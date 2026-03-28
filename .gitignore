@@ -53,11 +53,8 @@ next-env.d.ts
 # Данные Docker Compose (bind-mount: ./lab-data)
 /lab-data/
 
-# local artifacts (кроме pack для ИИ — явно отслеживаются)
+# local artifacts
 /local/*
-!/local/pack_for_ai.py
-!/local/pack_manifest.txt
-!/local/context_for_ai.txt
 
 # Agents
 /AGENTS.md
