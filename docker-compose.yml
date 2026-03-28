@@ -1,0 +1,18 @@
+# Запуск: docker compose up --build
+# Создайте .env из .env.example (обязательно NEXTAUTH_SECRET).
+# Каталог lab-data/ появится сам: положите туда data.xlsx для импорта или задайте DATA_XLSX_PATH.
+
+services:
+  app:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: file:/data/dev.db
+      DATA_XLSX_PATH: /data/data.xlsx
+      HOSTNAME: 0.0.0.0
+    volumes:
+      - ./lab-data:/data
+    restart: unless-stopped

@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(uuid())
+  username String @unique
+  password String
+  role     String @default("EDITOR")
+}
+
+model Specimen {
+  id           String       @id
+  taxon        String?
+  locality     String?
+  collector    String?
+  
+  // Данные выделения (Экстракция)
+  extrLab      String?
+  extrOperator String?
+  extrMethod   String?
+  extrDateRaw  String?
+  extrDate     String?
+  
+  // Измерение концентрации ДНК
+  dnaMeter         String?
+  measDate         String?
+  measOperator     String?
+  dnaConcentration String?  // String, чтобы можно было писать "< 1.0" или "Low"
+  dnaProfile       String?
+  measComm         String?  // Комментарии к измерению
+
+  imageUrl     String?
+  
+  // Статусы маркеров
+  itsStatus    String?
+  itsGb        String?
+  ssuStatus    String?
+  lsuStatus    String?
+  mcm7Status   String?
+  
+  /// Сводка: свободные колонки + комментарии Excel + метка листа/строки (импорт)
+  notes        String?
+  
+  attempts     PcrAttempt[]
+}
+
+model PcrAttempt {
+  id            String   @id @default(uuid())
+  specimenId    String
+  date          DateTime @default(now())
+  
+  // Детали ПЦР
+  marker        String?  // Какой маркер амплифицировали (ITS, SSU и т.д.)
+  forwardPrimer String?  // Прямой праймер
+  reversePrimer String?  // Обратный праймер
+  dnaMatrix     String?  // Количество ДНК-матрицы
+  volume        String   // Общий объем
+  
+  result        String   // В БД: Success | Fail (подписи в UI на русском)
+  
+  specimen      Specimen @relation(fields: [specimenId], references: [id], onDelete: Cascade)
+}

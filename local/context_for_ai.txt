@@ -1,0 +1,4580 @@
+# Lab Journal — контекст для ИИ (по сути 5.0; package 0.3.0)
+
+
+
+--- START OF FILE VERSION ---
+
+5.0
+0.3.0
+
+
+--- END OF FILE VERSION ---
+
+
+--- START OF FILE package.json ---
+
+{
+  "name": "lab-journal",
+  "version": "0.3.0",
+  "description": "Журнал проб ДНК и учёт ПЦР для лаборатории (Next.js, Prisma, NextAuth)",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "icons": "node scripts/gen-pwa-icons.mjs",
+    "prebuild": "node scripts/gen-pwa-icons.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "backup": "node scripts/backup-db.mjs",
+    "setup": "node scripts/setup.mjs",
+    "install:all": "node scripts/install-all.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.2",
+    "bcryptjs": "^3.0.3",
+    "lucide-react": "^0.577.0",
+    "next": "16.2.1",
+    "next-auth": "^4.24.13",
+    "prisma": "^6.19.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.1",
+    "postcss": "^8.4.47",
+    "sharp": "^0.34.5",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
+  }
+}
+
+
+--- END OF FILE package.json ---
+
+
+--- START OF FILE tsconfig.json ---
+
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+
+
+--- END OF FILE tsconfig.json ---
+
+
+--- START OF FILE next.config.ts ---
+
+import type { NextConfig } from "next";
+
+/** Сборка Next.js: tree-shaking для lucide-react. */
+const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
+};
+
+export default nextConfig;
+
+--- END OF FILE next.config.ts ---
+
+
+--- START OF FILE middleware.ts ---
+
+import { withAuth } from "next-auth/middleware";
+
+/** JWT обязателен для всех страниц кроме API и статики. */
+export default withAuth({
+  callbacks: {
+    authorized: ({ token }) => !!token,
+  },
+});
+
+export const config = {
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.json|offline\\.html|icon-192\\.png|icon-512\\.png|apple-touch-icon\\.png|icon\\.svg).*)",
+  ],
+};
+
+--- END OF FILE middleware.ts ---
+
+
+--- START OF FILE vitest.config.ts ---
+
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    environment: "node",
+    include: ["lib/**/*.test.ts"],
+  },
+});
+
+
+--- END OF FILE vitest.config.ts ---
+
+
+--- START OF FILE postcss.config.mjs ---
+
+/**
+ * Конфиг PostCSS (Tailwind CSS v4).
+ * @type {import('postcss-load-config').Config}
+ */
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+
+--- END OF FILE postcss.config.mjs ---
+
+
+--- START OF FILE eslint.config.mjs ---
+
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+
+/** Правила ESLint для Next.js + TypeScript. */
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  globalIgnores([
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+  ]),
+]);
+
+export default eslintConfig;
+
+
+--- END OF FILE eslint.config.mjs ---
+
+
+--- START OF FILE prisma/schema.prisma ---
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(uuid())
+  username String @unique
+  password String
+  role     String @default("EDITOR")
+}
+
+model Specimen {
+  id           String       @id
+  taxon        String?
+  locality     String?
+  collector    String?
+  
+  // Данные выделения (Экстракция)
+  extrLab      String?
+  extrOperator String?
+  extrMethod   String?
+  extrDateRaw  String?
+  extrDate     String?
+  
+  // Измерение концентрации ДНК
+  dnaMeter         String?
+  measDate         String?
+  measOperator     String?
+  dnaConcentration String?  // String, чтобы можно было писать "< 1.0" или "Low"
+  dnaProfile       String?
+  measComm         String?  // Комментарии к измерению
+
+  imageUrl     String?
+  
+  // Статусы маркеров
+  itsStatus    String?
+  itsGb        String?
+  ssuStatus    String?
+  lsuStatus    String?
+  mcm7Status   String?
+  
+  /// Сводка: свободные колонки + комментарии Excel + метка листа/строки (импорт)
+  notes        String?
+  
+  attempts     PcrAttempt[]
+}
+
+model PcrAttempt {
+  id            String   @id @default(uuid())
+  specimenId    String
+  date          DateTime @default(now())
+  
+  // Детали ПЦР
+  marker        String?  // Какой маркер амплифицировали (ITS, SSU и т.д.)
+  forwardPrimer String?  // Прямой праймер
+  reversePrimer String?  // Обратный праймер
+  dnaMatrix     String?  // Количество ДНК-матрицы
+  volume        String   // Общий объем
+  
+  result        String   // В БД: Success | Fail (подписи в UI на русском)
+  
+  specimen      Specimen @relation(fields: [specimenId], references: [id], onDelete: Cascade)
+}
+
+--- END OF FILE prisma/schema.prisma ---
+
+
+--- START OF FILE public/manifest.json ---
+
+{
+  "id": "/",
+  "name": "Журнал проб ДНК",
+  "short_name": "Журнал ДНК",
+  "description": "Учёт проб, выделения ДНК и журнал ПЦР для лаборатории",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fafafa",
+  "theme_color": "#0d9488",
+  "lang": "ru",
+  "categories": ["medical", "productivity", "business"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
+
+
+--- END OF FILE public/manifest.json ---
+
+
+--- START OF FILE public/sw.js ---
+
+/* eslint-disable no-restricted-globals */
+const CACHE = "lj-shell-v1";
+const PRECACHE = ["/offline.html", "/manifest.json", "/icon-192.png", "/icon-512.png", "/icon.svg"];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((cache) => cache.addAll(PRECACHE))
+      .then(() => self.skipWaiting())
+      .catch(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  if (req.method !== "GET") return;
+
+  event.respondWith(
+    fetch(req)
+      .then((res) => res)
+      .catch(() =>
+        caches.match(req).then((cached) => {
+          if (cached) return cached;
+          if (req.mode === "navigate" || req.headers.get("Accept")?.includes("text/html")) {
+            return caches.match("/offline.html");
+          }
+          return Promise.reject(new Error("offline"));
+        })
+      )
+  );
+});
+
+
+--- END OF FILE public/sw.js ---
+
+
+--- START OF FILE public/offline.html ---
+
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0d9488" />
+    <title>Нет сети — Журнал ДНК</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        background: linear-gradient(160deg, #ecfdf5 0%, #f4f4f5 40%);
+        color: #18181b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+      }
+      .card {
+        max-width: 22rem;
+        text-align: center;
+        padding: 2rem;
+        border-radius: 1.25rem;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(228, 228, 231, 0.9);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+      }
+      h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
+      p { margin: 0; color: #71717a; font-size: 0.9rem; line-height: 1.5; }
+      .icon {
+        width: 3rem;
+        height: 3rem;
+        margin: 0 auto 1rem;
+        border-radius: 0.75rem;
+        background: linear-gradient(135deg, #14b8a6, #047857);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+      }
+      button {
+        margin-top: 1.25rem;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        border: none;
+        background: #18181b;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+      button:active { transform: scale(0.99); }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="icon" aria-hidden="true">⚗</div>
+      <h1>Нет подключения</h1>
+      <p>Проверьте Wi‑Fi или мобильные данные и откройте журнал снова.</p>
+      <button type="button" onclick="location.reload()">Повторить</button>
+    </div>
+  </body>
+</html>
+
+
+--- END OF FILE public/offline.html ---
+
+
+--- START OF FILE public/icon.svg ---
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#0d9488"/>
+  <path fill="#ecfdf5" d="M11 8h10v2h-1v6c0 2.5-1.5 4-4 4s-4-1.5-4-4v-6h-1V8zm2 2v6c0 1.3.7 2 2 2s2-.7 2-2v-6h-4z"/>
+  <path fill="#99f6e4" d="M12 22h8v2h-8v-2z"/>
+</svg>
+
+
+--- END OF FILE public/icon.svg ---
+
+
+--- START OF FILE .env.example ---
+
+# Скопируйте в .env и подставьте значения.
+# Файл .env в репозиторий не коммитится.
+
+# SQLite: путь относительно каталога prisma/ (см. prisma/schema.prisma)
+DATABASE_URL="file:./dev.db"
+
+NEXTAUTH_SECRET=
+NEXTAUTH_URL="http://localhost:3000"
+
+# Необязательно: путь к файлу импорта (по умолчанию data.xlsx в корне проекта)
+# DATA_XLSX_PATH=data.xlsx
+
+
+--- END OF FILE .env.example ---
+
+
+--- START OF FILE README.md ---
+
+# Журнал проб ДНК (lab-journal)
+
+[![Node.js](https://img.shields.io/badge/node.js-%3E%3D20-417505?logo=node.js&logoColor=white)](https://nodejs.org/en/download)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white)](https://nextjs.org/docs)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/docs)
+
+Веб-приложение для учёта проб, выделения ДНК и журнала ПЦР: таблица проб, роли пользователей, импорт из Excel, экспорт и печать. Подходит для развёртывания во внутренней сети лаборатории или на сервере с доступом по HTTPS.
+
+**Стек:** Next.js 16 (App Router), TypeScript, Prisma, SQLite (типичная среда разработки), NextAuth.js, Tailwind CSS.
+
+---
+
+## Развёртывание «под ключ» (без участия разработчиков)
+
+### Один запуск после клонирования (Node.js 20+ уже установлен)
+
+Из корня репозитория:
+
+```bash
+node scripts/install-all.mjs
+```
+
+Скрипт последовательно выполняет `npm install`, создаёт `.env` из `.env.example` при отсутствии, при необходимости генерирует `NEXTAUTH_SECRET`, затем `prisma generate`, `prisma db push`, `npm run build` и запускает `npm start`. Остановка сервера: `Ctrl+C`.
+
+Эквивалент вручную: `npm install` → `npm run setup` → `npm start`.
+
+На **Windows** можно вызвать: `powershell -ExecutionPolicy Bypass -File scripts/install.ps1`.  
+На **Linux/macOS**: `chmod +x scripts/install.sh && ./scripts/install.sh`.
+
+### Docker (Linux-сервер с установленным Docker)
+
+```bash
+cp .env.example .env
+# Укажите в .env NEXTAUTH_SECRET и при публичном URL — NEXTAUTH_URL (например https://журнал.лаборатория.локально)
+mkdir -p lab-data
+# При необходимости положите файл импорта как lab-data/data.xlsx (путь задан в docker-compose)
+docker compose up --build
+```
+
+База SQLite хранится в томе `./lab-data` (каталог в `.gitignore`). Переменная `DATA_XLSX_PATH` в compose указывает на `/data/data.xlsx`.
+
+### Контроль работоспособности
+
+HTTP `GET /api/health` — JSON с полем `ok`, версией из `package.json` и меткой времени (удобно для мониторинга и проверки после установки).
+
+---
+
+## Возможности
+
+| Область | Описание |
+|---------|----------|
+| Учёт проб | Идентификатор, таксон, место, лаборатория и оператор выделения, метод, концентрация ДНК, заметки, ссылка на изображение геля |
+| Маркер ITS | Циклические статусы качества (успех / ошибка / «чужой») с быстрым переключением |
+| ПЦР | Несколько попыток на пробу: объём, результат, опционально маркер и праймеры |
+| Роли | `ADMIN` — пользователи, импорт, очистка таблицы, массовое удаление; `EDITOR` — редактирование; `READER` — только просмотр |
+| Данные | Импорт из `data.xlsx` (корень проекта), экспорт таблицы в `.xlsx`, печать текущего вида |
+
+---
+
+## Быстрый старт
+
+### 1. Зависимости
+
+Требуется **Node.js 20+** ([официальная сборка](https://nodejs.org/en/download)).
+
+### 2. Клонирование и зависимости
+
+```bash
+git clone <url-репозитория> lab-journal
+cd lab-journal
+npm install
+```
+
+### 3. Переменные окружения
+
+```bash
+cp .env.example .env
+```
+
+Минимальное содержимое `.env`:
+
+```env
+DATABASE_URL="file:./dev.db"
+NEXTAUTH_SECRET="<случайная строка: openssl rand -base64 32>"
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+`DATABASE_URL` задаёт файл SQLite относительно каталога `prisma/`. Файл `.env` не коммитится.
+
+Опционально: `DATA_XLSX_PATH` — путь к файлу импорта (по умолчанию `data.xlsx` в корне проекта; для нестандартного расположения укажите абсолютный или относительный путь).
+
+### 4. База данных и режим разработки
+
+Первый раз после `npm install` и настройки `.env`:
+
+```bash
+npx prisma generate
+npx prisma db push
+npm run dev
+```
+
+Интерфейс разработки: [http://localhost:3000](http://localhost:3000). При пустой таблице пользователей допускается первый вход `admin` / `admin` (создаётся учётная запись администратора).
+
+Для **production** на новой машине (сборка и запуск) используйте `npm run setup`, затем `npm start`, либо одну команду `node scripts/install-all.mjs` (см. раздел выше).
+
+### 5. Импорт из Excel
+
+По умолчанию ожидается файл **`data.xlsx`** в корне проекта (расширение `.xlsx` в `.gitignore`). Импорт запускается из раздела администратора. Путь переопределяется переменной `DATA_XLSX_PATH`.
+
+---
+
+## Сборка и production
+
+```bash
+npm run build
+npm run start
+```
+
+Порт задаётся переменной окружения `PORT` (по умолчанию 3000). Для внешнего доступа задайте корректный `NEXTAUTH_URL` (публичный URL сервиса). При переходе на [PostgreSQL](https://www.prisma.io/docs/orm/overview/databases/postgresql) измените `DATABASE_URL` и провайдер в `prisma/schema.prisma`, затем выполните миграции Prisma.
+
+---
+
+## Резервное копирование SQLite
+
+```bash
+npm run backup
+```
+
+Создаётся копия `prisma/dev.db` в каталоге `backups/` с меткой времени в имени файла. Каталог `backups/` в `.gitignore`.
+
+---
+
+## Поведение без сети и параллельное редактирование
+
+Клиент обращается к API на том же хосте, что и интерфейс. При отсутствии сети запросы не выполняются: **изменения не сохраняются** до восстановления связи. Отдельной офлайн-очереди и автоматической синхронизации нет.
+
+Несколько операторов, работающих онлайн, изменяют одну и ту же запись последовательно: действует последнее успешное сохранение на сервере. Для строгого разрешения конфликтов потребовались бы версии записей или иной протокол слияния — это не реализовано в текущей версии.
+
+---
+
+## Команды npm
+
+| Команда | Назначение |
+|---------|------------|
+| `npm run dev` | Режим разработки с hot reload |
+| `npm run setup` | Prisma + сборка (подготовка к `npm start`) |
+| `npm run install:all` | То же, что `node scripts/install-all.mjs` |
+| `npm run build` | Production-сборка |
+| `npm run start` | Запуск после `build` |
+| `npm run lint` | Проверка ESLint |
+| `npm run backup` | Резервная копия SQLite (`scripts/backup-db.mjs`) |
+
+---
+
+## Структура репозитория (сводка)
+
+| Путь | Назначение |
+|------|------------|
+| `app/` | Страницы и маршруты API Next.js |
+| `prisma/schema.prisma` | Модель данных |
+| `lib/` | Prisma-клиент, аутентификация, импорт Excel |
+| `scripts/backup-db.mjs` | Резервное копирование БД |
+| `scripts/setup.mjs` | Автоматическая подготовка окружения |
+| `scripts/install-all.mjs` | Установка зависимостей + setup + запуск |
+| `Dockerfile`, `docker-compose.yml` | Контейнерный запуск |
+
+Файлы с секретами, выгрузки Excel с данными и вспомогательные каталоги вроде `local/` намеренно не включены в публичный снимок репозитория (см. `.gitignore`).
+
+---
+
+## Лицензия и владение
+
+Проект распространяется в составе учебной или внутренней инфраструктуры; при добавлении лицензии укажите её в корне репозитория отдельным файлом `LICENSE`.
+
+
+--- END OF FILE README.md ---
+
+
+--- START OF FILE app/globals.css ---
+
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  ::selection {
+    @apply bg-teal-500/25 text-zinc-900 dark:text-zinc-100;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-teal-600/50;
+  }
+}
+
+/* PWA / мобильные: вырезы и нижняя панель */
+.safe-pt {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+.safe-pb {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+.safe-pb-nav {
+  padding-bottom: max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom)));
+}
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (max-width: 767px) {
+  html {
+    -webkit-tap-highlight-color: rgba(13, 148, 136, 0.15);
+  }
+}
+
+@media print {
+  body {
+    @apply bg-white text-black;
+  }
+  @page {
+    margin: 12mm;
+  }
+  table {
+    break-inside: auto;
+  }
+  tr {
+    break-inside: avoid;
+    break-after: auto;
+  }
+  thead {
+    display: table-header-group;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+}
+
+
+--- END OF FILE app/globals.css ---
+
+
+--- START OF FILE app/layout.tsx ---
+
+import type { Metadata } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
+import "./globals.css";
+import { Providers } from "@/components/Providers";
+
+const inter = Inter({
+  variable: "--font-dm-sans",
+  subsets: ["latin", "cyrillic"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  title: "Журнал проб ДНК",
+  description: "Учёт проб, выделения ДНК и журнал ПЦР для лаборатории",
+  applicationName: "Журнал ДНК",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Журнал ДНК",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport = {
+  width: "device-width" as const,
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f4f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c0a09" },
+  ],
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="ru" suppressHydrationWarning>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+
+--- END OF FILE app/layout.tsx ---
+
+
+--- START OF FILE app/page.tsx ---
+
+"use client";
+
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { FlaskConical, Beaker, CheckCircle2, AlertTriangle, Bug, Download, Plus, LogOut, Settings, Trash2, Wifi, WifiOff, Camera, Activity, Printer, Moon, Sun, Barcode, X, Save, RefreshCw, FileText, ScanLine, Home as HomeIcon, Search, MoreHorizontal, Star, Link2, Keyboard } from 'lucide-react';
+import { signIn, signOut, useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { parseApiResponse } from '@/lib/api-client';
+import { BarcodeScanDialog } from '@/components/BarcodeScanDialog';
+import { MobileSpecimenCard } from '@/components/MobileSpecimenCard';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
+import { HighlightMatch } from '@/lib/highlight';
+import { loadFavoriteIds, saveFavoriteIds, toggleFavoriteId } from '@/lib/favorites';
+import { CommandPalette } from '@/components/CommandPalette';
+import { ShortcutsModal } from '@/components/ShortcutsModal';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+
+const RECENT_STORAGE_KEY = 'lj-recent-ids';
+const DARK_STORAGE_KEY = 'lj-dark-mode';
+
+/** Подпись результата ПЦР в интерфейсе (в БД хранятся Success | Fail). */
+function pcrResultLabelRu(result: string) {
+  if (result === 'Success') return 'Успех';
+  if (result === 'Fail') return 'Провал';
+  return result;
+}
+
+export default function App() {
+  return <Home />;
+}
+
+function Home() {
+  const { data: session, status } = useSession();
+  const [specimens, setSpecimens] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<{
+    labs: string[];
+    operators: string[];
+    methods: string[];
+  }>({ labs: [], operators: [], methods: [] });
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortKey, setSortKey] = useState('id');
+  const [sortOrder, setSortOrder] = useState(1);
+  const [isOnline, setIsOnline] = useState(true);
+  const [quickFilter, setQuickFilter] = useState('ALL');
+  const [darkMode, setDarkMode] = useState(false);
+  const [toast, setToast] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [pcrModalId, setPcrModalId] = useState('');
+  const [pcrVolume, setPcrVolume] = useState('');
+  const [pcrResult, setPcrResult] = useState('Fail');
+  const [newRecord, setNewRecord] = useState({ id: '', taxon: '', locality: '', extrLab: '', extrOperator: '', extrMethod: '', extrDateRaw: '' });
+  const [validationError, setValidationError] = useState(false);
+  const [massLab, setMassLab] = useState('');
+  const [massOperator, setMassOperator] = useState('');
+  const [massMethod, setMassMethod] = useState('');
+  const [massDnaConc, setMassDnaConc] = useState('');
+  const [pcrMarker, setPcrMarker] = useState('');
+  const [pcrFwd, setPcrFwd] = useState('');
+  const [pcrRev, setPcrRev] = useState('');
+  const [pcrDnaMatrix, setPcrDnaMatrix] = useState('');
+  const [dataLoading, setDataLoading] = useState(true);
+  const [isNarrow, setIsNarrow] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [toolsSheetOpen, setToolsSheetOpen] = useState(false);
+  const [recentIds, setRecentIds] = useState<string[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  const rowsPerPage = isNarrow ? 40 : 100;
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const fetchSpecimensRef = useRef<() => Promise<void>>(async () => {});
+  const persistDark = useRef(false);
+  const { canPromptInstall, iosShareHint, promptInstall } = usePwaInstall();
+  const ptrRef = usePullToRefresh(() => void fetchSpecimensRef.current(), dataLoading);
+
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem(DARK_STORAGE_KEY);
+      if (v === '1' || v === '0') setDarkMode(v === '1');
+    } catch {
+      /* ignore */
+    }
+    const id = requestAnimationFrame(() => {
+      persistDark.current = true;
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    if (!persistDark.current) return;
+    try {
+      localStorage.setItem(DARK_STORAGE_KEY, darkMode ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, [darkMode]);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const set = () => setIsNarrow(mq.matches);
+    set();
+    mq.addEventListener('change', set);
+    return () => mq.removeEventListener('change', set);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RECENT_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as unknown;
+        if (Array.isArray(parsed)) setRecentIds(parsed.filter((x): x is string => typeof x === 'string').slice(0, 8));
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    setFavoriteIds([...loadFavoriteIds()]);
+  }, []);
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    if (status === 'authenticated') fetchSpecimens();
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [status]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    const sp = params.get('specimen');
+    if (q) setSearch(q);
+    if (sp) setPcrModalId(sp);
+  }, [status]);
+
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    const u = new URL(window.location.href);
+    if (search.trim()) u.searchParams.set('q', search.trim());
+    else u.searchParams.delete('q');
+    if (pcrModalId) u.searchParams.set('specimen', pcrModalId);
+    else u.searchParams.delete('specimen');
+    window.history.replaceState(null, '', `${u.pathname}${u.search}`);
+  }, [search, pcrModalId, status]);
+
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      const tag = document.activeElement?.tagName;
+      const inField = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+      if (e.key === '/' && !inField) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if ((e.key === 'n' || e.key === 'Н') && !inField && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const r = (session?.user as { role?: string } | undefined)?.role;
+        if (r && r !== 'READER') {
+          e.preventDefault();
+          setIsAddModalOpen(true);
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setPaletteOpen(true);
+      }
+      if (e.key === '?' && !inField && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setShortcutsOpen(true);
+      }
+      if (e.key === 'Escape') {
+        setIsAddModalOpen(false);
+        setPcrModalId('');
+        setScanOpen(false);
+        setToolsSheetOpen(false);
+        setPaletteOpen(false);
+        setShortcutsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [session]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [quickFilter]);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 3000);
+  };
+
+  const applyScannedCode = useCallback((raw: string) => {
+    const q = raw.trim();
+    if (!q) return;
+    setSearch(q);
+    setCurrentPage(1);
+    setQuickFilter('ALL');
+    showToast(`Поиск: ${q}`);
+  }, []);
+
+  useEffect(() => {
+    if (!pcrModalId) return;
+    setRecentIds((prev) => {
+      const next = [pcrModalId, ...prev.filter((id) => id !== pcrModalId)].slice(0, 8);
+      try {
+        localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, [pcrModalId]);
+
+  const fetchSpecimens = async () => {
+    setDataLoading(true);
+    try {
+      const res = await fetch('/api/specimens');
+      const result = await parseApiResponse<{
+        specimens?: unknown[];
+        suggestions?: { labs: string[]; operators: string[]; methods: string[] };
+      }>(res);
+      if (!result.ok) {
+        showToast(result.message);
+        return;
+      }
+      if (result.data.specimens) {
+        setSpecimens(result.data.specimens as any[]);
+        setSuggestions(
+          result.data.suggestions ?? { labs: [], operators: [], methods: [] }
+        );
+      }
+    } finally {
+      setDataLoading(false);
+    }
+  };
+  fetchSpecimensRef.current = fetchSpecimens;
+
+  const handleCreateRecord = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRecord.id.trim()) {
+      setValidationError(true);
+      return;
+    }
+    setValidationError(false);
+    const res = await fetch('/api/specimens', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newRecord) });
+    const result = await parseApiResponse(res);
+    if (!result.ok) {
+      showToast(result.message);
+      return;
+    }
+    setIsAddModalOpen(false);
+    showToast('Проба добавлена');
+    fetchSpecimens();
+  };
+
+  const handleMassUpdate = async () => {
+    if (selectedIds.length === 0) return;
+    const updateData: Record<string, string> = {};
+    if (massLab) updateData.extrLab = massLab;
+    if (massOperator) updateData.extrOperator = massOperator;
+    if (massMethod) updateData.extrMethod = massMethod;
+    if (massDnaConc) updateData.dnaConcentration = massDnaConc;
+    const res = await fetch('/api/specimens', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: selectedIds, updateData }) });
+    const result = await parseApiResponse(res);
+    if (!result.ok) {
+      showToast(result.message);
+      return;
+    }
+    setSelectedIds([]); setMassLab(''); setMassOperator(''); setMassMethod(''); setMassDnaConc('');
+    showToast('Данные обновлены');
+    fetchSpecimens();
+  };
+
+  const handleMassDelete = async () => {
+    if (selectedIds.length === 0 || !confirm(`Удалить ${selectedIds.length} записей?`)) return;
+    const res = await fetch('/api/specimens', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: selectedIds }) });
+    const result = await parseApiResponse(res);
+    if (!result.ok) {
+      showToast(result.message);
+      return;
+    }
+    setSelectedIds([]);
+    showToast('Записи удалены');
+    fetchSpecimens();
+  };
+
+  const toggleStatus = async (id: string, current: string) => {
+    const nextStatus = current === '1' ? 'badQ' : current === 'badQ' ? 'alien' : '1';
+    const res = await fetch('/api/specimens', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ singleId: id, singleStatus: nextStatus }) });
+    const result = await parseApiResponse(res);
+    if (!result.ok) {
+      showToast(result.message);
+      return;
+    }
+    fetchSpecimens();
+  };
+
+  const handleAddAttempt = async () => {
+    if (!pcrVolume) return;
+    const res = await fetch('/api/specimens', { 
+      method: 'PUT', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ 
+        newAttempt: { 
+          specimenId: pcrModalId, 
+          volume: pcrVolume, 
+          result: pcrResult,
+          ...(pcrMarker.trim() ? { marker: pcrMarker.trim() } : {}),
+          ...(pcrFwd.trim() ? { forwardPrimer: pcrFwd.trim() } : {}),
+          ...(pcrRev.trim() ? { reversePrimer: pcrRev.trim() } : {}),
+          ...(pcrDnaMatrix.trim() ? { dnaMatrix: pcrDnaMatrix.trim() } : {}),
+        } 
+      }) 
+    });
+    const result = await parseApiResponse(res);
+    if (!result.ok) {
+      showToast(result.message);
+      return;
+    }
+    setPcrVolume('');
+    setPcrMarker(''); setPcrFwd(''); setPcrRev(''); setPcrDnaMatrix('');
+    showToast('Попытка ПЦР сохранена');
+    fetchSpecimens();
+  };
+
+  const handleSort = (key: string) => {
+    if (sortKey === key) setSortOrder(sortOrder * -1);
+    else { setSortKey(key); setSortOrder(1); }
+  };
+
+  const exportToExcel = async () => {
+    try {
+      const xlsx = await import('xlsx');
+      const ws = xlsx.utils.json_to_sheet(specimens);
+      const wb = xlsx.utils.book_new();
+      xlsx.utils.book_append_sheet(wb, ws, 'Журнал');
+      xlsx.writeFile(wb, 'Журнал_проб.xlsx');
+    } catch {
+      showToast('Не удалось сформировать Excel');
+    }
+  };
+
+  const role = session?.user?.role;
+  const isReader = role === 'READER';
+  const isAdmin = role === 'ADMIN';
+
+  const favSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
+
+  const filteredSpecimens = useMemo(() => {
+    const q = search.toLowerCase();
+    let list = specimens.filter(
+      (s) =>
+        s.id.toLowerCase().includes(q) ||
+        (s.taxon && s.taxon.toLowerCase().includes(q)) ||
+        (s.locality && String(s.locality).toLowerCase().includes(q)) ||
+        (s.extrOperator && s.extrOperator.toLowerCase().includes(q)) ||
+        (s.notes && String(s.notes).toLowerCase().includes(q))
+    );
+    if (quickFilter === 'SUCCESS') list = list.filter((s) => s.itsStatus === '1');
+    if (quickFilter === 'ERROR') list = list.filter((s) => s.itsStatus && s.itsStatus !== '1');
+    if (quickFilter === 'FAVORITES') list = list.filter((s) => favSet.has(s.id));
+    return [...list].sort((a, b) => {
+      const aVal = a[sortKey] || '';
+      const bVal = b[sortKey] || '';
+      return aVal > bVal ? sortOrder : aVal < bVal ? -sortOrder : 0;
+    });
+  }, [specimens, search, quickFilter, sortKey, sortOrder, favSet]);
+
+  const exportCsv = () => {
+    try {
+      const rows = filteredSpecimens;
+      const headers = ['id', 'taxon', 'locality', 'extrLab', 'extrOperator', 'extrMethod', 'dnaConcentration', 'itsStatus', 'notes'];
+      const esc = (v: unknown) => {
+        const s = v == null ? '' : String(v);
+        if (/[",\n\r;]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+        return s;
+      };
+      const lines = [headers.join(';'), ...rows.map((r) => headers.map((h) => esc((r as Record<string, unknown>)[h])).join(';'))];
+      const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Журнал_проб.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      showToast('Не удалось сформировать CSV');
+    }
+  };
+
+  const exportFilteredExcel = async () => {
+    try {
+      const xlsx = await import('xlsx');
+      const ws = xlsx.utils.json_to_sheet(filteredSpecimens);
+      const wb = xlsx.utils.book_new();
+      xlsx.utils.book_append_sheet(wb, ws, 'Отфильтровано');
+      xlsx.writeFile(wb, 'Журнал_отфильтровано.xlsx');
+    } catch {
+      showToast('Не удалось сформировать Excel');
+    }
+  };
+
+  const toggleFavorite = useCallback((id: string) => {
+    setFavoriteIds((prev) => {
+      const next = [...toggleFavoriteId(new Set(prev), id)];
+      saveFavoriteIds(new Set(next));
+      return next;
+    });
+  }, []);
+
+  const copySpecimenLink = useCallback((id: string) => {
+    const url = `${window.location.origin}/?q=${encodeURIComponent(id)}&specimen=${encodeURIComponent(id)}`;
+    void navigator.clipboard.writeText(url).then(
+      () => showToast('Ссылка скопирована'),
+      () => showToast('Не удалось скопировать')
+    );
+  }, []);
+
+  const currentData = filteredSpecimens.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+  const totalPages = Math.ceil(filteredSpecimens.length / rowsPerPage);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+
+  const successCount = specimens.filter((s) => s.itsStatus === '1').length;
+  const successPercent = specimens.length ? Math.round((successCount / specimens.length) * 100) : 0;
+
+  const renderStatus = (s: { id: string; itsStatus?: string | null }) => {
+    const st = s.itsStatus;
+    const base = 'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold transition ring-1 ring-inset';
+    if (st === '1')
+      return (
+        <button type="button" onClick={() => !isReader && toggleStatus(s.id, st)} className={`${base} bg-emerald-600/10 text-emerald-800 ring-emerald-600/20 dark:bg-emerald-500/15 dark:text-emerald-200`}>
+          <CheckCircle2 className="h-3 w-3" />
+          Успех
+        </button>
+      );
+    if (['badQ', 'badDNA', 'bad', 'bad Q'].includes(String(st)))
+      return (
+        <button type="button" onClick={() => !isReader && toggleStatus(s.id, st!)} className={`${base} bg-rose-600/10 text-rose-800 ring-rose-600/20 dark:bg-rose-500/15 dark:text-rose-200`}>
+          <AlertTriangle className="h-3 w-3" />
+          Ошибка
+        </button>
+      );
+    if (['alien', 'fungus'].includes(String(st)))
+      return (
+        <button type="button" onClick={() => !isReader && toggleStatus(s.id, st!)} className={`${base} bg-amber-500/15 text-amber-900 ring-amber-500/30 dark:bg-amber-400/10 dark:text-amber-200`}>
+          <Bug className="h-3 w-3" />
+          Чужой
+        </button>
+      );
+    return (
+      <button type="button" onClick={() => !isReader && toggleStatus(s.id, st || '')} className={`${base} bg-zinc-200/80 text-zinc-500 ring-zinc-400/20 dark:bg-zinc-800 dark:text-zinc-400`}>
+        Нет данных
+      </button>
+    );
+  };
+
+  const activeSpecimen = specimens.find((s) => s.id === pcrModalId);
+
+  const inputBase =
+    'rounded-xl border border-zinc-200/90 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-zinc-400 focus:border-teal-600/40 focus:ring-2 focus:ring-teal-500/15 dark:border-zinc-600 dark:bg-zinc-800/90 dark:text-zinc-100 dark:placeholder:text-zinc-500';
+
+  const tableColSpan = isReader ? 6 : 7;
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950">
+        <div className="mx-auto max-w-3xl space-y-4 p-8">
+          <div className="h-10 w-48 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+          <div className="h-32 animate-pulse rounded-2xl bg-zinc-200/80 dark:bg-zinc-800/80" />
+          <div className="h-64 animate-pulse rounded-2xl bg-zinc-200/60 dark:bg-zinc-800/60" />
+        </div>
+      </div>
+    );
+  }
+  if (status === 'unauthenticated') {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-zinc-100 px-4 dark:bg-zinc-950">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(20,184,166,0.18),transparent)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(45,212,191,0.12),transparent)]" />
+        <div className="relative w-full max-w-md rounded-3xl border border-zinc-200/80 bg-white/90 p-10 text-center shadow-2xl shadow-zinc-900/5 backdrop-blur-md dark:border-zinc-700/80 dark:bg-zinc-900/90">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-700 text-white shadow-lg shadow-teal-900/20">
+            <FlaskConical className="h-9 w-9" strokeWidth={1.75} />
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Журнал проб ДНК</h1>
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Учёт выделения и ПЦР. Войдите под учётной записью лаборатории.</p>
+          <button
+            type="button"
+            onClick={() => signIn()}
+            className="mt-8 w-full rounded-2xl bg-zinc-900 py-3.5 text-sm font-semibold text-white shadow-lg transition hover:bg-zinc-800 active:scale-[0.99] dark:bg-teal-600 dark:hover:bg-teal-500"
+          >
+            Войти
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={ptrRef}
+      className="min-h-screen touch-manipulation bg-zinc-100 p-2 text-zinc-900 transition-colors selection:bg-teal-500/20 dark:bg-zinc-950 dark:text-zinc-100 sm:p-6 max-md:safe-pb-nav md:pb-20"
+    >
+      <datalist id="labs-list">{suggestions.labs.map((l: string) => <option key={l} value={l} />)}</datalist>
+      <datalist id="ops-list">{suggestions.operators.map((o: string) => <option key={o} value={o} />)}</datalist>
+      <datalist id="methods-list">{suggestions.methods.map((m: string) => <option key={m} value={m} />)}</datalist>
+
+      {toast && (
+        <div className="fixed z-[100] max-w-sm rounded-2xl border border-zinc-200/80 bg-white/95 px-5 py-3 text-sm shadow-2xl shadow-zinc-900/10 backdrop-blur-md dark:border-zinc-600 dark:bg-zinc-900/95 max-md:safe-pb left-4 right-4 max-md:bottom-24 md:bottom-6 md:right-6 md:left-auto">
+          {toast}
+        </div>
+      )}
+
+      {!isOnline && (
+        <div className="mb-4 rounded-2xl border border-amber-300/80 bg-amber-50/95 px-4 py-3 text-sm text-amber-950 shadow-sm backdrop-blur-sm dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-100 print:hidden">
+          <strong>Нет сети.</strong> Запросы к серверу не выполняются. Данные до восстановления связи{' '}
+          <span className="font-semibold">не сохраняются в базе</span>.
+        </div>
+      )}
+      <header className="mb-6 rounded-2xl border border-zinc-200/80 bg-white/90 p-5 shadow-sm backdrop-blur-sm print:hidden dark:border-zinc-700/80 dark:bg-zinc-900/60">
+        <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
+            <h1 className="flex flex-wrap items-center gap-2 text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl dark:text-zinc-50">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-emerald-700 text-white shadow-md shadow-teal-900/15">
+                <FlaskConical className="h-5 w-5" strokeWidth={1.75} />
+              </span>
+              Журнал проб ДНК
+              {isOnline ? (
+                <Wifi className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden />
+              ) : (
+                <WifiOff className="h-4 w-4 text-red-500" aria-hidden />
+              )}
+            </h1>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+              Роль: <span className="font-medium text-zinc-700 dark:text-zinc-300">{role}</span>
+              <span className="ml-2 text-zinc-400">·</span>
+              <span className="ml-2 hidden sm:inline">
+                Поиск: /
+                {!isReader && (
+                  <>
+                    <span className="text-zinc-400"> · </span>
+                    новая проба: N
+                  </>
+                )}
+              </span>
+            </p>
+            {recentIds.length > 0 && (
+              <div className="mt-3 md:hidden">
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Недавние</p>
+                <div className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {recentIds.map((id) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => {
+                        setSearch(id);
+                        setCurrentPage(1);
+                        setQuickFilter('ALL');
+                      }}
+                      className="shrink-0 rounded-full bg-zinc-200/90 px-3 py-1.5 font-mono text-xs font-medium text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"
+                    >
+                      {id}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex w-full min-w-0 flex-col gap-3 md:w-auto md:flex-1 md:items-end">
+            <input
+              ref={searchInputRef}
+              type="search"
+              placeholder="Поиск по ID, таксону, оператору…"
+              enterKeyHint="search"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className={`min-h-[48px] w-full min-w-0 md:max-w-xs ${inputBase}`}
+            />
+            <div className="hidden flex-wrap justify-end gap-2 md:flex">
+              <button
+                type="button"
+                onClick={() => setShortcutsOpen(true)}
+                className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                title="Горячие клавиши (?)"
+                aria-label="Справка по клавишам"
+              >
+                <Keyboard className="h-4 w-4" />
+              </button>
+              {!isReader && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-teal-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-500 active:scale-[0.98] dark:bg-teal-500 dark:hover:bg-teal-400"
+                >
+                  <Plus className="h-4 w-4" />
+                  Новая проба
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={exportToExcel}
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+              >
+                <Download className="h-4 w-4" />
+                Экспорт (вся база)
+              </button>
+              <button
+                type="button"
+                onClick={() => void exportFilteredExcel()}
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50/80 px-3 py-2 text-sm font-medium text-teal-900 shadow-sm transition hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-100 dark:hover:bg-teal-900/40"
+                title="Только отфильтрованные строки"
+              >
+                <Download className="h-4 w-4" />
+                Excel (список)
+              </button>
+              <button
+                type="button"
+                onClick={exportCsv}
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                title="Текущий список (с учётом поиска и фильтров)"
+              >
+                <FileText className="h-4 w-4" />
+                CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => fetchSpecimens()}
+                disabled={dataLoading}
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                aria-busy={dataLoading}
+              >
+                <RefreshCw className={`h-4 w-4 ${dataLoading ? 'animate-spin' : ''}`} />
+                Обновить
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+              >
+                <Printer className="h-4 w-4" />
+                Печать
+              </button>
+              <button
+                type="button"
+                onClick={() => setDarkMode(!darkMode)}
+                className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+                aria-label={darkMode ? 'Светлая тема' : 'Тёмная тема'}
+              >
+                {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
+              {role === 'ADMIN' && (
+                <Link
+                  href="/admin"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-violet-300/80 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-900 shadow-sm transition hover:bg-violet-100 dark:border-violet-600/50 dark:bg-violet-950/50 dark:text-violet-100 dark:hover:bg-violet-900/50"
+                >
+                  <Settings className="h-4 w-4" />
+                  Админ
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={() => signOut()}
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 active:scale-[0.98] dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+              >
+                <LogOut className="h-4 w-4" />
+                Выход
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2 md:hidden">
+              {!isReader && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="touch-target inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm active:scale-[0.98] dark:bg-teal-500"
+                >
+                  <Plus className="h-4 w-4" />
+                  Новая
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => fetchSpecimens()}
+                disabled={dataLoading}
+                className="touch-target inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800"
+                aria-label="Обновить данные"
+              >
+                <RefreshCw className={`h-5 w-5 ${dataLoading ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setDarkMode(!darkMode)}
+                className="touch-target inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800"
+                aria-label={darkMode ? 'Светлая тема' : 'Тёмная тема'}
+              >
+                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setToolsSheetOpen(true)}
+                className="touch-target inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium dark:border-zinc-600 dark:bg-zinc-800"
+              >
+                <MoreHorizontal className="h-5 w-5" />
+                Ещё
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 border-t border-zinc-200/80 pt-5 sm:grid-cols-3 dark:border-zinc-700/80">
+          <div className="rounded-2xl border border-zinc-200/60 bg-gradient-to-br from-white to-zinc-50 p-4 shadow-sm dark:border-zinc-700/60 dark:from-zinc-900 dark:to-zinc-950">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Всего проб</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums text-zinc-900 dark:text-zinc-50">{specimens.length}</p>
+          </div>
+          <div className="rounded-2xl border border-emerald-200/60 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm dark:border-emerald-800/40 dark:from-emerald-950/20 dark:to-zinc-950">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Успешные ITS</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums text-emerald-900 dark:text-emerald-100">{successCount}</p>
+          </div>
+          <div className="rounded-2xl border border-rose-200/60 bg-gradient-to-br from-rose-50 to-white p-4 shadow-sm dark:border-rose-900/40 dark:from-rose-950/30 dark:to-zinc-950">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-300">Остальные</p>
+            <p className="mt-1 text-3xl font-bold tabular-nums text-rose-900 dark:text-rose-100">{specimens.length - successCount}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-zinc-800">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-[width] duration-500 ease-out"
+            style={{ width: `${successPercent}%` }}
+          />
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setQuickFilter('ALL')}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+              quickFilter === 'ALL'
+                ? 'bg-zinc-900 text-white shadow-sm dark:bg-teal-600 dark:text-white'
+                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+            }`}
+          >
+            Все
+          </button>
+          <button
+            type="button"
+            onClick={() => setQuickFilter('SUCCESS')}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+              quickFilter === 'SUCCESS'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+            }`}
+          >
+            Успешные
+          </button>
+          <button
+            type="button"
+            onClick={() => setQuickFilter('ERROR')}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+              quickFilter === 'ERROR'
+                ? 'bg-rose-600 text-white shadow-sm'
+                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+            }`}
+          >
+            С ошибками
+          </button>
+          <button
+            type="button"
+            onClick={() => setQuickFilter('FAVORITES')}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+              quickFilter === 'FAVORITES'
+                ? 'bg-amber-500 text-white shadow-sm dark:bg-amber-600'
+                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+            }`}
+          >
+            <span className="inline-flex items-center gap-1">
+              <Star className="h-3.5 w-3.5" />
+              Избранное
+            </span>
+          </button>
+        </div>
+      </header>
+
+      {!isReader && selectedIds.length > 0 && (
+        <div className="sticky top-3 z-20 mb-6 flex flex-col gap-3 rounded-2xl border border-teal-200/80 bg-teal-50/95 p-4 shadow-lg shadow-teal-900/5 backdrop-blur-md print:hidden dark:border-teal-800/50 dark:bg-teal-950/40">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-teal-900 dark:text-teal-100">
+              Выбрано: {selectedIds.length}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={handleMassDelete}
+                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Удалить
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setSelectedIds(filteredSpecimens.map((s) => s.id))}
+                className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-teal-300 bg-white px-3 py-2 text-sm font-semibold text-teal-900 shadow-sm transition hover:bg-teal-50 dark:border-teal-800 dark:bg-teal-950/30 dark:text-teal-100 dark:hover:bg-teal-900/40"
+              >
+                Все отфильтрованные ({filteredSpecimens.length})
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <input list="labs-list" placeholder="Лаборатория" value={massLab} onChange={(e) => setMassLab(e.target.value)} className={`min-h-[44px] w-full sm:min-h-0 ${inputBase}`} />
+            <input list="ops-list" placeholder="Кто выделял" value={massOperator} onChange={(e) => setMassOperator(e.target.value)} className={`min-h-[44px] w-full sm:min-h-0 ${inputBase}`} />
+            <input list="methods-list" placeholder="Метод" value={massMethod} onChange={(e) => setMassMethod(e.target.value)} className={`min-h-[44px] w-full sm:min-h-0 ${inputBase}`} />
+            <input placeholder="Конц. ДНК (нг/µл и т.п.)" value={massDnaConc} onChange={(e) => setMassDnaConc(e.target.value)} className={`min-h-[44px] w-full sm:min-h-0 ${inputBase}`} />
+          </div>
+          <button
+            type="button"
+            onClick={handleMassUpdate}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-teal-500 active:scale-[0.99] dark:bg-teal-500 dark:hover:bg-teal-400"
+          >
+            <Beaker className="h-4 w-4" />
+            Применить к выбранным
+          </button>
+        </div>
+      )}
+
+      <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/40 print:border-none print:shadow-none">
+        <div className="hidden overflow-x-auto md:block print:block">
+          <table className="w-full border-collapse text-left">
+            <thead className="sticky top-0 z-10 border-b border-zinc-200/90 bg-zinc-100/95 text-sm text-zinc-600 backdrop-blur-md dark:border-zinc-700 dark:bg-zinc-900/95 dark:text-zinc-300 print:bg-white print:text-black">
+              <tr>
+                {!isReader && (
+                  <th className="w-10 p-3 text-center print:hidden">
+                    <input
+                      type="checkbox"
+                      aria-label="Выбрать страницу"
+                      onChange={() =>
+                        selectedIds.length === currentData.length ? setSelectedIds([]) : setSelectedIds(currentData.map((s) => s.id))
+                      }
+                      checked={selectedIds.length === currentData.length && currentData.length > 0}
+                    />
+                  </th>
+                )}
+                <th className="cursor-pointer p-3 font-semibold hover:text-teal-700 dark:hover:text-teal-400" onClick={() => handleSort('id')}>
+                  ID {sortKey === 'id' && (sortOrder === 1 ? '↑' : '↓')}
+                </th>
+                <th className="hidden cursor-pointer p-3 font-semibold sm:table-cell hover:text-teal-700 dark:hover:text-teal-400" onClick={() => handleSort('taxon')}>
+                  Таксон {sortKey === 'taxon' && (sortOrder === 1 ? '↑' : '↓')}
+                </th>
+                <th className="hidden max-w-[14rem] p-3 font-semibold xl:table-cell">Заметки</th>
+                <th className="p-3 font-semibold">Выделение</th>
+                <th className="p-3 text-center font-semibold">ITS</th>
+                <th className="p-3 text-center font-semibold print:hidden">ПЦР</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100 text-sm dark:divide-zinc-800 print:divide-zinc-300">
+              {dataLoading ? (
+                Array.from({ length: 5 }, (_, i) => (
+                  <tr key={`sk-${i}`} className="even:bg-zinc-50/40 dark:even:bg-zinc-950/30">
+                    {!isReader && (
+                      <td className="p-3 print:hidden">
+                        <div className="mx-auto h-4 w-4 animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" />
+                      </td>
+                    )}
+                    <td className="p-3">
+                      <div className="h-4 w-28 animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" />
+                    </td>
+                    <td className="hidden p-3 sm:table-cell">
+                      <div className="h-4 w-36 animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" />
+                    </td>
+                    <td className="hidden p-3 xl:table-cell">
+                      <div className="h-10 max-w-[14rem] animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" />
+                    </td>
+                    <td className="p-3">
+                      <div className="h-4 w-40 animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" />
+                    </td>
+                    <td className="p-3 text-center">
+                      <div className="mx-auto h-7 w-20 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-700" />
+                    </td>
+                    <td className="p-3 text-center print:hidden">
+                      <div className="mx-auto h-5 w-5 animate-pulse rounded bg-zinc-200 dark:bg-zinc-700" />
+                    </td>
+                  </tr>
+                ))
+              ) : specimens.length === 0 ? (
+                <tr>
+                  <td colSpan={tableColSpan} className="p-12 text-center text-zinc-500 dark:text-zinc-400">
+                    <p className="text-base font-medium text-zinc-700 dark:text-zinc-200">База пока пуста</p>
+                    <p className="mt-1 text-sm">Добавьте первую пробу или импортируйте данные.</p>
+                  </td>
+                </tr>
+              ) : filteredSpecimens.length === 0 ? (
+                <tr>
+                  <td colSpan={tableColSpan} className="p-12 text-center text-zinc-500 dark:text-zinc-400">
+                    <p className="text-base font-medium text-zinc-700 dark:text-zinc-200">Ничего не найдено</p>
+                    <p className="mt-1 text-sm">Измените поиск или сбросьте быстрый фильтр.</p>
+                  </td>
+                </tr>
+              ) : (
+                currentData.map((s) => (
+                  <tr
+                    key={s.id}
+                    className={`transition-colors hover:bg-teal-50/40 dark:hover:bg-zinc-800/50 ${
+                      selectedIds.includes(s.id) ? 'bg-teal-50/60 dark:bg-teal-950/25' : 'even:bg-zinc-50/40 dark:even:bg-zinc-950/30'
+                    } print:border-b`}
+                  >
+                    {!isReader && (
+                      <td className="p-3 text-center print:hidden">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(s.id)}
+                          onChange={() => setSelectedIds((p) => (p.includes(s.id) ? p.filter((i) => i !== s.id) : [...p, s.id]))}
+                        />
+                      </td>
+                    )}
+                    <td className="p-3">
+                      <div className="flex flex-wrap items-center gap-1 font-mono text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                        <Barcode className="h-4 w-4 text-zinc-400 print:hidden" aria-hidden />
+                        <button
+                          type="button"
+                          onClick={() => toggleFavorite(s.id)}
+                          className={`rounded p-0.5 print:hidden ${favSet.has(s.id) ? 'text-amber-500' : 'text-zinc-300 hover:text-amber-400'}`}
+                          title="Избранное"
+                          aria-label={favSet.has(s.id) ? 'Убрать из избранного' : 'В избранное'}
+                        >
+                          <Star className={`h-4 w-4 ${favSet.has(s.id) ? 'fill-current' : ''}`} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copySpecimenLink(s.id)}
+                          className="rounded p-0.5 text-zinc-400 hover:text-teal-600 print:hidden"
+                          title="Ссылка на пробу"
+                          aria-label="Копировать ссылку"
+                        >
+                          <Link2 className="h-4 w-4" />
+                        </button>
+                        <span className="break-all">
+                          <HighlightMatch text={s.id} query={search} />
+                        </span>
+                        {s.imageUrl && (
+                          <a href={s.imageUrl} target="_blank" rel="noopener noreferrer" className="print:hidden" title="Изображение геля">
+                            <Camera className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                          </a>
+                        )}
+                      </div>
+                    </td>
+                    <td className="hidden p-3 sm:table-cell">
+                      <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                        {s.taxon ? <HighlightMatch text={String(s.taxon)} query={search} /> : '—'}
+                      </div>
+                      <div className="max-w-[200px] truncate text-xs text-zinc-500">{s.locality}</div>
+                    </td>
+                    <td className="hidden max-w-[14rem] align-top p-3 xl:table-cell">
+                      {s.notes ? (
+                        <p className="line-clamp-3 whitespace-pre-wrap break-words text-xs text-zinc-600 dark:text-zinc-400" title={s.notes}>
+                          {s.notes}
+                        </p>
+                      ) : (
+                        <span className="text-xs text-zinc-400">—</span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                        {s.extrLab || '—'}{' '}
+                        <span className="font-normal text-zinc-500">{s.extrOperator ? `· ${s.extrOperator}` : ''}</span>
+                      </div>
+                      <div className="mt-0.5 text-xs text-zinc-500">{s.extrMethod}</div>
+                    </td>
+                    <td className="p-3 text-center">{renderStatus(s)}</td>
+                    <td className="p-3 text-center print:hidden">
+                      <button type="button" className="rounded-lg p-1.5 transition hover:bg-zinc-200/80 dark:hover:bg-zinc-700" onClick={() => setPcrModalId(s.id)} title="Журнал ПЦР">
+                        <Activity
+                          className={`mx-auto h-5 w-5 ${s.attempts?.length > 0 ? 'text-teal-600 dark:text-teal-400' : 'text-zinc-300 hover:text-zinc-500 dark:text-zinc-600'}`}
+                        />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="divide-y divide-zinc-100 md:hidden print:hidden dark:divide-zinc-800">
+          {dataLoading ? (
+            <div className="space-y-3 p-3">
+              {Array.from({ length: 4 }, (_, i) => (
+                <div key={`msk-${i}`} className="h-40 animate-pulse rounded-2xl bg-zinc-100 dark:bg-zinc-800/80" />
+              ))}
+            </div>
+          ) : specimens.length === 0 ? (
+            <div className="p-10 text-center text-zinc-500 dark:text-zinc-400">
+              <p className="font-medium text-zinc-700 dark:text-zinc-200">База пока пуста</p>
+              <p className="mt-1 text-sm">Добавьте первую пробу или импортируйте данные.</p>
+            </div>
+          ) : filteredSpecimens.length === 0 ? (
+            <div className="p-10 text-center text-zinc-500 dark:text-zinc-400">
+              <p className="font-medium text-zinc-700 dark:text-zinc-200">Ничего не найдено</p>
+              <p className="mt-1 text-sm">Измените поиск или фильтр.</p>
+            </div>
+          ) : (
+            <div className="space-y-3 p-3">
+              {currentData.map((s) => (
+                <MobileSpecimenCard
+                  key={s.id}
+                  s={s}
+                  isReader={isReader}
+                  selected={selectedIds.includes(s.id)}
+                  onToggleSelect={() =>
+                    setSelectedIds((p) => (p.includes(s.id) ? p.filter((i) => i !== s.id) : [...p, s.id]))
+                  }
+                  onPcr={() => setPcrModalId(s.id)}
+                  renderStatus={renderStatus}
+                  favorite={favSet.has(s.id)}
+                  onToggleFavorite={() => toggleFavorite(s.id)}
+                  searchQuery={search}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex flex-wrap items-center justify-center gap-3 border-t border-zinc-200/80 bg-zinc-50/80 px-4 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900/50 print:hidden">
+            <button
+              type="button"
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              className="rounded-xl border border-zinc-200 bg-white px-4 py-2 font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            >
+              Назад
+            </button>
+            <span className="tabular-nums text-zinc-600 dark:text-zinc-400">
+              Страница {currentPage} из {totalPages} · по {rowsPerPage} строк
+            </span>
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              className="rounded-xl border border-zinc-200 bg-white px-4 py-2 font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            >
+              Вперёд
+            </button>
+          </div>
+        )}
+      </div>
+
+      <nav
+        className="safe-pb fixed bottom-0 left-0 right-0 z-[70] flex items-stretch justify-around gap-0 border-t border-zinc-200/90 bg-white/95 px-1 pt-1 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md print:hidden md:hidden dark:border-zinc-800 dark:bg-zinc-900/95"
+        aria-label="Быстрые действия"
+      >
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="touch-target flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium text-zinc-600 dark:text-zinc-400"
+        >
+          <HomeIcon className="h-6 w-6 shrink-0 opacity-90" aria-hidden />
+          Вверх
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            searchInputRef.current?.focus();
+            searchInputRef.current?.select();
+          }}
+          className="touch-target flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium text-zinc-600 dark:text-zinc-400"
+        >
+          <Search className="h-6 w-6 shrink-0 opacity-90" aria-hidden />
+          Поиск
+        </button>
+        <button
+          type="button"
+          onClick={() => setScanOpen(true)}
+          className="touch-target flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium text-teal-700 dark:text-teal-400"
+        >
+          <ScanLine className="h-6 w-6 shrink-0" aria-hidden />
+          Скан
+        </button>
+        {!isReader && (
+          <button
+            type="button"
+            onClick={() => setIsAddModalOpen(true)}
+            className="touch-target flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium text-teal-700 dark:text-teal-400"
+          >
+            <Plus className="h-6 w-6 shrink-0" aria-hidden />
+            Проба
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => setToolsSheetOpen(true)}
+          className="touch-target flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium text-zinc-600 dark:text-zinc-400"
+        >
+          <MoreHorizontal className="h-6 w-6 shrink-0 opacity-90" aria-hidden />
+          Меню
+        </button>
+      </nav>
+
+      {toolsSheetOpen ? (
+        <div className="fixed inset-0 z-[110] md:hidden print:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-zinc-950/50"
+            aria-label="Закрыть меню"
+            onClick={() => setToolsSheetOpen(false)}
+          />
+          <div className="safe-pb absolute bottom-0 left-0 right-0 max-h-[88dvh] overflow-y-auto rounded-t-3xl border border-zinc-200 bg-white px-4 pb-4 pt-2 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="mx-auto mb-4 h-1 w-10 shrink-0 rounded-full bg-zinc-300 dark:bg-zinc-600" />
+            <p className="mb-3 text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100">Действия</p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setToolsSheetOpen(false);
+                  void exportToExcel();
+                }}
+                className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 py-3 text-sm font-medium dark:border-zinc-600 dark:bg-zinc-800"
+              >
+                <Download className="h-4 w-4" />
+                Экспорт Excel (вся база)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setToolsSheetOpen(false);
+                  exportCsv();
+                }}
+                className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 py-3 text-sm font-medium dark:border-zinc-600 dark:bg-zinc-800"
+              >
+                <FileText className="h-4 w-4" />
+                CSV (текущий список)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setToolsSheetOpen(false);
+                  void exportFilteredExcel();
+                }}
+                className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-teal-200 bg-teal-50 py-3 text-sm font-medium text-teal-900 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-100"
+              >
+                <Download className="h-4 w-4" />
+                Excel (текущий список)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setToolsSheetOpen(false);
+                  window.print();
+                }}
+                className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 py-3 text-sm font-medium dark:border-zinc-600 dark:bg-zinc-800"
+              >
+                <Printer className="h-4 w-4" />
+                Печать
+              </button>
+              {role === 'ADMIN' ? (
+                <Link
+                  href="/admin"
+                  onClick={() => setToolsSheetOpen(false)}
+                  className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-violet-300/80 bg-violet-50 py-3 text-sm font-semibold text-violet-900 dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-100"
+                >
+                  <Settings className="h-4 w-4" />
+                  Админ
+                </Link>
+              ) : null}
+              {canPromptInstall ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setToolsSheetOpen(false);
+                    void promptInstall();
+                  }}
+                  className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 text-sm font-bold text-white"
+                >
+                  Установить приложение
+                </button>
+              ) : null}
+            </div>
+            {iosShareHint ? (
+              <p className="mt-4 rounded-2xl border border-zinc-200/80 bg-zinc-50/90 px-3 py-2 text-center text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-400">
+                На iPhone: кнопка «Поделиться» <span className="whitespace-nowrap">→ «На экран &quot;Домой&quot;»</span>, чтобы открывать журнал как приложение.
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => {
+                setToolsSheetOpen(false);
+                void signOut();
+              }}
+              className="mt-4 flex w-full min-h-[48px] items-center justify-center gap-2 rounded-xl bg-zinc-900 py-3 text-sm font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900"
+            >
+              <LogOut className="h-4 w-4" />
+              Выйти
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      <BarcodeScanDialog open={scanOpen} onClose={() => setScanOpen(false)} onCode={applyScannedCode} />
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        specimens={specimens}
+        onPickSpecimen={(id) => {
+          setSearch(id);
+          setCurrentPage(1);
+          setQuickFilter('ALL');
+          setPcrModalId(id);
+        }}
+        onNewSpecimen={() => setIsAddModalOpen(true)}
+        onRefresh={() => void fetchSpecimens()}
+        isReader={isReader}
+        isAdmin={isAdmin}
+      />
+      <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} isReader={isReader} />
+
+      {!isReader && isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-lg font-semibold tracking-tight">Новая проба</h2>
+              <button type="button" className="rounded-lg p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800" onClick={() => setIsAddModalOpen(false)} aria-label="Закрыть">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateRecord} className="flex flex-col gap-3">
+              <input
+                required
+                placeholder="ID пробы *"
+                value={newRecord.id}
+                onChange={(e) => setNewRecord({ ...newRecord, id: e.target.value })}
+                className={`${inputBase} ${validationError ? 'border-rose-500 ring-2 ring-rose-500/30' : ''}`}
+              />
+              <input placeholder="Таксон" value={newRecord.taxon} onChange={(e) => setNewRecord({ ...newRecord, taxon: e.target.value })} className={inputBase} />
+              <input list="labs-list" placeholder="Лаборатория" value={newRecord.extrLab} onChange={(e) => setNewRecord({ ...newRecord, extrLab: e.target.value })} className={inputBase} />
+              <input list="ops-list" placeholder="Лаборант" value={newRecord.extrOperator} onChange={(e) => setNewRecord({ ...newRecord, extrOperator: e.target.value })} className={inputBase} />
+              <button type="submit" className="mt-1 rounded-2xl bg-teal-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-teal-500 dark:bg-teal-500">
+                Сохранить
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {pcrModalId && activeSpecimen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-zinc-950/60 p-4 backdrop-blur-sm">
+          <div className="my-4 w-full max-w-lg rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <h2 className="font-mono text-lg font-semibold tracking-tight">ПЦР · {pcrModalId}</h2>
+              <button type="button" className="rounded-lg p-1 text-zinc-400 transition hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={() => setPcrModalId('')} aria-label="Закрыть">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {activeSpecimen.notes && (
+              <div className="mb-4 max-h-36 overflow-y-auto rounded-2xl border border-zinc-200/80 bg-zinc-50/80 p-3 text-sm dark:border-zinc-700 dark:bg-zinc-950/50">
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Заметки</p>
+                <p className="whitespace-pre-wrap break-words text-zinc-700 dark:text-zinc-300">{activeSpecimen.notes}</p>
+              </div>
+            )}
+
+            <div className="mb-4 max-h-52 space-y-2 overflow-y-auto border-y border-zinc-200/80 py-3 dark:border-zinc-700">
+              {activeSpecimen.attempts?.length === 0 ? (
+                <p className="text-center text-sm text-zinc-500">Пока нет записей ПЦР</p>
+              ) : (
+                activeSpecimen.attempts?.map((a: { id: string; date: string; volume: string; result: string; marker?: string; forwardPrimer?: string; reversePrimer?: string; dnaMatrix?: string }) => (
+                  <div key={a.id} className="rounded-xl border border-zinc-100 bg-zinc-50/50 p-3 text-sm dark:border-zinc-800 dark:bg-zinc-950/40">
+                    <div className="flex flex-wrap justify-between gap-2">
+                      <span className="text-zinc-500">{new Date(a.date).toLocaleDateString('ru-RU')}</span>
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100">{a.volume} мкл</span>
+                      <span className={a.result === 'Success' ? 'font-bold text-emerald-600 dark:text-emerald-400' : 'font-bold text-rose-600 dark:text-rose-400'}>{pcrResultLabelRu(a.result)}</span>
+                    </div>
+                    {(a.marker || a.forwardPrimer || a.reversePrimer || a.dnaMatrix) && (
+                      <p className="mt-1 break-words text-xs text-zinc-500">
+                        {[a.marker && `маркер: ${a.marker}`, a.forwardPrimer && `F: ${a.forwardPrimer}`, a.reversePrimer && `R: ${a.reversePrimer}`, a.dnaMatrix && `матр.: ${a.dnaMatrix}`]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {!isReader && (
+              <div className="flex flex-col gap-2">
+                <input type="text" inputMode="decimal" placeholder="Объём реакции, мкл" value={pcrVolume} onChange={(e) => setPcrVolume(e.target.value)} className={`min-h-[44px] ${inputBase}`} />
+                <input placeholder="Маркер (ITS, RPB2, …)" value={pcrMarker} onChange={(e) => setPcrMarker(e.target.value)} className={`min-h-[44px] ${inputBase}`} />
+                <input placeholder="Праймер прямой" value={pcrFwd} onChange={(e) => setPcrFwd(e.target.value)} className={`min-h-[44px] ${inputBase}`} />
+                <input placeholder="Праймер обратный" value={pcrRev} onChange={(e) => setPcrRev(e.target.value)} className={`min-h-[44px] ${inputBase}`} />
+                <input placeholder="Матрица ДНК (конц. / объём)" value={pcrDnaMatrix} onChange={(e) => setPcrDnaMatrix(e.target.value)} className={`min-h-[44px] ${inputBase}`} />
+                <select value={pcrResult} onChange={(e) => setPcrResult(e.target.value)} className={`min-h-[44px] ${inputBase}`}>
+                  <option value="Fail">Провал</option>
+                  <option value="Success">Успех</option>
+                </select>
+                <button type="button" onClick={handleAddAttempt} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-teal-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-teal-500 dark:bg-teal-500">
+                  <Save className="h-4 w-4" />
+                  Добавить запись
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+--- END OF FILE app/page.tsx ---
+
+
+--- START OF FILE app/admin/page.tsx ---
+
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { UserPlus, ShieldAlert, Trash2, ArrowLeft, Database, FileSpreadsheet, Save } from "lucide-react";
+import Link from "next/link";
+import { parseApiResponse } from "@/lib/api-client";
+
+function UserRow({
+  user: u,
+  fieldClass,
+  onUpdate,
+  onDelete,
+}: {
+  user: { id: string; username: string; role: string };
+  fieldClass: string;
+  onUpdate: (id: string, role: string, password?: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [role, setRole] = useState(u.role);
+  const [pwd, setPwd] = useState("");
+  useEffect(() => setRole(u.role), [u.role]);
+
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl border border-zinc-100 bg-zinc-50/80 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-950/50 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <p className="font-medium">{u.username}</p>
+        <p className="text-xs text-zinc-500">{u.role}</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {u.username !== "admin" ? (
+          <>
+            <select value={role} onChange={(e) => setRole(e.target.value)} className={`${fieldClass} max-w-[11rem]`}>
+              <option value="EDITOR">EDITOR</option>
+              <option value="READER">READER</option>
+              <option value="ADMIN">ADMIN</option>
+            </select>
+            <input
+              type="password"
+              placeholder="Новый пароль"
+              value={pwd}
+              onChange={(e) => setPwd(e.target.value)}
+              className={`${fieldClass} max-w-[10rem]`}
+              autoComplete="new-password"
+            />
+            <button
+              type="button"
+              onClick={() => onUpdate(u.id, role, pwd)}
+              className="inline-flex items-center gap-1 rounded-xl bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-500"
+            >
+              <Save className="h-4 w-4" />
+              Сохранить
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(u.id)}
+              className="rounded-xl p-2 text-rose-600 transition hover:bg-rose-50 dark:hover:bg-rose-950/50"
+              aria-label="Удалить"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+          </>
+        ) : (
+          <span className="text-xs text-zinc-400">Главный администратор</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function AdminPage() {
+  const { data: session, status } = useSession();
+  const [users, setUsers] = useState<any[]>([]);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("EDITOR");
+  const [toast, setToast] = useState("");
+  const [importBusy, setImportBusy] = useState(false);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 3000);
+  };
+
+  useEffect(() => {
+    if (session?.user?.role === "ADMIN") fetchUsers();
+  }, [session]);
+
+  const fetchUsers = async () => {
+    const res = await fetch("/api/users");
+    const result = await parseApiResponse<{ id: string; username: string; role: string }[]>(res);
+    if (!result.ok) {
+      showToast(result.message);
+      return;
+    }
+    setUsers(Array.isArray(result.data) ? result.data : []);
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch("/api/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password, role }),
+    });
+    const parsed = await parseApiResponse(res);
+    if (!parsed.ok) {
+      showToast(parsed.message);
+      return;
+    }
+    setUsername("");
+    setPassword("");
+    showToast("Пользователь создан");
+    fetchUsers();
+  };
+
+  const handleUpdateUser = async (id: string, newRole: string, newPassword?: string) => {
+    const res = await fetch("/api/users", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id,
+        role: newRole,
+        ...(newPassword && newPassword.length > 0 ? { password: newPassword } : {}),
+      }),
+    });
+    const parsed = await parseApiResponse(res);
+    if (!parsed.ok) {
+      showToast(parsed.message);
+      return;
+    }
+    showToast("Пользователь обновлён");
+    fetchUsers();
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if (!confirm("Точно удалить?")) return;
+    const res = await fetch(`/api/users?id=${id}`, { method: "DELETE" });
+    const parsed = await parseApiResponse(res);
+    if (!parsed.ok) {
+      showToast(parsed.message);
+      return;
+    }
+    showToast("Удалено");
+    fetchUsers();
+  };
+
+  const handleClearSpecimens = async () => {
+    if (!confirm("Удалить все пробы из базы? Попытки ПЦР тоже удалятся.")) return;
+    setImportBusy(true);
+    try {
+      const res = await fetch("/api/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "clear" }),
+      });
+      const result = await parseApiResponse<{ message?: string; deleted?: number }>(res);
+      if (!result.ok) {
+        showToast(result.message);
+        return;
+      }
+      showToast(result.data.message ?? `Удалено: ${result.data.deleted ?? 0}`);
+    } finally {
+      setImportBusy(false);
+    }
+  };
+
+  const handleImportFromExcel = async () => {
+    if (
+      !confirm(
+        "Удалить все текущие пробы и загрузить data.xlsx из корня проекта? (все листы файла.)"
+      )
+    )
+      return;
+    setImportBusy(true);
+    try {
+      const res = await fetch("/api/import");
+      const result = await parseApiResponse<{
+        message?: string;
+        sheets?: number;
+        rows?: number;
+      }>(res);
+      if (!result.ok) {
+        showToast(result.message);
+        return;
+      }
+      showToast(result.data.message ?? "Импорт завершён");
+    } finally {
+      setImportBusy(false);
+    }
+  };
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-zinc-100 p-8 dark:bg-zinc-950">
+        <div className="mx-auto max-w-4xl space-y-4">
+          <div className="h-8 w-40 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+          <div className="h-48 animate-pulse rounded-2xl bg-zinc-200/80 dark:bg-zinc-800/80" />
+        </div>
+      </div>
+    );
+  }
+  if (session?.user?.role !== "ADMIN") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-100 px-4 text-center dark:bg-zinc-950">
+        <ShieldAlert className="mb-4 h-16 w-16 text-rose-600" />
+        <p className="max-w-md text-lg font-semibold text-zinc-900 dark:text-zinc-100">Доступ запрещён. Нужна роль администратора.</p>
+        <Link href="/" className="mt-6 rounded-2xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-500">
+          На главную
+        </Link>
+      </div>
+    );
+  }
+
+  const field =
+    "w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/15 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100";
+
+  return (
+    <div className="min-h-screen bg-zinc-100 p-4 pb-[max(2rem,env(safe-area-inset-bottom,0px))] text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 sm:p-8">
+      {toast && (
+        <div className="fixed bottom-[max(1.5rem,env(safe-area-inset-bottom,0px))] left-4 z-50 max-w-[calc(100vw-2rem)] rounded-2xl border border-zinc-200/80 bg-white/95 px-5 py-3 text-sm shadow-xl backdrop-blur-md sm:left-auto sm:right-6 dark:border-zinc-600 dark:bg-zinc-900/95">
+          {toast}
+        </div>
+      )}
+      <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-teal-700 transition hover:text-teal-600 dark:text-teal-400 dark:hover:text-teal-300">
+        <ArrowLeft className="h-4 w-4" /> К журналу
+      </Link>
+
+      <h1 className="mb-8 flex flex-wrap items-center gap-3 text-2xl font-semibold tracking-tight">
+        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-700 text-white shadow-md">
+          <UserPlus className="h-6 w-6" strokeWidth={1.75} />
+        </span>
+        Администрирование
+      </h1>
+
+      <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="md:col-span-3 rounded-3xl border border-amber-200/80 bg-gradient-to-br from-amber-50 to-white p-6 shadow-sm dark:border-amber-900/40 dark:from-amber-950/40 dark:to-zinc-900">
+          <h2 className="mb-2 flex items-center gap-2 font-semibold">
+            <Database className="h-5 w-5 text-amber-700 dark:text-amber-400" />
+            Импорт проб (Excel)
+          </h2>
+          <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+            Импорт обрабатывает все листы файла <code className="rounded bg-zinc-200/80 px-1.5 py-0.5 font-mono text-xs dark:bg-zinc-800">data.xlsx</code> в корне каталога приложения на сервере.
+            Перед загрузкой таблица проб очищается.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={importBusy}
+              onClick={handleImportFromExcel}
+              className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Импортировать
+            </button>
+            <button
+              type="button"
+              disabled={importBusy}
+              onClick={handleClearSpecimens}
+              className="inline-flex items-center gap-2 rounded-2xl border border-rose-300 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-900 transition hover:bg-rose-100 disabled:opacity-50 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-200 dark:hover:bg-rose-900/50"
+            >
+              <Trash2 className="h-4 w-4" />
+              Очистить пробы
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleCreateUser} className="h-fit rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/60 md:col-span-1">
+          <h2 className="mb-4 font-semibold">Новый пользователь</h2>
+          <input required type="text" placeholder="Логин" value={username} onChange={(e) => setUsername(e.target.value)} className={`${field} mb-3`} />
+          <input required type="password" placeholder="Пароль" value={password} onChange={(e) => setPassword(e.target.value)} className={`${field} mb-3`} />
+          <select value={role} onChange={(e) => setRole(e.target.value)} className={`${field} mb-4`}>
+            <option value="EDITOR">Редактор (EDITOR)</option>
+            <option value="READER">Только чтение (READER)</option>
+            <option value="ADMIN">Администратор (ADMIN)</option>
+          </select>
+          <button className="w-full rounded-2xl bg-teal-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-teal-500 dark:bg-teal-500">Создать</button>
+        </form>
+
+        <div className="rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/60 md:col-span-2">
+          <h2 className="mb-4 font-semibold">Пользователи</h2>
+          <div className="space-y-2">
+            {users.map((u) => (
+              <UserRow
+                key={u.id}
+                user={u}
+                fieldClass={field}
+                onUpdate={handleUpdateUser}
+                onDelete={handleDeleteUser}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+--- END OF FILE app/admin/page.tsx ---
+
+
+--- START OF FILE app/api/auth/[...nextauth]/route.ts ---
+
+/** Маршруты NextAuth (вход по логину и паролю). */
+import NextAuth from "next-auth";
+import { authOptions } from "@/lib/auth";
+
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };
+
+
+--- END OF FILE app/api/auth/[...nextauth]/route.ts ---
+
+
+--- START OF FILE app/api/health/route.ts ---
+
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { NextResponse } from "next/server";
+
+/** Проверка живости сервиса (балансировщики, мониторинг, ручная диагностика). */
+export async function GET() {
+  let version = "0.0.0";
+  try {
+    const raw = readFileSync(join(process.cwd(), "package.json"), "utf8");
+    version = (JSON.parse(raw) as { version?: string }).version ?? version;
+  } catch {
+    /* ignore */
+  }
+  return NextResponse.json({
+    ok: true,
+    service: "lab-journal",
+    version,
+    time: new Date().toISOString(),
+  });
+}
+
+
+--- END OF FILE app/api/health/route.ts ---
+
+
+--- START OF FILE app/api/import/route.ts ---
+
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import * as xlsx from 'xlsx';
+import fs from 'fs';
+import path from 'path';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { mergeById, parseSheetToRows, type ParsedSpecimenRow } from '@/lib/import-excel';
+
+/** Импорт из data.xlsx (все листы) — только ADMIN. */
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as { role?: string }).role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Доступ запрещён' }, { status: 403 });
+    }
+
+    const rawPath = process.env.DATA_XLSX_PATH || 'data.xlsx';
+    const filePath = path.isAbsolute(rawPath) ? rawPath : path.join(process.cwd(), rawPath);
+    if (!fs.existsSync(filePath)) {
+      return NextResponse.json(
+        { error: `Файл импорта не найден: ${filePath}` },
+        { status: 400 }
+      );
+    }
+    const fileBuffer = fs.readFileSync(filePath);
+    const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+
+    const dataToInsert: ParsedSpecimenRow[] = [];
+
+    for (const sheetName of workbook.SheetNames) {
+      const sheet = workbook.Sheets[sheetName];
+      const rows = parseSheetToRows(sheet, sheetName);
+      dataToInsert.push(...rows);
+    }
+
+    const uniqueData = mergeById(dataToInsert);
+
+    await prisma.specimen.deleteMany({});
+
+    const chunkSize = 500;
+    for (let i = 0; i < uniqueData.length; i += chunkSize) {
+      const chunk = uniqueData.slice(i, i + chunkSize);
+      await prisma.specimen.createMany({ data: chunk });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Загружено ${uniqueData.length} проб (листов: ${workbook.SheetNames.length}).`,
+      sheets: workbook.SheetNames.length,
+      rows: uniqueData.length,
+    });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+/** Очистить таблицу проб без импорта — только ADMIN. */
+export async function POST(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as { role?: string }).role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Доступ запрещён' }, { status: 403 });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    if (body.action !== 'clear') {
+      return NextResponse.json({ error: 'Укажите JSON: { "action": "clear" }' }, { status: 400 });
+    }
+
+    const result = await prisma.specimen.deleteMany({});
+    return NextResponse.json({
+      success: true,
+      deleted: result.count,
+      message: `Удалено записей: ${result.count}`,
+    });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+
+--- END OF FILE app/api/import/route.ts ---
+
+
+--- START OF FILE app/api/specimens/route.ts ---
+
+import { NextResponse } from 'next/server';
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Требуется вход в систему" }, { status: 401 });
+    }
+
+    const specimens = await prisma.specimen.findMany({
+      include: { attempts: true },
+      orderBy: { id: 'asc' }
+    });
+    const labs = await prisma.specimen.findMany({ select: { extrLab: true }, distinct: ['extrLab'] });
+    const ops = await prisma.specimen.findMany({ select: { extrOperator: true }, distinct: ['extrOperator'] });
+    const methods = await prisma.specimen.findMany({ select: { extrMethod: true }, distinct: ['extrMethod'] });
+
+    return NextResponse.json({
+      specimens,
+      suggestions: {
+        labs: labs.map(l => l.extrLab).filter(Boolean),
+        operators: ops.map(o => o.extrOperator).filter(Boolean),
+        methods: methods.map(m => m.extrMethod).filter(Boolean),
+      }
+    });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session || (session.user as any).role === "READER") return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 });
+  const data = await request.json();
+  const id = data?.id != null ? String(data.id).trim() : "";
+  if (!id) {
+    return NextResponse.json({ error: "ID пробы обязателен" }, { status: 400 });
+  }
+  const existing = await prisma.specimen.findUnique({ where: { id } });
+  if (existing) {
+    return NextResponse.json({ error: "Проба с таким ID уже есть в базе" }, { status: 409 });
+  }
+  try {
+    const created = await prisma.specimen.create({ data });
+    return NextResponse.json(created);
+  } catch (e: unknown) {
+    const code = typeof e === "object" && e !== null && "code" in e ? (e as { code?: string }).code : undefined;
+    if (code === "P2002") {
+      return NextResponse.json({ error: "Проба с таким ID уже есть в базе" }, { status: 409 });
+    }
+    throw e;
+  }
+}
+
+export async function PUT(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session || (session.user as any).role === "READER") return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 });
+  const { ids, updateData, singleId, singleStatus, newAttempt } = await request.json();
+  
+  if (newAttempt) {
+    await prisma.pcrAttempt.create({ data: newAttempt });
+    return NextResponse.json({ success: true });
+  }
+
+  if (singleId && singleStatus !== undefined) {
+    await prisma.specimen.update({ where: { id: singleId }, data: { itsStatus: singleStatus } });
+    return NextResponse.json({ success: true });
+  }
+
+  await prisma.specimen.updateMany({ where: { id: { in: ids } }, data: updateData });
+  return NextResponse.json({ success: true });
+}
+
+export async function DELETE(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session || (session.user as any).role !== "ADMIN") {
+    return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 });
+  }
+  const body = await request.json();
+  if (body.ids && Array.isArray(body.ids)) {
+    await prisma.specimen.deleteMany({ where: { id: { in: body.ids } } });
+  }
+  return NextResponse.json({ success: true });
+}
+
+--- END OF FILE app/api/specimens/route.ts ---
+
+
+--- START OF FILE app/api/users/route.ts ---
+
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import bcrypt from "bcryptjs";
+import { authOptions } from "@/lib/auth";
+
+async function checkAdmin() {
+  const session = await getServerSession(authOptions);
+  if ((session?.user as { role?: string } | undefined)?.role !== "ADMIN") {
+    throw new Error("Недостаточно прав администратора");
+  }
+}
+
+export async function GET() {
+  try {
+    await checkAdmin();
+    const users = await prisma.user.findMany({ select: { id: true, username: true, role: true } });
+    return NextResponse.json(users);
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 403 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    await checkAdmin();
+    const { username, password, role } = await req.json();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const user = await prisma.user.create({
+      data: { username, password: hashedPassword, role }
+    });
+    return NextResponse.json({ success: true });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    await checkAdmin();
+    const body = await req.json();
+    const id = body?.id as string | undefined;
+    const role = body?.role as string | undefined;
+    const password = body?.password as string | undefined;
+    if (!id) {
+      return NextResponse.json({ error: "Не указан id пользователя" }, { status: 400 });
+    }
+    const allowed = new Set(["EDITOR", "ADMIN", "READER"]);
+    const data: { role?: string; password?: string } = {};
+    if (role !== undefined) {
+      if (!allowed.has(role)) {
+        return NextResponse.json({ error: "Недопустимая роль" }, { status: 400 });
+      }
+      data.role = role;
+    }
+    if (password != null && String(password).length > 0) {
+      data.password = await bcrypt.hash(String(password), 10);
+    }
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: "Нечего обновить" }, { status: 400 });
+    }
+    await prisma.user.update({ where: { id }, data });
+    return NextResponse.json({ success: true });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Ошибка";
+    return NextResponse.json({ error: msg }, { status: 400 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    await checkAdmin();
+    const url = new URL(req.url);
+    const id = url.searchParams.get("id");
+    await prisma.user.delete({ where: { id: String(id) } });
+    return NextResponse.json({ success: true });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
+}
+
+--- END OF FILE app/api/users/route.ts ---
+
+
+--- START OF FILE components/BarcodeScanDialog.tsx ---
+
+"use client";
+
+import { useEffect, useRef, useState, useCallback } from "react";
+import { X } from "lucide-react";
+
+type BarcodeDetectorClass = new (opts?: { formats?: string[] }) => {
+  detect: (image: ImageBitmapSource) => Promise<Array<{ rawValue: string }>>;
+};
+
+const FORMATS = ["qr_code", "code_128", "code_39", "ean_13", "data_matrix", "itf"];
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  onCode: (raw: string) => void;
+};
+
+export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef(0);
+  const onCodeRef = useRef(onCode);
+  const onCloseRef = useRef(onClose);
+  onCodeRef.current = onCode;
+  onCloseRef.current = onClose;
+  const [error, setError] = useState("");
+  const [manual, setManual] = useState("");
+  const [hasDetector, setHasDetector] = useState(false);
+
+  const stopCamera = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      stopCamera();
+      setError("");
+      setManual("");
+      return;
+    }
+    const BD = (globalThis as unknown as { BarcodeDetector?: BarcodeDetectorClass }).BarcodeDetector;
+    setHasDetector(typeof BD === "function");
+
+    if (typeof BD !== "function") {
+      setError("Сканер недоступен в этом браузере. Введите ID вручную.");
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" } },
+          audio: false,
+        });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        streamRef.current = stream;
+        const v = videoRef.current;
+        if (v) {
+          v.srcObject = stream;
+          await v.play();
+        }
+        const detector = new BD({ formats: FORMATS });
+
+        const tick = async () => {
+          if (cancelled || !videoRef.current) return;
+          try {
+            const codes = await detector.detect(videoRef.current);
+            if (codes.length > 0) {
+              const raw = codes[0].rawValue.trim();
+              stopCamera();
+              onCodeRef.current(raw);
+              onCloseRef.current();
+              return;
+            }
+          } catch {
+            /* кадр ещё не готов */
+          }
+          rafRef.current = requestAnimationFrame(() => {
+            tick();
+          });
+        };
+        tick();
+      } catch {
+        if (!cancelled) setError("Нет доступа к камере. Введите ID вручную или проверьте разрешения.");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      stopCamera();
+    };
+  }, [open, stopCamera]);
+
+  if (!open) return null;
+
+  const applyManual = () => {
+    const t = manual.trim();
+    if (!t) return;
+    stopCamera();
+    onCodeRef.current(t);
+    onCloseRef.current();
+  };
+
+  return (
+    <div className="safe-pt fixed inset-0 z-[120] flex flex-col bg-black/90 p-3 print:hidden">
+      <div className="mb-2 flex items-center justify-between text-white">
+        <p className="text-sm font-medium">Скан ID / QR</p>
+        <button
+          type="button"
+          onClick={() => {
+            stopCamera();
+            onClose();
+          }}
+          className="rounded-xl p-2 transition hover:bg-white/10"
+          aria-label="Закрыть"
+        >
+          <X className="h-6 w-6" />
+        </button>
+      </div>
+      {hasDetector && !error.includes("Нет доступа") && (
+        <div className="relative flex-1 overflow-hidden rounded-2xl border border-white/20 bg-black">
+          <video ref={videoRef} className="max-h-full min-h-[40vh] w-full object-cover" playsInline muted />
+          <p className="pointer-events-none absolute bottom-3 left-0 right-0 text-center text-xs text-white/80">
+            Наведите на штрихкод или QR-код этикетки
+          </p>
+        </div>
+      )}
+      {error ? <p className="mt-3 text-center text-sm text-amber-200">{error}</p> : null}
+      <div className="mt-4 space-y-2 safe-pb">
+        <input
+          value={manual}
+          onChange={(e) => setManual(e.target.value)}
+          placeholder="Или введите ID пробы с клавиатуры"
+          className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-base text-white outline-none placeholder:text-zinc-400 focus:ring-2 focus:ring-teal-400"
+        />
+        <button
+          type="button"
+          onClick={applyManual}
+          className="w-full rounded-2xl bg-teal-500 py-3 text-sm font-bold text-white shadow-lg active:scale-[0.99]"
+        >
+          Искать
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+--- END OF FILE components/BarcodeScanDialog.tsx ---
+
+
+--- START OF FILE components/MobileSpecimenCard.tsx ---
+
+"use client";
+
+import { Barcode, Camera, Activity, Share2, Copy, Star } from "lucide-react";
+import type { ReactNode } from "react";
+import { HighlightMatch } from "@/lib/highlight";
+
+export type MobileSpecimenShape = {
+  id: string;
+  taxon?: string | null;
+  locality?: string | null;
+  notes?: string | null;
+  extrLab?: string | null;
+  extrOperator?: string | null;
+  extrMethod?: string | null;
+  imageUrl?: string | null;
+  itsStatus?: string | null;
+  attempts?: unknown[];
+};
+
+type Props = {
+  s: MobileSpecimenShape;
+  isReader: boolean;
+  selected: boolean;
+  onToggleSelect: () => void;
+  onPcr: () => void;
+  renderStatus: (s: MobileSpecimenShape) => ReactNode;
+  favorite?: boolean;
+  onToggleFavorite?: () => void;
+  searchQuery?: string;
+};
+
+export function MobileSpecimenCard({
+  s,
+  isReader,
+  selected,
+  onToggleSelect,
+  onPcr,
+  renderStatus,
+  favorite,
+  onToggleFavorite,
+  searchQuery = "",
+}: Props) {
+  const copyId = async () => {
+    try {
+      await navigator.clipboard.writeText(s.id);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const share = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `Проба ${s.id}`, text: s.id });
+      } else {
+        await copyId();
+      }
+    } catch {
+      /* user cancel */
+    }
+  };
+
+  return (
+    <article
+      className={`rounded-2xl border p-4 shadow-sm transition-colors ${
+        selected
+          ? "border-teal-400 bg-teal-50/80 dark:border-teal-700 dark:bg-teal-950/30"
+          : "border-zinc-200/80 bg-white dark:border-zinc-700 dark:bg-zinc-900/60"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-start gap-2">
+          {!isReader && (
+            <input
+              type="checkbox"
+              className="mt-1 size-5 shrink-0 touch-manipulation"
+              checked={selected}
+              onChange={onToggleSelect}
+              aria-label={`Выбрать ${s.id}`}
+            />
+          )}
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 font-mono text-base font-bold text-zinc-900 dark:text-zinc-50">
+              <Barcode className="h-4 w-4 shrink-0 text-zinc-400" aria-hidden />
+              <span className="break-all">
+                <HighlightMatch text={s.id} query={searchQuery} />
+              </span>
+              {s.imageUrl && (
+                <a href={s.imageUrl} target="_blank" rel="noopener noreferrer" className="shrink-0" title="Гель">
+                  <Camera className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                </a>
+              )}
+            </div>
+            <p className="mt-0.5 font-medium text-zinc-800 dark:text-zinc-100">{s.taxon || "—"}</p>
+            {s.locality ? <p className="truncate text-xs text-zinc-500">{s.locality}</p> : null}
+          </div>
+        </div>
+        <div className="flex shrink-0 gap-1">
+          {onToggleFavorite ? (
+            <button
+              type="button"
+              onClick={onToggleFavorite}
+              className={`touch-target rounded-xl p-2 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                favorite ? "text-amber-500" : "text-zinc-400"
+              }`}
+              aria-label={favorite ? "Убрать из избранного" : "В избранное"}
+            >
+              <Star className={`h-4 w-4 ${favorite ? "fill-current" : ""}`} />
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={copyId}
+            className="touch-target rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            aria-label="Копировать ID"
+          >
+            <Copy className="h-4 w-4" />
+          </button>
+          {typeof navigator !== "undefined" && "share" in navigator && typeof navigator.share === "function" ? (
+            <button
+              type="button"
+              onClick={share}
+              className="touch-target rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              aria-label="Поделиться"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onPcr}
+            className="touch-target rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            aria-label="Журнал ПЦР"
+          >
+            <Activity className={`h-5 w-5 ${(s.attempts?.length ?? 0) > 0 ? "text-teal-600 dark:text-teal-400" : ""}`} />
+          </button>
+        </div>
+      </div>
+      {s.notes ? (
+        <p className="mt-2 line-clamp-2 whitespace-pre-wrap break-words text-xs text-zinc-600 dark:text-zinc-400">{s.notes}</p>
+      ) : null}
+      <div className="mt-3 border-t border-zinc-100 pt-3 text-sm dark:border-zinc-700">
+        <p className="font-medium text-zinc-800 dark:text-zinc-100">
+          {s.extrLab || "—"}{" "}
+          <span className="font-normal text-zinc-500">{s.extrOperator ? `· ${s.extrOperator}` : ""}</span>
+        </p>
+        <p className="text-xs text-zinc-500">{s.extrMethod}</p>
+        <div className="mt-2 flex justify-start">{renderStatus(s)}</div>
+      </div>
+    </article>
+  );
+}
+
+
+--- END OF FILE components/MobileSpecimenCard.tsx ---
+
+
+--- START OF FILE components/Providers.tsx ---
+
+"use client";
+
+/** Обёртка сессии NextAuth для клиентских компонентов. */
+import { SessionProvider } from "next-auth/react";
+import { PwaBootstrap } from "@/components/PwaBootstrap";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <PwaBootstrap />
+      {children}
+    </SessionProvider>
+  );
+}
+
+--- END OF FILE components/Providers.tsx ---
+
+
+--- START OF FILE components/PwaBootstrap.tsx ---
+
+"use client";
+
+import { useEffect } from "react";
+
+/** Регистрация service worker в production (критерий установки PWA в Chrome). */
+export function PwaBootstrap() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (process.env.NODE_ENV !== "production") return;
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
+  }, []);
+  return null;
+}
+
+
+--- END OF FILE components/PwaBootstrap.tsx ---
+
+
+--- START OF FILE components/CommandPalette.tsx ---
+
+"use client";
+
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { FlaskConical, Search, Plus, Settings, RefreshCw, ExternalLink } from "lucide-react";
+import Link from "next/link";
+
+type Spec = { id: string; taxon?: string | null };
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  specimens: Spec[];
+  onPickSpecimen: (id: string) => void;
+  onNewSpecimen: () => void;
+  onRefresh: () => void;
+  isReader: boolean;
+  isAdmin: boolean;
+};
+
+export function CommandPalette({
+  open,
+  onClose,
+  specimens,
+  onPickSpecimen,
+  onNewSpecimen,
+  onRefresh,
+  isReader,
+  isAdmin,
+}: Props) {
+  const [q, setQ] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setQ("");
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    if (!s) return specimens.slice(0, 24);
+    return specimens
+      .filter(
+        (x) =>
+          x.id.toLowerCase().includes(s) ||
+          (x.taxon && String(x.taxon).toLowerCase().includes(s))
+      )
+      .slice(0, 40);
+  }, [specimens, q]);
+
+  const actions = useMemo(() => {
+    const a: { id: string; label: string; icon: ReactNode; run: () => void }[] = [
+      { id: "refresh", label: "Обновить данные", icon: <RefreshCw className="h-4 w-4" />, run: onRefresh },
+    ];
+    if (!isReader) {
+      a.push({
+        id: "new",
+        label: "Новая проба",
+        icon: <Plus className="h-4 w-4" />,
+        run: onNewSpecimen,
+      });
+    }
+    if (isAdmin) {
+      a.push({
+        id: "admin",
+        label: "Админ-панель",
+        icon: <Settings className="h-4 w-4" />,
+        run: () => {
+          window.location.href = "/admin";
+        },
+      });
+    }
+    return a;
+  }, [isReader, isAdmin, onNewSpecimen, onRefresh]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[130] flex items-start justify-center bg-zinc-950/55 p-4 pt-[12vh] backdrop-blur-sm print:hidden">
+      <button type="button" className="absolute inset-0 cursor-default" aria-label="Закрыть" onClick={onClose} />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cmd-palette-title"
+        className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-600 dark:bg-zinc-900"
+      >
+        <div className="flex items-center gap-2 border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
+          <Search className="h-5 w-5 shrink-0 text-zinc-400" aria-hidden />
+          <input
+            ref={inputRef}
+            id="cmd-palette-title"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Команда или ID / таксон…"
+            className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-zinc-400 dark:text-zinc-100"
+          />
+          <kbd className="hidden rounded border border-zinc-200 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500 sm:inline dark:border-zinc-600">
+            Esc
+          </kbd>
+        </div>
+        <div className="max-h-[min(60vh,420px)] overflow-y-auto p-2 text-sm">
+          <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Действия</p>
+          <ul className="space-y-0.5">
+            {actions.map((a) => (
+              <li key={a.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    a.run();
+                    onClose();
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left transition hover:bg-teal-50 dark:hover:bg-teal-950/40"
+                >
+                  {a.icon}
+                  {a.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className="mb-1 mt-3 px-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Пробы</p>
+          <ul className="space-y-0.5">
+            {filtered.length === 0 ? (
+              <li className="px-3 py-4 text-center text-zinc-500">Ничего не найдено</li>
+            ) : (
+              filtered.map((s) => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onPickSpecimen(s.id);
+                      onClose();
+                    }}
+                    className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left font-mono text-xs transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    <span className="min-w-0 truncate font-semibold">{s.id}</span>
+                    {s.taxon ? <span className="truncate text-zinc-500">{s.taxon}</span> : null}
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+        <div className="flex items-center justify-between border-t border-zinc-100 px-3 py-2 text-[10px] text-zinc-400 dark:border-zinc-800">
+          <span className="flex items-center gap-1">
+            <FlaskConical className="h-3 w-3" /> Журнал
+          </span>
+          {isAdmin ? (
+            <Link href="/admin" className="inline-flex items-center gap-1 text-teal-600 dark:text-teal-400" onClick={onClose}>
+              <ExternalLink className="h-3 w-3" />
+              Админ
+            </Link>
+          ) : (
+            <span>Ctrl+K</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+--- END OF FILE components/CommandPalette.tsx ---
+
+
+--- START OF FILE components/ShortcutsModal.tsx ---
+
+"use client";
+
+import { X } from "lucide-react";
+
+type Props = { open: boolean; onClose: () => void; isReader: boolean };
+
+const rows = (isReader: boolean) =>
+  [
+    ["/", "Фокус на поиск"],
+    ["?", "Эта подсказка"],
+    ["Ctrl+K или ⌘K", "Палитра команд"],
+    ["Esc", "Закрыть окна"],
+    ...(isReader ? [] : [["N", "Новая проба"]]),
+  ] as const;
+
+export function ShortcutsModal({ open, onClose, isReader }: Props) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[125] flex items-center justify-center bg-zinc-950/50 p-4 backdrop-blur-sm print:hidden">
+      <button type="button" className="absolute inset-0" aria-label="Закрыть" onClick={onClose} />
+      <div
+        role="dialog"
+        className="relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900"
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Горячие клавиши</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            aria-label="Закрыть"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <table className="w-full text-sm">
+          <tbody>
+            {rows(isReader).map(([key, desc]) => (
+              <tr key={key} className="border-b border-zinc-100 dark:border-zinc-800">
+                <td className="py-2 pr-3 font-mono text-xs text-teal-700 dark:text-teal-400">{key}</td>
+                <td className="py-2 text-zinc-700 dark:text-zinc-300">{desc}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+
+--- END OF FILE components/ShortcutsModal.tsx ---
+
+
+--- START OF FILE hooks/usePwaInstall.ts ---
+
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+
+type BeforeInstallPrompt = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: string }>;
+};
+
+export function usePwaInstall() {
+  const [beforeInstall, setBeforeInstall] = useState<BeforeInstallPrompt | null>(null);
+  const [iosShareHint, setIosShareHint] = useState(false);
+  const [standalone, setStandalone] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const nav = window.navigator as Navigator & { standalone?: boolean };
+    const inStandalone =
+      window.matchMedia("(display-mode: standalone)").matches || nav.standalone === true;
+    setStandalone(inStandalone);
+
+    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    setIosShareHint(ios && !inStandalone);
+
+    const onBip = (e: Event) => {
+      e.preventDefault();
+      setBeforeInstall(e as BeforeInstallPrompt);
+    };
+    window.addEventListener("beforeinstallprompt", onBip);
+    return () => window.removeEventListener("beforeinstallprompt", onBip);
+  }, []);
+
+  const promptInstall = useCallback(async () => {
+    if (!beforeInstall) return;
+    await beforeInstall.prompt();
+    await beforeInstall.userChoice;
+    setBeforeInstall(null);
+  }, [beforeInstall]);
+
+  return {
+    canPromptInstall: Boolean(beforeInstall) && !standalone,
+    iosShareHint: iosShareHint && !standalone,
+    promptInstall,
+    standalone,
+  };
+}
+
+
+--- END OF FILE hooks/usePwaInstall.ts ---
+
+
+--- START OF FILE hooks/usePullToRefresh.ts ---
+
+"use client";
+
+import { useEffect, useRef } from "react";
+
+/** Pull-to-refresh у верхнего края страницы (touch). */
+export function usePullToRefresh(onRefresh: () => void | Promise<void>, disabled?: boolean) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || disabled) return;
+    let startY = 0;
+    let armed = false;
+    const threshold = 88;
+
+    const onStart = (e: TouchEvent) => {
+      if (window.scrollY > 8) return;
+      startY = e.touches[0].clientY;
+      armed = true;
+    };
+    const onMove = (e: TouchEvent) => {
+      if (!armed) return;
+      const dy = e.touches[0].clientY - startY;
+      if (dy > threshold) {
+        armed = false;
+        void Promise.resolve(onRefresh());
+      }
+    };
+    const onEnd = () => {
+      armed = false;
+    };
+
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: true });
+    el.addEventListener("touchend", onEnd);
+    el.addEventListener("touchcancel", onEnd);
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onEnd);
+    };
+  }, [onRefresh, disabled]);
+  return ref;
+}
+
+
+--- END OF FILE hooks/usePullToRefresh.ts ---
+
+
+--- START OF FILE lib/api-client.ts ---
+
+/** Разбор JSON и извлечение поля `error` при ответе с ошибкой. */
+export async function parseApiResponse<T>(
+  res: Response
+): Promise<{ ok: true; data: T } | { ok: false; message: string }> {
+  const text = await res.text();
+  let data: unknown = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    return { ok: false, message: "Некорректный ответ сервера" };
+  }
+  if (!res.ok) {
+    const err = (data as { error?: string }).error;
+    const msg =
+      typeof err === "string" && err.length > 0 ? err : `Ошибка ${res.status}`;
+    return { ok: false, message: msg };
+  }
+  return { ok: true, data: data as T };
+}
+
+
+--- END OF FILE lib/api-client.ts ---
+
+
+--- START OF FILE lib/api-client.test.ts ---
+
+import { describe, it, expect } from "vitest";
+import { parseApiResponse } from "./api-client";
+
+describe("parseApiResponse", () => {
+  it("returns ok with parsed JSON", async () => {
+    const res = new Response(JSON.stringify({ a: 1 }), { status: 200 });
+    const r = await parseApiResponse<{ a: number }>(res);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.data.a).toBe(1);
+  });
+
+  it("returns message on error field", async () => {
+    const res = new Response(JSON.stringify({ error: "Нет прав" }), { status: 403 });
+    const r = await parseApiResponse(res);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.message).toBe("Нет прав");
+  });
+
+  it("handles invalid JSON body", async () => {
+    const res = new Response("not json", { status: 500 });
+    const r = await parseApiResponse(res);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.message).toContain("Некорректный");
+  });
+});
+
+
+--- END OF FILE lib/api-client.test.ts ---
+
+
+--- START OF FILE lib/auth.ts ---
+
+import type { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+
+export const authOptions: NextAuthOptions = {
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
+  },
+  providers: [
+    CredentialsProvider({
+      name: "Вход",
+      credentials: {
+        username: { label: "Логин", type: "text" },
+        password: { label: "Пароль", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.username || !credentials?.password) return null;
+
+        let user = await prisma.user.findUnique({
+          where: { username: credentials.username },
+        });
+
+        if (!user && credentials.username === "admin" && credentials.password === "admin") {
+          const hashed = await bcrypt.hash("admin", 10);
+          user = await prisma.user.create({
+            data: {
+              username: "admin",
+              password: hashed,
+              role: "ADMIN",
+            },
+          });
+        }
+
+        if (!user) return null;
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) return null;
+
+        return {
+          id: user.id,
+          name: user.username,
+          role: user.role,
+        };
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = (user as { role?: string }).role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        (session.user as { role?: string }).role = token.role as string;
+      }
+      return session;
+    },
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+};
+
+
+--- END OF FILE lib/auth.ts ---
+
+
+--- START OF FILE lib/favorites.ts ---
+
+const KEY = "lj-favorite-ids";
+
+export function loadFavoriteIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.filter((x): x is string => typeof x === "string"));
+  } catch {
+    return new Set();
+  }
+}
+
+export function saveFavoriteIds(ids: Set<string>) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify([...ids]));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function toggleFavoriteId(ids: Set<string>, id: string): Set<string> {
+  const next = new Set(ids);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return next;
+}
+
+
+--- END OF FILE lib/favorites.ts ---
+
+
+--- START OF FILE lib/highlight.tsx ---
+
+import { Fragment } from "react";
+
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Подсветка вхождений поисковой строки в тексте. */
+export function HighlightMatch({ text, query }: { text: string; query: string }) {
+  const q = query.trim();
+  if (!q) return <>{text}</>;
+  try {
+    const parts = text.split(new RegExp(`(${escapeRegExp(q)})`, "gi"));
+    return (
+      <>
+        {parts.map((part, i) =>
+          part.toLowerCase() === q.toLowerCase() ? (
+            <mark
+              key={i}
+              className="rounded bg-amber-200/90 px-0.5 text-inherit dark:bg-amber-800/60"
+            >
+              {part}
+            </mark>
+          ) : (
+            <Fragment key={i}>{part}</Fragment>
+          )
+        )}
+      </>
+    );
+  } catch {
+    return <>{text}</>;
+  }
+}
+
+
+--- END OF FILE lib/highlight.tsx ---
+
+
+--- START OF FILE lib/import-excel.ts ---
+
+import * as XLSX from "xlsx";
+
+function cellText(v: unknown): string {
+  if (v === undefined || v === null) return "";
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  return String(v).trim();
+}
+
+function normalizeHeader(h: string): string {
+  return h
+    .toLowerCase()
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\s*\/\s*/g, "/")
+    .trim();
+}
+
+/** Достаём первую дату вида дд.мм.гг из длинной ячейки (например «PCR, FaM, 21.11.14»). */
+export function extractEmbeddedDate(raw: string): string {
+  if (!raw) return "";
+  const m = raw.match(/\b(\d{1,2})[\./](\d{1,2})[\./](\d{2,4})\b/);
+  if (!m) return raw.trim();
+  return `${m[1]}.${m[2]}.${m[3]}`;
+}
+
+/**
+ * Ключ колонки по заголовку. Порядок важен: сначала длинные шаблоны (its gb, не its).
+ */
+export function headerToCanonicalKey(raw: string): string | null {
+  const t = raw.trim();
+  const n = normalizeHeader(raw);
+  if (!n) return null;
+
+  if (/^isolate$/i.test(t) || n === "isolate") return "isolate";
+  if (/^taxon$/i.test(t) || n === "taxon") return "taxon";
+
+  if (/\bits\s+gb\b/i.test(t) || n.includes("its gb")) return "itsGb";
+  if (/\bits\s*\(/i.test(t) || /справочно/i.test(t)) return "itsRef";
+
+  if (/\brpb2\s+gb\b/i.test(t) || /\brpb2\s*gb\b/i.test(n)) return "rpb2Gb";
+  if (/\brpb2\b/i.test(t) || n === "rpb2") return "rpb2";
+
+  if (/\bmtssu\s+gb\b/i.test(t)) return "mtssuGb";
+  if (/\bmtssu\b/i.test(t) || n === "mtssu") return "mtssu";
+
+  if (/\bmtlsu\s+gb\b/i.test(t)) return "mtlsuGb";
+  if (/^lsu$/i.test(t.trim())) return "mtlsu";
+  if (/\bmtlsu\b/i.test(t) || n === "mtlsu") return "mtlsu";
+
+  if (/\bnu\s*ssu\b/i.test(t) || /nussu/i.test(n)) return "nuSsu";
+  if (/\bnu\s*lsu\b/i.test(t) || /nulsu/i.test(n)) return "nuLsu";
+
+  if (/\bssu\s+gb\b/i.test(t) || n.includes("ssu gb")) return "ssuGb";
+  if (/^ssu$/i.test(t) || n === "ssu") return "ssu";
+
+  if (/\bmcm7\s+gb\b/i.test(t)) return "mcm7Gb";
+  if (/\bmcm7\b/i.test(t) || n === "mcm7") return "mcm7";
+
+  if (/^its$/i.test(t) || n === "its") return "its";
+
+  if (/comment/i.test(t)) return "comment";
+  if (/locality|collection/i.test(t)) return "locality";
+  if (/collector/i.test(t)) return "collector";
+  if (/herbarium|acc\.?\s*no/i.test(t)) return "herbarium";
+  if (/^labor$/i.test(t) || n === "labor") return "labor";
+  if (/method/i.test(t) && !/mrssu/i.test(n)) return "method";
+  if (/extr\.?\s*data|extr\.?\s*date/i.test(t)) return "extrDate";
+  if (/lab\.?\s*no/i.test(t)) return "labNo";
+  if (/connections/i.test(t)) return "connections";
+  if (/^pcr$/i.test(t) || n === "pcr") return "pcr";
+  if (/sequence/i.test(t)) return "sequence";
+  if (/re-check|recheck/i.test(t)) return "recheck";
+  if (/делать|сделать/i.test(t)) return "todo";
+
+  return null;
+}
+
+export function findHeaderRowIndex(rawData: unknown[][]): number {
+  const max = Math.min(rawData.length, 120);
+  for (let i = 0; i < max; i++) {
+    const row = rawData[i];
+    if (!Array.isArray(row)) continue;
+    for (let j = 0; j < Math.min(row.length, 35); j++) {
+      const cell = cellText(row[j]);
+      if (/^isolate$/i.test(cell.trim())) return i;
+    }
+  }
+  return -1;
+}
+
+export type ColumnBinding = { index: number; rawHeader: string; key: string };
+
+export function buildColumnBindings(headerRow: unknown[]): ColumnBinding[] {
+  const out: ColumnBinding[] = [];
+  const counts = new Map<string, number>();
+  const len = Math.min(headerRow.length, 90);
+  for (let c = 0; c < len; c++) {
+    const rawHeader = cellText(headerRow[c]);
+    if (!rawHeader) continue;
+    let key = headerToCanonicalKey(rawHeader);
+    if (!key) key = `__col_${c}`;
+    if (key.startsWith("__")) {
+      out.push({ index: c, rawHeader, key });
+      continue;
+    }
+    const n = counts.get(key) ?? 0;
+    counts.set(key, n + 1);
+    const finalKey = n === 0 ? key : `${key}_${n}`;
+    out.push({ index: c, rawHeader, key: finalKey });
+  }
+  return out;
+}
+
+function getByKey(row: unknown[], bindings: ColumnBinding[], baseKey: string): string {
+  const matches = bindings
+    .filter((b) => {
+      if (b.key === baseKey) return true;
+      if (b.key.startsWith(baseKey + "_")) {
+        const rest = b.key.slice(baseKey.length + 1);
+        return /^\d+$/.test(rest);
+      }
+      return false;
+    })
+    .sort((a, b) => a.index - b.index);
+  for (const b of matches) {
+    const v = cellText(row[b.index]);
+    if (v) return v;
+  }
+  return "";
+}
+
+export function collectRowCellComments(sheet: XLSX.WorkSheet, rowIndex0: number): string {
+  if (!sheet["!ref"]) return "";
+  const range = XLSX.utils.decode_range(sheet["!ref"]);
+  if (rowIndex0 < range.s.r || rowIndex0 > range.e.r) return "";
+  const texts: string[] = [];
+  for (let c = range.s.c; c <= range.e.c; c++) {
+    const addr = XLSX.utils.encode_cell({ r: rowIndex0, c });
+    const cell = sheet[addr] as { c?: unknown } | undefined;
+    if (!cell?.c) continue;
+    const block = cell.c;
+    const arr = Array.isArray(block) ? block : [block];
+    for (const item of arr) {
+      if (item == null) continue;
+      if (typeof item === "string") {
+        if (item.trim()) texts.push(item.trim());
+        continue;
+      }
+      if (typeof item === "object" && "t" in item && typeof (item as { t?: string }).t === "string") {
+        const tt = (item as { t: string }).t.trim();
+        if (tt) texts.push(tt);
+      }
+    }
+  }
+  return texts.join(" | ");
+}
+
+function formatUtcYmd(d: Date): string {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function parseLabDate(raw: string): Date | null {
+  if (!raw) return null;
+  const compact = extractEmbeddedDate(raw);
+  const s = compact.toLowerCase().trim();
+
+  const dotMatch = s.match(/(\d{1,2})[\./-](\d{1,2})[\./-](\d{2,4})/);
+  if (dotMatch) {
+    let year = parseInt(dotMatch[3], 10);
+    if (year < 100) year += 2000;
+    return new Date(Date.UTC(year, parseInt(dotMatch[2], 10) - 1, parseInt(dotMatch[1], 10)));
+  }
+
+  const ruMonths: Record<string, number> = {
+    янв: 0,
+    фев: 1,
+    мар: 2,
+    апр: 3,
+    май: 4,
+    мая: 4,
+    июн: 5,
+    июл: 6,
+    авг: 7,
+    сен: 8,
+    окт: 9,
+    ноя: 10,
+    nov: 10,
+    дек: 11,
+    dec: 11,
+  };
+  for (const [m, idx] of Object.entries(ruMonths)) {
+    if (s.includes(m)) {
+      const yearMatch = s.match(/\d{2,4}/);
+      if (yearMatch) {
+        let year = parseInt(yearMatch[0], 10);
+        if (year < 100) year += 2000;
+        return new Date(Date.UTC(year, idx, 1));
+      }
+    }
+  }
+
+  const romanRe =
+    /(\d{1,2})\s+(xii|xi|x|ix|viii|vii|vi|iv|iii|ii|i|v)\s+(\d{2,4})/i;
+  const romanMatch = s.match(romanRe);
+  if (romanMatch) {
+    const romans: Record<string, number> = {
+      i: 0,
+      ii: 1,
+      iii: 2,
+      iv: 3,
+      v: 4,
+      vi: 5,
+      vii: 6,
+      viii: 7,
+      ix: 8,
+      x: 9,
+      xi: 10,
+      xii: 11,
+    };
+    const month = romans[romanMatch[2].toLowerCase()];
+    if (month !== undefined) {
+      let year = parseInt(romanMatch[3], 10);
+      if (year < 100) year += 2000;
+      return new Date(Date.UTC(year, month, parseInt(romanMatch[1], 10)));
+    }
+  }
+
+  if (/^\d{6}$/.test(s)) {
+    return new Date(
+      Date.UTC(
+        2000 + parseInt(s.slice(4, 6), 10),
+        parseInt(s.slice(2, 4), 10) - 1,
+        parseInt(s.slice(0, 2), 10)
+      )
+    );
+  }
+
+  const ymMatch = s.match(/^(\d{4})-(\d{1,2})$/);
+  if (ymMatch) {
+    return new Date(Date.UTC(parseInt(ymMatch[1], 10), parseInt(ymMatch[2], 10) - 1, 1));
+  }
+
+  return null;
+}
+
+export function extrDateString(parsed: Date | null): string | null {
+  if (!parsed) return null;
+  return formatUtcYmd(parsed);
+}
+
+export type ParsedSpecimenRow = {
+  id: string;
+  taxon: string;
+  locality: string;
+  collector: string;
+  extrLab: string;
+  extrOperator: string;
+  extrMethod: string;
+  extrDateRaw: string;
+  extrDate: string | null;
+  itsStatus: string;
+  itsGb: string;
+  ssuStatus: string;
+  lsuStatus: string;
+  mcm7Status: string;
+  notes: string;
+};
+
+const NOTE_EXTRA_KEYS = new Set([
+  "comment",
+  "herbarium",
+  "labNo",
+  "connections",
+  "pcr",
+  "sequence",
+  "recheck",
+  "todo",
+]);
+
+export function parseRowWithBindings(
+  row: unknown[],
+  bindings: ColumnBinding[],
+  sheet: XLSX.WorkSheet,
+  sheetRowIndex0: number,
+  sheetName: string
+): ParsedSpecimenRow | null {
+  if (!Array.isArray(row)) return null;
+
+  const id = getByKey(row, bindings, "isolate");
+  if (!id) return null;
+
+  const extrRawFull = getByKey(row, bindings, "extrDate");
+  const extrDateRaw = extrRawFull ? extractEmbeddedDate(extrRawFull) || extrRawFull : "";
+  const parsedDate = parseLabDate(extrDateRaw || extrRawFull);
+
+  const its = getByKey(row, bindings, "its") || getByKey(row, bindings, "itsRef");
+  const itsGb = getByKey(row, bindings, "itsGb");
+  const ssu = getByKey(row, bindings, "ssu");
+  const ssuGb = getByKey(row, bindings, "ssuGb");
+  const mtlsu = getByKey(row, bindings, "mtlsu");
+  const mtlsuGb = getByKey(row, bindings, "mtlsuGb");
+  const mtssu = getByKey(row, bindings, "mtssu");
+  const mtssuGb = getByKey(row, bindings, "mtssuGb");
+  const nuLsu = getByKey(row, bindings, "nuLsu");
+  const nuSsu = getByKey(row, bindings, "nuSsu");
+  const mcm7 = getByKey(row, bindings, "mcm7");
+  const mcm7Gb = getByKey(row, bindings, "mcm7Gb");
+  const rpb2 = getByKey(row, bindings, "rpb2");
+  const rpb2Gb = getByKey(row, bindings, "rpb2Gb");
+
+  const collector = getByKey(row, bindings, "collector");
+
+  const noteParts: string[] = [];
+  noteParts.push(`[импорт] лист «${sheetName}», строка ${sheetRowIndex0 + 1}`);
+
+  for (const b of bindings) {
+    if (b.key.startsWith("__col_")) {
+      const v = cellText(row[b.index]);
+      if (v) noteParts.push(`${b.rawHeader}: ${v}`);
+      continue;
+    }
+    const base = b.key.replace(/_\d+$/, "");
+    if (NOTE_EXTRA_KEYS.has(base)) {
+      const v = cellText(row[b.index]);
+      if (v) noteParts.push(`${b.rawHeader}: ${v}`);
+    }
+  }
+
+  const markerBits: string[] = [];
+  if (ssuGb) markerBits.push(`SSU GB: ${ssuGb}`);
+  if (mtlsuGb) markerBits.push(`mtLSU GB: ${mtlsuGb}`);
+  if (mtssuGb) markerBits.push(`mtSSU GB: ${mtssuGb}`);
+  if (mcm7Gb) markerBits.push(`MCM7 GB: ${mcm7Gb}`);
+  if (rpb2Gb) markerBits.push(`RPB2 GB: ${rpb2Gb}`);
+  if (rpb2) markerBits.push(`RPB2: ${rpb2}`);
+
+  if (ssu && mtssu && ssu !== mtssu) {
+    markerBits.push(`mtSSU (отдельно): ${mtssu}`);
+  } else if (!ssu && mtssu) {
+    /* mtSSU идёт в ssuStatus ниже */
+  }
+
+  const lsuStatus = mtlsu || nuLsu || "";
+  if (mtlsu && nuLsu && mtlsu !== nuLsu) {
+    markerBits.push(`nuLSU (дубль): ${nuLsu}`);
+  }
+
+  let ssuStatus = ssu || mtssu || "";
+  if (nuSsu && !ssuStatus) ssuStatus = nuSsu;
+
+  const cellComments = collectRowCellComments(sheet, sheetRowIndex0);
+  if (cellComments) noteParts.push(`Excel-комментарий: ${cellComments}`);
+  if (markerBits.length) noteParts.push(markerBits.join(" | "));
+
+  const notes = noteParts.filter(Boolean).join("\n");
+
+  return {
+    id,
+    taxon: getByKey(row, bindings, "taxon"),
+    locality: getByKey(row, bindings, "locality"),
+    collector,
+    extrLab: getByKey(row, bindings, "labor"),
+    extrOperator: collector,
+    extrMethod: getByKey(row, bindings, "method"),
+    extrDateRaw: extrRawFull || extrDateRaw,
+    extrDate: extrDateString(parsedDate),
+    itsStatus: its,
+    itsGb,
+    ssuStatus,
+    lsuStatus,
+    mcm7Status: mcm7,
+    notes,
+  };
+}
+
+export function parseRowLegacy(
+  row: unknown[],
+  sheet: XLSX.WorkSheet,
+  sheetRowIndex0: number,
+  sheetName: string
+): ParsedSpecimenRow | null {
+  if (!Array.isArray(row) || row[2] == null || String(row[2]).trim() === "") return null;
+
+  const rawDateStr = row[10] != null ? String(row[10]).trim() : "";
+  const parsedDate = parseLabDate(extractEmbeddedDate(rawDateStr) || rawDateStr);
+
+  const unmapped: string[] = [];
+  for (let j = 0; j < 50; j++) {
+    if ([2, 3, 5, 6, 7, 8, 9, 10, 13, 14].includes(j)) continue;
+    const t = cellText(row[j]);
+    if (t) unmapped.push(t);
+  }
+
+  const meta = `[лист «${sheetName}»; строка ${sheetRowIndex0 + 1}]`;
+  const fromCells = collectRowCellComments(sheet, sheetRowIndex0);
+  const notes = [meta, unmapped.join(" | "), fromCells].filter(Boolean).join("\n").trim();
+
+  return {
+    id: String(row[2]).trim(),
+    taxon: row[3] != null ? String(row[3]).trim() : "",
+    locality: row[5] != null ? String(row[5]).trim() : "",
+    collector: row[6] != null ? String(row[6]).trim() : "",
+    extrLab: row[8] != null ? String(row[8]).trim() : "",
+    extrMethod: row[9] != null ? String(row[9]).trim() : "",
+    extrOperator: row[7] != null ? String(row[7]).trim() : "",
+    extrDateRaw: rawDateStr,
+    extrDate: extrDateString(parsedDate),
+    itsStatus: row[13] != null ? String(row[13]).trim() : "",
+    itsGb: row[14] != null ? String(row[14]).trim() : "",
+    ssuStatus: "",
+    lsuStatus: "",
+    mcm7Status: "",
+    notes,
+  };
+}
+
+/**
+ * Лист LY: без строки «Isolate», колонки A–H — ID, таксон, коммент/дата, место, коллектор, гербарий, лаборатория, метод.
+ */
+export function parseLySheetRows(
+  rawData: unknown[][],
+  sheet: XLSX.WorkSheet,
+  sheetName: string
+): ParsedSpecimenRow[] {
+  const out: ParsedSpecimenRow[] = [];
+  for (let i = 0; i < rawData.length; i++) {
+    const row = rawData[i];
+    if (!Array.isArray(row)) continue;
+    const id = cellText(row[0]);
+    if (!id || /^isolate$/i.test(id)) continue;
+
+    const taxon = cellText(row[1]);
+    const c2 = row[2];
+    let extrDateRaw = "";
+    let parsedDate: Date | null = null;
+    if (c2 instanceof Date) {
+      extrDateRaw = c2.toISOString().slice(0, 10);
+      parsedDate = c2;
+    } else if (typeof c2 === "number" && c2 > 20000 && c2 < 600000) {
+      const d = new Date(Math.round((c2 - 25569) * 86400 * 1000));
+      extrDateRaw = d.toISOString().slice(0, 10);
+      parsedDate = d;
+    } else {
+      const comment = cellText(row[2]);
+      extrDateRaw = comment;
+      parsedDate = parseLabDate(extractEmbeddedDate(comment) || comment);
+    }
+
+    const locality = cellText(row[3]);
+    const collector = cellText(row[4]);
+    const herbarium = cellText(row[5]);
+    const labor = cellText(row[6]);
+    const method = cellText(row[7]);
+
+    const noteParts = [
+      `[импорт] лист «${sheetName}», строка ${i + 1}`,
+      herbarium && `Гербарий: ${herbarium}`,
+    ].filter(Boolean) as string[];
+    const cellComments = collectRowCellComments(sheet, i);
+    if (cellComments) noteParts.push(`Excel-комментарий: ${cellComments}`);
+
+    out.push({
+      id,
+      taxon,
+      locality,
+      collector,
+      extrLab: labor,
+      extrOperator: collector,
+      extrMethod: method,
+      extrDateRaw,
+      extrDate: extrDateString(parsedDate),
+      itsStatus: "",
+      itsGb: "",
+      ssuStatus: "",
+      lsuStatus: "",
+      mcm7Status: "",
+      notes: noteParts.join("\n"),
+    });
+  }
+  return out;
+}
+
+export function parseSheetToRows(sheet: XLSX.WorkSheet, sheetName: string): ParsedSpecimenRow[] {
+  const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as unknown[][];
+  if (!rawData.length) return [];
+
+  const sn = sheetName.trim();
+  if (/^LY$/i.test(sn)) {
+    return parseLySheetRows(rawData, sheet, sheetName);
+  }
+
+  const headerIdx = findHeaderRowIndex(rawData);
+  if (headerIdx >= 0) {
+    const bindings = buildColumnBindings(rawData[headerIdx]);
+    const hasIsolate = bindings.some((b) => b.key === "isolate" || /^isolate_\d+$/.test(b.key));
+    if (hasIsolate) {
+      const out: ParsedSpecimenRow[] = [];
+      for (let i = headerIdx + 1; i < rawData.length; i++) {
+        const parsed = parseRowWithBindings(rawData[i], bindings, sheet, i, sheetName);
+        if (parsed) out.push(parsed);
+      }
+      return out;
+    }
+  }
+
+  return parseSheetLegacyRows(sheet, sheetName, rawData);
+}
+
+function parseSheetLegacyRows(
+  sheet: XLSX.WorkSheet,
+  sheetName: string,
+  rawData: unknown[][]
+): ParsedSpecimenRow[] {
+  const out: ParsedSpecimenRow[] = [];
+  for (let i = 2; i < rawData.length; i++) {
+    const parsed = parseRowLegacy(rawData[i], sheet, i, sheetName);
+    if (parsed) out.push(parsed);
+  }
+  return out;
+}
+
+function pickNonEmpty(prev: string, next: string): string {
+  const n = next?.trim();
+  if (n) return next;
+  return prev ?? "";
+}
+
+export function mergeById(rows: ParsedSpecimenRow[]): ParsedSpecimenRow[] {
+  const map = new Map<string, ParsedSpecimenRow>();
+  for (const row of rows) {
+    const prev = map.get(row.id);
+    if (!prev) {
+      map.set(row.id, { ...row });
+      continue;
+    }
+    const mergedNotes = [prev.notes, row.notes].filter(Boolean).join("\n---\n");
+    const extrDateRaw = pickNonEmpty(prev.extrDateRaw, row.extrDateRaw);
+    const pDate = parseLabDate(extractEmbeddedDate(extrDateRaw) || extrDateRaw);
+    const extrDateComputed =
+      extrDateString(pDate) ||
+      pickNonEmpty(prev.extrDate ?? "", row.extrDate ?? "").trim() ||
+      null;
+
+    map.set(row.id, {
+      id: row.id,
+      taxon: pickNonEmpty(prev.taxon, row.taxon),
+      locality: pickNonEmpty(prev.locality, row.locality),
+      collector: pickNonEmpty(prev.collector, row.collector),
+      extrLab: pickNonEmpty(prev.extrLab, row.extrLab),
+      extrOperator: pickNonEmpty(prev.extrOperator, row.extrOperator),
+      extrMethod: pickNonEmpty(prev.extrMethod, row.extrMethod),
+      extrDateRaw,
+      extrDate: extrDateComputed,
+      itsStatus: pickNonEmpty(prev.itsStatus, row.itsStatus),
+      itsGb: pickNonEmpty(prev.itsGb, row.itsGb),
+      ssuStatus: pickNonEmpty(prev.ssuStatus, row.ssuStatus),
+      lsuStatus: pickNonEmpty(prev.lsuStatus, row.lsuStatus),
+      mcm7Status: pickNonEmpty(prev.mcm7Status, row.mcm7Status),
+      notes: mergedNotes,
+    });
+  }
+  return Array.from(map.values());
+}
+
+
+--- END OF FILE lib/import-excel.ts ---
+
+
+--- START OF FILE lib/prisma.ts ---
+
+/** Единственный экземпляр PrismaClient (без дублирования в dev при hot reload). */
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: ["error"],
+  });
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+--- END OF FILE lib/prisma.ts ---
+
+
+--- START OF FILE types/next-auth.d.ts ---
+
+/** Расширение типов NextAuth: поле role у пользователя и JWT. */
+import type { DefaultSession } from "next-auth";
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      role: string;
+    } & DefaultSession["user"];
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    role?: string;
+  }
+}
+
+
+--- END OF FILE types/next-auth.d.ts ---
+
+
+--- START OF FILE scripts/backup-db.mjs ---
+
+/**
+ * Копия SQLite dev.db в backups/dev-<timestamp>.db
+ * Запуск: node scripts/backup-db.mjs
+ */
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const root = path.join(__dirname, "..");
+const db = path.join(root, "prisma", "dev.db");
+const dir = path.join(root, "backups");
+if (!fs.existsSync(db)) {
+  console.error("Нет файла:", db);
+  process.exit(1);
+}
+if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+const ts = new Date().toISOString().replace(/[:.]/g, "-");
+const dest = path.join(dir, `dev-${ts}.db`);
+fs.copyFileSync(db, dest);
+console.log(dest);
+
+
+--- END OF FILE scripts/backup-db.mjs ---
+
+
+--- START OF FILE scripts/gen-pwa-icons.mjs ---
+
+/**
+ * Растеризует public/icon.svg в PNG для манифеста PWA и Apple Touch Icon.
+ * Запуск: node scripts/gen-pwa-icons.mjs
+ */
+import sharp from "sharp";
+import { readFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = join(__dirname, "..");
+const svg = readFileSync(join(root, "public", "icon.svg"));
+
+const sizes = [
+  [192, "icon-192.png"],
+  [512, "icon-512.png"],
+  [180, "apple-touch-icon.png"],
+];
+
+for (const [size, name] of sizes) {
+  const out = join(root, "public", name);
+  await sharp(svg).resize(size, size).png().toFile(out);
+  console.log("Wrote", name);
+}
+
+
+--- END OF FILE scripts/gen-pwa-icons.mjs ---
+
+
+--- START OF FILE scripts/install-all.mjs ---
+
+#!/usr/bin/env node
+/**
+ * Полная установка и запуск одной командой (после git clone, при установленном Node.js 20+):
+ *
+ *   node scripts/install-all.mjs
+ *
+ * Выполняет: npm install → setup (Prisma + build) → npm start
+ */
+import { execSync } from "node:child_process";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+function run(cmd) {
+  execSync(cmd, { cwd: root, stdio: "inherit", shell: true, env: process.env });
+}
+
+const major = Number.parseInt(process.version.slice(1).split(".")[0] ?? "0", 10);
+if (major < 20) {
+  console.error(`Требуется Node.js 20+. Текущая версия: ${process.version}`);
+  process.exit(1);
+}
+
+console.log("→ npm install\n");
+run("npm install");
+
+console.log("\n→ node scripts/setup.mjs\n");
+run("node scripts/setup.mjs");
+
+console.log("\n→ npm start (Ctrl+C для остановки)\n");
+run("npm start");
+
+
+--- END OF FILE scripts/install-all.mjs ---
+
+
+--- START OF FILE scripts/setup.mjs ---
+
+#!/usr/bin/env node
+/**
+ * Подготовка к запуску: .env, Prisma, production build.
+ * Вызывается после npm install или из install-all.mjs.
+ */
+import { execSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
+import { existsSync, readFileSync, writeFileSync, copyFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+function run(cmd) {
+  execSync(cmd, { cwd: root, stdio: "inherit", shell: true, env: process.env });
+}
+
+const major = Number.parseInt(process.version.slice(1).split(".")[0] ?? "0", 10);
+if (major < 20) {
+  console.error(`Требуется Node.js 20+. Текущая версия: ${process.version}`);
+  process.exit(1);
+}
+
+const envPath = join(root, ".env");
+const examplePath = join(root, ".env.example");
+
+if (!existsSync(envPath)) {
+  if (!existsSync(examplePath)) {
+    console.error("Не найден .env.example — репозиторий повреждён?");
+    process.exit(1);
+  }
+  copyFileSync(examplePath, envPath);
+  console.log("Создан .env из .env.example");
+}
+
+let envText = readFileSync(envPath, "utf8");
+
+if (/^NEXTAUTH_SECRET=\s*$/m.test(envText) || /^NEXTAUTH_SECRET=$/m.test(envText)) {
+  const secret = randomBytes(32).toString("base64");
+  envText = envText.replace(/^NEXTAUTH_SECRET=.*$/m, `NEXTAUTH_SECRET="${secret}"`);
+  writeFileSync(envPath, envText);
+  console.log("Сгенерирован NEXTAUTH_SECRET в .env");
+}
+
+if (!/^DATABASE_URL=/m.test(envText)) {
+  envText += `\nDATABASE_URL="file:./dev.db"\n`;
+  writeFileSync(envPath, envText);
+  console.log("Добавлен DATABASE_URL в .env");
+}
+
+console.log("\n→ prisma generate\n");
+run("npx prisma generate");
+
+console.log("\n→ prisma db push\n");
+run("npx prisma db push");
+
+console.log("\n→ npm run build\n");
+run("npm run build");
+
+console.log("\nГотово. Запуск: npm start\n");
+
+
+--- END OF FILE scripts/setup.mjs ---
+
+
+--- START OF FILE local/pack_for_ai.py ---
+
+import os
+
+# Режим по манифесту: не зависит от git — явный список файлов в local/pack_manifest.txt
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
+MANIFEST_FILE = os.path.join(SCRIPT_DIR, "pack_manifest.txt")
+OUTPUT_FILE = os.path.join(SCRIPT_DIR, "context_for_ai.txt")
+VERSION_FILE = os.path.join(PROJECT_DIR, "VERSION")
+
+# Устаревший обход каталога, если манифеста нет
+ALLOWED_EXTENSIONS = {".ts", ".tsx", ".prisma", ".css"}
+IGNORE_DIRS = {"node_modules", ".next", "out", "build", ".git", "local"}
+
+
+def read_manifest_paths():
+    if not os.path.isfile(MANIFEST_FILE):
+        return None
+    paths = []
+    with open(MANIFEST_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            paths.append(line.replace("/", os.sep))
+    return paths if paths else None
+
+
+def write_version_header(out_file):
+    """Первая строка VERSION — «эпоха» (напр. 4.0), вторая — semver пакета (как в package.json)."""
+    if os.path.isfile(VERSION_FILE):
+        try:
+            with open(VERSION_FILE, "r", encoding="utf-8") as vf:
+                lines = [
+                    ln.strip()
+                    for ln in vf.read().splitlines()
+                    if ln.strip() and not ln.strip().startswith("#")
+                ]
+            if not lines:
+                return
+            epic = lines[0]
+            pkg = lines[1] if len(lines) > 1 else ""
+            if pkg:
+                out_file.write(
+                    f"# Lab Journal — контекст для ИИ (по сути {epic}; package {pkg})\n\n"
+                )
+            else:
+                out_file.write(f"# Lab Journal — контекст для ИИ (по сути {epic})\n\n")
+        except OSError:
+            pass
+
+
+def pack_from_manifest(paths, out_file):
+    missing = []
+    root_abs = os.path.abspath(PROJECT_DIR)
+    for rel in paths:
+        file_path = os.path.abspath(os.path.join(PROJECT_DIR, rel))
+        if not (file_path == root_abs or file_path.startswith(root_abs + os.sep)):
+            print(f"Пропуск (вне проекта): {rel}")
+            continue
+        if not os.path.isfile(file_path):
+            missing.append(rel)
+            continue
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except Exception as e:
+            print(f"Ошибка чтения {file_path}: {e}")
+            continue
+        out_file.write(f"\n\n--- START OF FILE {rel.replace(os.sep, '/')} ---\n\n")
+        out_file.write(content)
+        out_file.write(f"\n\n--- END OF FILE {rel.replace(os.sep, '/')} ---\n")
+    if missing:
+        print("Отсутствуют файлы из манифеста:")
+        for m in missing:
+            print(f"  - {m}")
+
+
+def pack_walk_legacy(out_file):
+    print(
+        "Внимание: нет local/pack_manifest.txt — используется обход каталога (лучше создать манифест)."
+    )
+    for root, dirs, files in os.walk(PROJECT_DIR):
+        dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
+        for file in files:
+            ext = os.path.splitext(file)[1]
+            if ext not in ALLOWED_EXTENSIONS:
+                continue
+            file_path = os.path.join(root, file)
+            rel_path = os.path.relpath(file_path, PROJECT_DIR)
+            if file in [
+                "next-env.d.ts",
+                "postcss.config.mjs",
+                "tailwind.config.ts",
+            ]:
+                continue
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                out_file.write(f"\n\n--- START OF FILE {rel_path} ---\n\n")
+                out_file.write(content)
+                out_file.write(f"\n\n--- END OF FILE {rel_path} ---\n")
+            except Exception as e:
+                print(f"Ошибка чтения {file_path}: {e}")
+
+
+def pack_project():
+    os.makedirs(SCRIPT_DIR, exist_ok=True)
+    paths = read_manifest_paths()
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as out_file:
+        write_version_header(out_file)
+        if paths is not None:
+            pack_from_manifest(paths, out_file)
+        else:
+            pack_walk_legacy(out_file)
+    print(f"Готово: {OUTPUT_FILE}")
+
+
+if __name__ == "__main__":
+    pack_project()
+
+
+--- END OF FILE local/pack_for_ai.py ---
+
+
+--- START OF FILE local/pack_manifest.txt ---
+
+# Список путей для local/pack_for_ai.py (от корня репозитория).
+# Строки с # и пустые пропускаются. Обновляй при добавлении/переименовании исходников.
+# VERSION: строка 1 — мета-релиз (напр. 4.0), строка 2 — semver, дублирует package.json.
+
+VERSION
+package.json
+tsconfig.json
+next.config.ts
+middleware.ts
+vitest.config.ts
+postcss.config.mjs
+eslint.config.mjs
+prisma/schema.prisma
+public/manifest.json
+public/sw.js
+public/offline.html
+public/icon.svg
+.env.example
+README.md
+app/globals.css
+app/layout.tsx
+app/page.tsx
+app/admin/page.tsx
+app/api/auth/[...nextauth]/route.ts
+app/api/health/route.ts
+app/api/import/route.ts
+app/api/specimens/route.ts
+app/api/users/route.ts
+components/BarcodeScanDialog.tsx
+components/MobileSpecimenCard.tsx
+components/Providers.tsx
+components/PwaBootstrap.tsx
+components/CommandPalette.tsx
+components/ShortcutsModal.tsx
+hooks/usePwaInstall.ts
+hooks/usePullToRefresh.ts
+lib/api-client.ts
+lib/api-client.test.ts
+lib/auth.ts
+lib/favorites.ts
+lib/highlight.tsx
+lib/import-excel.ts
+lib/prisma.ts
+types/next-auth.d.ts
+scripts/backup-db.mjs
+scripts/gen-pwa-icons.mjs
+scripts/install-all.mjs
+scripts/setup.mjs
+local/pack_for_ai.py
+local/pack_manifest.txt
+
+
+--- END OF FILE local/pack_manifest.txt ---
