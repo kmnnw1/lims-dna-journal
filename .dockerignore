@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.gitignore
+local
+backups
+*.xlsx
+.env
+.env.*
+!.env.example
+npm-debug.log*
+README.md
+*.md
+.vscode
+.idea

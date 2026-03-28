@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0d9488" />
+    <title>Нет сети — Журнал ДНК</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        background: linear-gradient(160deg, #ecfdf5 0%, #f4f4f5 40%);
+        color: #18181b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+      }
+      .card {
+        max-width: 22rem;
+        text-align: center;
+        padding: 2rem;
+        border-radius: 1.25rem;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(228, 228, 231, 0.9);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+      }
+      h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
+      p { margin: 0; color: #71717a; font-size: 0.9rem; line-height: 1.5; }
+      .icon {
+        width: 3rem;
+        height: 3rem;
+        margin: 0 auto 1rem;
+        border-radius: 0.75rem;
+        background: linear-gradient(135deg, #14b8a6, #047857);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+      }
+      button {
+        margin-top: 1.25rem;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        border: none;
+        background: #18181b;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+      button:active { transform: scale(0.99); }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="icon" aria-hidden="true">⚗</div>
+      <h1>Нет подключения</h1>
+      <p>Проверьте Wi‑Fi или мобильные данные и откройте журнал снова.</p>
+      <button type="button" onclick="location.reload()">Повторить</button>
+    </div>
+  </body>
+</html>

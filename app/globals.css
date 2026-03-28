@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  ::selection {
+    @apply bg-teal-500/25 text-zinc-900 dark:text-zinc-100;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-teal-600/50;
+  }
+}
+
+/* PWA / мобильные: вырезы и нижняя панель */
+.safe-pt {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+.safe-pb {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+.safe-pb-nav {
+  padding-bottom: max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom)));
+}
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (max-width: 767px) {
+  html {
+    -webkit-tap-highlight-color: rgba(13, 148, 136, 0.15);
+  }
+}
+
+@media print {
+  body {
+    @apply bg-white text-black;
+  }
+  @page {
+    margin: 12mm;
+  }
+  table {
+    break-inside: auto;
+  }
+  tr {
+    break-inside: avoid;
+    break-after: auto;
+  }
+  thead {
+    display: table-header-group;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+}
