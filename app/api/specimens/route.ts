@@ -58,6 +58,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session || (session.user as any).role === "READER") return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 });
+  
   const { ids, updateData, singleId, singleStatus, newAttempt } = await request.json();
   
   if (newAttempt) {
@@ -70,8 +71,18 @@ export async function PUT(request: Request) {
     return NextResponse.json({ success: true });
   }
 
-  await prisma.specimen.updateMany({ where: { id: { in: ids } }, data: updateData });
-  return NextResponse.json({ success: true });
+  if (singleId && updateData) {
+    // Полное редактирование конкретной пробы
+    await prisma.specimen.update({ where: { id: singleId }, data: updateData });
+    return NextResponse.json({ success: true });
+  }
+
+  if (ids && Array.isArray(ids) && updateData) {
+    await prisma.specimen.updateMany({ where: { id: { in: ids } }, data: updateData });
+    return NextResponse.json({ success: true });
+  }
+
+  return NextResponse.json({ error: "Неверные параметры запроса" }, { status: 400 });
 }
 
 export async function DELETE(request: Request) {

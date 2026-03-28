@@ -1,6 +1,6 @@
 "use client";
 
-import { Barcode, Camera, Activity, Share2, Copy, Star } from "lucide-react";
+import { Barcode, Camera, Activity, Share2, Copy, Star, Pencil } from "lucide-react";
 import type { ReactNode } from "react";
 import { HighlightMatch } from "@/lib/highlight";
 
@@ -23,6 +23,7 @@ type Props = {
   selected: boolean;
   onToggleSelect: () => void;
   onPcr: () => void;
+  onEdit: () => void;
   renderStatus: (s: MobileSpecimenShape) => ReactNode;
   favorite?: boolean;
   onToggleFavorite?: () => void;
@@ -35,6 +36,7 @@ export function MobileSpecimenCard({
   selected,
   onToggleSelect,
   onPcr,
+  onEdit,
   renderStatus,
   favorite,
   onToggleFavorite,
@@ -43,9 +45,7 @@ export function MobileSpecimenCard({
   const copyId = async () => {
     try {
       await navigator.clipboard.writeText(s.id);
-    } catch {
-      /* ignore */
-    }
+    } catch {}
   };
 
   const share = async () => {
@@ -55,9 +55,7 @@ export function MobileSpecimenCard({
       } else {
         await copyId();
       }
-    } catch {
-      /* user cancel */
-    }
+    } catch {}
   };
 
   return (
@@ -95,54 +93,35 @@ export function MobileSpecimenCard({
             {s.locality ? <p className="truncate text-xs text-zinc-500">{s.locality}</p> : null}
           </div>
         </div>
-        <div className="flex shrink-0 gap-1">
-          {onToggleFavorite ? (
+        <div className="flex shrink-0 flex-wrap gap-1 w-[4.5rem] justify-end">
+          {onToggleFavorite && (
             <button
               type="button"
               onClick={onToggleFavorite}
               className={`touch-target rounded-xl p-2 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
                 favorite ? "text-amber-500" : "text-zinc-400"
               }`}
-              aria-label={favorite ? "Убрать из избранного" : "В избранное"}
             >
               <Star className={`h-4 w-4 ${favorite ? "fill-current" : ""}`} />
             </button>
-          ) : null}
-          <button
-            type="button"
-            onClick={copyId}
-            className="touch-target rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            aria-label="Копировать ID"
-          >
+          )}
+          <button type="button" onClick={copyId} className="touch-target rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800">
             <Copy className="h-4 w-4" />
           </button>
-          {typeof navigator !== "undefined" && "share" in navigator && typeof navigator.share === "function" ? (
-            <button
-              type="button"
-              onClick={share}
-              className="touch-target rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              aria-label="Поделиться"
-            >
-              <Share2 className="h-4 w-4" />
+          {!isReader && (
+            <button type="button" onClick={onEdit} className="touch-target rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800">
+              <Pencil className="h-4 w-4" />
             </button>
-          ) : null}
-          <button
-            type="button"
-            onClick={onPcr}
-            className="touch-target rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            aria-label="Журнал ПЦР"
-          >
+          )}
+          <button type="button" onClick={onPcr} className="touch-target rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-100 dark:hover:bg-zinc-800">
             <Activity className={`h-5 w-5 ${(s.attempts?.length ?? 0) > 0 ? "text-teal-600 dark:text-teal-400" : ""}`} />
           </button>
         </div>
       </div>
-      {s.notes ? (
-        <p className="mt-2 line-clamp-2 whitespace-pre-wrap break-words text-xs text-zinc-600 dark:text-zinc-400">{s.notes}</p>
-      ) : null}
+      {s.notes && <p className="mt-2 line-clamp-2 whitespace-pre-wrap break-words text-xs text-zinc-600 dark:text-zinc-400">{s.notes}</p>}
       <div className="mt-3 border-t border-zinc-100 pt-3 text-sm dark:border-zinc-700">
         <p className="font-medium text-zinc-800 dark:text-zinc-100">
-          {s.extrLab || "—"}{" "}
-          <span className="font-normal text-zinc-500">{s.extrOperator ? `· ${s.extrOperator}` : ""}</span>
+          {s.extrLab || "—"} <span className="font-normal text-zinc-500">{s.extrOperator ? `· ${s.extrOperator}` : ""}</span>
         </p>
         <p className="text-xs text-zinc-500">{s.extrMethod}</p>
         <div className="mt-2 flex justify-start">{renderStatus(s)}</div>
