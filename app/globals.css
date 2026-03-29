@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
@@ -9,6 +11,23 @@
   html {
     @apply scroll-smooth;
   }
+  
+  body {
+    @apply bg-fixed bg-center bg-cover bg-no-repeat text-zinc-900 transition-colors duration-500;
+    background-color: #f4f4f5;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(173, 80%, 40%, 0.12) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(240, 100%, 70%, 0.08) 0px, transparent 50%);
+  }
+
+  .dark body {
+    @apply text-zinc-100;
+    background-color: #09090b;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(173, 80%, 40%, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(240, 100%, 70%, 0.05) 0px, transparent 50%);
+  }
+
   ::selection {
     @apply bg-teal-500/25 text-zinc-900 dark:text-zinc-100;
   }
@@ -17,47 +36,32 @@
   }
 }
 
-/* PWA / мобильные: вырезы и нижняя панель */
-.safe-pt {
-  padding-top: max(0.75rem, env(safe-area-inset-top));
-}
-.safe-pb {
-  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
-}
-.safe-pb-nav {
-  padding-bottom: max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom)));
-}
-.touch-target {
-  min-width: 44px;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-@media (max-width: 767px) {
-  html {
-    -webkit-tap-highlight-color: rgba(13, 148, 136, 0.15);
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border border-white/50 dark:border-zinc-700/50 shadow-xl dark:shadow-black/50;
+  }
+  .glass-button {
+    @apply bg-white/40 dark:bg-zinc-800/40 backdrop-blur-md border border-white/40 dark:border-zinc-700/50 hover:bg-white/60 dark:hover:bg-zinc-700/60 transition-all active:scale-95;
+  }
+  .md3-input {
+    @apply w-full rounded-2xl border border-zinc-200/50 bg-white/50 px-4 py-3.5 text-sm outline-none transition-all placeholder:text-zinc-400 focus:border-teal-500/50 focus:bg-white focus:ring-4 focus:ring-teal-500/10 dark:border-zinc-700/50 dark:bg-zinc-950/50 dark:text-zinc-100 dark:focus:bg-zinc-900;
   }
 }
 
+.safe-pt { padding-top: max(0.75rem, env(safe-area-inset-top)); }
+.safe-pb { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
+.safe-pb-nav { padding-bottom: max(5.5rem, calc(4.5rem + env(safe-area-inset-bottom))); }
+.touch-target { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+
+@media (max-width: 767px) {
+  html { -webkit-tap-highlight-color: rgba(13, 148, 136, 0.15); }
+}
+
 @media print {
-  body {
-    @apply bg-white text-black;
-  }
-  @page {
-    margin: 12mm;
-  }
-  table {
-    break-inside: auto;
-  }
-  tr {
-    break-inside: avoid;
-    break-after: auto;
-  }
-  thead {
-    display: table-header-group;
-  }
-  .print\:hidden {
-    display: none !important;
-  }
+  body { @apply bg-white text-black bg-none; }
+  @page { margin: 12mm; }
+  table { break-inside: auto; }
+  tr { break-inside: avoid; break-after: auto; }
+  thead { display: table-header-group; }
+  .print\:hidden { display: none !important; }
 }
