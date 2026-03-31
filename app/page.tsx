@@ -13,6 +13,22 @@ import { loadFavoriteIds, saveFavoriteIds, toggleFavoriteId } from '@/lib/favori
 import { CommandPalette } from '@/components/CommandPalette';
 import { ShortcutsModal } from '@/components/ShortcutsModal';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { 
+  Specimen, 
+  Suggestions, 
+  NewRecordForm, 
+  EditSpecimenForm,
+  MassUpdateForm,
+  PcrForm,
+  SortableFields,
+  QuickFilter, 
+  EMPTY_NEW_RECORD,
+  EMPTY_MASS_UPDATE,
+  EMPTY_PCR_FORM,
+  EMPTY_SUGGESTIONS
+} from '@/types';
+import { exportToCsv } from '@/lib/export';
+
 
 const RECENT_STORAGE_KEY = 'lj-recent-ids';
 const DARK_STORAGE_KEY = 'lj-dark-mode';
@@ -34,37 +50,27 @@ function Home() {
   const { data: session, status } = useSession();
   
   // Оригинальные стейты
-  const [specimens, setSpecimens] = useState<any[]>([]);
-  const [suggestions, setSuggestions] = useState<{ labs: string[]; operators: string[]; methods: string[]; }>({ labs: [], operators: [], methods: [] });
+  const [specimens, setSpecimens] = useState<Specimen[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestions>(EMPTY_SUGGESTIONS);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortKey, setSortKey] = useState('id');
-  const [sortOrder, setSortOrder] = useState(1);
+  const [sortKey, setSortKey] = useState<SortableFields>('id');
+  const [sortOrder, setSortOrder] = useState<1 | -1>(1);
   const [isOnline, setIsOnline] = useState(true);
-  const [quickFilter, setQuickFilter] = useState('ALL');
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('ALL');
   const [darkMode, setDarkMode] = useState(false);
   const [toast, setToast] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [validationError, setValidationError] = useState(false); 
   
   // Восстановленный стейт полного редактирования
-  const [editingSpecimen, setEditingSpecimen] = useState<any | null>(null);
+  const [editingSpecimen, setEditingSpecimen] = useState<EditSpecimenForm | null>(null);
   
   const [pcrModalId, setPcrModalId] = useState('');
-  const [pcrVolume, setPcrVolume] = useState('');
-  const [pcrResult, setPcrResult] = useState('Fail');
-  const [newRecord, setNewRecord] = useState({ id: '', taxon: '', locality: '', extrLab: '', extrOperator: '', extrMethod: '', extrDateRaw: '' });
-  const [validationError, setValidationError] = useState(false);
-  const [massLab, setMassLab] = useState('');
-  const [massOperator, setMassOperator] = useState('');
-  const [massMethod, setMassMethod] = useState('');
-  const [massDnaConc, setMassDnaConc] = useState('');
-  
-  // Дополнительные параметры ПЦР
-  const [pcrMarker, setPcrMarker] = useState('');
-  const [pcrFwd, setPcrFwd] = useState('');
-  const [pcrRev, setPcrRev] = useState('');
-  const [pcrDnaMatrix, setPcrDnaMatrix] = useState('');
+  const [pcrForm, setPcrForm] = useState<PcrForm>(EMPTY_PCR_FORM);
+  const [newRecord, setNewRecord] = useState<NewRecordForm>(EMPTY_NEW_RECORD);
+  const [massUpdate, setMassUpdate] = useState<MassUpdateForm>(EMPTY_MASS_UPDATE);
 
   // Умный фильтр
   const [showAdvFilter, setShowAdvFilter] = useState(false);
@@ -224,126 +230,225 @@ function Home() {
   fetchSpecimensRef.current = fetchSpecimens;
 
   const handleCreateRecord = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newRecord.id.trim()) { setValidationError(true); return; }
-    setValidationError(false);
-    const res = await fetch('/api/specimens', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newRecord) });
-    const result = await parseApiResponse(res);
-    if (!result.ok) { showToast(result.message); return; }
-    setIsAddModalOpen(false); setNewRecord({ id: '', taxon: '', locality: '', extrLab: '', extrOperator: '', extrMethod: '', extrDateRaw: '' });
-    showToast('Проба добавлена'); fetchSpecimens();
-  };
+  e.preventDefault();
+  if (!newRecord.id.trim()) { 
+    setValidationError(true); 
+    return; 
+  }
+  setValidationError(false);
+  
+  const res = await fetch('/api/specimens', { 
+    method: 'POST', 
+    headers: { 'Content-Type': 'application/json' }, 
+    body: JSON.stringify(newRecord) 
+  });
+  
+  const result = await parseApiResponse(res);
+  if (!result.ok) { 
+    showToast(result.message); 
+    return; 
+  }
+  
+  // ✅ Используем EMPTY_NEW_RECORD для очистки
+  setIsAddModalOpen(false);
+  setNewRecord(EMPTY_NEW_RECORD);
+  showToast('Проба добавлена');
+  fetchSpecimens();
+};
 
-  const handleSaveEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingSpecimen) return;
-    const { id, attempts, ...dataToUpdate } = editingSpecimen;
-    const res = await fetch('/api/specimens', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ singleId: id, updateData: dataToUpdate }) });
-    const result = await parseApiResponse(res);
-    if (!result.ok) { showToast(result.message); return; }
-    setEditingSpecimen(null); showToast('Проба успешно обновлена'); fetchSpecimens();
-  };
+const handleSaveEdit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!editingSpecimen) return;
+  
+  // Исключаем id и attempts из данных для обновления
+  const { id, attempts, ...dataToUpdate } = editingSpecimen;
+  
+  const res = await fetch('/api/specimens', { 
+    method: 'PUT', 
+    headers: { 'Content-Type': 'application/json' }, 
+    body: JSON.stringify({ singleId: id, updateData: dataToUpdate }) 
+  });
+  
+  const result = await parseApiResponse(res);
+  if (!result.ok) { 
+    showToast(result.message); 
+    return; 
+  }
+  
+  setEditingSpecimen(null);
+  showToast('Проба успешно обновлена');
+  fetchSpecimens();
+};
 
-  const handleMassUpdate = async () => {
-    if (selectedIds.length === 0) return;
-    const updateData: Record<string, string> = {};
-    if (massLab) updateData.extrLab = massLab;
-    if (massOperator) updateData.extrOperator = massOperator;
-    if (massMethod) updateData.extrMethod = massMethod;
-    if (massDnaConc) updateData.dnaConcentration = massDnaConc;
-    const res = await fetch('/api/specimens', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: selectedIds, updateData }) });
-    const result = await parseApiResponse(res);
-    if (!result.ok) { showToast(result.message); return; }
-    setSelectedIds([]); setMassLab(''); setMassOperator(''); setMassMethod(''); setMassDnaConc('');
-    showToast('Данные обновлены'); fetchSpecimens();
-  };
+const handleMassUpdate = async () => {
+  if (selectedIds.length === 0) return;
+  
+  // ✅ Используем massUpdate вместо отдельных переменных
+  const updateData: Record<string, string> = {};
+  if (massUpdate.lab) updateData.extrLab = massUpdate.lab;
+  if (massUpdate.operator) updateData.extrOperator = massUpdate.operator;
+  if (massUpdate.method) updateData.extrMethod = massUpdate.method;
+  if (massUpdate.dnaConcentration) updateData.dnaConcentration = massUpdate.dnaConcentration;
+  
+  const res = await fetch('/api/specimens', { 
+    method: 'PUT', 
+    headers: { 'Content-Type': 'application/json' }, 
+    body: JSON.stringify({ ids: selectedIds, updateData }) 
+  });
+  
+  const result = await parseApiResponse(res);
+  if (!result.ok) { 
+    showToast(result.message); 
+    return; 
+  }
+  
+  // ✅ Очистка одной строкой
+  setSelectedIds([]);
+  setMassUpdate(EMPTY_MASS_UPDATE);
+  showToast('Данные обновлены');
+  fetchSpecimens();
+};
 
-  const handleMassDelete = async () => {
-    if (selectedIds.length === 0 || !confirm(`Удалить ${selectedIds.length} записей?`)) return;
-    const res = await fetch('/api/specimens', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: selectedIds }) });
-    const result = await parseApiResponse(res);
-    if (!result.ok) { showToast(result.message); return; }
-    setSelectedIds([]); showToast('Записи удалены'); fetchSpecimens();
-  };
+const handleMassDelete = async () => {
+  if (selectedIds.length === 0 || !confirm(`Удалить ${selectedIds.length} записей?`)) return;
+  
+  const res = await fetch('/api/specimens', { 
+    method: 'DELETE', 
+    headers: { 'Content-Type': 'application/json' }, 
+    body: JSON.stringify({ ids: selectedIds }) 
+  });
+  
+  const result = await parseApiResponse(res);
+  if (!result.ok) { 
+    showToast(result.message); 
+    return; 
+  }
+  
+  setSelectedIds([]);
+  showToast('Записи удалены');
+  fetchSpecimens();
+};
 
-  const toggleStatus = async (id: string, current: string, markerKey: string = 'itsStatus') => {
-    const nextStatus = current === '1' ? 'badQ' : current === 'badQ' ? 'alien' : '1';
-    const updateData = { [markerKey]: nextStatus };
-    const res = await fetch('/api/specimens', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ singleId: id, updateData }) });
-    const result = await parseApiResponse(res);
-    if (!result.ok) { showToast(result.message); return; }
-    fetchSpecimens();
-  };
+const toggleStatus = async (id: string, current: string, markerKey: string = 'itsStatus') => {
+  // Цикл статусов: '1' → 'badQ' → 'alien' → '1'
+  const nextStatus = current === '1' ? 'badQ' : current === 'badQ' ? 'alien' : '1';
+  const updateData = { [markerKey]: nextStatus };
+  
+  const res = await fetch('/api/specimens', { 
+    method: 'PUT', 
+    headers: { 'Content-Type': 'application/json' }, 
+    body: JSON.stringify({ singleId: id, updateData }) 
+  });
+  
+  const result = await parseApiResponse(res);
+  if (!result.ok) { 
+    showToast(result.message); 
+    return; 
+  }
+  
+  fetchSpecimens();
+};
 
-  const handleAddAttempt = async () => {
-    if (!pcrVolume) return;
-    const res = await fetch('/api/specimens', { 
-      method: 'PUT', headers: { 'Content-Type': 'application/json' }, 
-      body: JSON.stringify({ newAttempt: { specimenId: pcrModalId, volume: pcrVolume, result: pcrResult, marker: pcrMarker.trim(), forwardPrimer: pcrFwd.trim(), reversePrimer: pcrRev.trim(), dnaMatrix: pcrDnaMatrix.trim() } }) 
-    });
-    const result = await parseApiResponse(res);
-    if (!result.ok) { showToast(result.message); return; }
-    setPcrVolume(''); setPcrMarker(''); setPcrFwd(''); setPcrRev(''); setPcrDnaMatrix('');
-    showToast('Попытка ПЦР сохранена'); fetchSpecimens();
-  };
+const handleAddAttempt = async () => {
+  // ✅ Используем pcrForm вместо отдельных переменных
+  if (!pcrForm.volume) return;
+  
+  const res = await fetch('/api/specimens', { 
+    method: 'PUT', 
+    headers: { 'Content-Type': 'application/json' }, 
+    body: JSON.stringify({ 
+      newAttempt: { 
+        specimenId: pcrModalId, 
+        volume: pcrForm.volume, 
+        result: pcrForm.result, 
+        marker: pcrForm.marker.trim(), 
+        forwardPrimer: pcrForm.forwardPrimer.trim(), 
+        reversePrimer: pcrForm.reversePrimer.trim(), 
+        dnaMatrix: pcrForm.dnaMatrix.trim() 
+      } 
+    }) 
+  });
+  
+  const result = await parseApiResponse(res);
+  if (!result.ok) { 
+    showToast(result.message); 
+    return; 
+  }
+  
+  // ✅ Очистка одной строкой
+  setPcrForm(EMPTY_PCR_FORM);
+  showToast('Попытка ПЦР сохранена');
+  fetchSpecimens();
+};
 
-  const handleSort = (key: string) => {
-    if (sortKey === key) setSortOrder(sortOrder * -1);
-    else { setSortKey(key); setSortOrder(1); }
-  };
+const handleSort = (key: SortableFields) => {
+  if (sortKey === key) {
+    setSortOrder((sortOrder * -1) as 1 | -1);
+  } else {
+    setSortKey(key);
+    setSortOrder(1);
+  }
+};
 
-  const exportToExcel = async () => {
-    try {
-      const xlsx = await import('xlsx');
-      const ws = xlsx.utils.json_to_sheet(specimens);
-      const wb = xlsx.utils.book_new();
-      xlsx.utils.book_append_sheet(wb, ws, 'Журнал');
-      xlsx.writeFile(wb, 'Журнал_проб.xlsx');
-    } catch { showToast('Не удалось сформировать Excel'); }
-  };
+const exportToExcel = async () => {
+  try {
+    const xlsx = await import('xlsx');
+    const ws = xlsx.utils.json_to_sheet(specimens);
+    const wb = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(wb, ws, 'Журнал');
+    xlsx.writeFile(wb, 'Журнал_проб.xlsx');
+  } catch { 
+    showToast('Не удалось сформировать Excel'); 
+  }
+};
 
-  const exportFilteredExcel = async () => {
-    try {
-      const xlsx = await import('xlsx');
-      const ws = xlsx.utils.json_to_sheet(filteredSpecimens);
-      const wb = xlsx.utils.book_new();
-      xlsx.utils.book_append_sheet(wb, ws, 'Отфильтровано');
-      xlsx.writeFile(wb, 'Журнал_отфильтровано.xlsx');
-    } catch { showToast('Не удалось сформировать Excel'); }
-  };
+const exportFilteredExcel = async () => {
+  try {
+    const xlsx = await import('xlsx');
+    const ws = xlsx.utils.json_to_sheet(filteredSpecimens);
+    const wb = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(wb, ws, 'Отфильтровано');
+    xlsx.writeFile(wb, 'Журнал_отфильтровано.xlsx');
+  } catch { 
+    showToast('Не удалось сформировать Excel'); 
+  }
+};
 
-  const exportExtractionJournal = async () => {
-    try {
-      const xlsx = await import('xlsx');
-      const list = selectedIds.length > 0 ? specimens.filter(s => selectedIds.includes(s.id)) : filteredSpecimens;
-      const dataToExport = list.map(s => ({
-        'Дата': s.extrDateRaw || s.extrDate || '',
-        'Лаборатория': s.extrLab || '',
-        'Метод': s.extrMethod || '',
-        'Кто выделял': s.extrOperator || '',
-        'Isolate': s.id,
-        'Taxon': s.taxon || '',
-        'Locality': s.locality || '',
-        'Заметки': s.notes || ''
-      }));
-      const ws = xlsx.utils.json_to_sheet(dataToExport);
-      const wb = xlsx.utils.book_new();
-      xlsx.utils.book_append_sheet(wb, ws, 'Журнал выделений');
-      xlsx.writeFile(wb, 'Журнал_выделений.xlsx');
-      setToolsSheetOpen(false);
-    } catch { showToast('Не удалось сформировать Excel'); }
-  };
+const exportExtractionJournal = async () => {
+  try {
+    const xlsx = await import('xlsx');
+    const list = selectedIds.length > 0 
+      ? specimens.filter(s => selectedIds.includes(s.id)) 
+      : filteredSpecimens;
+    
+    const dataToExport = list.map(s => ({
+      'Дата': s.extrDateRaw ||  '',
+      'Лаборатория': s.extrLab || '',
+      'Метод': s.extrMethod || '',
+      'Кто выделял': s.extrOperator || '',
+      'Isolate': s.id,
+      'Taxon': s.taxon || '',
+      'Locality': s.locality || '',
+      'Заметки': s.notes || ''
+    }));
+    
+    const ws = xlsx.utils.json_to_sheet(dataToExport);
+    const wb = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(wb, ws, 'Журнал выделений');
+    xlsx.writeFile(wb, 'Журнал_выделений.xlsx');
+    setToolsSheetOpen(false);
+  } catch { 
+    showToast('Не удалось сформировать Excel'); 
+  }
+};
 
-  const exportCsv = () => {
-    try {
-      const rows = filteredSpecimens;
-      const headers = ['id', 'taxon', 'locality', 'extrLab', 'extrOperator', 'extrMethod', 'dnaConcentration', 'itsStatus', 'notes'];
-      const esc = (v: unknown) => { const s = v == null ? '' : String(v); return /[",\n\r;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-      const lines = [headers.join(';'), ...rows.map((r) => headers.map((h) => esc((r as Record<string, unknown>)[h])).join(';'))];
-      const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Журнал_проб.csv'; a.click(); URL.revokeObjectURL(a.href);
-    } catch { showToast('Не удалось сформировать CSV'); }
-  };
+const exportCsv = () => {
+  try {
+    exportToCsv(filteredSpecimens);
+  } catch { 
+    showToast('Не удалось сформировать CSV'); 
+  }
+};
 
   const role = session?.user?.role;
   const isReader = role === 'READER';
@@ -592,33 +697,78 @@ function Home() {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {['ALL', 'SUCCESS', 'ERROR', 'FAVORITES'].map(key => (
-            <button key={key} onClick={() => setQuickFilter(key)} className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${quickFilter === key ? 'bg-zinc-900 text-white shadow dark:bg-teal-600' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-300'}`}>
-              {key === 'FAVORITES' ? <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5" />Избранное</span> : key === 'ALL' ? 'Все' : key === 'SUCCESS' ? 'Успешные' : 'С ошибками'}
-            </button>
-          ))}
-        </div>
+  {(['ALL', 'SUCCESS', 'ERROR', 'FAVORITES'] as const).map((key) => (
+    <button 
+      key={key} 
+      onClick={() => setQuickFilter(key)} 
+      className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
+        quickFilter === key 
+          ? 'bg-zinc-900 text-white shadow dark:bg-teal-600' 
+          : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-300'
+      }`}
+    >
+      {key === 'FAVORITES' ? (
+        <span className="flex items-center gap-1">
+          <Star className="h-3.5 w-3.5" />Избранное
+        </span>
+      ) : key === 'ALL' ? 'Все' : key === 'SUCCESS' ? 'Успешные' : 'С ошибками'}
+    </button>
+  ))}
+</div>
       </header>
 
       {!isReader && selectedIds.length > 0 && (
-        <div className={`sticky top-3 z-20 mb-6 flex flex-col gap-3 p-4 shadow-lg print:hidden ${theme.card} bg-teal-50/95 dark:bg-teal-950/80 border-teal-200 dark:border-teal-800`}>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-teal-900 dark:text-teal-100">Выбрано: {selectedIds.length}</p>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={exportExtractionJournal} className={theme.btnSecondary}><FileSpreadsheet className="h-4 w-4 inline mr-1" /> Журнал выделений</button>
-              {isAdmin && <button onClick={handleMassDelete} className="rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-500"><Trash2 className="h-4 w-4 inline mr-1" /> Удалить</button>}
-              <button onClick={() => setSelectedIds(filteredSpecimens.map(s => s.id))} className={theme.btnSecondary}>Все в фильтре</button>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <input list="labs-list" placeholder="Лаборатория" value={massLab} onChange={(e) => setMassLab(e.target.value)} className={theme.input} />
-            <input list="ops-list" placeholder="Кто выделял" value={massOperator} onChange={(e) => setMassOperator(e.target.value)} className={theme.input} />
-            <input list="methods-list" placeholder="Метод" value={massMethod} onChange={(e) => setMassMethod(e.target.value)} className={theme.input} />
-            <input placeholder="Конц. ДНК" value={massDnaConc} onChange={(e) => setMassDnaConc(e.target.value)} className={theme.input} />
-          </div>
-          <button onClick={handleMassUpdate} className={theme.btnPrimary}><Beaker className="h-4 w-4 inline mr-1" /> Применить</button>
-        </div>
-      )}
+  <div className={`sticky top-3 z-20 mb-6 flex flex-col gap-3 p-4 shadow-lg print:hidden ${theme.card} bg-teal-50/95 dark:bg-teal-950/80 border-teal-200 dark:border-teal-800`}>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <p className="text-sm font-semibold text-teal-900 dark:text-teal-100">Выбрано: {selectedIds.length}</p>
+      <div className="flex flex-wrap gap-2">
+        <button onClick={exportExtractionJournal} className={theme.btnSecondary}>
+          <FileSpreadsheet className="h-4 w-4 inline mr-1" /> Журнал выделений
+        </button>
+        {isAdmin && (
+          <button onClick={handleMassDelete} className="rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-500">
+            <Trash2 className="h-4 w-4 inline mr-1" /> Удалить
+          </button>
+        )}
+        <button onClick={() => setSelectedIds(filteredSpecimens.map(s => s.id))} className={theme.btnSecondary}>
+          Все в фильтре
+        </button>
+      </div>
+    </div>
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <input 
+        list="labs-list" 
+        placeholder="Лаборатория" 
+        value={massUpdate.lab} 
+        onChange={(e) => setMassUpdate({ ...massUpdate, lab: e.target.value })} 
+        className={theme.input} 
+      />
+      <input 
+        list="ops-list" 
+        placeholder="Кто выделял" 
+        value={massUpdate.operator} 
+        onChange={(e) => setMassUpdate({ ...massUpdate, operator: e.target.value })} 
+        className={theme.input} 
+      />
+      <input 
+        list="methods-list" 
+        placeholder="Метод" 
+        value={massUpdate.method} 
+        onChange={(e) => setMassUpdate({ ...massUpdate, method: e.target.value })} 
+        className={theme.input} 
+      />
+      <input 
+        placeholder="Конц. ДНК" 
+        value={massUpdate.dnaConcentration} 
+        onChange={(e) => setMassUpdate({ ...massUpdate, dnaConcentration: e.target.value })} 
+        className={theme.input} 
+      />
+    </div>
+    <button onClick={handleMassUpdate} className={theme.btnPrimary}>
+      <Beaker className="h-4 w-4 inline mr-1" /> Применить
+    </button>
+  </div>
+)}
 
       <div className={`overflow-hidden relative z-10 print:border-none print:shadow-none print:bg-transparent ${theme.card}`}>
         <div className="hidden overflow-x-auto md:block print:block">
@@ -678,10 +828,27 @@ function Home() {
                     </td>
                     <td className="p-3 text-center print:hidden">
                       <div className="flex items-center justify-center gap-1">
-                        {!isReader && <button type="button" onClick={() => setEditingSpecimen(s)} className="p-1.5 text-zinc-400 hover:text-teal-600 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-700" title="Изменить"><Pencil className="h-4 w-4" /></button>}
-                        <button type="button" onClick={() => setPcrModalId(s.id)} className={`p-1.5 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-700 ${s.attempts?.length > 0 ? 'text-teal-600 dark:text-teal-400' : 'text-zinc-400'}`} title="ПЦР"><Activity className="h-4 w-4" /></button>
-                      </div>
-                    </td>
+                            {!isReader && (
+                                <button 
+                                  type="button" 
+                                  onClick={() => setEditingSpecimen(s)} 
+                                  className="p-1.5 text-zinc-400 hover:text-teal-600 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-700" 
+                                  title="Изменить">
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                          )}
+                          <button 
+                            type="button" 
+                            onClick={() => setPcrModalId(s.id)} 
+                            className={`p-1.5 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-700 ${
+                              s.attempts?.length ? 'text-teal-600 dark:text-teal-400' : 'text-zinc-400'
+                            }`} 
+                            title="ПЦР"
+                          >
+                            <Activity className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
                   </tr>
                 ))
               )}
@@ -792,7 +959,7 @@ function Home() {
         </div>
       )}
 
-      {pcrModalId && activeSpecimen && (
+            {pcrModalId && activeSpecimen && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center overflow-y-auto bg-zinc-950/60 p-4 backdrop-blur-sm">
           <div className={`${theme.card} my-4 w-full max-w-lg p-6`}>
             <div className="mb-5 flex items-center justify-between gap-2">
@@ -835,17 +1002,50 @@ function Home() {
               <div className="flex flex-col gap-3 pt-4 border-t border-zinc-200/50 dark:border-zinc-700/50">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">Новая попытка</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <input placeholder="Объём (мкл)" value={pcrVolume} onChange={(e) => setPcrVolume(e.target.value)} className={theme.input} />
-                  <input placeholder="Маркер (ITS...)" value={pcrMarker} onChange={(e) => setPcrMarker(e.target.value)} className={theme.input} />
-                  <input placeholder="Fwd праймер" value={pcrFwd} onChange={(e) => setPcrFwd(e.target.value)} className={theme.input} />
-                  <input placeholder="Rev праймер" value={pcrRev} onChange={(e) => setPcrRev(e.target.value)} className={theme.input} />
+                  <input 
+                    placeholder="Объём (мкл)" 
+                    value={pcrForm.volume} 
+                    onChange={(e) => setPcrForm({ ...pcrForm, volume: e.target.value })} 
+                    className={theme.input} 
+                  />
+                  <input 
+                    placeholder="Маркер (ITS...)" 
+                    value={pcrForm.marker} 
+                    onChange={(e) => setPcrForm({ ...pcrForm, marker: e.target.value })} 
+                    className={theme.input} 
+                  />
+                  <input 
+                    placeholder="Fwd праймер" 
+                    value={pcrForm.forwardPrimer} 
+                    onChange={(e) => setPcrForm({ ...pcrForm, forwardPrimer: e.target.value })} 
+                    className={theme.input} 
+                  />
+                  <input 
+                    placeholder="Rev праймер" 
+                    value={pcrForm.reversePrimer} 
+                    onChange={(e) => setPcrForm({ ...pcrForm, reversePrimer: e.target.value })} 
+                    className={theme.input} 
+                  />
                 </div>
-                <input placeholder="Матрица ДНК (конц. / объём)" value={pcrDnaMatrix} onChange={(e) => setPcrDnaMatrix(e.target.value)} className={theme.input} />
-                <select value={pcrResult} onChange={(e) => setPcrResult(e.target.value)} className={theme.input}>
+                <input 
+                  placeholder="Матрица ДНК (конц. / объём)" 
+                  value={pcrForm.dnaMatrix} 
+                  onChange={(e) => setPcrForm({ ...pcrForm, dnaMatrix: e.target.value })} 
+                  className={theme.input} 
+                />
+                <select 
+                  value={pcrForm.result} 
+                  onChange={(e) => setPcrForm({ ...pcrForm, result: e.target.value })} 
+                  className={theme.input}
+                >
                   <option value="Fail">Провал</option>
                   <option value="Success">Успех</option>
                 </select>
-                <button type="button" onClick={handleAddAttempt} className={`mt-2 ${theme.btnPrimary}`}>
+                <button 
+                  type="button" 
+                  onClick={handleAddAttempt} 
+                  className={`mt-2 ${theme.btnPrimary}`}
+                >
                   <Save className="h-4 w-4 inline mr-1" /> Добавить запись
                 </button>
               </div>
