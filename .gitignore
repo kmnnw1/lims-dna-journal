@@ -23,7 +23,8 @@
 # misc
 .DS_Store
 *.pem
-# Данные Excel для импорта (data.xlsx) и прочие таблицы — не в репозитории
+
+# Excel
 *.xlsx
 *.csv
 
