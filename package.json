@@ -1,7 +1,7 @@
 {
   "name": "lab-journal",
-  "version": "0.3.0",
-  "description": "Журнал проб ДНК и учёт ПЦР для лаборатории (Next.js, Prisma, NextAuth)",
+  "version": "0.3.1",
+  "description": "Современный журнал учёта ДНК-проб и ПЦР-результатов для лабораторий. Next.js, Prisma, NextAuth, React, импорт/экспорт Excel.",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,10 +9,15 @@
     "prebuild": "node scripts/gen-pwa-icons.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint --ext .js,.ts,.jsx,.tsx .",
     "test": "vitest run",
+    "test:ui": "vitest --ui",
     "backup": "node scripts/backup-db.mjs",
+    "restore": "node scripts/restore-db.mjs",
     "setup": "node scripts/setup.mjs",
+    "prisma:studio": "prisma studio",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate",
     "install:all": "node scripts/install-all.mjs"
   },
   "dependencies": {
@@ -29,16 +34,20 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
     "@types/bcryptjs": "^2.4.6",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/node": "^20.11.30",
+    "@types/react": "^19.2.22",
+    "@types/react-dom": "^19.0.18",
     "autoprefixer": "^10.4.20",
-    "eslint": "^9",
+    "eslint": "^9.2.0",
     "eslint-config-next": "16.2.1",
     "postcss": "^8.4.47",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5",
+    "typescript": "^5.4.5",
     "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18.18.0",
+    "npm": ">=9.6.0"
   }
 }

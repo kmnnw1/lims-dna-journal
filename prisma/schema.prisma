@@ -7,62 +7,94 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id       String @id @default(uuid())
-  username String @unique
-  password String
-  role     String @default("EDITOR")
+// --- МОДЕЛЬ ПОЛЬЗОВАТЕЛЯ ---
+// Добавлен createdAt для отслеживания даты создания
+// Уточнен enum Role для предотвращения ошибок
+enum Role {
+  ADMIN
+  EDITOR
+  READER
 }
 
-model Specimen {
-  id           String       @id
-  taxon        String?
-  locality     String?
-  collector    String?
-  
-  // Данные выделения (Экстракция)
-  extrLab      String?
-  extrOperator String?
-  extrMethod   String?
-  extrDateRaw  String?
-  extrDate     String?
-  
-  // Измерение концентрации ДНК
-  dnaMeter         String?
-  measDate         String?
-  measOperator     String?
-  dnaConcentration String?  // String, чтобы можно было писать "< 1.0" или "Low"
-  dnaProfile       String?
-  measComm         String?  // Комментарии к измерению
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  role      Role     @default(EDITOR)
+  createdAt DateTime @default(now())
+  // Возможность привязки к объектам или расширения в будущем
+  // specimens Specimen[]
+}
 
+// --- МОДЕЛЬ ПРОБЫ ---
+model Specimen {
+  id            String       @id @default(uuid())
+  taxon         String?
+  locality      String?
+  collector     String?
+  collectedAt   DateTime?    // Более структурированная дата сбора
+  collectNotes  String?      // Доп. поле для комментариев к сбору
+  
+  // Экстракция ДНК
+  extrLab       String?
+  extrOperator  String?
+  extrMethod    String?
+  extrDateRaw   String?
+  extrDate      DateTime?    // Изменено на DateTime для удобства поиска
+  
+  // Концентрация ДНК
+  dnaMeter         String?
+  measDate         DateTime?
+  measOperator     String?
+  dnaConcentration String?   // Оставляем строкой для гибкости
+  dnaProfile       String?
+  measComm         String?
+  
   imageUrl     String?
   
-  // Статусы маркеров
+  // Статусы маркеров + значения гены
   itsStatus    String?
   itsGb        String?
   ssuStatus    String?
+  ssuGb        String?
   lsuStatus    String?
+  lsuGb        String?
   mcm7Status   String?
+  mcm7Gb       String?
   
-  /// Сводка: свободные колонки + комментарии Excel + метка листа/строки (импорт)
-  notes        String?
+  // История изменений и импорт
+  notes        String?     // Общие заметки
+  importOrigin String?     // Метка файла/страницы Excel
+  importRow    Int?        // Номер строки Excel (по желанию)
   
   attempts     PcrAttempt[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  // Возможна привязка к User создателю или изменившему
 }
 
+// --- МОДЕЛЬ ПЦР ПОПЫТКИ ---
 model PcrAttempt {
-  id            String   @id @default(uuid())
-  specimenId    String
-  date          DateTime @default(now())
+  id             String    @id @default(uuid())
+  specimenId     String
+  date           DateTime  @default(now())
   
   // Детали ПЦР
-  marker        String?  // Какой маркер амплифицировали (ITS, SSU и т.д.)
-  forwardPrimer String?  // Прямой праймер
-  reversePrimer String?  // Обратный праймер
-  dnaMatrix     String?  // Количество ДНК-матрицы
-  volume        String   // Общий объем
+  marker         String?   // ITS, SSU и пр.
+  forwardPrimer  String?
+  reversePrimer  String?
+  dnaMatrix      String?
+  volume         String
+  polymerase     String?   // Добавлено: какой полимеразой проведена реакция
+  cycler         String?   // На каком термоциклере
   
-  result        String   // В БД: Success | Fail (подписи в UI на русском)
+  cycles         String?   // Число и режимы циклов, если требуется
+  annealingTemp  String?   // Температура отжига
+  extensionTime  String?   // Время удлинения
   
-  specimen      Specimen @relation(fields: [specimenId], references: [id], onDelete: Cascade)
+  result         String    // Success | Fail (см. UI mapping)
+  resultNotes    String?   // Причины неудачи/комментарии
+  
+  specimen       Specimen  @relation(fields: [specimenId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
 }

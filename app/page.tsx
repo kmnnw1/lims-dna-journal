@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { parseApiResponse } from '@/lib/api-client';
 import { BarcodeScanDialog } from '@/components/BarcodeScanDialog';
 import { MobileSpecimenCard } from '@/components/MobileSpecimenCard';
-import { usePwaInstall } from '@/hooks/usePwaInstall';
 import { HighlightMatch } from '@/lib/highlight';
 import { loadFavoriteIds, saveFavoriteIds, toggleFavoriteId } from '@/lib/favorites';
 import { CommandPalette } from '@/components/CommandPalette';
@@ -82,8 +81,7 @@ function Home() {
   const[dataLoading, setDataLoading] = useState(true);
   const [isNarrow, setIsNarrow] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
-  const[toolsSheetOpen, setToolsSheetOpen] = useState(false);
-  const [recentIds, setRecentIds] = useState<string[]>([]);
+  const [toolsSheetOpen, setToolsSheetOpen] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const[shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -122,7 +120,10 @@ function Home() {
       const raw = localStorage.getItem(RECENT_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as unknown;
-        if (Array.isArray(parsed)) setRecentIds(parsed.filter((x): x is string => typeof x === 'string').slice(0, 8));
+        if (Array.isArray(parsed)) {
+          const recentIds = parsed.filter((x): x is string => typeof x === 'string').slice(0, 8);
+          setFavoriteIds(recentIds);
+        }
       }
     } catch {}
     setFavoriteIds([...loadFavoriteIds()]);
@@ -181,7 +182,7 @@ function Home() {
 
   useEffect(() => {
     if (!pcrModalId) return;
-    setRecentIds((prev) => {
+    setFavoriteIds((prev) => {
       const next =[pcrModalId, ...prev.filter((id) => id !== pcrModalId)].slice(0, 8);
       try { localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(next)); } catch {}
       return next;
@@ -202,7 +203,7 @@ function Home() {
   };
   fetchSpecimensRef.current = fetchSpecimens;
 
-  const handleCreateRecord = async (e: React.FormEvent) => {
+  const handleCreateRecord = async (e: SubmitEvent) => {
     e.preventDefault();
     if (!newRecord.id.trim()) { setValidationError(true); return; }
     setValidationError(false);
@@ -215,7 +216,7 @@ function Home() {
     fetchSpecimens();
   };
 
-  const handleSaveEdit = async (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: SubmitEvent) => {
     e.preventDefault();
     if (!editingSpecimen) return;
     const { id, attempts, ...dataToUpdate } = editingSpecimen;
@@ -639,9 +640,29 @@ function Home() {
       )}
 
       {/* --- МОДАЛЬНЫЕ ОКНА (ВЫНЕСЕНЫ В КОМПОНЕНТЫ) --- */}
-      <AddSpecimenModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} newRecord={newRecord} setNewRecord={setNewRecord} onSubmit={handleCreateRecord} validationError={validationError} />
-      <EditSpecimenModal specimen={editingSpecimen} onClose={() => setEditingSpecimen(null)} onChange={setEditingSpecimen} onSubmit={handleSaveEdit} />
-      <PcrModal specimenId={pcrModalId} activeSpecimen={activeSpecimen} onClose={() => setPcrModalId('')} pcrForm={pcrForm} setPcrForm={setPcrForm} onSubmit={handleAddAttempt} isReader={isReader} />
+      <AddSpecimenModal
+        open={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        newRecord={newRecord}
+        setNewRecord={setNewRecord}
+        onSubmit={(e) => { void handleCreateRecord(e as unknown as SubmitEvent); }}
+        validationError={validationError}
+      />
+      <EditSpecimenModal
+        specimen={editingSpecimen}
+        onClose={() => setEditingSpecimen(null)}
+        onChange={setEditingSpecimen}
+        onSubmit={(e) => { void handleSaveEdit(e as unknown as SubmitEvent); }}
+      />
+      <PcrModal
+        specimenId={pcrModalId}
+        activeSpecimen={activeSpecimen}
+        onClose={() => setPcrModalId('')}
+        pcrForm={pcrForm}
+        setPcrForm={setPcrForm}
+        onSubmit={handleAddAttempt}
+        isReader={isReader}
+      />
 
       <BarcodeScanDialog open={scanOpen} onClose={() => setScanOpen(false)} onCode={applyScannedCode} />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} specimens={specimens} onPickSpecimen={(id) => { setSearch(id); setCurrentPage(1); setQuickFilter('ALL'); setPcrModalId(id); }} onNewSpecimen={() => setIsAddModalOpen(true)} onRefresh={() => void fetchSpecimens()} isReader={isReader} isAdmin={isAdmin} />

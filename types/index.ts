@@ -1,23 +1,29 @@
 
-// ============================================
-// ПЦР ПОПЫТКИ
-// ============================================
+// ========================================
+// Типы для ПЦР-попыток
+// ========================================
 
+/**
+ * Описывает одну попытку постановки ПЦР
+ */
 export interface PcrAttempt {
   id: string;
-  date: string;
-  volume: string;
-  result: string;
+  date: string;               // Дата попытки (ISO)
+  volume: string;             // Объём (например, "20 мкл")
+  result: 'Fail' | 'Success'; // Результат — явно: "Fail" или "Success"
   marker?: string;
   forwardPrimer?: string;
   reversePrimer?: string;
   dnaMatrix?: string;
 }
 
-// ============================================
-// ОБРАЗЦЫ (SPECIMEN)
-// ============================================
+// ========================================
+// Типы для образца (Specimen)
+// ========================================
 
+/**
+ * Основная единица хранения информации о биологическом образце
+ */
 export interface Specimen {
   id: string;
   taxon?: string;
@@ -36,12 +42,12 @@ export interface Specimen {
   ssuStatus?: string;
   lsuStatus?: string;
   mcm7Status?: string;
-  attempts?: PcrAttempt[];
+  attempts?: PcrAttempt[]; // Массив попыток ПЦР
 }
 
-// ============================================
-// ФОРМА НОВОЙ ПРОБЫ
-// ============================================
+// ========================================
+// Форма создания нового образца
+// ========================================
 
 export interface NewRecordForm {
   id: string;
@@ -53,7 +59,8 @@ export interface NewRecordForm {
   extrDateRaw: string;
 }
 
-export const EMPTY_NEW_RECORD: NewRecordForm = {
+/** Пустой шаблон формы для удобства сброса */
+export const EMPTY_NEW_RECORD: Readonly<NewRecordForm> = {
   id: '',
   taxon: '',
   locality: '',
@@ -63,35 +70,21 @@ export const EMPTY_NEW_RECORD: NewRecordForm = {
   extrDateRaw: ''
 };
 
-// ============================================
-// ФОРМА РЕДАКТИРОВАНИЯ
-// ============================================
+// ========================================
+// Форма редактирования образца
+// ========================================
 
-export interface EditSpecimenForm {
-  id: string;
-  taxon?: string;
-  locality?: string;
-  extrLab?: string;
-  extrOperator?: string;
-  extrMethod?: string;
-  extrDateRaw?: string;
-  dnaConcentration?: string;
-  dnaMeter?: string;
-  measOperator?: string;
-  measDate?: string;
-  notes?: string;
-  collector?: string;
-  itsStatus?: string;
-  ssuStatus?: string;
-  lsuStatus?: string;
-  mcm7Status?: string;
+export type EditSpecimenForm = Partial<Omit<Specimen, 'attempts'>> & Pick<Specimen, 'id'> & {
   attempts?: PcrAttempt[];
-}
+};
 
-// ============================================
-// ФОРМА МАССОВОГО ОБНОВЛЕНИЯ
-// ============================================
+// ========================================
+// Форма массового обновления
+// ========================================
 
+/**
+ * Для быстрого массового применения параметров к выбранным образцам
+ */
 export interface MassUpdateForm {
   lab: string;
   operator: string;
@@ -99,27 +92,31 @@ export interface MassUpdateForm {
   dnaConcentration: string;
 }
 
-export const EMPTY_MASS_UPDATE: MassUpdateForm = {
+export const EMPTY_MASS_UPDATE: Readonly<MassUpdateForm> = {
   lab: '',
   operator: '',
   method: '',
   dnaConcentration: ''
 };
 
-// ============================================
-// ФОРМА ПЦР
-// ============================================
+// ========================================
+// Форма ПЦР (ввод новой попытки)
+// ========================================
 
+/**
+ * Значения новой ПЦР-формы
+ */
 export interface PcrForm {
   volume: string;
-  result: string;
+  result: 'Fail' | 'Success'; // Строгая типизация
   marker: string;
   forwardPrimer: string;
   reversePrimer: string;
   dnaMatrix: string;
 }
 
-export const EMPTY_PCR_FORM: PcrForm = {
+/** Пустое состояние */
+export const EMPTY_PCR_FORM: Readonly<PcrForm> = {
   volume: '',
   result: 'Fail',
   marker: '',
@@ -128,10 +125,13 @@ export const EMPTY_PCR_FORM: PcrForm = {
   dnaMatrix: ''
 };
 
-// ============================================
-// ПОДСКАЗКИ ДЛЯ ФОРМ
-// ============================================
+// ========================================
+// Подсказки для автозаполнения форм
+// ========================================
 
+/**
+ * Списки актуальных подсказок для разных полей форм
+ */
 export interface Suggestions {
   labs: string[];
   operators: string[];
@@ -139,22 +139,27 @@ export interface Suggestions {
   taxa?: string[];
 }
 
-export const EMPTY_SUGGESTIONS: Suggestions = {
+export const EMPTY_SUGGESTIONS: Readonly<Suggestions> = {
   labs: [],
   operators: [],
   methods: []
 };
 
+// ========================================
+// Сортируемые поля таблицы
+// ========================================
 
-// ============================================
-// СОРТИРОВКА
-// ============================================
+/** Список допустимых для сортировки полей Specimen */
+export type SortableFields =
+  | 'id'
+  | 'taxon'
+  | 'extrLab'
+  | 'extrOperator'
+  | 'extrMethod';
 
-export type SortableFields = keyof Pick<Specimen, 'id' | 'taxon' | 'extrLab' | 'extrOperator' | 'extrMethod'>;
+// ========================================
+// Быстрые фильтры для списка образцов
+// ========================================
 
-// ============================================
-// СОРТИРОВКА
-// ============================================
 export type QuickFilter = 'ALL' | 'SUCCESS' | 'ERROR' | 'FAVORITES';
-
 

@@ -1,19 +1,55 @@
-/** Разбор JSON и извлечение поля `error` при ответе с ошибкой. */
+/** Разбор JSON, извлечение поля `error` или `message` для ошибок, более тщательная диагностика. */
 export async function parseApiResponse<T>(
   res: Response
 ): Promise<{ ok: true; data: T } | { ok: false; message: string }> {
-  const text = await res.text();
-  let data: unknown = {};
+  let text: string;
+  try {
+    text = await res.text();
+  } catch {
+    return { ok: false, message: "Ошибка соединения с сервером" };
+  }
+
+  let data: any = {};
   try {
     data = text ? JSON.parse(text) : {};
   } catch {
-    return { ok: false, message: "Некорректный ответ сервера" };
+    return {
+      ok: false,
+      message:
+        text.trim().length === 0
+          ? "Пустой или некорректный ответ сервера"
+          : "Некорректный ответ сервера: не удалось разобрать JSON",
+    };
   }
+
+  // При ошибке ищем `message`, затем `error`, затем статус
   if (!res.ok) {
-    const err = (data as { error?: string }).error;
-    const msg =
-      typeof err === "string" && err.length > 0 ? err : `Ошибка ${res.status}`;
+    let msg = "";
+    if (typeof data?.message === "string" && data.message.trim().length > 0) {
+      msg = data.message.trim();
+    } else if (typeof data?.error === "string" && data.error.trim().length > 0) {
+      msg = data.error.trim();
+    } else if (typeof data === "string" && data.trim().length > 0) {
+      msg = data.trim();
+    } else {
+      msg = `Ошибка ${res.status}`;
+    }
     return { ok: false, message: msg };
   }
+
+  // Даже если res.ok, проверим, нет ли на верхнем уровне стандартных error-сообщений
+  if (
+    typeof data?.error === "string" &&
+    data.error.trim().length > 0
+  ) {
+    return { ok: false, message: data.error.trim() };
+  }
+  if (
+    typeof data?.message === "string" &&
+    data.message.trim().length > 0
+  ) {
+    return { ok: false, message: data.message.trim() };
+  }
+
   return { ok: true, data: data as T };
 }

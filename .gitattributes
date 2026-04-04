@@ -1,2 +1,24 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Глобальная нормализация окончаний строк (применяет LF для всех текстовых файлов)
+* text=auto eol=lf
+
+# Явно задаём бинарные файлы — без нормализации строк
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.pdf binary
+*.xlsx binary
+*.csv binary
+
+# Уточняем типы для кода
+*.js   text eol=lf
+*.ts   text eol=lf
+*.tsx  text eol=lf
+*.json text eol=lf
+*.css  text eol=lf
+*.md   text eol=lf
+*.env* text eol=lf
+# Для Dockerfile и YAML — тоже LF
+Dockerfile   text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf
