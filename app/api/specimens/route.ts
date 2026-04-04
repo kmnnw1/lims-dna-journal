@@ -25,9 +25,9 @@ async function getDistinctFields() {
     prisma.specimen.findMany({ select: { extrMethod: true }, distinct: ['extrMethod'] }),
   ]);
   return {
-    labs: labs.map(l => l.extrLab).filter(Boolean),
-    operators: ops.map(o => o.extrOperator).filter(Boolean),
-    methods: methods.map(m => m.extrMethod).filter(Boolean),
+    labs: labs.map((l: { extrLab: string | null }) => l.extrLab).filter(Boolean),
+    operators: ops.map((o: { extrOperator: string | null }) => o.extrOperator).filter(Boolean),
+    methods: methods.map((m: { extrMethod: string | null }) => m.extrMethod).filter(Boolean),
   };
 }
 
