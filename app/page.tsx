@@ -5,6 +5,16 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useDebounce } from '@/hooks/useDebounce';
 
+// Иконки заменяем на LucideReact (lucide-react)
+// Не забудьте установить: npm install lucide-react
+import {
+	Search as MagnifyingGlassIcon,
+	Plus as PlusIcon,
+	LogOut as ArrowRightOnRectangleIcon,
+	Star as StarIcon,
+	Table as TableCellsIcon
+} from 'lucide-react';
+
 // Наши компоненты
 import { StatsCards } from './components/StatsCards';
 import { SpecimenTable } from './components/SpecimenTable';
@@ -32,11 +42,15 @@ export default function JournalPage() {
 		try {
 			const res = await fetch('/api/specimens');
 			const data = await res.json();
-			// ЗАЩИТА: проверяем, что данные — это массив
-			if (Array.isArray(data)) {
+			
+			// ИСПРАВЛЕННАЯ ЛОГИКА: забираем массив из поля specimens
+			if (data && Array.isArray(data.specimens)) {
+				setSpecimens(data.specimens);
+			} else if (Array.isArray(data)) {
+				// На случай если API когда-то вернет просто массив
 				setSpecimens(data);
 			} else {
-				console.error('API вернул не массив:', data);
+				console.error('API вернул неожиданный формат:', data);
 				setSpecimens([]);
 			}
 		} catch (error) {
@@ -52,9 +66,7 @@ export default function JournalPage() {
 		if (status === 'authenticated') fetchSpecimens();
 	}, [status]);
 
-	// Логика фильтрации с защитой
 	const filteredSpecimens = useMemo(() => {
-		// ЗАЩИТА: если specimens вдруг не массив, возвращаем пустой список
 		if (!Array.isArray(specimens)) return [];
 
 		let result = specimens.filter(s => 
@@ -125,7 +137,7 @@ export default function JournalPage() {
 				<header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
 					<div className="flex items-center gap-4">
 						<div className="p-3 bg-teal-500 rounded-2xl shadow-lg shadow-teal-500/20">
-							{/* Removed TableCellsIcon: component not found */}
+							<TableCellsIcon className="w-8 h-8 text-white" />
 						</div>
 						<div>
 							<h1 className="text-3xl font-black tracking-tight text-white">База Проб</h1>
@@ -135,12 +147,7 @@ export default function JournalPage() {
 
 					<div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
 						<div className="relative flex-1 md:w-80">
-							<span className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 pointer-events-none inline-flex items-center justify-center">
-								<svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<circle cx="11" cy="11" r="7" strokeWidth="2" />
-									<line x1="16.65" y1="16.65" x2="21" y2="21" strokeWidth="2" strokeLinecap="round" />
-								</svg>
-							</span>
+							<MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
 							<input
 								id="main-search"
 								type="text"
@@ -151,16 +158,11 @@ export default function JournalPage() {
 							/>
 						</div>
 						<button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 px-6 py-3.5 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl transition-all font-bold shadow-lg shadow-teal-900/20 active:scale-95">
-							<svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-								<path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m7-7H5"/>
-							</svg>
+							<PlusIcon className="w-5 h-5" />
 							<span>Новая проба</span>
 						</button>
 						<button onClick={() => signOut()} className="p-3.5 bg-slate-800/50 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-2xl transition-all">
-							{/* Replaced ArrowRightOnRectangleIcon with an inline SVG */}
-							<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-								<path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1"/>
-							</svg>
+							<ArrowRightOnRectangleIcon className="w-6 h-6" />
 						</button>
 					</div>
 				</header>
@@ -179,14 +181,7 @@ export default function JournalPage() {
 							{type === 'all' && 'Все'}
 							{type === 'success' && 'Успешные'}
 							{type === 'error' && 'С ошибками'}
-							{type === 'fav' && (
-								<div className="flex items-center gap-1">
-									<svg className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-										<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.163c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.05 9.384c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69l1.286-3.957z"/>
-									</svg>
-									Избранное
-								</div>
-							)}
+							{type === 'fav' && <div className="flex items-center gap-1"><StarIcon className="w-3.5 h-3.5" /> Избранное</div>}
 						</button>
 					))}
 				</div>
