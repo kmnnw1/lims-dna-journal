@@ -218,6 +218,29 @@ export default function JournalPage() {
 				onClose={() => setEditingSpecimen(null)} 
 				onSave={handleEditSave} 
 			/>
+        {/* Панель массовых действий */}
+			{selectedIds.size > 0 && (
+				<div className="sticky bottom-8 mt-8 mx-auto max-w-4xl bg-teal-500/10 backdrop-blur-xl border border-teal-500/30 rounded-2xl p-4 flex items-center justify-between shadow-2xl shadow-teal-900/20">
+					<div className="flex items-center gap-3">
+						<span className="flex items-center justify-center w-8 h-8 rounded-full bg-teal-500 text-white font-bold text-sm">
+							{selectedIds.size}
+						</span>
+						<span className="text-teal-100 font-medium">проб выбрано</span>
+					</div>
+					<div className="flex gap-2">
+						<button 
+							onClick={() => setSelectedIds(new Set())}
+							className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+						>
+							Сбросить
+						</button>
+						{/* Пока просто заглушка для теста */}
+						<button className="px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg">
+							Массовое действие
+						</button>
+					</div>
+				</div>
+			)}
 		</main>
 	);
 }
