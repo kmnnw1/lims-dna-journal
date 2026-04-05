@@ -16,122 +16,74 @@ const SHORTCUTS: (isReader: boolean) => Shortcut[] = (isReader) => [
 	{ keys: ['?'], description: 'Показать это окно', hint: 'Shift+/ для быстрого вызова' },
 	{ keys: ['Ctrl+K', '⌘K'], description: 'Палитра команд', hint: 'Команды и глобальный поиск' },
 	{ keys: ['Esc'], description: 'Закрыть окна', hint: 'Закрывает модальные окна и меню' },
-	...(!isReader
-		? [{ keys: ['N'], description: 'Новая проба', hint: 'Создать новую запись' }]
-		: []),
+	...(!isReader ? [{ keys: ['N'], description: 'Новая проба', hint: 'Создать новую запись' }] : []),
 ];
 
 function formatKeys(keys: string | string[]) {
-	return Array.isArray(keys) ? (
-		keys
-			.map((k) => (
-				<kbd
-					key={k}
-					className="inline-flex items-center gap-1 rounded bg-zinc-100 px-1.5 py-0.5 text-xs shadow-sm font-mono border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100">
-					{k}
-				</kbd>
-			))
-			.reduce(
-				(prev, curr, i) =>
-					prev === null
-						? [curr]
-						: [
-								...prev,
-								<span
-									key={`or-${i}`}
-									className="mx-1 text-[11px] text-zinc-400 dark:text-zinc-500">
-									или
-								</span>,
-								curr,
-							],
-				null as any,
-			) // null trick for reduce start
-	) : (
-		<kbd className="inline-flex items-center gap-1 rounded bg-zinc-100 px-1.5 py-0.5 text-xs shadow-sm font-mono border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100">
-			{keys}
-		</kbd>
-	);
+	const kbdClass = "inline-flex items-center justify-center min-w-[2rem] px-2 py-1 rounded-lg bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-on-surface)] font-mono text-sm font-bold shadow-sm";
+	
+	if (Array.isArray(keys)) {
+		return keys.map((k) => <kbd key={k} className={kbdClass}>{k}</kbd>).reduce((prev, curr, i) =>
+			prev === null ? [curr] : [
+				...prev,
+				<span key={`or-${i}`} className="mx-2 text-xs font-medium text-[var(--md-sys-color-outline)] uppercase tracking-wider">или</span>,
+				curr,
+			], null as any
+		);
+	}
+	return <kbd className={kbdClass}>{keys}</kbd>;
 }
 
 export function ShortcutsModal({ open, onClose, isReader }: Props) {
 	const dialogRef = useRef<HTMLDivElement>(null);
 
-	// Позволяет закрыть модалку по Escape
 	useEffect(() => {
 		if (!open) return;
-		const onKeyDown = (e: KeyboardEvent) => {
-			if (e.key === 'Escape') {
-				onClose();
-			}
-		};
+		const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
 		window.addEventListener('keydown', onKeyDown);
 		return () => window.removeEventListener('keydown', onKeyDown);
 	}, [open, onClose]);
 
-	// Фокус на модалке для a11y
 	useEffect(() => {
-		if (open && dialogRef.current) {
-			dialogRef.current.focus();
-		}
+		if (open && dialogRef.current) dialogRef.current.focus();
 	}, [open]);
 
 	if (!open) return null;
+
 	return (
-		<div
-			className="fixed inset-0 z-[125] flex items-center justify-center bg-zinc-950/50 p-4 backdrop-blur-sm print:hidden"
-			tabIndex={-1}
-			aria-modal="true"
-			aria-label="Горячие клавиши">
-			<button
-				type="button"
-				className="absolute inset-0"
-				aria-label="Закрыть"
-				onClick={onClose}
-				tabIndex={-1}
-			/>
-			<div
-				ref={dialogRef}
-				role="dialog"
-				tabIndex={0}
-				aria-modal="true"
-				aria-labelledby="shortcuts-modal-title"
-				className="relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 focus-visible:outline-none">
-				<div className="mb-4 flex items-center justify-between">
-					<h2
-						id="shortcuts-modal-title"
-						className="text-lg font-semibold flex items-center gap-2">
-						<Keyboard className="h-5 w-5 text-teal-500" /> Горячие клавиши
+		<div className="fixed inset-0 z-[125] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm print:hidden" tabIndex={-1} aria-modal="true" aria-label="Горячие клавиши">
+			<button type="button" className="absolute inset-0 cursor-default" aria-label="Закрыть" onClick={onClose} tabIndex={-1} />
+			
+			{/* MD3 Modal Surface */}
+			<div ref={dialogRef} role="dialog" tabIndex={0} className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] bg-[var(--md-sys-color-surface-container-low)] shadow-2xl focus-visible:outline-none animate-in fade-in zoom-in-95 duration-200">
+				
+				<div className="px-8 pt-8 pb-6 flex items-center justify-between bg-[var(--md-sys-color-surface-container)]">
+					<h2 className="text-2xl font-normal text-[var(--md-sys-color-on-surface)] flex items-center gap-3">
+						<Keyboard className="h-7 w-7 text-[var(--md-sys-color-primary)]" />
+						Горячие клавиши
 					</h2>
-					<button
-						type="button"
-						onClick={onClose}
-						className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus-visible:ring-2 focus-visible:ring-teal-400/60"
-						aria-label="Закрыть">
-						<X className="h-5 w-5" />
+					<button type="button" onClick={onClose} className="p-3 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] transition-all">
+						<X className="h-6 w-6" />
 					</button>
 				</div>
-				<table className="w-full text-sm mb-1">
-					<tbody>
-						{SHORTCUTS(isReader).map((row, idx) => (
-							<tr
-								key={idx}
-								className="border-b border-zinc-100 dark:border-zinc-800 text-left">
-								<td className="py-2 pr-3 font-mono text-xs text-teal-700 dark:text-teal-400 whitespace-nowrap align-top">
-									{formatKeys(row.keys)}
-								</td>
-								<td className="py-2 text-zinc-700 dark:text-zinc-300 align-top">
-									<span>{row.description}</span>
-									{row.hint && (
-										<div className="mt-0.5 text-[11px] text-zinc-400 dark:text-zinc-500">
-											{row.hint}
-										</div>
-									)}
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
-				<div className="mt-3 text-xs text-zinc-400 dark:text-zinc-500 text-right select-none">
+				
+				<div className="p-4 sm:p-8 space-y-2">
+					{SHORTCUTS(isReader).map((row, idx) => (
+						<div key={idx} className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-4 rounded-[1.5rem] hover:bg-[var(--md-sys-color-surface-container)] transition-colors">
+							<div className="flex flex-col gap-1">
+								<span className="text-base font-medium text-[var(--md-sys-color-on-surface)]">{row.description}</span>
+								{row.hint && (
+									<span className="text-sm text-[var(--md-sys-color-outline)]">{row.hint}</span>
+								)}
+							</div>
+							<div className="shrink-0 flex items-center">
+								{formatKeys(row.keys)}
+							</div>
+						</div>
+					))}
+				</div>
+				
+				<div className="px-8 pb-8 text-center text-sm font-medium text-[var(--md-sys-color-outline)] opacity-70">
 					Для доступа к клавишам клавиатура должна быть активна
 				</div>
 			</div>

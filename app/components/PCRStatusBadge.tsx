@@ -11,10 +11,18 @@ interface PCRStatusBadgeProps {
 export const PCRStatusBadge: React.FC<PCRStatusBadgeProps> = ({ status, marker, onClick }) => {
 	const getStatusStyle = (s: string | null | undefined) => {
 		switch (s) {
-			case '✓': return 'bg-teal-500/20 text-teal-300 border-teal-500/50 hover:bg-teal-500/30';
-			case '✕': return 'bg-rose-500/20 text-rose-300 border-rose-500/50 hover:bg-rose-500/30';
-			case '?': return 'bg-amber-500/20 text-amber-300 border-amber-500/50 hover:bg-amber-500/30';
-			default: return 'bg-slate-700/50 text-slate-400 border-slate-600 hover:bg-slate-700';
+			case '✓': 
+				// Успех (MD3 Custom Success)
+				return 'bg-[#4caf50]/15 text-[#2e7d32] dark:bg-[#81c784]/20 dark:text-[#a5d6a7] hover:bg-[#4caf50]/25';
+			case '✕': 
+				// Ошибка (MD3 Error Container)
+				return 'bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-on-error-container)] hover:brightness-95 dark:hover:brightness-110';
+			case '?': 
+				// В процессе / Сомнение (MD3 Custom Warning)
+				return 'bg-[#ffeb3b]/20 text-[#f57f17] dark:bg-[#fbc02d]/20 dark:text-[#fff59d] hover:bg-[#ffeb3b]/30';
+			default: 
+				// Нет данных (MD3 Surface Container Highest)
+				return 'bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-on-surface)]';
 		}
 	};
 
@@ -24,7 +32,7 @@ export const PCRStatusBadge: React.FC<PCRStatusBadgeProps> = ({ status, marker, 
 				e.stopPropagation();
 				onClick();
 			}}
-			className={`px-2 py-0.5 rounded border text-[10px] font-medium transition-all duration-200 ${getStatusStyle(status)}`}
+			className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide uppercase transition-all duration-200 active:scale-95 ${getStatusStyle(status)}`}
 		>
 			{marker} {status || '?'}
 		</button>

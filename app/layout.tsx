@@ -1,6 +1,14 @@
 import type { Metadata, Viewport } from 'next';
-import './globals.css';
+import { Roboto_Flex } from 'next/font/google';
 import { Providers } from '@/components/ui/Providers';
+import './globals.css';
+
+// MD3 рекомендует использовать Roboto. Flex-версия дает отличную выразительность (Expressive).
+const roboto = Roboto_Flex({ 
+	subsets: ['cyrillic', 'latin'],
+	variable: '--font-roboto',
+	display: 'swap',
+});
 
 export const metadata: Metadata = {
 	title: {
@@ -30,16 +38,25 @@ export const viewport: Viewport = {
 	initialScale: 1,
 	maximumScale: 5,
 	themeColor: [
-		{ media: '(prefers-color-scheme: light)', color: '#f4f4f5' },
-		{ media: '(prefers-color-scheme: dark)', color: '#0c0a09' },
+		{ media: '(prefers-color-scheme: light)', color: '#fafdfb' },
+		{ media: '(prefers-color-scheme: dark)', color: '#191c1b' },
 	],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
 	return (
-		<html lang="ru" suppressHydrationWarning>
-			<body className="font-sans antialiased">
-				<Providers>{children}</Providers>
+		<html lang="ru" className={`${roboto.variable}`} suppressHydrationWarning>
+			{/* Внедряем базовые токены MD3: цвет фона (Surface) и цвет текста (On Surface).
+				Также настраиваем цвет выделения текста (Selection) под наш Primary цвет.
+			*/}
+			<body className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] selection:bg-[var(--md-sys-color-primary)] selection:text-[var(--md-sys-color-on-primary)] transition-colors duration-300 font-sans antialiased">
+				<Providers>
+					{children}
+				</Providers>
 			</body>
 		</html>
 	);

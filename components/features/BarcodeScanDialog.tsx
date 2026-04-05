@@ -3,18 +3,12 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { X } from 'lucide-react';
 
-/**
- * Представляет интерфейс детектора штрихкодов.
- */
 type BarcodeDetectorClass = new (opts?: { formats?: string[] }) => {
 	detect: (image: ImageBitmapSource) => Promise<Array<{ rawValue: string }>>;
 };
 
 const FORMATS = ['qr_code', 'code_128', 'code_39', 'ean_13', 'data_matrix', 'itf'];
 
-/**
- * Свойства диалога сканирования штрихкода.
- */
 type Props = {
 	open: boolean;
 	onClose: () => void;
@@ -28,7 +22,6 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 	const onCodeRef = useRef(onCode);
 	const onCloseRef = useRef(onClose);
 
-	// Автоматически синхронизируем последние версии колбеков
 	useEffect(() => {
 		onCodeRef.current = onCode;
 		onCloseRef.current = onClose;
@@ -45,7 +38,6 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 		if (videoRef.current) videoRef.current.srcObject = null;
 	}, []);
 
-	// Основная логика работы: открытие камеры, сканирование, обработка ошибок
 	useEffect(() => {
 		if (!open) {
 			stopCamera();
@@ -58,8 +50,7 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 		let cancelled = false;
 
 		(async () => {
-			const BD = (globalThis as unknown as { BarcodeDetector?: BarcodeDetectorClass })
-				.BarcodeDetector;
+			const BD = (globalThis as unknown as { BarcodeDetector?: BarcodeDetectorClass }).BarcodeDetector;
 			setHasDetector(typeof BD === 'function');
 
 			if (typeof BD !== 'function') {
@@ -96,29 +87,14 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 							onCloseRef.current();
 							return;
 						}
-					} catch {
-						// Кадр еще не готов или ошибка — пробуем еще раз на следующем animationFrame
-					}
+					} catch {}
 					rafRef.current = requestAnimationFrame(tick);
 				};
 
 				tick();
 			} catch (err: any) {
 				if (!cancelled) {
-					if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
-						setError(
-							'Отказано в доступе к камере. Предоставьте разрешение или введите ID вручную.',
-						);
-					} else if (
-						err?.name === 'NotFoundError' ||
-						err?.name === 'DevicesNotFoundError'
-					) {
-						setError('Камера не найдена. Подключите камеру или введите ID вручную.');
-					} else {
-						setError(
-							'Нет доступа к камере. Введите ID вручную или проверьте разрешения.',
-						);
-					}
+					setError('Нет доступа к камере. Введите ID вручную или проверьте разрешения.');
 				}
 			}
 		})();
@@ -129,7 +105,6 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 		};
 	}, [open, stopCamera]);
 
-	// Обработка отправки вручную
 	const applyManual = () => {
 		const t = manual.trim();
 		if (!t) return;
@@ -138,14 +113,10 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 		onCloseRef.current();
 	};
 
-	// Реализация клавиши Enter для поля ручного ввода
 	const onManualKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === 'Enter') {
-			applyManual();
-		}
+		if (e.key === 'Enter') applyManual();
 	};
 
-	// Обработка Esc для закрытия окна
 	useEffect(() => {
 		if (!open) return;
 		const handler = (e: KeyboardEvent) => {
@@ -156,15 +127,11 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 		};
 		window.addEventListener('keydown', handler);
 		return () => window.removeEventListener('keydown', handler);
-		// eslint-disable-next-line
 	}, [open, stopCamera]);
 
-	// Фокус на поле ручного ввода при ручном режиме
 	const inputRef = useRef<HTMLInputElement>(null);
 	useEffect(() => {
-		if (!open) return;
-		// Фокусируем, только если нет потоковой камеры (например, на ошибке)
-		if ((!hasDetector || error) && inputRef.current) {
+		if (open && (!hasDetector || error) && inputRef.current) {
 			inputRef.current.focus();
 		}
 	}, [open, hasDetector, error]);
@@ -172,62 +139,62 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 	if (!open) return null;
 
 	return (
-		<div
-			className="safe-pt fixed inset-0 z-[120] flex flex-col bg-black/90 p-3 print:hidden"
-			aria-modal="true"
-			role="dialog"
-			tabIndex={-1}>
-			<div className="mb-2 flex items-center justify-between text-white">
-				<p className="text-sm font-medium">Сканируйте ID / QR-код</p>
-				<button
-					type="button"
-					onClick={() => {
-						stopCamera();
-						onClose();
-					}}
-					className="rounded-xl p-2 transition hover:bg-white/10"
-					aria-label="Закрыть">
-					<X className="h-6 w-6" />
-				</button>
-			</div>
-			{hasDetector && !error && (
-				<div className="relative flex-1 overflow-hidden rounded-2xl border border-white/20 bg-black">
-					<video
-						ref={videoRef}
-						className="max-h-full min-h-[40vh] w-full object-cover"
-						playsInline
-						muted
-						autoFocus
-					/>
-					<p className="pointer-events-none absolute bottom-3 left-0 right-0 text-center text-xs text-white/80">
-						Наведите камеру на штрихкод или QR-код этикетки
-					</p>
+		<div className="fixed inset-0 z-[120] flex flex-col bg-[var(--md-sys-color-surface)] sm:p-4 print:hidden animate-in fade-in duration-200" aria-modal="true" role="dialog" tabIndex={-1}>
+			<div className="flex-1 flex flex-col w-full max-w-lg mx-auto bg-[var(--md-sys-color-surface-container-low)] sm:rounded-[2.5rem] shadow-2xl overflow-hidden">
+				
+				<div className="flex items-center justify-between p-4 bg-[var(--md-sys-color-surface-container)]">
+					<p className="text-lg font-medium text-[var(--md-sys-color-on-surface)] ml-2">Сканирование ID</p>
+					<button type="button" onClick={() => { stopCamera(); onClose(); }} className="p-3 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] transition-all">
+						<X className="h-6 w-6" />
+					</button>
 				</div>
-			)}
-			{error && <p className="mt-3 text-center text-sm text-amber-200">{error}</p>}
-			<div className="mt-4 space-y-2 safe-pb">
-				<input
-					ref={inputRef}
-					value={manual}
-					onChange={(e) => setManual(e.target.value)}
-					onKeyDown={onManualKeyDown}
-					placeholder="Или введите ID пробы вручную"
-					className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-base text-white outline-none placeholder:text-zinc-400 focus:ring-2 focus:ring-teal-400"
-					spellCheck={false}
-					maxLength={48}
-					autoFocus={!hasDetector || !!error}
-					aria-label="Ручной ввод ID"
-				/>
-				<button
-					type="button"
-					onClick={applyManual}
-					className="w-full rounded-2xl bg-teal-500 py-3 text-sm font-bold text-white shadow-lg active:scale-[0.99]"
-					disabled={!manual.trim()}>
-					Искать
-				</button>
-				<p className="text-xs text-center text-white/60 select-none">
-					* Для сканирования и ручного ввода поддерживаются и цифры, и латиница
-				</p>
+
+				<div className="flex-1 flex flex-col p-4 gap-4">
+					{hasDetector && !error && (
+						<div className="relative flex-1 overflow-hidden rounded-[2rem] bg-black shadow-inner">
+							<video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" playsInline muted autoFocus />
+							<div className="absolute inset-0 border-4 border-[var(--md-sys-color-primary)]/30 rounded-[2rem] pointer-events-none" />
+							<p className="absolute bottom-6 left-0 right-0 text-center text-sm font-medium text-white drop-shadow-md bg-black/40 py-2 mx-8 rounded-full backdrop-blur-sm">
+								Наведите на штрихкод
+							</p>
+						</div>
+					)}
+					
+					{error && (
+						<div className="flex-1 flex items-center justify-center p-6 bg-[var(--md-sys-color-error-container)] rounded-[2rem] text-[var(--md-sys-color-on-error-container)] text-center font-medium">
+							{error}
+						</div>
+					)}
+
+					<div className="mt-auto space-y-4 pt-4 pb-safe">
+						<div className="relative group">
+							<input
+								ref={inputRef}
+								value={manual}
+								onChange={(e) => setManual(e.target.value)}
+								onKeyDown={onManualKeyDown}
+								className="w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-surface-container-high)] px-5 pt-6 pb-2 text-base outline-none transition-all text-[var(--md-sys-color-on-surface)]"
+								spellCheck={false}
+								maxLength={48}
+								autoFocus={!hasDetector || !!error}
+							/>
+							<label className={`absolute left-5 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
+								${manual ? 'top-1.5 text-xs' : 'top-4 text-base'}
+								group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-1.5 group-focus-within:text-xs
+							`}>
+								Ввести вручную
+							</label>
+						</div>
+
+						<button
+							type="button"
+							onClick={applyManual}
+							className="w-full py-4 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-medium shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:active:scale-100"
+							disabled={!manual.trim()}>
+							Искать
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

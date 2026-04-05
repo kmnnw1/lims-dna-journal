@@ -1,47 +1,170 @@
 'use client';
 
-import React from 'react';
 import { X } from 'lucide-react';
+import type { NewRecordForm } from '@/types';
+import { useRef, useEffect } from 'react';
 
-interface AddSpecimenModalProps {
-	isOpen: boolean;
+type Props = {
+	open: boolean;
 	onClose: () => void;
-	onSave: (data: any) => void;
-}
+	newRecord: NewRecordForm;
+	setNewRecord: (val: NewRecordForm) => void;
+	onSubmit: (e: React.FormEvent) => void;
+	validationError: boolean;
+};
 
-export const AddSpecimenModal: React.FC<AddSpecimenModalProps> = ({ isOpen, onClose, onSave }) => {
-	if (!isOpen) return null;
+export function AddSpecimenModal({
+	open,
+	onClose,
+	newRecord,
+	setNewRecord,
+	onSubmit,
+	validationError,
+}: Props) {
+	const idInputRef = useRef<HTMLInputElement>(null);
+	const overlayRef = useRef<HTMLDivElement>(null);
 
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		const formData = new FormData(e.currentTarget);
-		onSave(Object.fromEntries(formData.entries()));
+	useEffect(() => {
+		if (open && idInputRef.current) {
+			idInputRef.current.focus();
+		}
+	}, [open]);
+
+	useEffect(() => {
+		if (!open) return;
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') onClose();
+		};
+		window.addEventListener('keydown', onKeyDown);
+		return () => window.removeEventListener('keydown', onKeyDown);
+	}, [open, onClose]);
+
+	const handleOverlayClick = (e: React.MouseEvent) => {
+		if (e.target === overlayRef.current) onClose();
 	};
 
+	if (!open) return null;
+
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-			<div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200" role="dialog">
-				<div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
-					<h2 className="text-xl font-bold text-slate-100">Новая проба</h2>
-					<button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-xl text-slate-400 transition-colors">
-						<X className="w-6 h-6" />
+		<div
+			ref={overlayRef}
+			className="fixed inset-0 z-[140] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+			onClick={handleOverlayClick}
+			aria-modal="true"
+			role="dialog"
+			tabIndex={-1}>
+			
+			{/* MD3 Expressive Dialog Surface */}
+			<div className="w-full max-w-md p-8 relative bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem] shadow-2xl text-[var(--md-sys-color-on-surface)] transition-all transform scale-100">
+				
+				<div className="mb-8 flex items-center justify-between">
+					<h2 className="text-3xl font-normal tracking-tight">
+						Новая проба
+					</h2>
+					<button
+						type="button"
+						onClick={onClose}
+						className="inline-flex items-center justify-center p-3 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] active:scale-95 transition-all"
+						aria-label="Закрыть">
+						<X className="h-6 w-6" />
 					</button>
 				</div>
-				<form onSubmit={handleSubmit} className="p-6 space-y-4">
-					<div>
-						<label className="block text-xs font-semibold text-slate-500 uppercase mb-1 ml-1">ID пробы</label>
-						<input name="id" required placeholder="Например: AP1932" className="w-full bg-slate-800 border-slate-700 rounded-2xl text-slate-100 focus:ring-teal-500/50 focus:border-teal-500" />
+
+				<form onSubmit={onSubmit} className="flex flex-col gap-5" autoComplete="off">
+					{/* MD3 Filled Text Field */}
+					<div className="relative group">
+						<input
+							ref={idInputRef}
+							required
+							autoFocus
+							maxLength={30}
+							value={newRecord.id}
+							spellCheck={false}
+							onChange={(e) =>
+								setNewRecord({ ...newRecord, id: e.target.value.replace(/\s/g, '') })
+							}
+							className={`w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 bg-[var(--md-sys-color-surface-container-high)] px-5 pt-6 pb-2 text-base outline-none transition-all
+								${validationError ? 'border-[var(--md-sys-color-error)] text-[var(--md-sys-color-error)]' : 'border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)]'}
+							`}
+							data-testid="addspecimen-id"
+						/>
+						<label className={`absolute left-5 transition-all duration-200 pointer-events-none
+							${newRecord.id ? 'top-1.5 text-xs' : 'top-4 text-base'}
+							${validationError ? 'text-[var(--md-sys-color-error)]' : 'text-[var(--md-sys-color-outline)] group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-1.5 group-focus-within:text-xs'}
+						`}>
+							ID пробы *
+						</label>
 					</div>
-					<div>
-						<label className="block text-xs font-semibold text-slate-500 uppercase mb-1 ml-1">Таксон</label>
-						<input name="taxon" data-testid="addspecimen-taxon" placeholder="Введите название таксона" className="w-full bg-slate-800 border-slate-700 rounded-2xl text-slate-100 focus:ring-teal-500/50 focus:border-teal-500" />
+
+					<div className="relative group">
+						<input
+							value={newRecord.taxon}
+							maxLength={80}
+							onChange={(e) => setNewRecord({ ...newRecord, taxon: e.target.value })}
+							className="w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-surface-container-high)] px-5 pt-6 pb-2 text-base outline-none transition-all"
+							data-testid="addspecimen-taxon"
+						/>
+						<label className={`absolute left-5 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
+							${newRecord.taxon ? 'top-1.5 text-xs' : 'top-4 text-base'}
+							group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-1.5 group-focus-within:text-xs
+						`}>
+							Таксон
+						</label>
 					</div>
-					<div className="pt-4 flex gap-3">
-						<button type="button" onClick={onClose} className="flex-1 px-6 py-3 bg-slate-800 text-slate-300 rounded-2xl hover:bg-slate-700 transition-all font-semibold">Отмена</button>
-						<button type="submit" className="flex-[2] px-6 py-3 bg-teal-600 text-white rounded-2xl hover:bg-teal-500 transition-all font-semibold shadow-lg shadow-teal-900/20">Сохранить</button>
+
+					<div className="relative group">
+						<input
+							list="labs-list"
+							value={newRecord.extrLab}
+							maxLength={40}
+							onChange={(e) => setNewRecord({ ...newRecord, extrLab: e.target.value })}
+							className="w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-surface-container-high)] px-5 pt-6 pb-2 text-base outline-none transition-all"
+							data-testid="addspecimen-lab"
+						/>
+						<label className={`absolute left-5 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
+							${newRecord.extrLab ? 'top-1.5 text-xs' : 'top-4 text-base'}
+							group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-1.5 group-focus-within:text-xs
+						`}>
+							Лаборатория
+						</label>
+					</div>
+
+					<div className="relative group">
+						<input
+							list="ops-list"
+							value={newRecord.extrOperator}
+							maxLength={40}
+							onChange={(e) =>
+								setNewRecord({ ...newRecord, extrOperator: e.target.value })
+							}
+							className="w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-surface-container-high)] px-5 pt-6 pb-2 text-base outline-none transition-all"
+							data-testid="addspecimen-operator"
+						/>
+						<label className={`absolute left-5 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
+							${newRecord.extrOperator ? 'top-1.5 text-xs' : 'top-4 text-base'}
+							group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-1.5 group-focus-within:text-xs
+						`}>
+							Лаборант
+						</label>
+					</div>
+
+					{/* MD3 FAB/Filled Button */}
+					<div className="flex justify-end gap-3 mt-4 pt-2">
+						<button
+							type="button"
+							onClick={onClose}
+							className="px-6 py-2.5 rounded-full text-sm font-medium text-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-primary)]/10 transition-all">
+							Отмена
+						</button>
+						<button
+							type="submit"
+							className="px-8 py-2.5 rounded-full text-sm font-medium bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-md hover:shadow-lg hover:bg-[#005a51] dark:hover:bg-[#40b8a7] active:scale-95 transition-all"
+							data-testid="addspecimen-submit">
+							Сохранить
+						</button>
 					</div>
 				</form>
 			</div>
 		</div>
 	);
-};
+}

@@ -5,27 +5,25 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useDebounce } from '@/hooks/useDebounce';
 import Link from 'next/link';
+import { Search, Plus, Settings, LogOut, Keyboard, Filter } from 'lucide-react';
 
-// Наши компоненты
+// Правильные импорты! (Используем обновленные компоненты из корня)
 import { StatsCards } from './components/StatsCards';
 import { SpecimenTable } from './components/SpecimenTable';
-import { AddSpecimenModal } from './components/Modals/AddSpecimenModal';
-import { EditSpecimenModal } from './components/Modals/EditSpecimenModal';
+import { AddSpecimenModal } from '@/components/features/AddSpecimenModal';
+import { EditSpecimenModal } from '@/components/features/EditSpecimenModal';
 
 export default function JournalPage() {
 	const { data: session, status } = useSession();
 	const router = useRouter();
 	
-	// Состояние данных
 	const [specimens, setSpecimens] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
 	
-	// Пагинация и серверный тотал
 	const [page, setPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalGlobal, setTotalGlobal] = useState(0);
 
-	// Фильтры и поиск
 	const [searchQuery, setSearchQuery] = useState('');
 	const debouncedSearch = useDebounce(searchQuery, 400); 
 	
@@ -33,11 +31,10 @@ export default function JournalPage() {
 	const [filterType, setFilterType] = useState<'all' | 'success' | 'error' | 'fav'>('all');
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-	// Модалки
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [editingSpecimen, setEditingSpecimen] = useState<any | null>(null);
+	const [newRecordData, setNewRecordData] = useState({ id: '', taxon: '', locality: '', extrLab: '', extrOperator: '', extrMethod: '', extrDateRaw: '' });
 
-	// Сбрасываем страницу при изменении фильтров
 	useEffect(() => {
 		setPage(1);
 	}, [debouncedSearch, filterType, sortConfig]);
@@ -47,7 +44,7 @@ export default function JournalPage() {
 		try {
 			const params = new URLSearchParams({
 				page: page.toString(),
-				limit: '50', // Грузим по 50 штук
+				limit: '50',
 				search: debouncedSearch,
 				filter: filterType,
 				sortBy: sortConfig?.key || 'id',
@@ -63,9 +60,6 @@ export default function JournalPage() {
 				setTotalGlobal(data.total || 0);
 			} else if (Array.isArray(data)) {
 				setSpecimens(data);
-			} else {
-				console.error('API вернул неожиданный формат:', data);
-				setSpecimens([]);
 			}
 		} catch (error) {
 			console.error('Ошибка загрузки:', error);
@@ -97,25 +91,29 @@ export default function JournalPage() {
 		}));
 	};
 
-	const handleAddSave = async (data: any) => {
+	const handleAddSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
 		try {
 			await fetch('/api/specimens', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data)
+				body: JSON.stringify(newRecordData)
 			});
 		} finally {
 			setIsAddModalOpen(false);
+			setNewRecordData({ id: '', taxon: '', locality: '', extrLab: '', extrOperator: '', extrMethod: '', extrDateRaw: '' });
 			fetchSpecimens();
 		}
 	};
 
-	const handleEditSave = async (id: string, data: any) => {
+	const handleEditSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!editingSpecimen) return;
 		try {
 			await fetch('/api/specimens', {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ id, ...data })
+				body: JSON.stringify({ id: editingSpecimen.id, ...editingSpecimen })
 			});
 		} finally {
 			setEditingSpecimen(null);
@@ -123,14 +121,11 @@ export default function JournalPage() {
 		}
 	};
 
-	// ФУНКЦИЯ ПЕРЕКЛЮЧЕНИЯ СТАТУСА (теперь бейджики кликабельны!)
 	const handleStatusToggle = async (id: string, marker: string) => {
-		if (marker !== 'ITS') return; // Пока оживляем только ITS
-
+		if (marker !== 'ITS') return; 
 		const specimen = specimens.find(s => s.id === id);
 		if (!specimen) return;
 
-		// Логика переключения: ? -> ✓ -> ✕ -> ?
 		let newStatus: string | null = '✓';
 		if (specimen.itsStatus === '✓') newStatus = '✕';
 		else if (specimen.itsStatus === '✕') newStatus = null;
@@ -142,85 +137,86 @@ export default function JournalPage() {
 				body: JSON.stringify({ singleId: id, singleStatus: newStatus })
 			});
 			fetchSpecimens();
-		} catch (error) {
-			console.error('Ошибка при обновлении статуса:', error);
-		}
+		} catch (error) {}
 	};
 
 	if (status === 'loading') return null;
 
 	return (
-		<main className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 font-sans selection:bg-teal-500/30 pb-32">
+		<main className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] p-4 md:p-8 pb-32 transition-colors duration-300">
 			<div className="max-w-[1600px] mx-auto">
-				{/* Header */}
-				<header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-					<div className="flex items-center gap-4">
-						<div className="p-3 bg-teal-500 rounded-2xl shadow-lg shadow-teal-500/20 text-2xl flex items-center justify-center">
-							📊
+				
+				<header className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-10">
+					<div className="flex items-center gap-5">
+						<div className="w-14 h-14 bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] rounded-[1.25rem] shadow-sm flex items-center justify-center text-2xl font-black">
+							ДНК
 						</div>
 						<div>
-							<h1 className="text-3xl font-black tracking-tight text-white">База Проб</h1>
-							<p className="text-slate-500 text-sm font-medium">Доступ: {session?.user?.name || 'Администратор'}</p>
+							<h1 className="text-4xl font-normal tracking-tight">Журнал Проб</h1>
+							<p className="text-[var(--md-sys-color-outline)] text-sm font-medium mt-1">
+								Доступ: {session?.user?.name || 'Администратор'}
+							</p>
 						</div>
 					</div>
 
-					<div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-						<div className="relative flex-1 md:w-64 lg:w-80">
-							<span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-lg">🔍</span>
+					<div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+						<div className="relative flex-1 xl:w-80 group">
+							<Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--md-sys-color-outline)] group-focus-within:text-[var(--md-sys-color-primary)] transition-colors" />
 							<input
-								id="main-search"
 								type="text"
 								placeholder="Поиск по ID или таксону..."
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
-								className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:ring-2 focus:ring-teal-500/50 transition-all outline-none text-sm font-medium placeholder:text-slate-600"
+								className="w-full pl-12 pr-4 py-4 bg-[var(--md-sys-color-surface-container-high)] rounded-full outline-none text-base placeholder:text-[var(--md-sys-color-outline)] transition-all border-2 border-transparent focus:border-[var(--md-sys-color-primary)] focus:bg-[var(--md-sys-color-surface)]"
 							/>
 						</div>
 
-						<button className="hidden lg:flex items-center gap-2 px-4 py-3.5 bg-slate-800/50 hover:bg-slate-700 text-slate-300 rounded-2xl transition-all font-medium text-sm">
-							<span className="text-lg">⌨️</span>
-							<span>Клавиши</span>
+						<button className="hidden lg:flex items-center gap-2 px-5 py-4 bg-[var(--md-sys-color-surface-container)] hover:bg-[var(--md-sys-color-surface-container-high)] rounded-full transition-all font-medium text-sm">
+							<Keyboard className="w-5 h-5" /> Клавиши
 						</button>
 						
-						<button className="hidden lg:flex items-center gap-2 px-4 py-3.5 bg-slate-800/50 hover:bg-slate-700 text-slate-300 rounded-2xl transition-all font-medium text-sm">
-							<span className="text-lg">⚡</span>
-							<span>Умный фильтр</span>
+						<button className="hidden lg:flex items-center gap-2 px-5 py-4 bg-[var(--md-sys-color-surface-container)] hover:bg-[var(--md-sys-color-surface-container-high)] rounded-full transition-all font-medium text-sm">
+							<Filter className="w-5 h-5" /> Умный фильтр
 						</button>
 
-						<button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 px-5 py-3.5 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl transition-all font-bold shadow-lg shadow-teal-900/20 active:scale-95">
-							<span className="text-lg">➕</span>
+						<button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 px-6 py-4 bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] hover:shadow-md rounded-[1rem] transition-all font-medium active:scale-95">
+							<Plus className="w-6 h-6" />
 							<span className="hidden sm:inline">Новая проба</span>
 						</button>
 
-						<Link href="/admin" className="flex items-center gap-2 px-5 py-3.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 rounded-2xl transition-all font-bold shadow-lg">
-							<span className="text-lg">⚙️</span>
+						<Link href="/admin" className="flex items-center gap-2 px-5 py-4 bg-[var(--md-sys-color-surface-container)] hover:bg-[var(--md-sys-color-surface-container-high)] rounded-[1rem] transition-all font-medium">
+							<Settings className="w-5 h-5" />
 							<span className="hidden sm:inline">Админ</span>
 						</Link>
 
-						<button onClick={() => signOut()} title="Выйти" className="p-3.5 bg-slate-800/50 border border-slate-700/50 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-2xl transition-all flex items-center justify-center">
-							<span className="text-lg">🚪</span>
+						<button onClick={() => signOut()} title="Выйти" className="p-4 bg-[var(--md-sys-color-surface-container)] hover:bg-[var(--md-sys-color-error-container)] hover:text-[var(--md-sys-color-on-error-container)] rounded-full transition-all flex items-center justify-center">
+							<LogOut className="w-5 h-5" />
 						</button>
 					</div>
 				</header>
 
 				<StatsCards {...stats} />
 
-				{/* Filter Toolbar */}
-				<div className="flex items-center gap-2 mb-6">
-					{(['all', 'success', 'error', 'fav'] as const).map((type) => (
-						<button
-							key={type}
-							onClick={() => setFilterType(type)}
-							className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${
-								filterType === type ? 'bg-teal-600 text-white shadow-lg' : 'bg-slate-800/40 text-slate-400 hover:bg-slate-800'
-							}`}
-						>
-							{type === 'all' && 'Все'}
-							{type === 'success' && 'Успешные'}
-							{type === 'error' && 'С ошибками'}
-							{type === 'fav' && <div className="flex items-center gap-1"><span className="text-yellow-400">⭐</span> Избранное</div>}
-						</button>
-					))}
+				<div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 custom-scrollbar">
+					{(['all', 'success', 'error', 'fav'] as const).map((type) => {
+						const isSelected = filterType === type;
+						return (
+							<button
+								key={type}
+								onClick={() => setFilterType(type)}
+								className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap border border-[var(--md-sys-color-outline-variant)]
+									${isSelected 
+										? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] border-transparent' 
+										: 'bg-transparent text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container)]'
+									}`}
+							>
+								{type === 'all' && 'Все пробы'}
+								{type === 'success' && 'Успешные'}
+								{type === 'error' && 'С ошибками'}
+								{type === 'fav' && '⭐ Избранное'}
+							</button>
+						);
+					})}
 				</div>
 
 				<SpecimenTable 
@@ -237,68 +233,70 @@ export default function JournalPage() {
 					}}
 					onEdit={setEditingSpecimen}
 					onPcr={() => {}} 
-					onStatusClick={handleStatusToggle} // <-- Привязали функцию клика!
+					onStatusClick={handleStatusToggle}
 					searchQuery={debouncedSearch}
 					sortConfig={sortConfig}
 					onSort={handleSort}
 				/>
 
-				{/* Пагинация */}
 				{totalPages > 1 && (
-					<div className="flex items-center justify-between mt-6 bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl">
+					<div className="flex items-center justify-between mt-8 bg-[var(--md-sys-color-surface-container-low)] p-4 rounded-[1.5rem]">
 						<button
 							onClick={() => setPage(p => Math.max(1, p - 1))}
 							disabled={page === 1 || loading}
-							className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all"
+							className="px-6 py-3 bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-surface-container-high)] disabled:opacity-40 rounded-full text-sm font-medium transition-all"
 						>
-							<span>◀️</span> Назад
+							Назад
 						</button>
 						
-						<span className="text-slate-400 text-sm font-medium">
-							Страница <span className="text-slate-100 font-bold">{page}</span> из {totalPages}
+						<span className="text-[var(--md-sys-color-outline)] text-sm font-medium">
+							Страница <span className="text-[var(--md-sys-color-on-surface)] font-bold">{page}</span> из {totalPages}
 						</span>
 
 						<button
 							onClick={() => setPage(p => Math.min(totalPages, p + 1))}
 							disabled={page === totalPages || loading}
-							className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all"
+							className="px-6 py-3 bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-surface-container-high)] disabled:opacity-40 rounded-full text-sm font-medium transition-all"
 						>
-							Вперёд <span>▶️</span>
+							Вперёд
 						</button>
 					</div>
 				)}
 			</div>
 
 			<AddSpecimenModal 
-				isOpen={isAddModalOpen} 
+				open={isAddModalOpen} 
 				onClose={() => setIsAddModalOpen(false)} 
-				onSave={handleAddSave} 
+				newRecord={newRecordData as any} 
+				setNewRecord={setNewRecordData as any} 
+				onSubmit={handleAddSubmit} 
+				validationError={false} 
 			/>
 			
 			<EditSpecimenModal 
 				specimen={editingSpecimen} 
 				onClose={() => setEditingSpecimen(null)} 
-				onSave={handleEditSave} 
+				onChange={setEditingSpecimen}
+				onSubmit={handleEditSubmit} 
 			/>
 
-			{/* Панель массовых действий */}
 			{selectedIds.size > 0 && (
-				<div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-2xl bg-slate-800/90 backdrop-blur-xl border border-teal-500/30 rounded-2xl p-4 flex items-center justify-between shadow-2xl shadow-teal-900/20 z-40 animate-in slide-in-from-bottom-4">
-					<div className="flex items-center gap-3">
-						<span className="flex items-center justify-center w-8 h-8 rounded-full bg-teal-500 text-white font-bold text-sm">
+				<div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-[var(--md-sys-color-inverse-surface)] text-[var(--md-sys-color-inverse-on-surface)] rounded-[1.5rem] p-4 flex items-center justify-between shadow-2xl z-40 animate-in slide-in-from-bottom-8">
+					<div className="flex items-center gap-4 pl-2">
+						<span className="flex items-center justify-center w-8 h-8 rounded-full bg-[var(--md-sys-color-inverse-primary)] text-[var(--md-sys-color-primary)] font-bold text-sm">
 							{selectedIds.size}
 						</span>
-						<span className="text-teal-100 font-medium">проб выбрано</span>
+						<span className="font-medium">выбрано</span>
 					</div>
 					<div className="flex gap-2">
 						<button 
 							onClick={() => setSelectedIds(new Set())}
-							className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+							className="px-5 py-2.5 text-sm font-medium text-[var(--md-sys-color-inverse-primary)] hover:bg-white/10 rounded-full transition-colors"
 						>
 							Сбросить
 						</button>
-						<button className="px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg">
-							Массовое действие
+						<button className="px-6 py-2.5 bg-[var(--md-sys-color-inverse-primary)] text-[var(--md-sys-color-primary)] hover:brightness-110 text-sm font-medium rounded-full transition-all">
+							Действия
 						</button>
 					</div>
 				</div>

@@ -1,73 +1,38 @@
-import { Fragment } from 'react';
+'use client';
 
-/** Экранирует спецсимволы для RegExp, работает безопасно с UTF-16 */
-function escapeRegExp(s: string) {
-	// Принудительно приводим к строке, чтобы избежать ошибки .replace у undefined
-	const safeStr = String(s || '');
-	return safeStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+import React from 'react';
 
-/**
- * Подсвечивает все вхождения query в text.
- * Учтены edge-cases: null/undefined значения из БД, пустые строки, эмодзи.
- */
-export function HighlightMatch({
-	text,
-	query,
-}: {
-	text: string | null | undefined;
-	query: string;
-}) {
-	// 1. Защита от null/undefined значений, которые теперь приходят из Prisma 7
-	const safeText = text || '';
-	const q = (query || '').trim();
+type Props = {
+	text?: string | null;
+	query?: string;
+};
 
-	if (!q || !safeText) return <>{safeText}</>;
+export function HighlightMatch({ text, query }: Props) {
+	if (!text) return null;
+	if (!query || !query.trim()) return <>{text}</>;
 
-	// 2. Парсим query как слова
-	const terms = Array.from(
-		new Set(
-			q
-				.split(/[\s]+/)
-				.map((t) => t.trim())
-				.filter(Boolean),
-		),
-	).sort((a, b) => b.length - a.length);
+	// Экранируем спецсимволы в запросе для безопасности регулярного выражения
+	const escapeRegExp = (string: string) => {
+		return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	};
 
-	if (terms.length === 0) return <>{safeText}</>;
+	const regex = new RegExp(`(${escapeRegExp(query.trim())})`, 'gi');
+	const parts = text.split(regex);
 
-	try {
-		const pattern = terms.map(escapeRegExp).join('|');
-		if (!pattern) return <>{safeText}</>;
-
-		const regex = new RegExp(`(${pattern})`, 'giu');
-		const parts = [];
-		let lastIndex = 0;
-		let match: RegExpExecArray | null;
-
-		while ((match = regex.exec(safeText)) !== null) {
-			if (match.index > lastIndex) {
-				parts.push(
-					<Fragment key={lastIndex}>{safeText.slice(lastIndex, match.index)}</Fragment>,
-				);
-			}
-			parts.push(
-				<mark
-					key={match.index}
-					className="rounded bg-amber-200/90 px-0.5 text-inherit dark:bg-amber-800/60">
-					{match[0]}
-				</mark>,
-			);
-			lastIndex = regex.lastIndex;
-			if (match.index === regex.lastIndex) regex.lastIndex++;
-		}
-
-		if (lastIndex < safeText.length) {
-			parts.push(<Fragment key={lastIndex}>{safeText.slice(lastIndex)}</Fragment>);
-		}
-		return <>{parts}</>;
-	} catch (e) {
-		console.error('Highlight error:', e);
-		return <>{safeText}</>;
-	}
+	return (
+		<>
+			{parts.map((part, i) =>
+				part.toLowerCase() === query.trim().toLowerCase() ? (
+					<mark 
+						key={i} 
+						className="bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] px-1 rounded-md font-bold transition-all shadow-sm"
+					>
+						{part}
+					</mark>
+				) : (
+					<span key={i}>{part}</span>
+				)
+			)}
+		</>
+	);
 }

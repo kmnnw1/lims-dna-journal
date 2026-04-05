@@ -1,8 +1,26 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useState, Suspense } from 'react';
+import { useState, Suspense, forwardRef } from 'react';
 import { FlaskConical, AlertCircle, ArrowRight } from 'lucide-react';
+
+// Локальный хелпер для полей MD3 Filled
+const MD3Field = forwardRef<HTMLInputElement, { label: string; value: string } & React.InputHTMLAttributes<HTMLInputElement>>(({ label, value, className = '', ...props }, ref) => {
+	const baseClass = `w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-surface-container-highest)] px-6 pt-7 pb-3 text-base outline-none transition-all text-[var(--md-sys-color-on-surface)] ${className}`;
+	
+	return (
+		<div className="relative group w-full">
+			<input ref={ref} value={value} className={baseClass} {...props} />
+			<label className={`absolute left-6 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)] font-medium
+				${value ? 'top-2 text-xs' : 'top-5 text-base'}
+				group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-2 group-focus-within:text-xs
+			`}>
+				{label}
+			</label>
+		</div>
+	);
+});
+MD3Field.displayName = 'MD3Field';
 
 function LoginContent() {
 	const [username, setUsername] = useState('');
@@ -35,54 +53,48 @@ function LoginContent() {
 	};
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4 font-sans text-zinc-900 dark:text-zinc-100 relative overflow-hidden">
-			{/* Декоративные круги на фоне */}
-			<div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-teal-600/5 dark:bg-teal-900/20 blur-3xl pointer-events-none" />
-			<div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-emerald-600/5 dark:bg-emerald-900/20 blur-3xl pointer-events-none" />
+		<div className="min-h-screen flex items-center justify-center bg-[var(--md-sys-color-surface)] p-4 font-sans relative overflow-hidden transition-colors duration-300">
+			{/* Декоративные пятна (MD3 Expressive flavor) */}
+			<div className="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-[var(--md-sys-color-primary-container)]/30 blur-[100px] pointer-events-none" />
+			<div className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-[var(--md-sys-color-primary)]/10 blur-[100px] pointer-events-none" />
 
-			<div className="w-full max-w-[420px] bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-xl dark:shadow-2xl border border-zinc-200/50 dark:border-zinc-800/50 p-8 sm:p-10 relative z-10 animate-in fade-in zoom-in-95 duration-500">
+			{/* MD3 Dialog Surface */}
+			<div className="w-full max-w-[440px] bg-[var(--md-sys-color-surface-container-low)] rounded-[3rem] shadow-2xl p-8 sm:p-12 relative z-10 animate-in fade-in zoom-in-95 duration-500">
+				
 				<div className="flex flex-col items-center text-center mb-10">
-					<div className="w-20 h-20 bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-400 rounded-[1.5rem] flex items-center justify-center mb-6 shadow-sm rotate-3">
-						<FlaskConical className="w-10 h-10 -rotate-3" strokeWidth={2} />
+					<div className="w-24 h-24 bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] rounded-[1.75rem] flex items-center justify-center mb-8 shadow-sm rotate-3">
+						<FlaskConical className="w-12 h-12 -rotate-3" strokeWidth={1.5} />
 					</div>
-					<h1 className="text-3xl font-bold tracking-tight mb-2">Добро пожаловать</h1>
-					<p className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">
+					<h1 className="text-4xl font-normal tracking-tight text-[var(--md-sys-color-on-surface)] mb-3">
+						Вход в систему
+					</h1>
+					<p className="text-[var(--md-sys-color-outline)] text-base font-medium">
 						Лабораторный журнал (LIMS)
 					</p>
 				</div>
 
 				<form onSubmit={handleSubmit} className="space-y-5">
-					<div className="space-y-1">
-						<label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 ml-4">
-							Имя пользователя (Логин)
-						</label>
-						<input
-							type="text"
-							required
-							value={username}
-							onChange={(e) => setUsername(e.target.value)}
-							className="w-full rounded-3xl border-none bg-zinc-100/80 dark:bg-zinc-800/80 px-6 py-4 text-base outline-none focus:ring-2 focus:ring-teal-600 dark:focus:bg-zinc-800 transition-all placeholder:text-zinc-400"
-							placeholder="Введите логин"
-						/>
-					</div>
+					<MD3Field
+						label="Имя пользователя"
+						type="text"
+						required
+						value={username}
+						onChange={(e) => setUsername(e.target.value)}
+						autoComplete="username"
+					/>
 
-					<div className="space-y-1">
-						<label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 ml-4">
-							Пароль
-						</label>
-						<input
-							type="password"
-							required
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							className="w-full rounded-3xl border-none bg-zinc-100/80 dark:bg-zinc-800/80 px-6 py-4 text-base outline-none focus:ring-2 focus:ring-teal-600 dark:focus:bg-zinc-800 transition-all placeholder:text-zinc-400"
-							placeholder="••••••••"
-						/>
-					</div>
+					<MD3Field
+						label="Пароль"
+						type="password"
+						required
+						value={password}
+						onChange={(e) => setPassword(e.target.value)}
+						autoComplete="current-password"
+					/>
 
 					{error && (
-						<div className="bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 p-4 rounded-2xl text-sm font-medium flex items-center gap-3 animate-in slide-in-from-top-2">
-							<AlertCircle className="w-5 h-5 shrink-0" />
+						<div className="bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-on-error-container)] p-5 rounded-[1.5rem] text-sm font-medium flex items-center gap-3 animate-in slide-in-from-top-2">
+							<AlertCircle className="w-6 h-6 shrink-0" />
 							{error}
 						</div>
 					)}
@@ -90,13 +102,13 @@ function LoginContent() {
 					<button
 						type="submit"
 						disabled={loading}
-						className="w-full flex items-center justify-center gap-3 bg-teal-600 hover:bg-teal-700 text-white rounded-full px-6 py-4 text-base font-bold shadow-md hover:shadow-lg active:scale-[0.98] transition-all mt-4 disabled:opacity-70 disabled:cursor-not-allowed">
+						className="w-full flex items-center justify-center gap-3 bg-[var(--md-sys-color-primary)] hover:brightness-110 text-[var(--md-sys-color-on-primary)] rounded-full px-8 py-5 text-lg font-medium shadow-md hover:shadow-lg active:scale-95 transition-all mt-6 disabled:opacity-70 disabled:active:scale-100">
 						{loading ? (
-							<div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+							<div className="w-7 h-7 border-4 border-white/30 border-t-white rounded-full animate-spin" />
 						) : (
 							<>
-								Войти в систему
-								<ArrowRight className="w-5 h-5" />
+								Войти
+								<ArrowRight className="w-6 h-6" />
 							</>
 						)}
 					</button>
@@ -110,8 +122,8 @@ export default function LoginPage() {
 	return (
 		<Suspense
 			fallback={
-				<div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-					<div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full"></div>
+				<div className="min-h-screen bg-[var(--md-sys-color-surface)] flex items-center justify-center">
+					<div className="animate-spin w-10 h-10 border-4 border-[var(--md-sys-color-primary)]/30 border-t-[var(--md-sys-color-primary)] rounded-full"></div>
 				</div>
 			}>
 			<LoginContent />

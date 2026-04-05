@@ -11,39 +11,42 @@ interface StatsCardsProps {
 
 export const StatsCards: React.FC<StatsCardsProps> = ({ total, successful, others }) => {
 	return (
-		<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-			<div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-3xl">
-				<div className="flex items-center gap-4">
-					<div className="p-3 bg-teal-500/20 rounded-2xl text-teal-400">
-						<FlaskConical className="w-6 h-6" />
+		<div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+			{/* MD3 Tonal Card: Primary */}
+			<div className="bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] p-6 rounded-[2rem] shadow-sm transition-transform hover:scale-[1.02]">
+				<div className="flex items-center gap-5">
+					<div className="p-4 bg-[var(--md-sys-color-on-primary-container)]/10 rounded-full text-[var(--md-sys-color-primary)]">
+						<FlaskConical className="w-8 h-8" strokeWidth={1.5} />
 					</div>
 					<div>
-						<p className="text-slate-400 text-sm font-medium uppercase tracking-wider">Всего проб</p>
-						<p className="text-3xl font-bold text-slate-100 tabular-nums">{total}</p>
+						<p className="text-sm font-medium tracking-wide uppercase opacity-80 mb-1">Всего проб</p>
+						<p className="text-4xl font-normal tabular-nums tracking-tight">{total}</p>
 					</div>
 				</div>
 			</div>
 
-			<div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-3xl">
-				<div className="flex items-center gap-4">
-					<div className="p-3 bg-emerald-500/20 rounded-2xl text-emerald-400">
-						<CheckCircle className="w-6 h-6" />
+			{/* MD3 Tonal Card: Success (Custom MD3 Green) */}
+			<div className="bg-[#e8f5e9] dark:bg-[#1b5e20]/40 text-[#1b5e20] dark:text-[#a5d6a7] p-6 rounded-[2rem] shadow-sm transition-transform hover:scale-[1.02]">
+				<div className="flex items-center gap-5">
+					<div className="p-4 bg-[#4caf50]/20 rounded-full text-[#2e7d32] dark:text-[#81c784]">
+						<CheckCircle className="w-8 h-8" strokeWidth={1.5} />
 					</div>
 					<div>
-						<p className="text-slate-400 text-sm font-medium uppercase tracking-wider">Успешные ITS</p>
-						<p className="text-3xl font-bold text-slate-100 tabular-nums">{successful}</p>
+						<p className="text-sm font-medium tracking-wide uppercase opacity-80 mb-1">Успешные ITS</p>
+						<p className="text-4xl font-normal tabular-nums tracking-tight">{successful}</p>
 					</div>
 				</div>
 			</div>
 
-			<div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-3xl">
-				<div className="flex items-center gap-4">
-					<div className="p-3 bg-rose-500/20 rounded-2xl text-rose-400">
-						<AlertTriangle className="w-6 h-6" />
+			{/* MD3 Tonal Card: Error Container */}
+			<div className="bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-on-error-container)] p-6 rounded-[2rem] shadow-sm transition-transform hover:scale-[1.02]">
+				<div className="flex items-center gap-5">
+					<div className="p-4 bg-[var(--md-sys-color-error)]/10 rounded-full text-[var(--md-sys-color-error)]">
+						<AlertTriangle className="w-8 h-8" strokeWidth={1.5} />
 					</div>
 					<div>
-						<p className="text-slate-400 text-sm font-medium uppercase tracking-wider">Остальные</p>
-						<p className="text-3xl font-bold text-slate-100 tabular-nums">{others}</p>
+						<p className="text-sm font-medium tracking-wide uppercase opacity-80 mb-1">Остальные</p>
+						<p className="text-4xl font-normal tabular-nums tracking-tight">{others}</p>
 					</div>
 				</div>
 			</div>
