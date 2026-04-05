@@ -1,68 +1,62 @@
 {
-  "id": "/",
-  "name": "Журнал проб ДНК и ПЦР",
-  "short_name": "ДНК журнал",
-  "description": "Учет проб, выделения ДНК, ведение ПЦР и управление лабораторией. Приложение с PWA для регистрации, поиска и отслеживания биологических образцов.",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#fafafa",
-  "theme_color": "#0d9488",
-  "lang": "ru",
-  "categories": [
-    "medical",
-    "productivity",
-    "science",
-    "health",
-    "business"
-  ],
-  "dir": "ltr",
-  "prefer_related_applications": false,
-  "shortcuts": [
-    {
-      "name": "Создать пробу",
-      "description": "Быстро создать новую пробу",
-      "url": "/samples/new",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
-    },
-    {
-      "name": "Быстрый поиск",
-      "description": "Открыть поиск проб",
-      "url": "/samples",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
-    }
-  ],
-  "icons": [
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
-  ]
+	"id": "/",
+	"name": "Журнал проб ДНК и ПЦР",
+	"short_name": "ДНК журнал",
+	"description": "Учет проб, выделения ДНК, ведение ПЦР и управление лабораторией. Приложение с PWA для регистрации, поиска и отслеживания биологических образцов.",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"orientation": "portrait",
+	"background_color": "#fafafa",
+	"theme_color": "#0d9488",
+	"lang": "ru",
+	"categories": ["medical", "productivity", "science", "health", "business"],
+	"dir": "ltr",
+	"prefer_related_applications": false,
+	"shortcuts": [
+		{
+			"name": "Создать пробу",
+			"description": "Быстро создать новую пробу",
+			"url": "/samples/new",
+			"icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}]
+		},
+		{
+			"name": "Быстрый поиск",
+			"description": "Открыть поиск проб",
+			"url": "/samples",
+			"icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}]
+		}
+	],
+	"icons": [
+		{
+			"src": "/icon-192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/icon-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/icon-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable"
+		},
+		{
+			"src": "/apple-touch-icon.png",
+			"sizes": "180x180",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/icon.svg",
+			"sizes": "any",
+			"type": "image/svg+xml",
+			"purpose": "any"
+		}
+	]
 }

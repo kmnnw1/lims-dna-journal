@@ -1,6 +1,8 @@
-export default {
-	schema: {
-		kind: 'local',
-		path: 'prisma/schema.prisma',
+import {defineConfig} from '@prisma/config';
+
+export default defineConfig({
+	earlyAccess: true,
+	datasource: {
+		url: process.env.DATABASE_URL || 'file:./dev.db',
 	},
-};
+});

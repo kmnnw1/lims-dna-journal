@@ -4,31 +4,31 @@
 # Обработка логов и автоматический рестарт, изоляция данных и гибкость портов.
 
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: lab-journal-app
-    ports:
-      - "${PORT:-3000}:3000"
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: file:/data/dev.db
-      DATA_XLSX_PATH: ${DATA_XLSX_PATH:-/data/data.xlsx}
-      HOSTNAME: 0.0.0.0
-      NODE_ENV: production
-      NEXT_TELEMETRY_DISABLED: 1
-    volumes:
-      - ./lab-data:/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: lab-journal-app
+        ports:
+            - '${PORT:-3000}:3000'
+        env_file:
+            - .env
+        environment:
+            DATABASE_URL: file:/data/dev.db
+            DATA_XLSX_PATH: ${DATA_XLSX_PATH:-/data/data.xlsx}
+            HOSTNAME: 0.0.0.0
+            NODE_ENV: production
+            NEXT_TELEMETRY_DISABLED: 1
+        volumes:
+            - ./lab-data:/data
+        restart: unless-stopped
+        healthcheck:
+            test: ['CMD-SHELL', 'curl -f http://localhost:3000/api/health || exit 1']
+            interval: 30s
+            timeout: 10s
+            retries: 3
+        logging:
+            driver: 'json-file'
+            options:
+                max-size: '10m'
+                max-file: '3'

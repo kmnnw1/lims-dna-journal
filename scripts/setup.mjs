@@ -44,10 +44,24 @@ if (!existsSync(envPath)) {
 let envText = readFileSync(envPath, 'utf8');
 let modified = false;
 
+// Проверка секрета
 if (/^NEXTAUTH_SECRET=\s*$/m.test(envText) || /^NEXTAUTH_SECRET=$/m.test(envText)) {
 	const secret = randomBytes(32).toString('base64');
 	envText = envText.replace(/^NEXTAUTH_SECRET=.*$/m, `NEXTAUTH_SECRET="${secret}"`);
 	modified = true;
+	process.env.NEXTAUTH_SECRET = secret;
+}
+
+// Проверка БД
+if (!/^DATABASE_URL=/m.test(envText)) {
+	const dbUrl = 'file:./dev.db';
+	envText += `\nDATABASE_URL="${dbUrl}"\n`;
+	modified = true;
+	process.env.DATABASE_URL = dbUrl;
+} else {
+	// Если переменная уже есть в файле, но не в процессе — загружаем её
+	const match = envText.match(/^DATABASE_URL=["']?(.+?)["']?$/m);
+	if (match) process.env.DATABASE_URL = match[1];
 }
 
 if (modified) writeFileSync(envPath, envText);
