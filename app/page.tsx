@@ -278,20 +278,35 @@ function Home() {
     if (sortKey === key) { setSortOrder((sortOrder * -1) as 1 | -1); } else { setSortKey(key); setSortOrder(1); }
   };
 
+  // ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ EXCELJS
   const exportToExcel = async () => {
     try {
-      const xlsx = await import('xlsx');
-      const ws = xlsx.utils.json_to_sheet(specimens);
-      const wb = xlsx.utils.book_new();
-      xlsx.utils.book_append_sheet(wb, ws, 'Журнал');
-      xlsx.writeFile(wb, 'Журнал_проб.xlsx');
+      const ExcelJS = (await import('exceljs')).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Журнал');
+
+      if (specimens.length > 0) {
+        worksheet.columns = Object.keys(specimens[0]).map(key => ({ header: key, key: key }));
+        worksheet.addRows(specimens);
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Журнал_проб.xlsx';
+      a.click();
+      window.URL.revokeObjectURL(url);
     } catch { showToast('Не удалось сформировать Excel'); }
   };
 
+  // ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ EXCELJS
   const exportExtractionJournal = async () => {
     try {
-      const xlsx = await import('xlsx');
+      const ExcelJS = (await import('exceljs')).default;
       const list = selectedIds.length > 0 ? specimens.filter(s => selectedIds.includes(s.id)) : filteredSpecimens;
+      
       const dataToExport = list.map(s => ({
         'Дата': s.extrDateRaw || '',
         'Лаборатория': s.extrLab || '',
@@ -302,10 +317,23 @@ function Home() {
         'Locality': s.locality || '',
         'Заметки': s.notes || ''
       }));
-      const ws = xlsx.utils.json_to_sheet(dataToExport);
-      const wb = xlsx.utils.book_new();
-      xlsx.utils.book_append_sheet(wb, ws, 'Журнал выделений');
-      xlsx.writeFile(wb, 'Журнал_выделений.xlsx');
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Журнал выделений');
+
+      if (dataToExport.length > 0) {
+        worksheet.columns = Object.keys(dataToExport[0]).map(key => ({ header: key, key: key }));
+        worksheet.addRows(dataToExport);
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Журнал_выделений.xlsx';
+      a.click();
+      window.URL.revokeObjectURL(url);
       setToolsSheetOpen(false);
     } catch { showToast('Не удалось сформировать Excel'); }
   };

@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 export type SourceRef = { sheet: string; row: number };
 
@@ -149,29 +149,18 @@ function getByKey(row: unknown[], bindings: ColumnBinding[], baseKey: string): s
 	return "";
 }
 
-export function collectRowCellComments(sheet: XLSX.WorkSheet, rowIndex0: number): string {
-	if (!sheet["!ref"]) return "";
-	const range = XLSX.utils.decode_range(sheet["!ref"]);
-	if (rowIndex0 < range.s.r || rowIndex0 > range.e.r) return "";
+export function collectRowCellComments(sheet: ExcelJS.Worksheet, rowIndex0: number): string {
+	const excelRowIndex = rowIndex0 + 1;
+	const row = sheet.getRow(excelRowIndex);
+	if (!row) return "";
+
 	const texts: string[] = [];
-	for (let c = range.s.c; c <= range.e.c; c++) {
-		const addr = XLSX.utils.encode_cell({ r: rowIndex0, c });
-		const cell = sheet[addr] as { c?: unknown } | undefined;
-		if (!cell?.c) continue;
-		const block = cell.c;
-		const arr = Array.isArray(block) ? block : [block];
-		for (const item of arr) {
-			if (item == null) continue;
-			if (typeof item === "string") {
-				if (item.trim()) texts.push(item.trim());
-				continue;
-			}
-			if (typeof item === "object" && "t" in item && typeof (item as { t?: string }).t === "string") {
-				const tt = (item as { t: string }).t.trim();
-				if (tt) texts.push(tt);
-			}
+	row.eachCell({ includeEmpty: true }, (cell) => {
+		if (cell.note) {
+			const noteText = typeof cell.note === 'string' ? cell.note : cell.note.texts?.map(t => t.text).join('') || '';
+			if (noteText.trim()) texts.push(noteText.trim());
 		}
-	}
+	});
 	return texts.join(" | ");
 }
 
@@ -244,7 +233,7 @@ const NOTE_EXTRA_KEYS = new Set([
 export function parseRowWithBindings(
 	row: unknown[],
 	bindings: ColumnBinding[],
-	sheet: XLSX.WorkSheet,
+	sheet: ExcelJS.Worksheet,
 	sheetRowIndex0: number,
 	sheetName: string
 ): ParsedSpecimenRow | null {
@@ -337,7 +326,7 @@ export function parseRowWithBindings(
 
 export function parseRowLegacy(
 	row: unknown[],
-	sheet: XLSX.WorkSheet,
+	sheet: ExcelJS.Worksheet,
 	sheetRowIndex0: number,
 	sheetName: string
 ): ParsedSpecimenRow | null {
@@ -380,7 +369,7 @@ export function parseRowLegacy(
 
 export function parseLySheetRows(
 	rawData: unknown[][],
-	sheet: XLSX.WorkSheet,
+	sheet: ExcelJS.Worksheet,
 	sheetName: string
 ): ParsedSpecimenRow[] {
 	const out: ParsedSpecimenRow[] = [];
@@ -441,8 +430,17 @@ export function parseLySheetRows(
 	return out;
 }
 
-export function parseSheetToRows(sheet: XLSX.WorkSheet, sheetName: string): ParsedSpecimenRow[] {
-	const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as unknown[][];
+function extractRawDataFromSheet(sheet: ExcelJS.Worksheet): unknown[][] {
+	const rawData: unknown[][] = [];
+	sheet.eachRow({ includeEmpty: true }, (row) => {
+		const rowValues = Array.isArray(row.values) ? row.values.slice(1) : [];
+		rawData.push(rowValues.map(v => (v === undefined || v === null) ? "" : v));
+	});
+	return rawData;
+}
+
+export function parseSheetToRows(sheet: ExcelJS.Worksheet, sheetName: string): ParsedSpecimenRow[] {
+	const rawData = extractRawDataFromSheet(sheet);
 	if (!rawData.length) return [];
 
 	const sn = sheetName.trim();
@@ -468,7 +466,7 @@ export function parseSheetToRows(sheet: XLSX.WorkSheet, sheetName: string): Pars
 }
 
 function parseSheetLegacyRows(
-	sheet: XLSX.WorkSheet,
+	sheet: ExcelJS.Worksheet,
 	sheetName: string,
 	rawData: unknown[][]
 ): ParsedSpecimenRow[] {
@@ -503,7 +501,6 @@ function formatSources(sources: SourceRef[]): string {
 	return `[Импорт: ${parts.join('; ')}]`;
 }
 
-// Слияние данных по ID
 export function mergeById(rows: ParsedSpecimenRow[]): ParsedSpecimenRow[] {
 	const map = new Map<string, ParsedSpecimenRow>();
 
@@ -555,7 +552,6 @@ export function mergeById(rows: ParsedSpecimenRow[]): ParsedSpecimenRow[] {
 		const sourceStr = formatSources(r._sources || []);
 		const finalNotes = [r.notes, sourceStr].filter(Boolean).join("\n\n");
 		const { _sources, ...rest } = r;
-		// 🛠 КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: пустая строка в extrDate -> null
 		if (rest.extrDate === "") rest.extrDate = null;
 		return { ...rest, notes: finalNotes };
 	});

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import * as xlsx from 'xlsx';
+import ExcelJS from 'exceljs';
 import fs from 'fs';
 import path from 'path';
 import { getServerSession } from 'next-auth/next';
@@ -37,18 +37,19 @@ export async function GET() {
       );
     }
 
-    // Чтение файла и парсинг книги
-    const fileBuffer = fs.readFileSync(filePath);
-    const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+    // Чтение файла через ExcelJS
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(filePath);
 
     const dataToInsert: ParsedSpecimenRow[] = [];
+    const sheetNames: string[] = [];
 
-    for (const sheetName of workbook.SheetNames) {
-      const sheet = workbook.Sheets[sheetName];
-      // Парсим каждый лист в строки, добавляем в dataToInsert
-      const rows = parseSheetToRows(sheet, sheetName);
+    // Парсим каждый лист
+    workbook.eachSheet((sheet) => {
+      sheetNames.push(sheet.name);
+      const rows = parseSheetToRows(sheet, sheet.name);
       dataToInsert.push(...rows);
-    }
+    });
 
     const uniqueData = mergeById(dataToInsert);
 
@@ -70,8 +71,8 @@ export async function GET() {
     // Итоговый ответ с подробной статистикой импорта
     return NextResponse.json({
       success: true,
-      message: `Импортировано ${inserted} проб (листов: ${workbook.SheetNames.length}).`,
-      sheets: workbook.SheetNames,
+      message: `Импортировано ${inserted} проб (листов: ${sheetNames.length}).`,
+      sheets: sheetNames,
       totalRows: inserted,
       previousCount: beforeCount,
     });
