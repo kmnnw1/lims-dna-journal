@@ -1,0 +1,55 @@
+=== PRISMA & NEXT.JS DEBUGGER ===
+Node Version: v25.8.1
+DATABASE_URL: undefined
+CWD: C:\Projects\Coursa2\lab-journal
+
+[TEST 1] Стандартный PrismaClient (без адаптера)
+❌ Test 1 Ошибка: 
+PrismaClientInitializationError: `PrismaClient` needs to be constructed with a non-empty, valid `PrismaClientOptions`:
+
+```
+new PrismaClient({
+  ...
+})
+```
+
+or
+
+```
+constructor() {
+  super({ ... });
+}
+```
+          
+    at new t (C:\Projects\Coursa2\lab-journal\node_modules\@prisma\client\runtime\client.js:70:1527)
+    at main (file:///C:/Projects/Coursa2/lab-journal/scripts/debug.mjs:26:20)
+    at file:///C:/Projects/Coursa2/lab-journal/scripts/debug.mjs:63:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+    at async node:internal/modules/esm/loader:639:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+[TEST 2] PrismaClient с явным URL
+❌ Test 2 Ошибка: 
+PrismaClientConstructorValidationError: Unknown property datasources provided to PrismaClient constructor.
+Read more at https://pris.ly/d/client-constructor
+    at jl (C:\Projects\Coursa2\lab-journal\node_modules\@prisma\client\runtime\client.js:66:3832)
+    at new t (C:\Projects\Coursa2\lab-journal\node_modules\@prisma\client\runtime\client.js:70:1808)
+    at main (file:///C:/Projects/Coursa2/lab-journal/scripts/debug.mjs:37:20)
+    at file:///C:/Projects/Coursa2/lab-journal/scripts/debug.mjs:63:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+    at async node:internal/modules/esm/loader:639:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+[TEST 3] PrismaClient + better-sqlite3 адаптер
+❌ Test 3 Ошибка: 
+TypeError: Cannot read properties of undefined (reading 'replace')
+    at createBetterSQLite3Client (file:///C:/Projects/Coursa2/lab-journal/node_modules/@prisma/adapter-better-sqlite3/dist/index.mjs:622:22)
+    at PrismaBetterSqlite3AdapterFactory.connect (file:///C:/Projects/Coursa2/lab-journal/node_modules/@prisma/adapter-better-sqlite3/dist/index.mjs:611:59)
+    at e.connect (C:\Projects\Coursa2\lab-journal\node_modules\@prisma\client\runtime\client.js:57:311)
+    at #l (C:\Projects\Coursa2\lab-journal\node_modules\@prisma\client\runtime\client.js:57:18565)
+    at C:\Projects\Coursa2\lab-journal\node_modules\@prisma\client\runtime\client.js:57:17902
+    at Object.runInChildSpan (C:\Projects\Coursa2\lab-journal\node_modules\@prisma\client\runtime\client.js:65:2516)
+    at di.runInChildSpan (C:\Projects\Coursa2\lab-journal\node_modules\@prisma\client\runtime\client.js:65:2850)
+    at #a (C:\Projects\Coursa2\lab-journal\node_modules\@prisma\client\runtime\client.js:57:17840)
+    at jt.request (C:\Projects\Coursa2\lab-journal\node_modules\@prisma\client\runtime\client.js:58:1995)
+    at Object.singleLoader (C:\Projects\Coursa2\lab-journal\node_modules\@prisma\client\runtime\client.js:65:6595)
