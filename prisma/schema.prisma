@@ -1,83 +1,83 @@
 generator client {
-	provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-	provider = "sqlite"
-	url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-	id        String   @id @default(uuid())
-	username  String   @unique
-	password  String
-	role      String   @default("EDITOR") // Было Role, стала обычная строка
-	createdAt DateTime @default(now())
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  role      String   @default("EDITOR")
+  createdAt DateTime @default(now())
 }
 
 model Specimen {
-	id               String       @id @default(uuid())
-	taxon            String?
-	locality         String?
-	collector        String?
-	collectedAt      DateTime?
-	collectNotes     String?
-	extrLab          String?
-	extrOperator     String?
-	extrMethod       String?
-	extrDateRaw      String?
-	extrDate         DateTime?
-	dnaMeter         String?
-	measDate         DateTime?
-	measOperator     String?
-	dnaConcentration String?
-	dnaProfile       String?
-	measComm         String?
-	imageUrl         String?
-	itsStatus        String?
-	itsGb            String?
-	ssuStatus        String?
-	ssuGb            String?
-	lsuStatus        String?
-	lsuGb            String?
-	mcm7Status       String?
-	mcm7Gb           String?
-	notes            String?
-	importOrigin     String?
-	importRow        Int?
-	importNotes      String?      
-	attempts         PcrAttempt[]
-	createdAt        DateTime     @default(now())
-	updatedAt        DateTime     @updatedAt
+  id               String       @id @default(uuid())
+  taxon            String?
+  locality         String?
+  collector        String?
+  collectedAt      DateTime?
+  collectNotes     String?
+  extrLab          String?
+  extrOperator     String?
+  extrMethod       String?
+  extrDateRaw      String?
+  extrDate         DateTime?
+  dnaMeter         String?
+  measDate         DateTime?
+  measOperator     String?
+  dnaConcentration String?
+  dnaProfile       String?
+  measComm         String?
+  imageUrl         String?
+  itsStatus        String?
+  itsGb            String?
+  ssuStatus        String?
+  ssuGb            String?
+  lsuStatus        String?
+  lsuGb            String?
+  mcm7Status       String?
+  mcm7Gb           String?
+  notes            String?
+  importOrigin     String?
+  importRow        Int?
+  importNotes      String?      
+  attempts         PcrAttempt[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 }
 
 model PcrAttempt {
-	id               String            @id @default(uuid())
-	specimenId       String
-	date             DateTime          @default(now())
-	marker           String?
-	forwardPrimer    String?
-	reversePrimer    String?
-	dnaMatrix        String?
-	volume           String?
-	polymerase       String?
-	cycler           String?
-	cycles           String?
-	annealingTemp    String?
-	extensionTime    String?
-	result           String
-	resultNotes      String?
-	specimen         Specimen          @relation(fields: [specimenId], references: [id], onDelete: Cascade)
-	sequencingResult SequencingResult?
-	createdAt        DateTime          @default(now())
+  id               String            @id @default(uuid())
+  specimenId       String
+  date             DateTime          @default(now())
+  marker           String?
+  forwardPrimer    String?
+  reversePrimer    String?
+  dnaMatrix        String?
+  volume           String?
+  polymerase       String?
+  cycler           String?
+  cycles           String?
+  annealingTemp    String?
+  extensionTime    String?
+  result           String
+  resultNotes      String?
+  specimen         Specimen          @relation(fields: [specimenId], references: [id], onDelete: Cascade)
+  sequencingResult SequencingResult?
+  createdAt        DateTime          @default(now())
 }
 
 model SequencingResult {
-	id           String     @id @default(uuid())
-	pcrAttemptId String     @unique
-	pcrAttempt   PcrAttempt @relation(fields: [pcrAttemptId], references: [id], onDelete: Cascade)
-	sequenceData String?    
-	chromatogram String?    
-	qualityScore String?    
-	createdAt    DateTime   @default(now())
+  id           String     @id @default(uuid())
+  pcrAttemptId String     @unique
+  pcrAttempt   PcrAttempt @relation(fields: [pcrAttemptId], references: [id], onDelete: Cascade)
+  sequenceData String?    
+  chromatogram String?    
+  qualityScore String?    
+  createdAt    DateTime   @default(now())
 }

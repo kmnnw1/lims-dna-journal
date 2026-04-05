@@ -16,7 +16,7 @@ dist/
 .env.test.local
 .env.production.local
 
-# База данных SQLite (Не затирай чужие данные!)
+# База данных SQLite
 prisma/*.db
 prisma/*.db-journal
 
@@ -41,3 +41,10 @@ Thumbs.db
 next-env.d.ts
 coverage/
 local/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
