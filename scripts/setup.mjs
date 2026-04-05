@@ -1,30 +1,28 @@
 #!/usr/bin/env node
 /**
- * Усовершенствованная подготовка проекта: Prisma 7, ExcelJS и тотальная табуляция.
+ * Усовершенствованная подготовка проекта: Prisma 7, автоматизация версий и Husky.
  */
 
-import { execSync } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import {execSync} from 'node:child_process';
+import {randomBytes} from 'node:crypto';
+import {existsSync, readFileSync, writeFileSync, copyFileSync} from 'node:fs';
+import {dirname, join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 function run(cmd, title) {
 	if (title) console.log(`\n→ ${title}\n`);
 	try {
-		execSync(cmd, { cwd: root, stdio: 'inherit', shell: true, env: process.env });
+		execSync(cmd, {cwd: root, stdio: 'inherit', shell: true, env: process.env});
 	} catch (err) {
 		console.error(`❌ Ошибка выполнения '${cmd}':\n`, err?.message || err);
 		process.exit(1);
 	}
 }
 
-// Настройка npm
-run('npm config set fund false', 'Конфигурация npm');
+run('npm config set fund false', 'Настройка npm');
 
-// Проверка версии Node.js
 (function checkNodeVersion(required = 20) {
 	const major = Number.parseInt(process.version.slice(1).split('.')[0] ?? '0', 10);
 	if (major < required) {
@@ -54,15 +52,17 @@ if (/^NEXTAUTH_SECRET=\s*$/m.test(envText) || /^NEXTAUTH_SECRET=$/m.test(envText
 
 if (modified) writeFileSync(envPath, envText);
 
-// Prisma и зависимости
-run('npx prisma generate', 'Генерация Prisma Client (v7)');
+// Prisma и автоматизация
+run('npm install', 'Установка всех зависимостей');
+run('npx prisma generate', 'Генерация Prisma 7 Client');
 run('npx prisma db push', 'Синхронизация схемы БД');
+run('npx husky', 'Инициализация Git Hooks (Husky)');
 
-// Форматирование кода (Табы и пустые строки)
+// Форматирование
 try {
-	run('npx prettier --write .', 'Причесываем код: переводим всё на табы');
+	run('npx prettier --write .', 'Причесываем код перед стартом');
 } catch (e) {
-	console.log('ℹ️ Prettier не смог отработать, проверьте конфиг.');
+	console.log('ℹ️ Проблемы с форматированием, пропускаем.');
 }
 
-console.log('\n🟢 Готово! Проект на острие прогресса и на табах.\n👉 Запуск: npm run dev\n');
+console.log('\n🟢 Готово! Версионирование автоматизировано.\n👉 Запуск: npm run dev\n');

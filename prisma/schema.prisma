@@ -1,100 +1,77 @@
 generator client {
-  provider = "prisma-client-js"
+	provider        = "prisma-client-js"
+	previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+	provider = "sqlite"
 }
 
-// --- МОДЕЛЬ ПОЛЬЗОВАТЕЛЯ ---
-// Добавлен createdAt для отслеживания даты создания
-// Уточнен enum Role для предотвращения ошибок
 enum Role {
-  ADMIN
-  EDITOR
-  READER
+	ADMIN
+	EDITOR
+	READER
 }
 
 model User {
-  id        String   @id @default(uuid())
-  username  String   @unique
-  password  String
-  role      Role     @default(EDITOR)
-  createdAt DateTime @default(now())
-  // Возможность привязки к объектам или расширения в будущем
-  // specimens Specimen[]
+	id        String   @id @default(uuid())
+	username  String   @unique
+	password  String
+	role      Role     @default(EDITOR)
+	createdAt DateTime @default(now())
 }
 
-// --- МОДЕЛЬ ПРОБЫ ---
 model Specimen {
-  id            String       @id @default(uuid())
-  taxon         String?
-  locality      String?
-  collector     String?
-  collectedAt   DateTime?    // Более структурированная дата сбора
-  collectNotes  String?      // Доп. поле для комментариев к сбору
-  
-  // Экстракция ДНК
-  extrLab       String?
-  extrOperator  String?
-  extrMethod    String?
-  extrDateRaw   String?
-  extrDate      DateTime?    // Изменено на DateTime для удобства поиска
-  
-  // Концентрация ДНК
-  dnaMeter         String?
-  measDate         DateTime?
-  measOperator     String?
-  dnaConcentration String?   // Оставляем строкой для гибкости
-  dnaProfile       String?
-  measComm         String?
-  
-  imageUrl     String?
-  
-  // Статусы маркеров + значения гены
-  itsStatus    String?
-  itsGb        String?
-  ssuStatus    String?
-  ssuGb        String?
-  lsuStatus    String?
-  lsuGb        String?
-  mcm7Status   String?
-  mcm7Gb       String?
-  
-  // История изменений и импорт
-  notes        String?     // Общие заметки
-  importOrigin String?     // Метка файла/страницы Excel
-  importRow    Int?        // Номер строки Excel (по желанию)
-  
-  attempts     PcrAttempt[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  // Возможна привязка к User создателю или изменившему
+	id               String       @id @default(uuid())
+	taxon            String?
+	locality         String?
+	collector        String?
+	collectedAt      DateTime?
+	collectNotes     String?
+	extrLab          String?
+	extrOperator     String?
+	extrMethod       String?
+	extrDateRaw      String?
+	extrDate         DateTime?
+	dnaMeter         String?
+	measDate         DateTime?
+	measOperator     String?
+	dnaConcentration String?
+	dnaProfile       String?
+	measComm         String?
+	imageUrl         String?
+	itsStatus        String?
+	itsGb            String?
+	ssuStatus        String?
+	ssuGb            String?
+	lsuStatus        String?
+	lsuGb            String?
+	mcm7Status       String?
+	mcm7Gb           String?
+	notes            String?
+	importOrigin     String?
+	importRow        Int?
+	attempts         PcrAttempt[]
+	createdAt        DateTime     @default(now())
+	updatedAt        DateTime     @updatedAt
 }
 
-// --- МОДЕЛЬ ПЦР ПОПЫТКИ ---
 model PcrAttempt {
-  id             String    @id @default(uuid())
-  specimenId     String
-  date           DateTime  @default(now())
-  
-  // Детали ПЦР
-  marker         String?   // ITS, SSU и пр.
-  forwardPrimer  String?
-  reversePrimer  String?
-  dnaMatrix      String?
-  volume         String
-  polymerase     String?   // Добавлено: какой полимеразой проведена реакция
-  cycler         String?   // На каком термоциклере
-  
-  cycles         String?   // Число и режимы циклов, если требуется
-  annealingTemp  String?   // Температура отжига
-  extensionTime  String?   // Время удлинения
-  
-  result         String    // Success | Fail (см. UI mapping)
-  resultNotes    String?   // Причины неудачи/комментарии
-  
-  specimen       Specimen  @relation(fields: [specimenId], references: [id], onDelete: Cascade)
-  createdAt      DateTime  @default(now())
+	id            String   @id @default(uuid())
+	specimenId    String
+	date          DateTime @default(now())
+	marker        String?
+	forwardPrimer String?
+	reversePrimer String?
+	dnaMatrix     String?
+	volume        String
+	polymerase    String?
+	cycler        String?
+	cycles        String?
+	annealingTemp String?
+	extensionTime String?
+	result        String
+	resultNotes   String?
+	specimen      Specimen @relation(fields: [specimenId], references: [id], onDelete: Cascade)
+	createdAt     DateTime @default(now())
 }
