@@ -42,17 +42,61 @@ function handleError(e: any) {
 	return NextResponse.json({ error: message }, { status });
 }
 
-export async function GET() {
+export async function GET(req: Request) {
 	try {
 		await requireRole('READER');
-		const specimens = await prisma.specimen.findMany({
-			include: { attempts: true },
-			orderBy: { id: 'asc' },
+		
+		// 1. Получаем параметры из URL для пагинации и поиска
+		const { searchParams } = new URL(req.url);
+		const page = parseInt(searchParams.get('page') || '1');
+		const limit = parseInt(searchParams.get('limit') || '100'); // По умолчанию отдаем 100
+		const search = searchParams.get('search') || '';
+		const sortKey = searchParams.get('sortBy') || 'id';
+		const sortDir = searchParams.get('sortOrder') || 'asc';
+		const filterType = searchParams.get('filter') || 'all';
+
+		const skip = (page - 1) * limit;
+
+		// 2. Строим условия фильтрации (WHERE)
+		const where: any = {};
+		
+		if (search) {
+			where.OR = [
+				{ id: { contains: search } },
+				{ taxon: { contains: search } }
+			];
+		}
+
+		if (filterType === 'success') where.itsStatus = '✓';
+		if (filterType === 'error') where.itsStatus = '✕';
+		// Если нужно избранное: if (filterType === 'fav') where.isFavorite = true;
+
+		// 3. Строим условия сортировки (ORDER BY)
+		const orderBy: any = {};
+		if (sortKey) {
+			orderBy[sortKey] = sortDir === 'asc' ? 'asc' : 'desc';
+		}
+
+		// 4. Выполняем запросы параллельно: данные, счетчик и подсказки
+		const [specimens, total, suggestions] = await Promise.all([
+			prisma.specimen.findMany({
+				where,
+				skip,
+				take: limit,
+				orderBy,
+				include: { attempts: true },
+			}),
+			prisma.specimen.count({ where }),
+			getDistinctFields()
+		]);
+
+		return NextResponse.json({ 
+			specimens, 
+			suggestions,
+			total,
+			page,
+			totalPages: Math.ceil(total / limit)
 		});
-
-		const suggestions = await getDistinctFields();
-
-		return NextResponse.json({ specimens, suggestions });
 	} catch (e: any) {
 		return handleError(e);
 	}
@@ -85,7 +129,10 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
 	try {
 		await requireRole('EDITOR');
-		const { ids, updateData, singleId, singleStatus, newAttempt } = await request.json();
+		const body = await request.json();
+		
+		// Извлекаем как старые параметры, так и новые
+		const { ids, updateData, singleId, singleStatus, newAttempt, id, ...restData } = body;
 
 		if (newAttempt) {
 			await prisma.pcrAttempt.create({ data: newAttempt });
@@ -107,6 +154,12 @@ export async function PUT(request: Request) {
 
 		if (ids && Array.isArray(ids) && updateData) {
 			await prisma.specimen.updateMany({ where: { id: { in: ids } }, data: updateData });
+			return NextResponse.json({ success: true });
+		}
+
+		// НОВЫЙ БЛОК: Для редактирования через нашу новую модалку
+		if (id && Object.keys(restData).length > 0) {
+			await prisma.specimen.update({ where: { id: String(id) }, data: restData });
 			return NextResponse.json({ success: true });
 		}
 

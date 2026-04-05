@@ -4,18 +4,22 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useDebounce } from '@/hooks/useDebounce';
+import Link from 'next/link';
 
-// Иконки заменяем на LucideReact (lucide-react)
-// Не забудьте установить: npm install lucide-react
-import {
-	Search as MagnifyingGlassIcon,
-	Plus as PlusIcon,
-	LogOut as ArrowRightOnRectangleIcon,
-	Star as StarIcon,
-	Table as TableCellsIcon
-} from 'lucide-react';
+// Для иконок вместо @heroicons/react используем локальные svg компоненты или stub-заглушки (замените по мере необходимости)
+const MagnifyingGlassIcon = (props: any) => <span {...props}>🔍</span>;
+const PlusIcon = (props: any) => <span {...props}>＋</span>;
+const ArrowRightOnRectangleIcon = (props: any) => <span {...props}>⏏️</span>;
+const StarIcon = (props: any) => <span {...props}>⭐</span>;
+const TableCellsIcon = (props: any) => <span {...props}>▦</span>;
+const Cog8ToothIcon = (props: any) => <span {...props}>⚙️</span>;
+const FunnelIcon = (props: any) => <span {...props}>⏳</span>;
+const CommandLineIcon = (props: any) => <span {...props}>⌨️</span>;
+const ChevronLeftIcon = (props: any) => <span {...props}>◀️</span>;
+const ChevronRightIcon = (props: any) => <span {...props}>▶️</span>;
 
-// Наши компоненты
+
+// Наши новые компоненты
 import { StatsCards } from './components/StatsCards';
 import { SpecimenTable } from './components/SpecimenTable';
 import { AddSpecimenModal } from './components/Modals/AddSpecimenModal';
@@ -25,29 +29,53 @@ export default function JournalPage() {
 	const { data: session, status } = useSession();
 	const router = useRouter();
 	
+	// Состояние данных
 	const [specimens, setSpecimens] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
+	
+	// Пагинация и серверный тотал
+	const [page, setPage] = useState(1);
+	const [totalPages, setTotalPages] = useState(1);
+	const [totalGlobal, setTotalGlobal] = useState(0);
+
+	// Фильтры и поиск
 	const [searchQuery, setSearchQuery] = useState('');
-	const debouncedSearch = useDebounce(searchQuery, 300);
+	const debouncedSearch = useDebounce(searchQuery, 400); // Чуть увеличили паузу, чтобы не спамить сервер
 	
 	const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 	const [filterType, setFilterType] = useState<'all' | 'success' | 'error' | 'fav'>('all');
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+	// Модалки
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [editingSpecimen, setEditingSpecimen] = useState<any | null>(null);
+
+	// Если меняем поиск или фильтр - сбрасываем на первую страницу
+	useEffect(() => {
+		setPage(1);
+	}, [debouncedSearch, filterType, sortConfig]);
 
 	const fetchSpecimens = async () => {
 		setLoading(true);
 		try {
-			const res = await fetch('/api/specimens');
+			// Строим параметры для нового серверного API
+			const params = new URLSearchParams({
+				page: page.toString(),
+				limit: '50', // Грузим по 50 штук
+				search: debouncedSearch,
+				filter: filterType,
+				sortBy: sortConfig?.key || 'id',
+				sortOrder: sortConfig?.direction || 'asc'
+			});
+
+			const res = await fetch(`/api/specimens?${params.toString()}`);
 			const data = await res.json();
 			
-			// ИСПРАВЛЕННАЯ ЛОГИКА: забираем массив из поля specimens
 			if (data && Array.isArray(data.specimens)) {
 				setSpecimens(data.specimens);
+				setTotalPages(data.totalPages || 1);
+				setTotalGlobal(data.total || 0);
 			} else if (Array.isArray(data)) {
-				// На случай если API когда-то вернет просто массив
 				setSpecimens(data);
 			} else {
 				console.error('API вернул неожиданный формат:', data);
@@ -61,42 +89,22 @@ export default function JournalPage() {
 		}
 	};
 
+	// Слушаем изменения зависимостей для загрузки
 	useEffect(() => {
 		if (status === 'unauthenticated') router.push('/login');
 		if (status === 'authenticated') fetchSpecimens();
-	}, [status]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [status, page, debouncedSearch, filterType, sortConfig]);
 
-	const filteredSpecimens = useMemo(() => {
-		if (!Array.isArray(specimens)) return [];
-
-		let result = specimens.filter(s => 
-			(s.id && s.id.toLowerCase().includes(debouncedSearch.toLowerCase())) ||
-			(s.taxon && s.taxon.toLowerCase().includes(debouncedSearch.toLowerCase()))
-		);
-
-		if (filterType === 'success') result = result.filter(s => s.itsStatus === '✓');
-		if (filterType === 'error') result = result.filter(s => s.itsStatus === '✕');
-		
-		if (sortConfig) {
-			result.sort((a, b) => {
-				const valA = a[sortConfig.key] || '';
-				const valB = b[sortConfig.key] || '';
-				if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
-				if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
-				return 0;
-			});
-		}
-		return result;
-	}, [specimens, debouncedSearch, filterType, sortConfig]);
-
+	// Статистика (смешанная: глобальная из БД + детали по текущей странице)
 	const stats = useMemo(() => {
 		const list = Array.isArray(specimens) ? specimens : [];
 		return {
-			total: list.length,
+			total: totalGlobal, // Показываем реальное количество всех проб в базе
 			successful: list.filter(s => s.itsStatus === '✓').length,
 			others: list.filter(s => s.itsStatus !== '✓').length
 		};
-	}, [specimens]);
+	}, [specimens, totalGlobal]);
 
 	const handleSort = (key: string) => {
 		setSortConfig(current => ({
@@ -113,7 +121,6 @@ export default function JournalPage() {
 				body: JSON.stringify(data)
 			});
 		} finally {
-			// Закрываем окно и обновляем таблицу независимо от ответа сервера
 			setIsAddModalOpen(false);
 			fetchSpecimens();
 		}
@@ -121,14 +128,12 @@ export default function JournalPage() {
 
 	const handleEditSave = async (id: string, data: any) => {
 		try {
-			// ИСПРАВЛЕНИЕ: Передаем id внутрь body, как ждет твой сервер
 			await fetch('/api/specimens', {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ id, ...data })
 			});
 		} finally {
-			// Закрываем окно и обновляем таблицу
 			setEditingSpecimen(null);
 			fetchSpecimens();
 		}
@@ -137,8 +142,9 @@ export default function JournalPage() {
 	if (status === 'loading') return null;
 
 	return (
-		<main className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 font-sans selection:bg-teal-500/30">
+		<main className="min-h-screen bg-[#0f172a] text-slate-200 p-4 md:p-8 font-sans selection:bg-teal-500/30 pb-32">
 			<div className="max-w-[1600px] mx-auto">
+				{/* Header */}
 				<header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
 					<div className="flex items-center gap-4">
 						<div className="p-3 bg-teal-500 rounded-2xl shadow-lg shadow-teal-500/20">
@@ -151,7 +157,7 @@ export default function JournalPage() {
 					</div>
 
 					<div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-						<div className="relative flex-1 md:w-80">
+						<div className="relative flex-1 md:w-64 lg:w-80">
 							<MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
 							<input
 								id="main-search"
@@ -159,21 +165,39 @@ export default function JournalPage() {
 								placeholder="Поиск по ID или таксону..."
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
-								className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 border-slate-700/50 rounded-2xl focus:ring-2 focus:ring-teal-500/50 transition-all outline-none text-sm font-medium placeholder:text-slate-600"
+								className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 border border-slate-700/50 rounded-2xl focus:ring-2 focus:ring-teal-500/50 transition-all outline-none text-sm font-medium placeholder:text-slate-600"
 							/>
 						</div>
-						<button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 px-6 py-3.5 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl transition-all font-bold shadow-lg shadow-teal-900/20 active:scale-95">
-							<PlusIcon className="w-5 h-5" />
-							<span>Новая проба</span>
+
+						<button className="hidden lg:flex items-center gap-2 px-4 py-3.5 bg-slate-800/50 hover:bg-slate-700 text-slate-300 rounded-2xl transition-all font-medium text-sm">
+							<CommandLineIcon className="w-5 h-5" />
+							<span>Клавиши</span>
 						</button>
-						<button onClick={() => signOut()} className="p-3.5 bg-slate-800/50 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-2xl transition-all">
-							<ArrowRightOnRectangleIcon className="w-6 h-6" />
+						
+						<button className="hidden lg:flex items-center gap-2 px-4 py-3.5 bg-slate-800/50 hover:bg-slate-700 text-slate-300 rounded-2xl transition-all font-medium text-sm">
+							<FunnelIcon className="w-5 h-5" />
+							<span>Умный фильтр</span>
+						</button>
+
+						<button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 px-5 py-3.5 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl transition-all font-bold shadow-lg shadow-teal-900/20 active:scale-95">
+							<PlusIcon className="w-5 h-5" />
+							<span className="hidden sm:inline">Новая проба</span>
+						</button>
+
+						<Link href="/admin" className="flex items-center gap-2 px-5 py-3.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 rounded-2xl transition-all font-bold shadow-lg">
+							<Cog8ToothIcon className="w-5 h-5" />
+							<span className="hidden sm:inline">Админ</span>
+						</Link>
+
+						<button onClick={() => signOut()} title="Выйти" className="p-3.5 bg-slate-800/50 border border-slate-700/50 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-2xl transition-all">
+							<ArrowRightOnRectangleIcon className="w-5 h-5" />
 						</button>
 					</div>
 				</header>
 
 				<StatsCards {...stats} />
 
+				{/* Filter Toolbar */}
 				<div className="flex items-center gap-2 mb-6">
 					{(['all', 'success', 'error', 'fav'] as const).map((type) => (
 						<button
@@ -192,7 +216,7 @@ export default function JournalPage() {
 				</div>
 
 				<SpecimenTable 
-					specimens={filteredSpecimens.slice(0, 100)} 
+					specimens={specimens} // Передаем чистые данные с сервера
 					loading={loading}
 					selectedIds={selectedIds}
 					onSelect={(id) => {
@@ -210,6 +234,33 @@ export default function JournalPage() {
 					sortConfig={sortConfig}
 					onSort={handleSort}
 				/>
+
+				{/* Пагинация */}
+				{totalPages > 1 && (
+					<div className="flex items-center justify-between mt-6 bg-slate-800/40 border border-slate-700/50 p-4 rounded-2xl">
+						<button
+							onClick={() => setPage(p => Math.max(1, p - 1))}
+							disabled={page === 1 || loading}
+							className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all"
+						>
+							<ChevronLeftIcon className="w-4 h-4" />
+							Назад
+						</button>
+						
+						<span className="text-slate-400 text-sm font-medium">
+							Страница <span className="text-slate-100 font-bold">{page}</span> из {totalPages}
+						</span>
+
+						<button
+							onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+							disabled={page === totalPages || loading}
+							className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all"
+						>
+							Вперёд
+							<ChevronRightIcon className="w-4 h-4" />
+						</button>
+					</div>
+				)}
 			</div>
 
 			<AddSpecimenModal 
@@ -223,9 +274,10 @@ export default function JournalPage() {
 				onClose={() => setEditingSpecimen(null)} 
 				onSave={handleEditSave} 
 			/>
-        {/* Панель массовых действий */}
+
+			{/* Панель массовых действий */}
 			{selectedIds.size > 0 && (
-				<div className="sticky bottom-8 mt-8 mx-auto max-w-4xl bg-teal-500/10 backdrop-blur-xl border border-teal-500/30 rounded-2xl p-4 flex items-center justify-between shadow-2xl shadow-teal-900/20">
+				<div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-2xl bg-slate-800/90 backdrop-blur-xl border border-teal-500/30 rounded-2xl p-4 flex items-center justify-between shadow-2xl shadow-teal-900/20 z-40 animate-in slide-in-from-bottom-4">
 					<div className="flex items-center gap-3">
 						<span className="flex items-center justify-center w-8 h-8 rounded-full bg-teal-500 text-white font-bold text-sm">
 							{selectedIds.size}
@@ -239,7 +291,6 @@ export default function JournalPage() {
 						>
 							Сбросить
 						</button>
-						{/* Пока просто заглушка для теста */}
 						<button className="px-6 py-2 bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg">
 							Массовое действие
 						</button>
