@@ -18,10 +18,9 @@ export type ParsedSpecimenRow = {
 	lsuStatus: string;
 	mcm7Status: string;
 	notes: string;
-	_sources?: SourceRef[]; // Внутреннее поле для слияния
+	_sources?: SourceRef[];
 };
 
-// 1. Очистка от лишних переносов и двойных пробелов (спасает от кривого ввода)
 function cellText(v: unknown): string {
 	if (v === undefined || v === null) return "";
 	if (v instanceof Date) return v.toISOString().slice(0, 10);
@@ -33,7 +32,6 @@ function normalizeHeader(h: string): string {
 	return h.toLowerCase().replace(/\u00a0/g, " ").replace(/\s+/g, " ").replace(/\s*\/\s*/g, "/").trim();
 }
 
-// 2. Блокируем мусорные ID из лабораторных журналов
 export function isGarbageId(id: string): boolean {
 	const s = id.toLowerCase().replace(/\s+/g, "");
 	if (!s) return true;
@@ -253,7 +251,7 @@ export function parseRowWithBindings(
 	if (!Array.isArray(row)) return null;
 
 	const id = getByKey(row, bindings, "isolate");
-	if (isGarbageId(id)) return null; // Отсекаем мусор
+	if (isGarbageId(id)) return null;
 
 	const extrRawFull = getByKey(row, bindings, "extrDate");
 	const extrDateRaw = extrRawFull ? extractEmbeddedDate(extrRawFull) || extrRawFull : "";
@@ -345,7 +343,7 @@ export function parseRowLegacy(
 ): ParsedSpecimenRow | null {
 	if (!Array.isArray(row) || row[2] == null || String(row[2]).trim() === "") return null;
 	const id = cellText(row[2]);
-	if (isGarbageId(id)) return null; // Отсекаем мусор
+	if (isGarbageId(id)) return null;
 
 	const rawDateStr = row[10] != null ? String(row[10]).trim() : "";
 	const parsedDate = parseLabDate(extractEmbeddedDate(rawDateStr) || rawDateStr);
@@ -390,7 +388,7 @@ export function parseLySheetRows(
 		const row = rawData[i];
 		if (!Array.isArray(row)) continue;
 		const id = cellText(row[0]);
-		if (isGarbageId(id)) continue; // Отсекаем мусор
+		if (isGarbageId(id)) continue;
 
 		const taxon = cellText(row[1]);
 		const c2 = row[2];
@@ -486,7 +484,6 @@ function pickNonEmpty(prev: string, next: string): string {
 	return next?.trim() ? next.trim() : (prev?.trim() || "");
 }
 
-// 3. Формируем компактную сводку о том, откуда взята проба
 function formatSources(sources: SourceRef[]): string {
 	if (!sources || sources.length === 0) return "";
 	const map = new Map<string, Set<number>>();
@@ -506,7 +503,7 @@ function formatSources(sources: SourceRef[]): string {
 	return `[Импорт: ${parts.join('; ')}]`;
 }
 
-// 4. Умное слияние данных по ID
+// Слияние данных по ID
 export function mergeById(rows: ParsedSpecimenRow[]): ParsedSpecimenRow[] {
 	const map = new Map<string, ParsedSpecimenRow>();
 
@@ -517,17 +514,22 @@ export function mergeById(rows: ParsedSpecimenRow[]): ParsedSpecimenRow[] {
 			continue;
 		}
 
-		// Защита от дублей заметок при копипасте в Excel
 		const noteSet = new Set<string>();
 		if (prev.notes) prev.notes.split('\n---\n').forEach(n => { if (n.trim()) noteSet.add(n.trim()); });
 		if (row.notes) row.notes.split('\n---\n').forEach(n => { if (n.trim()) noteSet.add(n.trim()); });
 		const mergedNotes = Array.from(noteSet).join("\n---\n");
 
-		const mergedSources = [...(prev._sources || []), ...(row._sources ||[])];
+		const mergedSources = [...(prev._sources || []), ...(row._sources || [])];
 
 		const extrDateRaw = pickNonEmpty(prev.extrDateRaw, row.extrDateRaw);
 		const pDate = parseLabDate(extractEmbeddedDate(extrDateRaw) || extrDateRaw);
-		const extrDateComputed = extrDateString(pDate) || pickNonEmpty(prev.extrDate ?? "", row.extrDate ?? "").trim() || null;
+		let extrDateComputed: string | null = extrDateString(pDate);
+		if (!extrDateComputed) {
+			const fromPrev = prev.extrDate ?? "";
+			const fromRow = row.extrDate ?? "";
+			const merged = pickNonEmpty(fromPrev, fromRow).trim();
+			extrDateComputed = merged === "" ? null : merged;
+		}
 
 		map.set(row.id, {
 			id: row.id,
@@ -549,13 +551,12 @@ export function mergeById(rows: ParsedSpecimenRow[]): ParsedSpecimenRow[] {
 		});
 	}
 
-	// Добавляем красивую сводку по листам в конец заметок
 	return Array.from(map.values()).map(r => {
-		const sourceStr = formatSources(r._sources ||[]);
+		const sourceStr = formatSources(r._sources || []);
 		const finalNotes = [r.notes, sourceStr].filter(Boolean).join("\n\n");
-
-		// Убираем временное поле _sources, чтобы оно не ломало отправку в Prisma
 		const { _sources, ...rest } = r;
+		// 🛠 КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: пустая строка в extrDate -> null
+		if (rest.extrDate === "") rest.extrDate = null;
 		return { ...rest, notes: finalNotes };
 	});
 }

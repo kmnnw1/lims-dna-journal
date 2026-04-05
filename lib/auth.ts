@@ -4,10 +4,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-/**
- * Вспомогательная функция — поиск пользователя по логину.
- * Возвращает null, если не найден.
- */
 async function findUserByUsername(username: string) {
   try {
     return await prisma.user.findUnique({
@@ -18,10 +14,6 @@ async function findUserByUsername(username: string) {
   }
 }
 
-/**
- * Вспомогательная функция — создание админа по умолчанию при первом запуске.
- * Возвращает созданного пользователя.
- */
 async function createInitialAdmin() {
   const hashed = await bcrypt.hash("admin", 10);
   try {
@@ -33,7 +25,6 @@ async function createInitialAdmin() {
       },
     });
   } catch {
-    // Если вдруг admin уже создан — просто найдём его
     return findUserByUsername("admin");
   }
 }
@@ -41,35 +32,31 @@ async function createInitialAdmin() {
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 дней
+    maxAge: 30 * 24 * 60 * 60,
   },
   providers: [
     CredentialsProvider({
       name: "Вход",
       credentials: {
-        username: { label: "Логин", type: "text", placeholder: "admin или пользователь" },
+        username: { label: "Логин", type: "text", placeholder: "admin" },
         password: { label: "Пароль", type: "password", placeholder: "Пароль" },
       },
       async authorize(credentials) {
         if (!credentials?.username?.trim() || !credentials?.password) return null;
 
         const username = credentials.username.trim();
-
-        // Поиск пользователя
         let user = await findUserByUsername(username);
 
-        // Создание админа "admin:admin" при первом логине
+        // Создание admin/admin при первом входе
         if (!user && username === "admin" && credentials.password === "admin") {
           user = await createInitialAdmin();
         }
 
         if (!user) return null;
 
-        // Сравнение пароля (хэш)
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) return null;
 
-        // Явно типизируем возвращаемое значение
         return {
           id: user.id,
           name: user.username,
@@ -79,15 +66,13 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: any }) {
-      // Передаём роль в JWT при логине
+    async jwt({ token, user }) {
       if (user?.role) {
         token.role = user.role;
       }
       return token;
     },
-    async session({ session, token }: { session: Session; token: JWT }) {
-      // Передаём роль в session.user
+    async session({ session, token }) {
       if (session.user && token.role) {
         (session.user as { role?: string }).role = token.role as string;
       }
@@ -95,4 +80,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    signIn: "/login",
+  },
 };

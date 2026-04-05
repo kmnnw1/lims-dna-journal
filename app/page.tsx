@@ -55,17 +55,17 @@ function Home() {
   
   const [specimens, setSpecimens] = useState<Specimen[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestions>(EMPTY_SUGGESTIONS);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const[selectedIds, setSelectedIds] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const[sortKey, setSortKey] = useState<SortableFields>('id');
   const[sortOrder, setSortOrder] = useState<1 | -1>(1);
   const [isOnline, setIsOnline] = useState(true);
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>('ALL');
+  const[quickFilter, setQuickFilter] = useState<QuickFilter>('ALL');
   const [darkMode, setDarkMode] = useState(false);
   const [toast, setToast] = useState('');
   
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const[isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [validationError, setValidationError] = useState(false); 
   const[editingSpecimen, setEditingSpecimen] = useState<EditSpecimenForm | null>(null);
   const[pcrModalId, setPcrModalId] = useState('');
@@ -74,13 +74,13 @@ function Home() {
   const [massUpdate, setMassUpdate] = useState<MassUpdateForm>(EMPTY_MASS_UPDATE);
 
   const [showAdvFilter, setShowAdvFilter] = useState(false);
-  const [filterFwd, setFilterFwd] = useState('');
+  const[filterFwd, setFilterFwd] = useState('');
   const[filterRev, setFilterRev] = useState('');
   const [filterMatrix, setFilterMatrix] = useState('');
 
   const[dataLoading, setDataLoading] = useState(true);
   const [isNarrow, setIsNarrow] = useState(false);
-  const [scanOpen, setScanOpen] = useState(false);
+  const[scanOpen, setScanOpen] = useState(false);
   const [toolsSheetOpen, setToolsSheetOpen] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -144,7 +144,7 @@ function Home() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('q')) setSearch(params.get('q')!);
     if (params.get('specimen')) setPcrModalId(params.get('specimen')!);
-  }, [status]);
+  },[status]);
 
   useEffect(() => {
     if (status !== 'authenticated') return;
@@ -152,7 +152,7 @@ function Home() {
     search.trim() ? u.searchParams.set('q', search.trim()) : u.searchParams.delete('q');
     pcrModalId ? u.searchParams.set('specimen', pcrModalId) : u.searchParams.delete('specimen');
     window.history.replaceState(null, '', `${u.pathname}${u.search}`);
-  }, [search, pcrModalId, status]);
+  },[search, pcrModalId, status]);
 
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -187,7 +187,7 @@ function Home() {
       try { localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(next)); } catch {}
       return next;
     });
-  }, [pcrModalId]);
+  },[pcrModalId]);
 
   const fetchSpecimens = async () => {
     setDataLoading(true);
@@ -435,7 +435,7 @@ function Home() {
           <div className="flex w-full min-w-0 flex-col gap-3 md:w-auto md:flex-1 md:items-end">
             <div className="relative w-full md:max-w-xs">
                <Search className="absolute left-4 top-3.5 h-4 w-4 text-zinc-400" />
-               <input ref={searchInputRef} type="search" placeholder="Поиск по ID или таксону..." value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} className={`${MD3.input} pl-10`} />
+               <input id="main-search" name="searchQuery" ref={searchInputRef} type="search" placeholder="Поиск по ID или таксону..." value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} className={`${MD3.input} pl-10`} />
             </div>
             
             <div className="hidden flex-wrap justify-end gap-2 md:flex">
@@ -459,9 +459,9 @@ function Home() {
           <div className="mt-4 rounded-2xl bg-zinc-100/50 dark:bg-zinc-800/30 p-4 border border-zinc-200/50 dark:border-zinc-800/50">
             <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-3">Интеллектуальный фильтр ПЦР</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <input placeholder="Fwd праймер" value={filterFwd} onChange={e => setFilterFwd(e.target.value)} className={MD3.input} />
-              <input placeholder="Rev праймер" value={filterRev} onChange={e => setFilterRev(e.target.value)} className={MD3.input} />
-              <input placeholder="ДНК-матрица" value={filterMatrix} onChange={e => setFilterMatrix(e.target.value)} className={MD3.input} />
+              <input id="filter-fwd" name="filterFwd" placeholder="Fwd праймер" value={filterFwd} onChange={e => setFilterFwd(e.target.value)} className={MD3.input} />
+              <input id="filter-rev" name="filterRev" placeholder="Rev праймер" value={filterRev} onChange={e => setFilterRev(e.target.value)} className={MD3.input} />
+              <input id="filter-matrix" name="filterMatrix" placeholder="ДНК-матрица" value={filterMatrix} onChange={e => setFilterMatrix(e.target.value)} className={MD3.input} />
             </div>
           </div>
         )}
@@ -513,10 +513,10 @@ function Home() {
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <input list="labs-list" placeholder="Лаборатория" value={massUpdate.lab} onChange={(e) => setMassUpdate({ ...massUpdate, lab: e.target.value })} className={MD3.input} />
-            <input list="ops-list" placeholder="Кто выделял" value={massUpdate.operator} onChange={(e) => setMassUpdate({ ...massUpdate, operator: e.target.value })} className={MD3.input} />
-            <input list="methods-list" placeholder="Метод" value={massUpdate.method} onChange={(e) => setMassUpdate({ ...massUpdate, method: e.target.value })} className={MD3.input} />
-            <input placeholder="Конц. ДНК" value={massUpdate.dnaConcentration} onChange={(e) => setMassUpdate({ ...massUpdate, dnaConcentration: e.target.value })} className={MD3.input} />
+            <input id="mass-lab" name="massLab" list="labs-list" placeholder="Лаборатория" value={massUpdate.lab} onChange={(e) => setMassUpdate({ ...massUpdate, lab: e.target.value })} className={MD3.input} />
+            <input id="mass-op" name="massOp" list="ops-list" placeholder="Кто выделял" value={massUpdate.operator} onChange={(e) => setMassUpdate({ ...massUpdate, operator: e.target.value })} className={MD3.input} />
+            <input id="mass-method" name="massMethod" list="methods-list" placeholder="Метод" value={massUpdate.method} onChange={(e) => setMassUpdate({ ...massUpdate, method: e.target.value })} className={MD3.input} />
+            <input id="mass-dna" name="massDna" placeholder="Конц. ДНК" value={massUpdate.dnaConcentration} onChange={(e) => setMassUpdate({ ...massUpdate, dnaConcentration: e.target.value })} className={MD3.input} />
           </div>
           <div className="flex">
             <button onClick={handleMassUpdate} className={MD3.btnPrimary}><Beaker className="h-4 w-4" /> Применить ко всем</button>
@@ -529,7 +529,7 @@ function Home() {
           <table className="w-full border-collapse text-left">
             <thead className={MD3.tableHeader}>
               <tr className="text-[13px] uppercase tracking-wider text-zinc-500">
-                {!isReader && <th className="w-12 p-4 text-center print:hidden"><input type="checkbox" onChange={() => selectedIds.length === currentData.length ? setSelectedIds([]) : setSelectedIds(currentData.map(s => s.id))} checked={selectedIds.length === currentData.length && currentData.length > 0} className="w-4 h-4 rounded text-teal-600 focus:ring-teal-600 cursor-pointer" /></th>}
+                {!isReader && <th className="w-12 p-4 text-center print:hidden"><input type="checkbox" name="selectAll" aria-label="Выбрать все" onChange={() => selectedIds.length === currentData.length ? setSelectedIds([]) : setSelectedIds(currentData.map(s => s.id))} checked={selectedIds.length === currentData.length && currentData.length > 0} className="w-4 h-4 rounded text-teal-600 focus:ring-teal-600 cursor-pointer" /></th>}
                 <th className="cursor-pointer p-4 hover:text-teal-600 transition-colors" onClick={() => handleSort('id')}>ID {sortKey === 'id' && (sortOrder === 1 ? '↑' : '↓')}</th>
                 <th className="cursor-pointer p-4 hover:text-teal-600 transition-colors" onClick={() => handleSort('taxon')}>Таксон {sortKey === 'taxon' && (sortOrder === 1 ? '↑' : '↓')}</th>
                 <th className="hidden max-w-[14rem] p-4 xl:table-cell">Заметки</th>
@@ -556,7 +556,7 @@ function Home() {
               ) : (
                 currentData.map((s) => (
                   <tr key={s.id} className={`${MD3.tableRow} ${selectedIds.includes(s.id) ? 'bg-teal-50/50 dark:bg-teal-900/10' : ''}`}>
-                    {!isReader && <td className="p-4 text-center print:hidden"><input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => setSelectedIds(p => p.includes(s.id) ? p.filter(i => i !== s.id) : [...p, s.id])} className="w-4 h-4 rounded text-teal-600 cursor-pointer" /></td>}
+                    {!isReader && <td className="p-4 text-center print:hidden"><input type="checkbox" name={`select-${s.id}`} aria-label={`Выбрать ${s.id}`} checked={selectedIds.includes(s.id)} onChange={() => setSelectedIds(p => p.includes(s.id) ? p.filter(i => i !== s.id) : [...p, s.id])} className="w-4 h-4 rounded text-teal-600 cursor-pointer" /></td>}
                     <td className="p-4">
                       <div className="flex flex-wrap items-center gap-1.5 font-mono font-bold text-teal-700 dark:text-teal-400 text-base">
                         <button type="button" onClick={() => toggleFavorite(s.id)} className={`print:hidden transition-colors ${favSet.has(s.id) ? 'text-amber-500' : 'text-zinc-300 hover:text-amber-400'}`}><Star className={`h-4 w-4 ${favSet.has(s.id) ? 'fill-current' : ''}`} /></button>
