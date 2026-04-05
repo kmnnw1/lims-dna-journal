@@ -6,19 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useDebounce } from '@/hooks/useDebounce';
 import Link from 'next/link';
 
-// Для иконок вместо @heroicons/react используем локальные svg компоненты или stub-заглушки (замените по мере необходимости)
-const MagnifyingGlassIcon = (props: any) => <span {...props}>🔍</span>;
-const PlusIcon = (props: any) => <span {...props}>＋</span>;
-const ArrowRightOnRectangleIcon = (props: any) => <span {...props}>⏏️</span>;
-const StarIcon = (props: any) => <span {...props}>⭐</span>;
-const TableCellsIcon = (props: any) => <span {...props}>▦</span>;
-const Cog8ToothIcon = (props: any) => <span {...props}>⚙️</span>;
-const FunnelIcon = (props: any) => <span {...props}>⏳</span>;
-const CommandLineIcon = (props: any) => <span {...props}>⌨️</span>;
-const ChevronLeftIcon = (props: any) => <span {...props}>◀️</span>;
-const ChevronRightIcon = (props: any) => <span {...props}>▶️</span>;
-
-
 // Наши новые компоненты
 import { StatsCards } from './components/StatsCards';
 import { SpecimenTable } from './components/SpecimenTable';
@@ -40,7 +27,7 @@ export default function JournalPage() {
 
 	// Фильтры и поиск
 	const [searchQuery, setSearchQuery] = useState('');
-	const debouncedSearch = useDebounce(searchQuery, 400); // Чуть увеличили паузу, чтобы не спамить сервер
+	const debouncedSearch = useDebounce(searchQuery, 400); 
 	
 	const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 	const [filterType, setFilterType] = useState<'all' | 'success' | 'error' | 'fav'>('all');
@@ -50,7 +37,7 @@ export default function JournalPage() {
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [editingSpecimen, setEditingSpecimen] = useState<any | null>(null);
 
-	// Если меняем поиск или фильтр - сбрасываем на первую страницу
+	// Сбрасываем страницу при изменении фильтров
 	useEffect(() => {
 		setPage(1);
 	}, [debouncedSearch, filterType, sortConfig]);
@@ -58,7 +45,6 @@ export default function JournalPage() {
 	const fetchSpecimens = async () => {
 		setLoading(true);
 		try {
-			// Строим параметры для нового серверного API
 			const params = new URLSearchParams({
 				page: page.toString(),
 				limit: '50', // Грузим по 50 штук
@@ -89,18 +75,16 @@ export default function JournalPage() {
 		}
 	};
 
-	// Слушаем изменения зависимостей для загрузки
 	useEffect(() => {
 		if (status === 'unauthenticated') router.push('/login');
 		if (status === 'authenticated') fetchSpecimens();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [status, page, debouncedSearch, filterType, sortConfig]);
 
-	// Статистика (смешанная: глобальная из БД + детали по текущей странице)
 	const stats = useMemo(() => {
 		const list = Array.isArray(specimens) ? specimens : [];
 		return {
-			total: totalGlobal, // Показываем реальное количество всех проб в базе
+			total: totalGlobal, 
 			successful: list.filter(s => s.itsStatus === '✓').length,
 			others: list.filter(s => s.itsStatus !== '✓').length
 		};
@@ -147,8 +131,8 @@ export default function JournalPage() {
 				{/* Header */}
 				<header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
 					<div className="flex items-center gap-4">
-						<div className="p-3 bg-teal-500 rounded-2xl shadow-lg shadow-teal-500/20">
-							<TableCellsIcon className="w-8 h-8 text-white" />
+						<div className="p-3 bg-teal-500 rounded-2xl shadow-lg shadow-teal-500/20 text-2xl flex items-center justify-center">
+							📊 {/* Эмодзи вместо TableCellsIcon */}
 						</div>
 						<div>
 							<h1 className="text-3xl font-black tracking-tight text-white">База Проб</h1>
@@ -158,7 +142,8 @@ export default function JournalPage() {
 
 					<div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
 						<div className="relative flex-1 md:w-64 lg:w-80">
-							<MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+							{/* Эмодзи лупы внутри инпута */}
+							<span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-lg">🔍</span>
 							<input
 								id="main-search"
 								type="text"
@@ -170,27 +155,27 @@ export default function JournalPage() {
 						</div>
 
 						<button className="hidden lg:flex items-center gap-2 px-4 py-3.5 bg-slate-800/50 hover:bg-slate-700 text-slate-300 rounded-2xl transition-all font-medium text-sm">
-							<CommandLineIcon className="w-5 h-5" />
+							<span className="text-lg">⌨️</span>
 							<span>Клавиши</span>
 						</button>
 						
 						<button className="hidden lg:flex items-center gap-2 px-4 py-3.5 bg-slate-800/50 hover:bg-slate-700 text-slate-300 rounded-2xl transition-all font-medium text-sm">
-							<FunnelIcon className="w-5 h-5" />
+							<span className="text-lg">⚡</span>
 							<span>Умный фильтр</span>
 						</button>
 
 						<button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 px-5 py-3.5 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl transition-all font-bold shadow-lg shadow-teal-900/20 active:scale-95">
-							<PlusIcon className="w-5 h-5" />
+							<span className="text-lg">➕</span>
 							<span className="hidden sm:inline">Новая проба</span>
 						</button>
 
 						<Link href="/admin" className="flex items-center gap-2 px-5 py-3.5 bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 rounded-2xl transition-all font-bold shadow-lg">
-							<Cog8ToothIcon className="w-5 h-5" />
+							<span className="text-lg">⚙️</span>
 							<span className="hidden sm:inline">Админ</span>
 						</Link>
 
-						<button onClick={() => signOut()} title="Выйти" className="p-3.5 bg-slate-800/50 border border-slate-700/50 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-2xl transition-all">
-							<ArrowRightOnRectangleIcon className="w-5 h-5" />
+						<button onClick={() => signOut()} title="Выйти" className="p-3.5 bg-slate-800/50 border border-slate-700/50 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-2xl transition-all flex items-center justify-center">
+							<span className="text-lg">🚪</span>
 						</button>
 					</div>
 				</header>
@@ -210,13 +195,13 @@ export default function JournalPage() {
 							{type === 'all' && 'Все'}
 							{type === 'success' && 'Успешные'}
 							{type === 'error' && 'С ошибками'}
-							{type === 'fav' && <div className="flex items-center gap-1"><StarIcon className="w-3.5 h-3.5" /> Избранное</div>}
+							{type === 'fav' && <div className="flex items-center gap-1"><span className="text-yellow-400">⭐</span> Избранное</div>}
 						</button>
 					))}
 				</div>
 
 				<SpecimenTable 
-					specimens={specimens} // Передаем чистые данные с сервера
+					specimens={specimens} 
 					loading={loading}
 					selectedIds={selectedIds}
 					onSelect={(id) => {
@@ -243,8 +228,7 @@ export default function JournalPage() {
 							disabled={page === 1 || loading}
 							className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all"
 						>
-							<ChevronLeftIcon className="w-4 h-4" />
-							Назад
+							<span>◀️</span> Назад
 						</button>
 						
 						<span className="text-slate-400 text-sm font-medium">
@@ -256,8 +240,7 @@ export default function JournalPage() {
 							disabled={page === totalPages || loading}
 							className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:hover:bg-slate-800 rounded-xl text-sm font-semibold transition-all"
 						>
-							Вперёд
-							<ChevronRightIcon className="w-4 h-4" />
+							Вперёд <span>▶️</span>
 						</button>
 					</div>
 				)}
