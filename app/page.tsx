@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useDebounce } from '@/hooks/useDebounce';
 import Link from 'next/link';
 
-// Наши новые компоненты
+// Наши компоненты
 import { StatsCards } from './components/StatsCards';
 import { SpecimenTable } from './components/SpecimenTable';
 import { AddSpecimenModal } from './components/Modals/AddSpecimenModal';
@@ -123,6 +123,30 @@ export default function JournalPage() {
 		}
 	};
 
+	// ФУНКЦИЯ ПЕРЕКЛЮЧЕНИЯ СТАТУСА (теперь бейджики кликабельны!)
+	const handleStatusToggle = async (id: string, marker: string) => {
+		if (marker !== 'ITS') return; // Пока оживляем только ITS
+
+		const specimen = specimens.find(s => s.id === id);
+		if (!specimen) return;
+
+		// Логика переключения: ? -> ✓ -> ✕ -> ?
+		let newStatus: string | null = '✓';
+		if (specimen.itsStatus === '✓') newStatus = '✕';
+		else if (specimen.itsStatus === '✕') newStatus = null;
+
+		try {
+			await fetch('/api/specimens', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ singleId: id, singleStatus: newStatus })
+			});
+			fetchSpecimens();
+		} catch (error) {
+			console.error('Ошибка при обновлении статуса:', error);
+		}
+	};
+
 	if (status === 'loading') return null;
 
 	return (
@@ -132,7 +156,7 @@ export default function JournalPage() {
 				<header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
 					<div className="flex items-center gap-4">
 						<div className="p-3 bg-teal-500 rounded-2xl shadow-lg shadow-teal-500/20 text-2xl flex items-center justify-center">
-							📊 {/* Эмодзи вместо TableCellsIcon */}
+							📊
 						</div>
 						<div>
 							<h1 className="text-3xl font-black tracking-tight text-white">База Проб</h1>
@@ -142,7 +166,6 @@ export default function JournalPage() {
 
 					<div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
 						<div className="relative flex-1 md:w-64 lg:w-80">
-							{/* Эмодзи лупы внутри инпута */}
 							<span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-lg">🔍</span>
 							<input
 								id="main-search"
@@ -214,7 +237,7 @@ export default function JournalPage() {
 					}}
 					onEdit={setEditingSpecimen}
 					onPcr={() => {}} 
-					onStatusClick={() => {}}
+					onStatusClick={handleStatusToggle} // <-- Привязали функцию клика!
 					searchQuery={debouncedSearch}
 					sortConfig={sortConfig}
 					onSort={handleSort}
