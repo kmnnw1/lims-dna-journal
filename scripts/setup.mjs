@@ -44,7 +44,6 @@ if (!existsSync(envPath)) {
 let envText = readFileSync(envPath, 'utf8');
 let modified = false;
 
-// Проверка секрета
 if (/^NEXTAUTH_SECRET=\s*$/m.test(envText) || /^NEXTAUTH_SECRET=$/m.test(envText)) {
 	const secret = randomBytes(32).toString('base64');
 	envText = envText.replace(/^NEXTAUTH_SECRET=.*$/m, `NEXTAUTH_SECRET="${secret}"`);
@@ -52,27 +51,24 @@ if (/^NEXTAUTH_SECRET=\s*$/m.test(envText) || /^NEXTAUTH_SECRET=$/m.test(envText
 	process.env.NEXTAUTH_SECRET = secret;
 }
 
-// Проверка БД
+// Указываем правильный путь в папку prisma/
 if (!/^DATABASE_URL=/m.test(envText)) {
-	const dbUrl = 'file:./dev.db';
+	const dbUrl = "file:./prisma/dev.db";
 	envText += `\nDATABASE_URL="${dbUrl}"\n`;
 	modified = true;
 	process.env.DATABASE_URL = dbUrl;
 } else {
-	// Если переменная уже есть в файле, но не в процессе — загружаем её
 	const match = envText.match(/^DATABASE_URL=["']?(.+?)["']?$/m);
 	if (match) process.env.DATABASE_URL = match[1];
 }
 
 if (modified) writeFileSync(envPath, envText);
 
-// Prisma и автоматизация
 run('npm install', 'Установка всех зависимостей');
 run('npx prisma generate', 'Генерация Prisma 7 Client');
 run('npx prisma db push', 'Синхронизация схемы БД');
 run('npx husky', 'Инициализация Git Hooks (Husky)');
 
-// Форматирование
 try {
 	run('npx prettier --write .', 'Причесываем код перед стартом');
 } catch (e) {
