@@ -106,24 +106,29 @@ export default function JournalPage() {
 	};
 
 	const handleAddSave = async (data: any) => {
-		const res = await fetch('/api/specimens', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(data)
-		});
-		if (res.ok) {
+		try {
+			await fetch('/api/specimens', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data)
+			});
+		} finally {
+			// Закрываем окно и обновляем таблицу независимо от ответа сервера
 			setIsAddModalOpen(false);
 			fetchSpecimens();
 		}
 	};
 
 	const handleEditSave = async (id: string, data: any) => {
-		const res = await fetch(`/api/specimens?id=${id}`, {
-			method: 'PUT',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(data)
-		});
-		if (res.ok) {
+		try {
+			// ИСПРАВЛЕНИЕ: Передаем id внутрь body, как ждет твой сервер
+			await fetch('/api/specimens', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id, ...data })
+			});
+		} finally {
+			// Закрываем окно и обновляем таблицу
 			setEditingSpecimen(null);
 			fetchSpecimens();
 		}
