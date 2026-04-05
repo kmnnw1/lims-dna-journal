@@ -1,62 +1,58 @@
-import {execSync} from 'node:child_process';
-import {readFileSync, writeFileSync} from 'node:fs';
-import {join, dirname} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import { execSync } from 'node:child_process';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pkgPath = join(root, 'package.json');
 
 function getDiffStat() {
 	try {
-		const stat = execSync('git diff --cached --shortstat', {encoding: 'utf8'}).trim();
-		if (!stat) {
-			const workStat = execSync('git diff HEAD --shortstat', {encoding: 'utf8'}).trim();
-			if (!workStat) return 0;
-			const ins = parseInt(workStat.match(/(\d+) insertion/)?.[1] || '0', 10);
-			const del = parseInt(workStat.match(/(\d+) deletion/)?.[1] || '0', 10);
-			return ins + del;
-		}
-		const insertions = parseInt(stat.match(/(\d+) insertion/)?.[1] || '0', 10);
-		const deletions = parseInt(stat.match(/(\d+) deletion/)?.[1] || '0', 10);
-		return insertions + deletions;
+		const stat = execSync('git diff --cached --shortstat', { encoding: 'utf8' }).trim();
+		if (!stat) return { files: 0, lines: 0 };
+		
+		const files = parseInt(stat.match(/(\d+)\s+file/)?.[1] || '0', 10);
+		const insertions = parseInt(stat.match(/(\d+)\s+insertion/)?.[1] || '0', 10);
+		const deletions = parseInt(stat.match(/(\d+)\s+deletion/)?.[1] || '0', 10);
+		
+		return { files, lines: insertions + deletions };
 	} catch {
-		return 0;
+		return { files: 0, lines: 0 };
 	}
 }
 
-const linesChanged = getDiffStat();
-if (linesChanged === 0) {
-	console.log('ℹ️ Изменений не обнаружено, пропуск обновления версии.');
+const { files, lines } = getDiffStat();
+if (lines === 0 && files === 0) {
+	console.log('[SYSTEM] Изменений в отслеживаемых файлах не обнаружено.');
 	process.exit(0);
 }
 
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
 let [major, minor, patch, build] = pkg.version.split('.').map(Number);
 
-// Если строк больше 5000 — это форматирование или лок-файл, не считаем это эпиком
-if (linesChanged > 5000) {
+// Умная логика: защищаем Major и Minor от случайных бампов
+if (lines > 5000) {
+	// Аномальный объем (например, Prettier пробежался или обновился package-lock)
+	// Это НЕ эпическая фича, это просто форматирование. Бампаем только Build.
 	build++;
-	console.log(`👽 Аномальный объем (${linesChanged} стр.) Скорее всего Prettier. -> Build ++`);
-} else if (linesChanged > 2000) {
-	minor++;
-	patch = 0;
-	build = 0;
-	console.log(`🚀 Эпические изменения (${linesChanged} стр.) -> Minor ++`);
-} else if (linesChanged > 500) {
+	console.log(`[SYSTEM] Автоматическое форматирование или лок-файл (${files} файлов, ${lines} строк). Инкремент: Build.`);
+} else if (files >= 5 || lines > 300) {
+	// Затронуто много файлов или логики — это полноценная фича (Patch)
 	patch++;
 	build = 0;
-	console.log(`📦 Солидный коммит (${linesChanged} стр.) -> Patch ++`);
+	console.log(`[SYSTEM] Интеграция функционала (${files} файлов, ${lines} строк). Инкремент: Patch.`);
 } else {
+	// 1-4 файла — это локальный фикс или рутина (Build)
 	build++;
-	console.log(`🛠 Рабочие правки (${linesChanged} стр.) -> Build ++`);
+	console.log(`[SYSTEM] Локальные правки (${files} файлов, ${lines} строк). Инкремент: Build.`);
 }
 
 pkg.version = [major, minor, patch, build].join('.');
 writeFileSync(pkgPath, JSON.stringify(pkg, null, '\t') + '\n');
-console.log(`✅ Версия обновлена до: ${pkg.version}`);
+console.log(`[SYSTEM] Версия проекта: ${pkg.version}`);
 
 try {
-	execSync('git add package.json', {cwd: root});
+	execSync('git add package.json', { cwd: root });
 } catch (e) {
-	console.warn('⚠️ Не удалось выполнить git add package.json');
+	console.warn('[ERROR] Не удалось выполнить индексацию файла package.json');
 }

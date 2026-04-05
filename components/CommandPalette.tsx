@@ -1,11 +1,11 @@
 'use client';
 
-import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react';
-import {FlaskConical, Search, Plus, Settings, RefreshCw, ExternalLink} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { FlaskConical, Search, Plus, Settings, RefreshCw, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 /** Тип экземпляра */
-type Spec = {id: string; taxon?: string | null};
+type Spec = { id: string; taxon?: string | null };
 
 /** Пропсы командной палитры */
 type Props = {
@@ -57,7 +57,7 @@ export function CommandPalette({
 
 	// Быстрые действия — формируются по ролям
 	const actions = useMemo(() => {
-		const a: {id: string; label: string; icon: ReactNode; run: () => void}[] = [
+		const a: { id: string; label: string; icon: ReactNode; run: () => void }[] = [
 			{
 				id: 'refresh',
 				label: 'Обновить данные',
@@ -136,8 +136,7 @@ export function CommandPalette({
 				role="dialog"
 				aria-modal="true"
 				aria-labelledby="cmd-palette-title"
-				className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-600 dark:bg-zinc-900"
-			>
+				className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-600 dark:bg-zinc-900">
 				<div className="flex items-center gap-2 border-b border-zinc-100 px-3 py-2 dark:border-zinc-800">
 					<Search className="h-5 w-5 shrink-0 text-zinc-400" aria-hidden />
 					<input
@@ -205,8 +204,7 @@ export function CommandPalette({
 										} else if (e.key === 'Enter' || e.key === ' ') {
 											e.currentTarget.click();
 										}
-									}}
-								>
+									}}>
 									{a.icon}
 									{a.label}
 								</button>
@@ -258,8 +256,7 @@ export function CommandPalette({
 											} else if (e.key === 'Enter' || e.key === ' ') {
 												e.currentTarget.click();
 											}
-										}}
-									>
+										}}>
 										<span className="min-w-0 truncate font-semibold">
 											{s.id}
 										</span>
@@ -282,8 +279,7 @@ export function CommandPalette({
 						<Link
 							href="/admin"
 							className="inline-flex items-center gap-1 text-teal-600 dark:text-teal-400"
-							onClick={onClose}
-						>
+							onClick={onClose}>
 							<ExternalLink className="h-3 w-3" />
 							Админ
 						</Link>

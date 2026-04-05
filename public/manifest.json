@@ -18,13 +18,13 @@
 			"name": "Создать пробу",
 			"description": "Быстро создать новую пробу",
 			"url": "/samples/new",
-			"icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}]
+			"icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
 		},
 		{
 			"name": "Быстрый поиск",
 			"description": "Открыть поиск проб",
 			"url": "/samples",
-			"icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"}]
+			"icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
 		}
 	],
 	"icons": [

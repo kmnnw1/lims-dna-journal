@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useState, useRef, useMemo, useCallback} from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import {
 	FlaskConical,
 	Beaker,
@@ -28,20 +28,20 @@ import {
 	ScanLine,
 	Home as HomeIcon,
 } from 'lucide-react';
-import {signIn, signOut, useSession} from 'next-auth/react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
-import {parseApiResponse} from '@/lib/api-client';
-import {BarcodeScanDialog} from '@/components/BarcodeScanDialog';
-import {MobileSpecimenCard} from '@/components/MobileSpecimenCard';
-import {HighlightMatch} from '@/lib/highlight';
-import {loadFavoriteIds, saveFavoriteIds, toggleFavoriteId} from '@/lib/favorites';
-import {CommandPalette} from '@/components/CommandPalette';
-import {ShortcutsModal} from '@/components/ShortcutsModal';
-import {usePullToRefresh} from '@/hooks/usePullToRefresh';
-import {AddSpecimenModal} from '@/components/AddSpecimenModal';
-import {EditSpecimenModal} from '@/components/EditSpecimenModal';
-import {PcrModal} from '@/components/PcrModal';
-import {exportToCsv} from '@/lib/export';
+import { parseApiResponse } from '@/lib/api-client';
+import { BarcodeScanDialog } from '@/components/BarcodeScanDialog';
+import { MobileSpecimenCard } from '@/components/MobileSpecimenCard';
+import { HighlightMatch } from '@/lib/highlight';
+import { loadFavoriteIds, saveFavoriteIds, toggleFavoriteId } from '@/lib/favorites';
+import { CommandPalette } from '@/components/CommandPalette';
+import { ShortcutsModal } from '@/components/ShortcutsModal';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { AddSpecimenModal } from '@/components/AddSpecimenModal';
+import { EditSpecimenModal } from '@/components/EditSpecimenModal';
+import { PcrModal } from '@/components/PcrModal';
+import { exportToCsv } from '@/lib/export';
 import {
 	Specimen,
 	Suggestions,
@@ -81,7 +81,7 @@ export default function App() {
 }
 
 function Home() {
-	const {data: session, status} = useSession();
+	const { data: session, status } = useSession();
 
 	const [specimens, setSpecimens] = useState<Specimen[]>([]);
 	const [suggestions, setSuggestions] = useState<Suggestions>(EMPTY_SUGGESTIONS);
@@ -258,14 +258,16 @@ function Home() {
 		setDataLoading(true);
 		try {
 			const res = await fetch('/api/specimens');
-			const result = await parseApiResponse<{specimens?: unknown[]; suggestions?: any}>(res);
+			const result = await parseApiResponse<{ specimens?: unknown[]; suggestions?: any }>(
+				res,
+			);
 			if (!result.ok) {
 				showToast(result.message);
 				return;
 			}
 			if (result.data.specimens) {
 				setSpecimens(result.data.specimens as any[]);
-				setSuggestions(result.data.suggestions ?? {labs: [], operators: [], methods: []});
+				setSuggestions(result.data.suggestions ?? { labs: [], operators: [], methods: [] });
 			}
 		} finally {
 			setDataLoading(false);
@@ -282,7 +284,7 @@ function Home() {
 		setValidationError(false);
 		const res = await fetch('/api/specimens', {
 			method: 'POST',
-			headers: {'Content-Type': 'application/json'},
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(newRecord),
 		});
 		const result = await parseApiResponse(res);
@@ -299,11 +301,11 @@ function Home() {
 	const handleSaveEdit = async (e: SubmitEvent) => {
 		e.preventDefault();
 		if (!editingSpecimen) return;
-		const {id, attempts, ...dataToUpdate} = editingSpecimen;
+		const { id, attempts, ...dataToUpdate } = editingSpecimen;
 		const res = await fetch('/api/specimens', {
 			method: 'PUT',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({singleId: id, updateData: dataToUpdate}),
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ singleId: id, updateData: dataToUpdate }),
 		});
 		const result = await parseApiResponse(res);
 		if (!result.ok) {
@@ -324,8 +326,8 @@ function Home() {
 		if (massUpdate.dnaConcentration) updateData.dnaConcentration = massUpdate.dnaConcentration;
 		const res = await fetch('/api/specimens', {
 			method: 'PUT',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({ids: selectedIds, updateData}),
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ ids: selectedIds, updateData }),
 		});
 		const result = await parseApiResponse(res);
 		if (!result.ok) {
@@ -342,8 +344,8 @@ function Home() {
 		if (selectedIds.length === 0 || !confirm(`Удалить ${selectedIds.length} записей?`)) return;
 		const res = await fetch('/api/specimens', {
 			method: 'DELETE',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({ids: selectedIds}),
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ ids: selectedIds }),
 		});
 		const result = await parseApiResponse(res);
 		if (!result.ok) {
@@ -359,8 +361,8 @@ function Home() {
 		const nextStatus = current === '1' ? 'badQ' : current === 'badQ' ? 'alien' : '1';
 		const res = await fetch('/api/specimens', {
 			method: 'PUT',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({singleId: id, updateData: {[markerKey]: nextStatus}}),
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ singleId: id, updateData: { [markerKey]: nextStatus } }),
 		});
 		const result = await parseApiResponse(res);
 		if (!result.ok) {
@@ -374,7 +376,7 @@ function Home() {
 		if (!pcrForm.volume) return;
 		const res = await fetch('/api/specimens', {
 			method: 'PUT',
-			headers: {'Content-Type': 'application/json'},
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				newAttempt: {
 					specimenId: pcrModalId,
@@ -594,8 +596,7 @@ function Home() {
 				<button
 					type="button"
 					onClick={() => !isReader && toggleStatus(s.id, st, key)}
-					className={`${base} bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300`}
-				>
+					className={`${base} bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300`}>
 					{marker} ✓
 				</button>
 			);
@@ -604,8 +605,7 @@ function Home() {
 				<button
 					type="button"
 					onClick={() => !isReader && toggleStatus(s.id, st, key)}
-					className={`${base} bg-rose-100 text-rose-800 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-300`}
-				>
+					className={`${base} bg-rose-100 text-rose-800 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-300`}>
 					{marker} ✕
 				</button>
 			);
@@ -614,8 +614,7 @@ function Home() {
 				<button
 					type="button"
 					onClick={() => !isReader && toggleStatus(s.id, st, key)}
-					className={`${base} bg-amber-100 text-amber-900 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300`}
-				>
+					className={`${base} bg-amber-100 text-amber-900 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300`}>
 					{marker} 👽
 				</button>
 			);
@@ -624,8 +623,7 @@ function Home() {
 			<button
 				type="button"
 				onClick={() => !isReader && toggleStatus(s.id, st || '', key)}
-				className={`${base} bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400`}
-			>
+				className={`${base} bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400`}>
 				{marker} ?
 			</button>
 		);
@@ -662,8 +660,7 @@ function Home() {
 					<button
 						type="button"
 						onClick={() => signIn()}
-						className="mt-8 w-full rounded-full bg-teal-600 py-3.5 text-sm font-bold text-white shadow-md hover:bg-teal-700 hover:shadow-lg transition-all"
-					>
+						className="mt-8 w-full rounded-full bg-teal-600 py-3.5 text-sm font-bold text-white shadow-md hover:bg-teal-700 hover:shadow-lg transition-all">
 						Войти в систему
 					</button>
 				</div>
@@ -745,22 +742,19 @@ function Home() {
 							<button
 								onClick={() => setShortcutsOpen(true)}
 								className={MD3.iconBtn}
-								title="Клавиши"
-							>
+								title="Клавиши">
 								<Keyboard className="h-4 w-4" />
 							</button>
 							<button
 								onClick={() => setShowAdvFilter(!showAdvFilter)}
 								className={`${MD3.iconBtn} ${showAdvFilter ? 'text-teal-600 bg-teal-100 dark:bg-teal-900/30' : ''}`}
-								title="Умный фильтр"
-							>
+								title="Умный фильтр">
 								<Filter className="h-4 w-4" />
 							</button>
 							{!isReader && (
 								<button
 									onClick={() => setIsAddModalOpen(true)}
-									className={MD3.btnPrimary}
-								>
+									className={MD3.btnPrimary}>
 									<Plus className="h-4 w-4" />
 									Новая проба
 								</button>
@@ -768,16 +762,14 @@ function Home() {
 							<button
 								onClick={exportToExcel}
 								className={MD3.btnSecondary}
-								title="Вся база"
-							>
+								title="Вся база">
 								<Download className="h-4 w-4" />
 								База
 							</button>
 							<button
 								onClick={() => fetchSpecimens()}
 								disabled={dataLoading}
-								className={MD3.iconBtn}
-							>
+								className={MD3.iconBtn}>
 								<RefreshCw
 									className={`h-4 w-4 ${dataLoading ? 'animate-spin' : ''}`}
 								/>
@@ -792,8 +784,7 @@ function Home() {
 							{role === 'ADMIN' && (
 								<Link
 									href="/admin"
-									className={`${MD3.btnSecondary} !bg-violet-100 !text-violet-700 dark:!bg-violet-900/30 dark:!text-violet-300`}
-								>
+									className={`${MD3.btnSecondary} !bg-violet-100 !text-violet-700 dark:!bg-violet-900/30 dark:!text-violet-300`}>
 									<Settings className="h-4 w-4" />
 									Админ
 								</Link>
@@ -803,24 +794,21 @@ function Home() {
 							{!isReader && (
 								<button
 									onClick={() => setIsAddModalOpen(true)}
-									className={`touch-target flex-1 ${MD3.btnPrimary}`}
-								>
+									className={`touch-target flex-1 ${MD3.btnPrimary}`}>
 									<Plus className="h-4 w-4" />
 									Новая
 								</button>
 							)}
 							<button
 								onClick={() => fetchSpecimens()}
-								className={`touch-target ${MD3.iconBtn}`}
-							>
+								className={`touch-target ${MD3.iconBtn}`}>
 								<RefreshCw
 									className={`h-5 w-5 ${dataLoading ? 'animate-spin' : ''}`}
 								/>
 							</button>
 							<button
 								onClick={() => setToolsSheetOpen(true)}
-								className={`touch-target flex-1 ${MD3.btnSecondary}`}
-							>
+								className={`touch-target flex-1 ${MD3.btnSecondary}`}>
 								<MoreHorizontal className="h-5 w-5" />
 								Ещё
 							</button>
@@ -890,7 +878,7 @@ function Home() {
 				<div className="mt-4 h-2 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-zinc-800/80">
 					<div
 						className="h-full rounded-full bg-teal-500 transition-[width] duration-500"
-						style={{width: `${successPercent}%`}}
+						style={{ width: `${successPercent}%` }}
 					/>
 				</div>
 
@@ -903,8 +891,7 @@ function Home() {
 								quickFilter === key
 									? 'bg-zinc-900 text-white dark:bg-teal-600'
 									: 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'
-							}`}
-						>
+							}`}>
 							{key === 'FAVORITES' ? (
 								<span className="flex items-center gap-1.5">
 									<Star className="h-4 w-4" />
@@ -924,8 +911,7 @@ function Home() {
 
 			{!isReader && selectedIds.length > 0 && (
 				<div
-					className={`sticky top-3 z-20 mb-6 flex flex-col gap-4 p-5 shadow-lg print:hidden ${MD3.card} !bg-teal-50 dark:!bg-teal-900/20 !border-teal-200 dark:!border-teal-800/50`}
-				>
+					className={`sticky top-3 z-20 mb-6 flex flex-col gap-4 p-5 shadow-lg print:hidden ${MD3.card} !bg-teal-50 dark:!bg-teal-900/20 !border-teal-200 dark:!border-teal-800/50`}>
 					<div className="flex flex-wrap items-center justify-between gap-2">
 						<p className="font-bold text-teal-900 dark:text-teal-100">
 							Выбрано: {selectedIds.length}
@@ -936,15 +922,13 @@ function Home() {
 							</button>
 							<button
 								onClick={() => setSelectedIds(filteredSpecimens.map((s) => s.id))}
-								className={MD3.btnSecondary}
-							>
+								className={MD3.btnSecondary}>
 								Все в фильтре
 							</button>
 							{isAdmin && (
 								<button
 									onClick={handleMassDelete}
-									className="rounded-full bg-rose-100 px-5 py-2.5 text-sm font-bold text-rose-700 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-400"
-								>
+									className="rounded-full bg-rose-100 px-5 py-2.5 text-sm font-bold text-rose-700 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-400">
 									<Trash2 className="h-4 w-4 inline mr-1" /> Удалить
 								</button>
 							)}
@@ -957,7 +941,7 @@ function Home() {
 							list="labs-list"
 							placeholder="Лаборатория"
 							value={massUpdate.lab}
-							onChange={(e) => setMassUpdate({...massUpdate, lab: e.target.value})}
+							onChange={(e) => setMassUpdate({ ...massUpdate, lab: e.target.value })}
 							className={MD3.input}
 						/>
 						<input
@@ -967,7 +951,7 @@ function Home() {
 							placeholder="Кто выделял"
 							value={massUpdate.operator}
 							onChange={(e) =>
-								setMassUpdate({...massUpdate, operator: e.target.value})
+								setMassUpdate({ ...massUpdate, operator: e.target.value })
 							}
 							className={MD3.input}
 						/>
@@ -977,7 +961,9 @@ function Home() {
 							list="methods-list"
 							placeholder="Метод"
 							value={massUpdate.method}
-							onChange={(e) => setMassUpdate({...massUpdate, method: e.target.value})}
+							onChange={(e) =>
+								setMassUpdate({ ...massUpdate, method: e.target.value })
+							}
 							className={MD3.input}
 						/>
 						<input
@@ -986,7 +972,7 @@ function Home() {
 							placeholder="Конц. ДНК"
 							value={massUpdate.dnaConcentration}
 							onChange={(e) =>
-								setMassUpdate({...massUpdate, dnaConcentration: e.target.value})
+								setMassUpdate({ ...massUpdate, dnaConcentration: e.target.value })
 							}
 							className={MD3.input}
 						/>
@@ -1000,8 +986,7 @@ function Home() {
 			)}
 
 			<div
-				className={`overflow-hidden relative z-10 print:border-none print:shadow-none print:bg-transparent ${MD3.card}`}
-			>
+				className={`overflow-hidden relative z-10 print:border-none print:shadow-none print:bg-transparent ${MD3.card}`}>
 				<div className="hidden overflow-x-auto md:block print:block">
 					<table className="w-full border-collapse text-left">
 						<thead className={MD3.tableHeader}>
@@ -1027,14 +1012,12 @@ function Home() {
 								)}
 								<th
 									className="cursor-pointer p-4 hover:text-teal-600 transition-colors"
-									onClick={() => handleSort('id')}
-								>
+									onClick={() => handleSort('id')}>
 									ID {sortKey === 'id' && (sortOrder === 1 ? '↑' : '↓')}
 								</th>
 								<th
 									className="cursor-pointer p-4 hover:text-teal-600 transition-colors"
-									onClick={() => handleSort('taxon')}
-								>
+									onClick={() => handleSort('taxon')}>
 									Таксон {sortKey === 'taxon' && (sortOrder === 1 ? '↑' : '↓')}
 								</th>
 								<th className="hidden max-w-[14rem] p-4 xl:table-cell">Заметки</th>
@@ -1045,7 +1028,7 @@ function Home() {
 						</thead>
 						<tbody className="text-sm">
 							{dataLoading ? (
-								Array.from({length: 5}).map((_, i) => (
+								Array.from({ length: 5 }).map((_, i) => (
 									<tr key={`sk-${i}`} className={MD3.tableRow}>
 										{!isReader && (
 											<td className="p-4">
@@ -1076,8 +1059,7 @@ function Home() {
 								<tr>
 									<td
 										colSpan={tableColSpan}
-										className="p-16 text-center text-zinc-500 font-medium"
-									>
+										className="p-16 text-center text-zinc-500 font-medium">
 										Ничего не найдено.
 									</td>
 								</tr>
@@ -1085,8 +1067,7 @@ function Home() {
 								currentData.map((s) => (
 									<tr
 										key={s.id}
-										className={`${MD3.tableRow} ${selectedIds.includes(s.id) ? 'bg-teal-50/50 dark:bg-teal-900/10' : ''}`}
-									>
+										className={`${MD3.tableRow} ${selectedIds.includes(s.id) ? 'bg-teal-50/50 dark:bg-teal-900/10' : ''}`}>
 										{!isReader && (
 											<td className="p-4 text-center print:hidden">
 												<input
@@ -1110,8 +1091,7 @@ function Home() {
 												<button
 													type="button"
 													onClick={() => toggleFavorite(s.id)}
-													className={`print:hidden transition-colors ${favSet.has(s.id) ? 'text-amber-500' : 'text-zinc-300 hover:text-amber-400'}`}
-												>
+													className={`print:hidden transition-colors ${favSet.has(s.id) ? 'text-amber-500' : 'text-zinc-300 hover:text-amber-400'}`}>
 													<Star
 														className={`h-4 w-4 ${favSet.has(s.id) ? 'fill-current' : ''}`}
 													/>
@@ -1122,8 +1102,7 @@ function Home() {
 												<button
 													type="button"
 													onClick={() => copySpecimenLink(s.id)}
-													className="text-zinc-400 hover:text-teal-600 print:hidden ml-1"
-												>
+													className="text-zinc-400 hover:text-teal-600 print:hidden ml-1">
 													<Link2 className="h-3.5 w-3.5" />
 												</button>
 											</div>
@@ -1147,8 +1126,7 @@ function Home() {
 											{s.notes ? (
 												<p
 													className="line-clamp-3 whitespace-pre-wrap break-words text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded-xl"
-													title={s.notes}
-												>
+													title={s.notes}>
 													{s.notes}
 												</p>
 											) : (
@@ -1178,8 +1156,7 @@ function Home() {
 														type="button"
 														onClick={() => setEditingSpecimen(s)}
 														className="p-2 text-zinc-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-full transition-colors"
-														title="Изменить"
-													>
+														title="Изменить">
 														<Pencil className="h-4 w-4" />
 													</button>
 												)}
@@ -1187,8 +1164,7 @@ function Home() {
 													type="button"
 													onClick={() => setPcrModalId(s.id)}
 													className={`p-2 rounded-full transition-colors ${s.attempts?.length ? 'text-teal-600 bg-teal-50 dark:bg-teal-900/30' : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
-													title="ПЦР"
-												>
+													title="ПЦР">
 													<Activity className="h-4 w-4" />
 												</button>
 											</div>
@@ -1230,8 +1206,7 @@ function Home() {
 						<button
 							disabled={currentPage <= 1}
 							onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-							className={MD3.btnSecondary}
-						>
+							className={MD3.btnSecondary}>
 							Назад
 						</button>
 						<span className="font-bold text-zinc-600 dark:text-zinc-400">
@@ -1240,8 +1215,7 @@ function Home() {
 						<button
 							disabled={currentPage >= totalPages}
 							onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-							className={MD3.btnSecondary}
-						>
+							className={MD3.btnSecondary}>
 							Вперёд
 						</button>
 					</div>
@@ -1251,25 +1225,22 @@ function Home() {
 			<nav className="safe-pb fixed bottom-0 left-0 right-0 z-[70] flex items-stretch justify-around gap-0 border-t border-zinc-200/90 bg-white/95 px-2 pt-2 pb-1 shadow-[0_-8px_30px_rgba(0,0,0,0.05)] backdrop-blur-md print:hidden md:hidden dark:border-zinc-800 dark:bg-zinc-900/95">
 				<button
 					type="button"
-					onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
-					className="touch-target flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-medium text-zinc-600 hover:text-teal-600"
-				>
+					onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+					className="touch-target flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-medium text-zinc-600 hover:text-teal-600">
 					<HomeIcon className="h-6 w-6 mb-1" />
 					Вверх
 				</button>
 				<button
 					type="button"
 					onClick={() => searchInputRef.current?.focus()}
-					className="touch-target flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-medium text-zinc-600 hover:text-teal-600"
-				>
+					className="touch-target flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-medium text-zinc-600 hover:text-teal-600">
 					<Search className="h-6 w-6 mb-1" />
 					Поиск
 				</button>
 				<button
 					type="button"
 					onClick={() => setScanOpen(true)}
-					className="touch-target flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-bold text-teal-700"
-				>
+					className="touch-target flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-bold text-teal-700">
 					<ScanLine className="h-6 w-6 mb-1" />
 					Скан
 				</button>
@@ -1277,8 +1248,7 @@ function Home() {
 					<button
 						type="button"
 						onClick={() => setIsAddModalOpen(true)}
-						className="touch-target flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-bold text-teal-700"
-					>
+						className="touch-target flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-bold text-teal-700">
 						<Plus className="h-6 w-6 mb-1" />
 						Проба
 					</button>
@@ -1286,8 +1256,7 @@ function Home() {
 				<button
 					type="button"
 					onClick={() => setToolsSheetOpen(true)}
-					className="touch-target flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-medium text-zinc-600 hover:text-teal-600"
-				>
+					className="touch-target flex flex-1 flex-col items-center justify-center py-1 text-[11px] font-medium text-zinc-600 hover:text-teal-600">
 					<MoreHorizontal className="h-6 w-6 mb-1" />
 					Меню
 				</button>
@@ -1308,8 +1277,7 @@ function Home() {
 									setToolsSheetOpen(false);
 									exportExtractionJournal();
 								}}
-								className="flex min-h-[56px] items-center justify-center gap-3 rounded-2xl bg-teal-50 text-sm font-bold text-teal-900 dark:bg-teal-900/30 dark:text-teal-100"
-							>
+								className="flex min-h-[56px] items-center justify-center gap-3 rounded-2xl bg-teal-50 text-sm font-bold text-teal-900 dark:bg-teal-900/30 dark:text-teal-100">
 								<FileSpreadsheet className="h-5 w-5" /> Журнал выделений
 							</button>
 							<button
@@ -1317,8 +1285,7 @@ function Home() {
 									setToolsSheetOpen(false);
 									exportToExcel();
 								}}
-								className="flex min-h-[56px] items-center justify-center gap-3 rounded-2xl bg-zinc-100 text-sm font-bold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-							>
+								className="flex min-h-[56px] items-center justify-center gap-3 rounded-2xl bg-zinc-100 text-sm font-bold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">
 								<Download className="h-5 w-5" /> Вся база (Excel)
 							</button>
 							<button
@@ -1326,8 +1293,7 @@ function Home() {
 									setToolsSheetOpen(false);
 									exportCsv();
 								}}
-								className="flex min-h-[56px] items-center justify-center gap-3 rounded-2xl bg-zinc-100 text-sm font-bold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-							>
+								className="flex min-h-[56px] items-center justify-center gap-3 rounded-2xl bg-zinc-100 text-sm font-bold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">
 								<FileText className="h-5 w-5" /> Список (CSV)
 							</button>
 							<button
@@ -1335,16 +1301,14 @@ function Home() {
 									setToolsSheetOpen(false);
 									window.print();
 								}}
-								className="flex min-h-[56px] items-center justify-center gap-3 rounded-2xl bg-zinc-100 text-sm font-bold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-							>
+								className="flex min-h-[56px] items-center justify-center gap-3 rounded-2xl bg-zinc-100 text-sm font-bold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">
 								<Printer className="h-5 w-5" /> Печать
 							</button>
 							{role === 'ADMIN' && (
 								<Link
 									href="/admin"
 									onClick={() => setToolsSheetOpen(false)}
-									className="flex min-h-[56px] items-center justify-center gap-3 rounded-2xl bg-violet-100 text-sm font-bold text-violet-900 dark:bg-violet-900/30 dark:text-violet-100"
-								>
+									className="flex min-h-[56px] items-center justify-center gap-3 rounded-2xl bg-violet-100 text-sm font-bold text-violet-900 dark:bg-violet-900/30 dark:text-violet-100">
 									<Settings className="h-5 w-5" /> Панель Админа
 								</Link>
 							)}
@@ -1354,8 +1318,7 @@ function Home() {
 								setToolsSheetOpen(false);
 								signOut();
 							}}
-							className="mt-5 flex w-full min-h-[56px] items-center justify-center gap-3 rounded-full bg-zinc-900 text-sm font-bold text-white dark:bg-zinc-100 dark:text-zinc-900"
-						>
+							className="mt-5 flex w-full min-h-[56px] items-center justify-center gap-3 rounded-full bg-zinc-900 text-sm font-bold text-white dark:bg-zinc-100 dark:text-zinc-900">
 							<LogOut className="h-5 w-5" /> Выйти
 						</button>
 					</div>

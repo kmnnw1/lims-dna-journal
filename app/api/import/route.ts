@@ -1,11 +1,11 @@
-import {NextResponse} from 'next/server';
-import {prisma} from '@/lib/prisma';
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import ExcelJS from 'exceljs';
 import fs from 'fs';
 import path from 'path';
-import {getServerSession} from 'next-auth/next';
-import {authOptions} from '@/lib/auth';
-import {mergeById, parseSheetToRows, type ParsedSpecimenRow} from '@/lib/import-excel';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { mergeById, parseSheetToRows, type ParsedSpecimenRow } from '@/lib/import-excel';
 
 /**
  * Проверка, что пользователь — админ, иначе выбрасывает 403.
@@ -13,8 +13,8 @@ import {mergeById, parseSheetToRows, type ParsedSpecimenRow} from '@/lib/import-
  */
 async function requireAdmin() {
 	const session = await getServerSession(authOptions);
-	if (!session || (session.user as {role?: string}).role !== 'ADMIN') {
-		throw {code: 403, message: 'Доступ запрещён (требуются права ADMIN)'};
+	if (!session || (session.user as { role?: string }).role !== 'ADMIN') {
+		throw { code: 403, message: 'Доступ запрещён (требуются права ADMIN)' };
 	}
 }
 
@@ -31,7 +31,10 @@ export async function GET() {
 		const filePath = path.isAbsolute(rawPath) ? rawPath : path.join(process.cwd(), rawPath);
 
 		if (!fs.existsSync(filePath)) {
-			return NextResponse.json({error: `Файл импорта не найден: ${filePath}`}, {status: 400});
+			return NextResponse.json(
+				{ error: `Файл импорта не найден: ${filePath}` },
+				{ status: 400 },
+			);
 		}
 
 		// Чтение файла через ExcelJS
@@ -61,7 +64,7 @@ export async function GET() {
 		let inserted = 0;
 		for (let i = 0; i < uniqueData.length; i += chunkSize) {
 			const chunk = uniqueData.slice(i, i + chunkSize);
-			const result = await prisma.specimen.createMany({data: chunk});
+			const result = await prisma.specimen.createMany({ data: chunk });
 			inserted += result.count ?? chunk.length;
 		}
 
@@ -76,7 +79,7 @@ export async function GET() {
 	} catch (e: any) {
 		const status = e?.code === 403 ? 403 : 500;
 		const msg = e?.message || (e instanceof Error ? e.message : String(e));
-		return NextResponse.json({error: msg}, {status});
+		return NextResponse.json({ error: msg }, { status });
 	}
 }
 
@@ -89,7 +92,10 @@ export async function POST(request: Request) {
 		await requireAdmin();
 		const body = await request.json().catch(() => ({}));
 		if (body.action !== 'clear') {
-			return NextResponse.json({error: 'Укажите JSON: { "action": "clear" }'}, {status: 400});
+			return NextResponse.json(
+				{ error: 'Укажите JSON: { "action": "clear" }' },
+				{ status: 400 },
+			);
 		}
 		const beforeCount = await prisma.specimen.count();
 		const result = await prisma.specimen.deleteMany({});
@@ -102,6 +108,6 @@ export async function POST(request: Request) {
 	} catch (e: any) {
 		const status = e?.code === 403 ? 403 : 500;
 		const msg = e?.message || (e instanceof Error ? e.message : String(e));
-		return NextResponse.json({error: msg}, {status});
+		return NextResponse.json({ error: msg }, { status });
 	}
 }

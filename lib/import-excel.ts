@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs';
+import { prisma } from './prisma';
 
-export type SourceRef = {sheet: string; row: number};
+export type SourceRef = { sheet: string; row: number };
 
 export type ParsedSpecimenRow = {
 	id: string;
@@ -15,8 +16,11 @@ export type ParsedSpecimenRow = {
 	itsStatus: string;
 	itsGb: string;
 	ssuStatus: string;
+	ssuGb: string;
 	lsuStatus: string;
+	lsuGb: string;
 	mcm7Status: string;
+	mcm7Gb: string;
 	notes: string;
 	_sources?: SourceRef[];
 };
@@ -121,7 +125,7 @@ export function findHeaderRowIndex(rawData: unknown[][]): number {
 	return -1;
 }
 
-export type ColumnBinding = {index: number; rawHeader: string; key: string};
+export type ColumnBinding = { index: number; rawHeader: string; key: string };
 
 export function buildColumnBindings(headerRow: unknown[]): ColumnBinding[] {
 	const out: ColumnBinding[] = [];
@@ -133,13 +137,13 @@ export function buildColumnBindings(headerRow: unknown[]): ColumnBinding[] {
 		let key = headerToCanonicalKey(rawHeader);
 		if (!key) key = `__col_${c}`;
 		if (key.startsWith('__')) {
-			out.push({index: c, rawHeader, key});
+			out.push({ index: c, rawHeader, key });
 			continue;
 		}
 		const n = counts.get(key) ?? 0;
 		counts.set(key, n + 1);
 		const finalKey = n === 0 ? key : `${key}_${n}`;
-		out.push({index: c, rawHeader, key: finalKey});
+		out.push({ index: c, rawHeader, key: finalKey });
 	}
 	return out;
 }
@@ -168,7 +172,7 @@ export function collectRowCellComments(sheet: ExcelJS.Worksheet, rowIndex0: numb
 	if (!row) return '';
 
 	const texts: string[] = [];
-	row.eachCell({includeEmpty: true}, (cell) => {
+	row.eachCell({ includeEmpty: true }, (cell) => {
 		if (cell.note) {
 			const noteText =
 				typeof cell.note === 'string'
@@ -373,10 +377,13 @@ export function parseRowWithBindings(
 		itsStatus: its,
 		itsGb,
 		ssuStatus,
+		ssuGb,
 		lsuStatus,
+		lsuGb: mtlsuGb || '',
 		mcm7Status: mcm7,
+		mcm7Gb,
 		notes,
-		_sources: [{sheet: sheetName, row: sheetRowIndex0 + 1}],
+		_sources: [{ sheet: sheetName, row: sheetRowIndex0 + 1 }],
 	};
 }
 
@@ -416,10 +423,13 @@ export function parseRowLegacy(
 		itsStatus: row[13] != null ? String(row[13]).trim() : '',
 		itsGb: row[14] != null ? String(row[14]).trim() : '',
 		ssuStatus: '',
+		ssuGb: '',
 		lsuStatus: '',
+		lsuGb: '',
 		mcm7Status: '',
+		mcm7Gb: '',
 		notes,
-		_sources: [{sheet: sheetName, row: sheetRowIndex0 + 1}],
+		_sources: [{ sheet: sheetName, row: sheetRowIndex0 + 1 }],
 	};
 }
 
@@ -475,10 +485,13 @@ export function parseLySheetRows(
 			itsStatus: '',
 			itsGb: '',
 			ssuStatus: '',
+			ssuGb: '',
 			lsuStatus: '',
+			lsuGb: '',
 			mcm7Status: '',
+			mcm7Gb: '',
 			notes: noteParts.join('\n'),
-			_sources: [{sheet: sheetName, row: i + 1}],
+			_sources: [{ sheet: sheetName, row: i + 1 }],
 		});
 	}
 	return out;
@@ -486,7 +499,7 @@ export function parseLySheetRows(
 
 function extractRawDataFromSheet(sheet: ExcelJS.Worksheet): unknown[][] {
 	const rawData: unknown[][] = [];
-	sheet.eachRow({includeEmpty: true}, (row) => {
+	sheet.eachRow({ includeEmpty: true }, (row) => {
 		const rowValues = Array.isArray(row.values) ? row.values.slice(1) : [];
 		rawData.push(rowValues.map((v) => (v === undefined || v === null ? '' : v)));
 	});
@@ -561,7 +574,7 @@ export function mergeById(rows: ParsedSpecimenRow[]): ParsedSpecimenRow[] {
 	for (const row of rows) {
 		const prev = map.get(row.id);
 		if (!prev) {
-			map.set(row.id, {...row, _sources: [...(row._sources || [])]});
+			map.set(row.id, { ...row, _sources: [...(row._sources || [])] });
 			continue;
 		}
 
@@ -601,8 +614,11 @@ export function mergeById(rows: ParsedSpecimenRow[]): ParsedSpecimenRow[] {
 			itsStatus: pickNonEmpty(prev.itsStatus, row.itsStatus),
 			itsGb: pickNonEmpty(prev.itsGb, row.itsGb),
 			ssuStatus: pickNonEmpty(prev.ssuStatus, row.ssuStatus),
+			ssuGb: pickNonEmpty(prev.ssuGb, row.ssuGb),
 			lsuStatus: pickNonEmpty(prev.lsuStatus, row.lsuStatus),
+			lsuGb: pickNonEmpty(prev.lsuGb, row.lsuGb),
 			mcm7Status: pickNonEmpty(prev.mcm7Status, row.mcm7Status),
+			mcm7Gb: pickNonEmpty(prev.mcm7Gb, row.mcm7Gb),
 			notes: mergedNotes,
 			_sources: mergedSources,
 		});
@@ -611,8 +627,132 @@ export function mergeById(rows: ParsedSpecimenRow[]): ParsedSpecimenRow[] {
 	return Array.from(map.values()).map((r) => {
 		const sourceStr = formatSources(r._sources || []);
 		const finalNotes = [r.notes, sourceStr].filter(Boolean).join('\n\n');
-		const {_sources, ...rest} = r;
+		const { _sources, ...rest } = r;
 		if (rest.extrDate === '') rest.extrDate = null;
-		return {...rest, notes: finalNotes};
+		return { ...rest, notes: finalNotes };
 	});
+}
+
+/**
+ * Инженерная интеграция: загрузка распарсенных данных в реляционную БД Prisma 7.
+ * Решает проблему 2D-таблиц, разделяя образцы (Specimen) и попытки ПЦР (PcrAttempt),
+ * а также сохраняет все неформатные данные в JSON (importNotes).
+ */
+export async function processExcelToDatabase(buffer: any) {
+	const workbook = new ExcelJS.Workbook();
+	await workbook.xlsx.load(buffer);
+
+	const results = {
+		specimensInserted: 0,
+		pcrAttemptsCreated: 0,
+		errors: 0,
+		logs: [] as string[],
+	};
+
+	let allParsedRows: ParsedSpecimenRow[] = [];
+	workbook.worksheets.forEach((sheet) => {
+		const rows = parseSheetToRows(sheet, sheet.name);
+		allParsedRows = allParsedRows.concat(rows);
+	});
+
+	const mergedRows = mergeById(allParsedRows);
+
+	await prisma.$transaction(
+		async (tx) => {
+			for (const row of mergedRows) {
+				try {
+					const importNotesObj: Record<string, string> = {};
+
+					if (row.notes) importNotesObj.generalNotes = row.notes;
+
+					if (!row.extrDate && row.extrDateRaw) {
+						importNotesObj.unparsedExtrDate = row.extrDateRaw;
+					}
+
+					if (row.itsStatus && row.itsStatus.length > 50)
+						importNotesObj.itsRaw = row.itsStatus;
+					if (row.ssuStatus && row.ssuStatus.length > 50)
+						importNotesObj.ssuRaw = row.ssuStatus;
+					if (row.lsuStatus && row.lsuStatus.length > 50)
+						importNotesObj.lsuRaw = row.lsuStatus;
+					if (row.mcm7Status && row.mcm7Status.length > 50)
+						importNotesObj.mcm7Raw = row.mcm7Status;
+
+					const importNotesJson =
+						Object.keys(importNotesObj).length > 0
+							? JSON.stringify(importNotesObj)
+							: null;
+
+					const specimen = await tx.specimen.upsert({
+						where: { id: row.id },
+						update: {
+							taxon: row.taxon || undefined,
+							locality: row.locality || undefined,
+							collector: row.collector || undefined,
+							extrLab: row.extrLab || undefined,
+							extrOperator: row.extrOperator || undefined,
+							extrMethod: row.extrMethod || undefined,
+							extrDateRaw: row.extrDateRaw || undefined,
+							extrDate: row.extrDate ? new Date(row.extrDate) : undefined,
+							itsGb: row.itsGb || undefined,
+							ssuGb: row.ssuGb || undefined,
+							lsuGb: row.lsuGb || undefined,
+							mcm7Gb: row.mcm7Gb || undefined,
+							importNotes: importNotesJson,
+							updatedAt: new Date(),
+						},
+						create: {
+							id: row.id,
+							taxon: row.taxon,
+							locality: row.locality,
+							collector: row.collector,
+							extrLab: row.extrLab,
+							extrOperator: row.extrOperator,
+							extrMethod: row.extrMethod,
+							extrDateRaw: row.extrDateRaw,
+							extrDate: row.extrDate ? new Date(row.extrDate) : null,
+							itsGb: row.itsGb,
+							ssuGb: row.ssuGb,
+							lsuGb: row.lsuGb,
+							mcm7Gb: row.mcm7Gb,
+							importOrigin: 'excel_legacy_parser',
+							importNotes: importNotesJson,
+						},
+					});
+					results.specimensInserted++;
+
+					const markersToCheck = [
+						{ name: 'ITS', status: row.itsStatus },
+						{ name: 'SSU', status: row.ssuStatus },
+						{ name: 'LSU', status: row.lsuStatus },
+						{ name: 'MCM7', status: row.mcm7Status },
+					];
+
+					for (const marker of markersToCheck) {
+						if (marker.status && marker.status.trim() !== '') {
+							await tx.pcrAttempt.create({
+								data: {
+									specimenId: specimen.id,
+									marker: marker.name,
+									result: marker.status.substring(0, 50),
+									resultNotes: marker.status.length > 50 ? marker.status : null,
+									date: row.extrDate ? new Date(row.extrDate) : new Date(),
+								},
+							});
+							results.pcrAttemptsCreated++;
+						}
+					}
+				} catch (error) {
+					results.errors++;
+					results.logs.push(`Ошибка на ID [${row.id}]: ${(error as Error).message}`);
+				}
+			}
+		},
+		{
+			maxWait: 10000,
+			timeout: 30000,
+		},
+	);
+
+	return results;
 }

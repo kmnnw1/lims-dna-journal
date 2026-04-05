@@ -1,13 +1,13 @@
-import type {NextAuthOptions, User as NextAuthUser, Session} from 'next-auth';
-import type {JWT} from 'next-auth/jwt';
+import type { NextAuthOptions, User as NextAuthUser, Session } from 'next-auth';
+import type { JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import {prisma} from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
 async function findUserByUsername(username: string) {
 	try {
 		return await prisma.user.findUnique({
-			where: {username},
+			where: { username },
 		});
 	} catch (e) {
 		return null;
@@ -38,8 +38,8 @@ export const authOptions: NextAuthOptions = {
 		CredentialsProvider({
 			name: 'Вход',
 			credentials: {
-				username: {label: 'Логин', type: 'text', placeholder: 'admin'},
-				password: {label: 'Пароль', type: 'password', placeholder: 'Пароль'},
+				username: { label: 'Логин', type: 'text', placeholder: 'admin' },
+				password: { label: 'Пароль', type: 'password', placeholder: 'Пароль' },
 			},
 			async authorize(credentials) {
 				if (!credentials?.username?.trim() || !credentials?.password) return null;
@@ -61,20 +61,20 @@ export const authOptions: NextAuthOptions = {
 					id: user.id,
 					name: user.username,
 					role: user.role,
-				} as NextAuthUser & {role: string};
+				} as NextAuthUser & { role: string };
 			},
 		}),
 	],
 	callbacks: {
-		async jwt({token, user}) {
+		async jwt({ token, user }) {
 			if (user?.role) {
 				token.role = user.role;
 			}
 			return token;
 		},
-		async session({session, token}) {
+		async session({ session, token }) {
 			if (session.user && token.role) {
-				(session.user as {role?: string}).role = token.role as string;
+				(session.user as { role?: string }).role = token.role as string;
 			}
 			return session;
 		},

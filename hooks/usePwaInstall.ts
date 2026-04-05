@@ -1,6 +1,6 @@
 'use client';
 
-import {useCallback, useEffect, useRef, useState} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Тип для beforeinstallprompt с актуальными полями.
@@ -8,7 +8,7 @@ import {useCallback, useEffect, useRef, useState} from 'react';
  */
 type BeforeInstallPrompt = Event & {
 	prompt: () => Promise<void>;
-	userChoice: Promise<{outcome: 'accepted' | 'dismissed'}>;
+	userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 };
 
 function isIosDevice(): boolean {

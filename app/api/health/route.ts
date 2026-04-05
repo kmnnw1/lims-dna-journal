@@ -1,6 +1,6 @@
-import {readFileSync} from 'node:fs';
-import {join} from 'node:path';
-import {NextResponse} from 'next/server';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { NextResponse } from 'next/server';
 
 /**
  * API-эндпоинт для health/probe (жив ли сервис, версия, текущее время).
@@ -13,7 +13,7 @@ export async function GET() {
 	try {
 		const pkgPath = join(process.cwd(), 'package.json');
 		const raw = readFileSync(pkgPath, 'utf8');
-		const pkg = JSON.parse(raw) as {version?: string; name?: string};
+		const pkg = JSON.parse(raw) as { version?: string; name?: string };
 		version = pkg.version ?? version;
 		name = pkg.name ?? name;
 		const stats = readFileSync(pkgPath); // just to check existence for mtime

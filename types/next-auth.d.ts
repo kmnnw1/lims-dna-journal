@@ -3,7 +3,7 @@
  * - В объекте пользователя в сессии (Session.user) добавляется поле 'role'
  * - В JWT-токене (JWT) также поддерживается поле 'role'
  */
-import type {DefaultSession, DefaultUser} from 'next-auth';
+import type { DefaultSession, DefaultUser } from 'next-auth';
 
 declare module 'next-auth' {
 	interface User extends DefaultUser {

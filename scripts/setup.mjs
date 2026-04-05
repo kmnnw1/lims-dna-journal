@@ -3,18 +3,18 @@
  * Усовершенствованная подготовка проекта: Prisma 7, автоматизация версий и Husky.
  */
 
-import {execSync} from 'node:child_process';
-import {randomBytes} from 'node:crypto';
-import {existsSync, readFileSync, writeFileSync, copyFileSync} from 'node:fs';
-import {dirname, join} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import { execSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
+import { existsSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 function run(cmd, title) {
 	if (title) console.log(`\n→ ${title}\n`);
 	try {
-		execSync(cmd, {cwd: root, stdio: 'inherit', shell: true, env: process.env});
+		execSync(cmd, { cwd: root, stdio: 'inherit', shell: true, env: process.env });
 	} catch (err) {
 		console.error(`❌ Ошибка выполнения '${cmd}':\n`, err?.message || err);
 		process.exit(1);
@@ -53,7 +53,7 @@ if (/^NEXTAUTH_SECRET=\s*$/m.test(envText) || /^NEXTAUTH_SECRET=$/m.test(envText
 
 // Указываем правильный путь в папку prisma/
 if (!/^DATABASE_URL=/m.test(envText)) {
-	const dbUrl = "file:./prisma/dev.db";
+	const dbUrl = 'file:./prisma/dev.db';
 	envText += `\nDATABASE_URL="${dbUrl}"\n`;
 	modified = true;
 	process.env.DATABASE_URL = dbUrl;

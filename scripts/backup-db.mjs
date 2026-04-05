@@ -5,8 +5,8 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import {fileURLToPath} from 'url';
-import {existsSync} from 'fs';
+import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 
 async function main() {
 	try {
@@ -21,7 +21,7 @@ async function main() {
 		}
 
 		try {
-			await fs.mkdir(dir, {recursive: true});
+			await fs.mkdir(dir, { recursive: true });
 		} catch (err) {
 			console.error(`❌ Failed to create backup directory: ${dir}\n`, err);
 			process.exit(1);

@@ -1,8 +1,8 @@
-import {withAuth} from 'next-auth/middleware';
+import { withAuth } from 'next-auth/middleware';
 
 export default withAuth({
 	callbacks: {
-		authorized: ({token}) => {
+		authorized: ({ token }) => {
 			return Boolean(token && typeof token === 'object');
 		},
 	},

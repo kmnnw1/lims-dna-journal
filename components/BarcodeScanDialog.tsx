@@ -1,13 +1,13 @@
 'use client';
 
-import {useEffect, useRef, useState, useCallback} from 'react';
-import {X} from 'lucide-react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { X } from 'lucide-react';
 
 /**
  * Представляет интерфейс детектора штрихкодов.
  */
-type BarcodeDetectorClass = new (opts?: {formats?: string[]}) => {
-	detect: (image: ImageBitmapSource) => Promise<Array<{rawValue: string}>>;
+type BarcodeDetectorClass = new (opts?: { formats?: string[] }) => {
+	detect: (image: ImageBitmapSource) => Promise<Array<{ rawValue: string }>>;
 };
 
 const FORMATS = ['qr_code', 'code_128', 'code_39', 'ean_13', 'data_matrix', 'itf'];
@@ -21,7 +21,7 @@ type Props = {
 	onCode: (raw: string) => void;
 };
 
-export function BarcodeScanDialog({open, onClose, onCode}: Props) {
+export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const streamRef = useRef<MediaStream | null>(null);
 	const rafRef = useRef(0);
@@ -58,7 +58,7 @@ export function BarcodeScanDialog({open, onClose, onCode}: Props) {
 		let cancelled = false;
 
 		(async () => {
-			const BD = (globalThis as unknown as {BarcodeDetector?: BarcodeDetectorClass})
+			const BD = (globalThis as unknown as { BarcodeDetector?: BarcodeDetectorClass })
 				.BarcodeDetector;
 			setHasDetector(typeof BD === 'function');
 
@@ -70,7 +70,7 @@ export function BarcodeScanDialog({open, onClose, onCode}: Props) {
 			setError('');
 			try {
 				const stream = await navigator.mediaDevices.getUserMedia({
-					video: {facingMode: {ideal: 'environment'}},
+					video: { facingMode: { ideal: 'environment' } },
 					audio: false,
 				});
 				if (cancelled) {
@@ -83,7 +83,7 @@ export function BarcodeScanDialog({open, onClose, onCode}: Props) {
 					v.srcObject = stream;
 					await v.play();
 				}
-				const detector = new BD({formats: FORMATS});
+				const detector = new BD({ formats: FORMATS });
 
 				const tick = async () => {
 					if (cancelled || !videoRef.current) return;
@@ -176,8 +176,7 @@ export function BarcodeScanDialog({open, onClose, onCode}: Props) {
 			className="safe-pt fixed inset-0 z-[120] flex flex-col bg-black/90 p-3 print:hidden"
 			aria-modal="true"
 			role="dialog"
-			tabIndex={-1}
-		>
+			tabIndex={-1}>
 			<div className="mb-2 flex items-center justify-between text-white">
 				<p className="text-sm font-medium">Сканируйте ID / QR-код</p>
 				<button
@@ -187,8 +186,7 @@ export function BarcodeScanDialog({open, onClose, onCode}: Props) {
 						onClose();
 					}}
 					className="rounded-xl p-2 transition hover:bg-white/10"
-					aria-label="Закрыть"
-				>
+					aria-label="Закрыть">
 					<X className="h-6 w-6" />
 				</button>
 			</div>
@@ -224,8 +222,7 @@ export function BarcodeScanDialog({open, onClose, onCode}: Props) {
 					type="button"
 					onClick={applyManual}
 					className="w-full rounded-2xl bg-teal-500 py-3 text-sm font-bold text-white shadow-lg active:scale-[0.99]"
-					disabled={!manual.trim()}
-				>
+					disabled={!manual.trim()}>
 					Искать
 				</button>
 				<p className="text-xs text-center text-white/60 select-none">

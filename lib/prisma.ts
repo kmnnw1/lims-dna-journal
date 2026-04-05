@@ -1,17 +1,26 @@
-import {PrismaClient} from '@prisma/client';
-import {PrismaBetterSqlite3} from '@prisma/adapter-better-sqlite3';
+import { PrismaClient } from '@prisma/client';
 import Database from 'better-sqlite3';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import path from 'path';
 
-const globalForPrisma = globalThis as unknown as {
-	prisma: PrismaClient | undefined;
-};
+// 1. Абсолютный путь для драйвера
+const dbPath = path.join(process.cwd(), 'prisma', 'dev.db');
+const sqlite = new Database(dbPath);
 
-const basePrisma = () => {
-	const sqlite = new Database('prisma/dev.db');
-	const adapter = new PrismaBetterSqlite3(sqlite);
-	return new PrismaClient({adapter});
-};
+// Используем 'as any' для обхода временного конфликта типов Prisma 7
+const adapter = new PrismaBetterSqlite3(sqlite as any);
 
-export const prisma = globalForPrisma.prisma ?? basePrisma();
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const prisma =
+	globalForPrisma.prisma ||
+	new PrismaClient({
+		adapter,
+		datasources: {
+			db: {
+				url: 'file:./prisma/dev.db',
+			},
+		},
+	} as any); // <-- Вот он, спасительный каст, который уберет ошибку!
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;

@@ -1,8 +1,8 @@
 'use client';
 
-import {signIn} from 'next-auth/react';
-import {useState, Suspense} from 'react';
-import {FlaskConical, AlertCircle, ArrowRight} from 'lucide-react';
+import { signIn } from 'next-auth/react';
+import { useState, Suspense } from 'react';
+import { FlaskConical, AlertCircle, ArrowRight } from 'lucide-react';
 
 function LoginContent() {
 	const [username, setUsername] = useState('');
@@ -90,8 +90,7 @@ function LoginContent() {
 					<button
 						type="submit"
 						disabled={loading}
-						className="w-full flex items-center justify-center gap-3 bg-teal-600 hover:bg-teal-700 text-white rounded-full px-6 py-4 text-base font-bold shadow-md hover:shadow-lg active:scale-[0.98] transition-all mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
-					>
+						className="w-full flex items-center justify-center gap-3 bg-teal-600 hover:bg-teal-700 text-white rounded-full px-6 py-4 text-base font-bold shadow-md hover:shadow-lg active:scale-[0.98] transition-all mt-4 disabled:opacity-70 disabled:cursor-not-allowed">
 						{loading ? (
 							<div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
 						) : (
@@ -114,8 +113,7 @@ export default function LoginPage() {
 				<div className="min-h-screen bg-zinc-950 flex items-center justify-center">
 					<div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full"></div>
 				</div>
-			}
-		>
+			}>
 			<LoginContent />
 		</Suspense>
 	);

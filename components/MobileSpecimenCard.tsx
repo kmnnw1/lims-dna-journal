@@ -1,8 +1,8 @@
 'use client';
 
-import {Barcode, Camera, Activity, Share2, Copy, Star, Pencil} from 'lucide-react';
-import {useState, type ReactNode} from 'react';
-import {HighlightMatch} from '@/lib/highlight';
+import { Barcode, Camera, Activity, Share2, Copy, Star, Pencil } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { HighlightMatch } from '@/lib/highlight';
 
 export type MobileSpecimenShape = {
 	id: string;
@@ -58,7 +58,7 @@ export function MobileSpecimenCard({
 
 	const share = async () => {
 		try {
-			if (navigator.share) await navigator.share({title: `Проба ${s.id}`, text: s.id});
+			if (navigator.share) await navigator.share({ title: `Проба ${s.id}`, text: s.id });
 			else await copyId();
 		} catch {}
 	};
@@ -96,8 +96,7 @@ export function MobileSpecimenCard({
 								strokeWidth="3"
 								strokeLinecap="round"
 								strokeLinejoin="round"
-								aria-hidden
-							>
+								aria-hidden>
 								<polyline points="20 6 9 17 4 12"></polyline>
 							</svg>
 						</div>
@@ -114,8 +113,7 @@ export function MobileSpecimenCard({
 									target="_blank"
 									rel="noopener noreferrer"
 									className="shrink-0"
-									title="Просмотреть гель"
-								>
+									title="Просмотреть гель">
 									<Camera className="h-4 w-4 text-teal-600 dark:text-teal-400" />
 									<span className="sr-only">Гель</span>
 								</a>
@@ -139,8 +137,7 @@ export function MobileSpecimenCard({
 								favorite ? 'text-amber-500' : 'text-zinc-400'
 							}`}
 							aria-label={favorite ? 'Убрать из избранного' : 'В избранное'}
-							title={favorite ? 'Убрать из избранного' : 'В избранное'}
-						>
+							title={favorite ? 'Убрать из избранного' : 'В избранное'}>
 							<Star
 								className={`h-4 w-4 transition-all ${favorite ? 'fill-current scale-110' : ''}`}
 							/>
@@ -152,13 +149,11 @@ export function MobileSpecimenCard({
 						className={`${btnClass} text-zinc-500 relative`}
 						aria-label="Скопировать ID"
 						title="Скопировать ID"
-						disabled={copied}
-					>
+						disabled={copied}>
 						<Copy className="h-4 w-4" />
 						<span
 							className={`absolute right-0 top-0 -translate-y-full text-[10px] px-1 rounded whitespace-nowrap bg-zinc-900/85 text-zinc-50 transition pointer-events-none ${copied ? 'opacity-100' : 'opacity-0'}`}
-							aria-live="polite"
-						>
+							aria-live="polite">
 							Скопировано
 						</span>
 					</button>
@@ -168,8 +163,7 @@ export function MobileSpecimenCard({
 							onClick={onEdit}
 							className={`${btnClass} text-zinc-500`}
 							aria-label="Редактировать"
-							title="Редактировать"
-						>
+							title="Редактировать">
 							<Pencil className="h-4 w-4" />
 						</button>
 					)}
@@ -179,8 +173,7 @@ export function MobileSpecimenCard({
 							onClick={share}
 							className={`${btnClass} text-zinc-500`}
 							aria-label="Поделиться"
-							title="Поделиться"
-						>
+							title="Поделиться">
 							<Share2 className="h-4 w-4" />
 						</button>
 					) : null}
@@ -193,8 +186,7 @@ export function MobileSpecimenCard({
 								: 'text-zinc-500'
 						}`}
 						aria-label="PCR"
-						title="PCR"
-					>
+						title="PCR">
 						<Activity className="h-4 w-4" />
 					</button>
 				</div>

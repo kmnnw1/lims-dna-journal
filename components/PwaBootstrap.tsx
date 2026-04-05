@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect} from 'react';
+import { useEffect } from 'react';
 
 /**
  * Инициализация/регистрация PWA service worker.
@@ -31,7 +31,7 @@ export function PwaBootstrap() {
 		}
 
 		navigator.serviceWorker
-			.register('/sw.js', {scope: '/'})
+			.register('/sw.js', { scope: '/' })
 			.then((reg) => {
 				// eslint-disable-next-line no-console
 				// console.info("[PWA] Service worker зарегистрирован:", reg.scope);
@@ -42,5 +42,5 @@ export function PwaBootstrap() {
 			});
 	}, []);
 	// Возвращаем скрытый элемент, чтобы компонент всегда отрендерился хоть как-то (anti-pure-empty)
-	return <span style={{display: 'none'}} aria-hidden />;
+	return <span style={{ display: 'none' }} aria-hidden />;
 }

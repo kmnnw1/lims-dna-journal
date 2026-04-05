@@ -1,12 +1,12 @@
 /** Разбор JSON, извлечение поля `error` или `message` для ошибок, более тщательная диагностика. */
 export async function parseApiResponse<T>(
 	res: Response,
-): Promise<{ok: true; data: T} | {ok: false; message: string}> {
+): Promise<{ ok: true; data: T } | { ok: false; message: string }> {
 	let text: string;
 	try {
 		text = await res.text();
 	} catch {
-		return {ok: false, message: 'Ошибка соединения с сервером'};
+		return { ok: false, message: 'Ошибка соединения с сервером' };
 	}
 
 	let data: any = {};
@@ -34,16 +34,16 @@ export async function parseApiResponse<T>(
 		} else {
 			msg = `Ошибка ${res.status}`;
 		}
-		return {ok: false, message: msg};
+		return { ok: false, message: msg };
 	}
 
 	// Даже если res.ok, проверим, нет ли на верхнем уровне стандартных error-сообщений
 	if (typeof data?.error === 'string' && data.error.trim().length > 0) {
-		return {ok: false, message: data.error.trim()};
+		return { ok: false, message: data.error.trim() };
 	}
 	if (typeof data?.message === 'string' && data.message.trim().length > 0) {
-		return {ok: false, message: data.message.trim()};
+		return { ok: false, message: data.message.trim() };
 	}
 
-	return {ok: true, data: data as T};
+	return { ok: true, data: data as T };
 }

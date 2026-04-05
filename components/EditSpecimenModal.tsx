@@ -1,8 +1,8 @@
 'use client';
 
-import {X, Save} from 'lucide-react';
-import {useRef, useEffect} from 'react';
-import type {EditSpecimenForm} from '@/types';
+import { X, Save } from 'lucide-react';
+import { useRef, useEffect } from 'react';
+import type { EditSpecimenForm } from '@/types';
 
 // Улучшенная и унифицированная pallete для всех модалок
 const MD3 = {
@@ -23,7 +23,7 @@ type Props = {
 	onSubmit: (e: React.FormEvent) => void;
 };
 
-export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props) {
+export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Props) {
 	const taxonInputRef = useRef<HTMLInputElement>(null);
 
 	// Автофокус на поле "Таксон" при открытии модалки
@@ -63,8 +63,7 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 						type="button"
 						onClick={onClose}
 						className={MD3.iconBtn}
-						aria-label="Закрыть"
-					>
+						aria-label="Закрыть">
 						<X className="h-5 w-5" />
 					</button>
 				</div>
@@ -82,7 +81,7 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 								maxLength={72}
 								autoComplete="off"
 								data-testid="editspecimen-taxon"
-								onChange={(e) => onChange({...specimen, taxon: e.target.value})}
+								onChange={(e) => onChange({ ...specimen, taxon: e.target.value })}
 								className={MD3.input}
 							/>
 							<input
@@ -90,7 +89,9 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 								value={specimen.locality || ''}
 								maxLength={100}
 								data-testid="editspecimen-locality"
-								onChange={(e) => onChange({...specimen, locality: e.target.value})}
+								onChange={(e) =>
+									onChange({ ...specimen, locality: e.target.value })
+								}
 								className={MD3.input}
 							/>
 							<input
@@ -98,7 +99,9 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 								value={specimen.collector || ''}
 								maxLength={40}
 								data-testid="editspecimen-collector"
-								onChange={(e) => onChange({...specimen, collector: e.target.value})}
+								onChange={(e) =>
+									onChange({ ...specimen, collector: e.target.value })
+								}
 								className={MD3.input}
 							/>
 							<textarea
@@ -106,7 +109,7 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 								value={specimen.notes || ''}
 								maxLength={300}
 								data-testid="editspecimen-notes"
-								onChange={(e) => onChange({...specimen, notes: e.target.value})}
+								onChange={(e) => onChange({ ...specimen, notes: e.target.value })}
 								className={`${MD3.input} sm:col-span-2 min-h-[100px] resize-y`}
 							/>
 						</div>
@@ -124,7 +127,7 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 								value={specimen.extrLab || ''}
 								maxLength={40}
 								data-testid="editspecimen-lab"
-								onChange={(e) => onChange({...specimen, extrLab: e.target.value})}
+								onChange={(e) => onChange({ ...specimen, extrLab: e.target.value })}
 								className={MD3.input}
 							/>
 							<input
@@ -134,7 +137,7 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 								maxLength={40}
 								data-testid="editspecimen-operator"
 								onChange={(e) =>
-									onChange({...specimen, extrOperator: e.target.value})
+									onChange({ ...specimen, extrOperator: e.target.value })
 								}
 								className={MD3.input}
 							/>
@@ -145,7 +148,7 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 								maxLength={40}
 								data-testid="editspecimen-method"
 								onChange={(e) =>
-									onChange({...specimen, extrMethod: e.target.value})
+									onChange({ ...specimen, extrMethod: e.target.value })
 								}
 								className={MD3.input}
 							/>
@@ -155,7 +158,7 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 								maxLength={20}
 								data-testid="editspecimen-extrdate"
 								onChange={(e) =>
-									onChange({...specimen, extrDateRaw: e.target.value})
+									onChange({ ...specimen, extrDateRaw: e.target.value })
 								}
 								className={MD3.input}
 							/>
@@ -173,7 +176,9 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 								value={specimen.dnaMeter || ''}
 								maxLength={32}
 								data-testid="editspecimen-dnameter"
-								onChange={(e) => onChange({...specimen, dnaMeter: e.target.value})}
+								onChange={(e) =>
+									onChange({ ...specimen, dnaMeter: e.target.value })
+								}
 								className={MD3.input}
 							/>
 							<input
@@ -183,7 +188,7 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 								data-testid="editspecimen-dnaconc"
 								inputMode="decimal"
 								onChange={(e) =>
-									onChange({...specimen, dnaConcentration: e.target.value})
+									onChange({ ...specimen, dnaConcentration: e.target.value })
 								}
 								className={MD3.input}
 							/>
@@ -193,7 +198,7 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 								maxLength={40}
 								data-testid="editspecimen-measoperator"
 								onChange={(e) =>
-									onChange({...specimen, measOperator: e.target.value})
+									onChange({ ...specimen, measOperator: e.target.value })
 								}
 								className={MD3.input}
 							/>
@@ -202,7 +207,9 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 								value={specimen.measDate || ''}
 								maxLength={20}
 								data-testid="editspecimen-measdate"
-								onChange={(e) => onChange({...specimen, measDate: e.target.value})}
+								onChange={(e) =>
+									onChange({ ...specimen, measDate: e.target.value })
+								}
 								className={MD3.input}
 							/>
 						</div>
@@ -213,8 +220,7 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 							type="button"
 							onClick={onClose}
 							className={MD3.btnSecondary}
-							data-testid="editspecimen-cancel"
-						>
+							data-testid="editspecimen-cancel">
 							Отмена
 						</button>
 						<button
@@ -222,8 +228,7 @@ export function EditSpecimenModal({specimen, onClose, onChange, onSubmit}: Props
 							className={MD3.btnPrimary}
 							disabled={isEmpty}
 							data-testid="editspecimen-submit"
-							title={isEmpty ? 'Заполните хотя бы одно поле' : undefined}
-						>
+							title={isEmpty ? 'Заполните хотя бы одно поле' : undefined}>
 							<Save className="h-5 w-5" />
 							Сохранить
 						</button>

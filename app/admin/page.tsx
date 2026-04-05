@@ -1,7 +1,7 @@
 'use client';
 
-import {useState, useEffect, useRef} from 'react';
-import {useSession} from 'next-auth/react';
+import { useState, useEffect, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 import {
 	UserPlus,
 	ShieldAlert,
@@ -12,13 +12,13 @@ import {
 	Save,
 } from 'lucide-react';
 import Link from 'next/link';
-import {parseApiResponse} from '@/lib/api-client';
+import { parseApiResponse } from '@/lib/api-client';
 
 // Переиспользуемый инпут с лейблом для форм
 function LabeledInput({
 	label,
 	...props
-}: React.InputHTMLAttributes<HTMLInputElement> & {label: string}) {
+}: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
 	return (
 		<label className="flex flex-col gap-1 mb-3">
 			<span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">{label}</span>
@@ -33,7 +33,7 @@ function UserRow({
 	onUpdate,
 	onDelete,
 }: {
-	user: {id: string; username: string; role: string};
+	user: { id: string; username: string; role: string };
 	fieldClass: string;
 	onUpdate: (id: string, role: string, password?: string) => void;
 	onDelete: (id: string) => void;
@@ -81,8 +81,7 @@ function UserRow({
 							onChange={(e) => setRole(e.target.value)}
 							className={`${fieldClass} max-w-[11rem]`}
 							disabled={busy}
-							aria-label="Роль"
-						>
+							aria-label="Роль">
 							<option value="EDITOR">EDITOR</option>
 							<option value="READER">READER</option>
 							<option value="ADMIN">ADMIN</option>
@@ -103,8 +102,7 @@ function UserRow({
 							className="inline-flex items-center gap-1 rounded-xl bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-500 transition disabled:opacity-50"
 							disabled={busy || (role === u.role && !pwd)}
 							ref={saveBtnRef}
-							aria-label="Сохранить изменения"
-						>
+							aria-label="Сохранить изменения">
 							<Save className="h-4 w-4" />
 							Сохранить
 						</button>
@@ -113,8 +111,7 @@ function UserRow({
 							onClick={handleDeleteClick}
 							className="rounded-xl p-2 text-rose-600 transition hover:bg-rose-50 dark:hover:bg-rose-950/50 disabled:opacity-50"
 							aria-label={`Удалить пользователя "${u.username}"`}
-							disabled={busy}
-						>
+							disabled={busy}>
 							<Trash2 className="h-5 w-5" />
 						</button>
 					</>
@@ -127,19 +124,21 @@ function UserRow({
 }
 
 export default function AdminPage() {
-	const {data: session, status} = useSession();
-	const [users, setUsers] = useState<{id: string; username: string; role: string}[]>([]);
+	const { data: session, status } = useSession();
+	const [users, setUsers] = useState<{ id: string; username: string; role: string }[]>([]);
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 	const [role, setRole] = useState('EDITOR');
-	const [toast, setToast] = useState<{message: string; type?: 'success' | 'error'} | null>(null);
+	const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' } | null>(
+		null,
+	);
 	const [importBusy, setImportBusy] = useState(false);
 	const [loadingUsers, setLoadingUsers] = useState(false);
 
 	const toastTimeout = useRef<NodeJS.Timeout | null>(null);
 
 	const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-		setToast({message, type});
+		setToast({ message, type });
 		if (toastTimeout.current) clearTimeout(toastTimeout.current);
 		toastTimeout.current = setTimeout(() => setToast(null), 3500);
 	};
@@ -149,7 +148,7 @@ export default function AdminPage() {
 		try {
 			const res = await fetch('/api/users');
 			const result =
-				await parseApiResponse<{id: string; username: string; role: string}[]>(res);
+				await parseApiResponse<{ id: string; username: string; role: string }[]>(res);
 			if (!result.ok) {
 				showToast(result.message, 'error');
 				return;
@@ -173,8 +172,8 @@ export default function AdminPage() {
 		}
 		const res = await fetch('/api/users', {
 			method: 'POST',
-			headers: {'Content-Type': 'application/json'},
-			body: JSON.stringify({username, password, role}),
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ username, password, role }),
 		});
 		const parsed = await parseApiResponse(res);
 		if (!parsed.ok) {
@@ -190,11 +189,11 @@ export default function AdminPage() {
 	const handleUpdateUser = async (id: string, newRole: string, newPassword?: string) => {
 		const res = await fetch('/api/users', {
 			method: 'PUT',
-			headers: {'Content-Type': 'application/json'},
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				id,
 				role: newRole,
-				...(newPassword && newPassword.length > 0 ? {password: newPassword} : {}),
+				...(newPassword && newPassword.length > 0 ? { password: newPassword } : {}),
 			}),
 		});
 		const parsed = await parseApiResponse(res);
@@ -208,7 +207,7 @@ export default function AdminPage() {
 
 	const handleDeleteUser = async (id: string) => {
 		if (!confirm('Точно удалить пользователя? Это действие необратимо.')) return;
-		const res = await fetch(`/api/users?id=${id}`, {method: 'DELETE'});
+		const res = await fetch(`/api/users?id=${id}`, { method: 'DELETE' });
 		const parsed = await parseApiResponse(res);
 		if (!parsed.ok) {
 			showToast(parsed.message, 'error');
@@ -224,10 +223,10 @@ export default function AdminPage() {
 		try {
 			const res = await fetch('/api/import', {
 				method: 'POST',
-				headers: {'Content-Type': 'application/json'},
-				body: JSON.stringify({action: 'clear'}),
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ action: 'clear' }),
 			});
-			const result = await parseApiResponse<{message?: string; deleted?: number}>(res);
+			const result = await parseApiResponse<{ message?: string; deleted?: number }>(res);
 			if (!result.ok) {
 				showToast(result.message, 'error');
 				return;
@@ -282,8 +281,7 @@ export default function AdminPage() {
 				</p>
 				<Link
 					href="/"
-					className="mt-6 rounded-2xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-500"
-				>
+					className="mt-6 rounded-2xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-500">
 					На главную
 				</Link>
 			</div>
@@ -303,15 +301,13 @@ export default function AdminPage() {
 					? 'border-rose-200 bg-white/95 text-rose-800 dark:border-rose-700 dark:bg-rose-950/95 dark:text-rose-100'
 					: 'border-zinc-200/80 bg-white/95 text-teal-900 dark:border-zinc-600 dark:bg-zinc-900/95 dark:text-teal-200'
 			}
-          `}
-				>
+          `}>
 					{toast.message}
 				</div>
 			)}
 			<Link
 				href="/"
-				className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-teal-700 transition hover:text-teal-600 dark:text-teal-400 dark:hover:text-teal-300"
-			>
+				className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-teal-700 transition hover:text-teal-600 dark:text-teal-400 dark:hover:text-teal-300">
 				<ArrowLeft className="h-4 w-4" /> К журналу
 			</Link>
 
@@ -341,8 +337,7 @@ export default function AdminPage() {
 							type="button"
 							disabled={importBusy}
 							onClick={handleImportFromExcel}
-							className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50"
-						>
+							className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50">
 							<FileSpreadsheet className="h-4 w-4" />
 							Импортировать
 						</button>
@@ -350,8 +345,7 @@ export default function AdminPage() {
 							type="button"
 							disabled={importBusy}
 							onClick={handleClearSpecimens}
-							className="inline-flex items-center gap-2 rounded-2xl border border-rose-300 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-900 transition hover:bg-rose-100 disabled:opacity-50 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-200 dark:hover:bg-rose-900/50"
-						>
+							className="inline-flex items-center gap-2 rounded-2xl border border-rose-300 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-900 transition hover:bg-rose-100 disabled:opacity-50 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-200 dark:hover:bg-rose-900/50">
 							<Trash2 className="h-4 w-4" />
 							Очистить пробы
 						</button>
@@ -360,8 +354,7 @@ export default function AdminPage() {
 
 				<form
 					onSubmit={handleCreateUser}
-					className="h-fit rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/60 md:col-span-1"
-				>
+					className="h-fit rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/60 md:col-span-1">
 					<h2 className="mb-4 font-semibold">Новый пользователь</h2>
 					<LabeledInput
 						required
@@ -396,8 +389,7 @@ export default function AdminPage() {
 						<select
 							value={role}
 							onChange={(e) => setRole(e.target.value)}
-							className={field}
-						>
+							className={field}>
 							<option value="EDITOR">Редактор (EDITOR)</option>
 							<option value="READER">Только чтение (READER)</option>
 							<option value="ADMIN">Администратор (ADMIN)</option>
@@ -405,8 +397,7 @@ export default function AdminPage() {
 					</label>
 					<button
 						className="w-full rounded-2xl bg-teal-600 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-teal-500 dark:bg-teal-500 disabled:opacity-50"
-						disabled={!username.trim() || !password.trim()}
-					>
+						disabled={!username.trim() || !password.trim()}>
 						Создать
 					</button>
 				</form>
@@ -418,8 +409,7 @@ export default function AdminPage() {
 							<span className="flex items-center gap-1 text-xs text-zinc-400">
 								<svg
 									className="animate-spin h-3 w-3 text-teal-500"
-									viewBox="0 0 24 24"
-								>
+									viewBox="0 0 24 24">
 									<circle
 										className="opacity-25"
 										cx="12"

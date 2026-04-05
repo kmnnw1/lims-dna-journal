@@ -1,8 +1,8 @@
 'use client';
 
-import {X} from 'lucide-react';
-import type {NewRecordForm} from '@/types';
-import {useRef, useEffect} from 'react';
+import { X } from 'lucide-react';
+import type { NewRecordForm } from '@/types';
+import { useRef, useEffect } from 'react';
 
 const MD3 = {
 	card: 'bg-white dark:bg-zinc-900 rounded-3xl shadow-sm border border-zinc-200/60 dark:border-zinc-800/80',
@@ -68,8 +68,7 @@ export function AddSpecimenModal({
 			onClick={handleOverlayClick}
 			aria-modal="true"
 			role="dialog"
-			tabIndex={-1}
-		>
+			tabIndex={-1}>
 			<div className={`${MD3.card} w-full max-w-md p-8 relative`}>
 				<div className="mb-6 flex items-center justify-between">
 					<h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
@@ -80,8 +79,7 @@ export function AddSpecimenModal({
 						onClick={onClose}
 						className={MD3.iconBtn}
 						title="Закрыть"
-						aria-label="Закрыть"
-					>
+						aria-label="Закрыть">
 						<X className="h-5 w-5" />
 					</button>
 				</div>
@@ -95,7 +93,7 @@ export function AddSpecimenModal({
 						value={newRecord.id}
 						spellCheck={false}
 						onChange={(e) =>
-							setNewRecord({...newRecord, id: e.target.value.replace(/\s/g, '')})
+							setNewRecord({ ...newRecord, id: e.target.value.replace(/\s/g, '') })
 						}
 						className={`${MD3.input} ${validationError ? 'ring-2 ring-rose-500' : ''}`}
 						data-testid="addspecimen-id"
@@ -104,7 +102,7 @@ export function AddSpecimenModal({
 						placeholder="Таксон"
 						value={newRecord.taxon}
 						maxLength={80}
-						onChange={(e) => setNewRecord({...newRecord, taxon: e.target.value})}
+						onChange={(e) => setNewRecord({ ...newRecord, taxon: e.target.value })}
 						className={MD3.input}
 						data-testid="addspecimen-taxon"
 					/>
@@ -113,7 +111,7 @@ export function AddSpecimenModal({
 						placeholder="Лаборатория"
 						value={newRecord.extrLab}
 						maxLength={40}
-						onChange={(e) => setNewRecord({...newRecord, extrLab: e.target.value})}
+						onChange={(e) => setNewRecord({ ...newRecord, extrLab: e.target.value })}
 						className={MD3.input}
 						data-testid="addspecimen-lab"
 					/>
@@ -122,15 +120,16 @@ export function AddSpecimenModal({
 						placeholder="Лаборант"
 						value={newRecord.extrOperator}
 						maxLength={40}
-						onChange={(e) => setNewRecord({...newRecord, extrOperator: e.target.value})}
+						onChange={(e) =>
+							setNewRecord({ ...newRecord, extrOperator: e.target.value })
+						}
 						className={MD3.input}
 						data-testid="addspecimen-operator"
 					/>
 					<button
 						type="submit"
 						className={`mt-4 ${MD3.btnPrimary}`}
-						data-testid="addspecimen-submit"
-					>
+						data-testid="addspecimen-submit">
 						Сохранить
 					</button>
 				</form>

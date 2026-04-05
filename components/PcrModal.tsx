@@ -1,7 +1,7 @@
 'use client';
 
-import {X, Activity, Save} from 'lucide-react';
-import type {PcrForm, Specimen} from '@/types';
+import { X, Activity, Save } from 'lucide-react';
+import type { PcrForm, Specimen } from '@/types';
 
 const MD3 = {
 	card: 'bg-white dark:bg-zinc-900 rounded-[2rem] shadow-sm border border-zinc-200/50 dark:border-zinc-800/50',
@@ -71,8 +71,7 @@ export function PcrModal({
 						activeSpecimen.attempts.map((a: any) => (
 							<div
 								key={a.id}
-								className="rounded-[1.5rem] bg-zinc-50 p-5 dark:bg-zinc-800/50"
-							>
+								className="rounded-[1.5rem] bg-zinc-50 p-5 dark:bg-zinc-800/50">
 								<div className="flex flex-wrap justify-between items-center gap-3 mb-3">
 									<span className="text-sm font-medium text-zinc-500">
 										{new Date(a.date).toLocaleDateString('ru-RU')}
@@ -85,8 +84,7 @@ export function PcrModal({
 											a.result === 'Success'
 												? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400'
 												: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-400'
-										}`}
-									>
+										}`}>
 										{pcrResultLabelRu(a.result)}
 									</span>
 								</div>
@@ -131,20 +129,20 @@ export function PcrModal({
 							<input
 								placeholder="Объём (мкл)"
 								value={pcrForm.volume}
-								onChange={(e) => setPcrForm({...pcrForm, volume: e.target.value})}
+								onChange={(e) => setPcrForm({ ...pcrForm, volume: e.target.value })}
 								className={MD3.input}
 							/>
 							<input
 								placeholder="Маркер (ITS...)"
 								value={pcrForm.marker}
-								onChange={(e) => setPcrForm({...pcrForm, marker: e.target.value})}
+								onChange={(e) => setPcrForm({ ...pcrForm, marker: e.target.value })}
 								className={MD3.input}
 							/>
 							<input
 								placeholder="Fwd праймер"
 								value={pcrForm.forwardPrimer}
 								onChange={(e) =>
-									setPcrForm({...pcrForm, forwardPrimer: e.target.value})
+									setPcrForm({ ...pcrForm, forwardPrimer: e.target.value })
 								}
 								className={MD3.input}
 							/>
@@ -152,7 +150,7 @@ export function PcrModal({
 								placeholder="Rev праймер"
 								value={pcrForm.reversePrimer}
 								onChange={(e) =>
-									setPcrForm({...pcrForm, reversePrimer: e.target.value})
+									setPcrForm({ ...pcrForm, reversePrimer: e.target.value })
 								}
 								className={MD3.input}
 							/>
@@ -162,7 +160,7 @@ export function PcrModal({
 								placeholder="Матрица ДНК (конц. / объём)"
 								value={pcrForm.dnaMatrix}
 								onChange={(e) =>
-									setPcrForm({...pcrForm, dnaMatrix: e.target.value})
+									setPcrForm({ ...pcrForm, dnaMatrix: e.target.value })
 								}
 								className={MD3.input}
 								autoComplete="off"
@@ -178,18 +176,15 @@ export function PcrModal({
 										result: e.target.value as 'Fail' | 'Success',
 									})
 								}
-								className={`${MD3.input} cursor-pointer font-bold text-base`}
-							>
+								className={`${MD3.input} cursor-pointer font-bold text-base`}>
 								<option
 									value="Success"
-									className="text-emerald-700 dark:text-emerald-400 font-bold"
-								>
+									className="text-emerald-700 dark:text-emerald-400 font-bold">
 									Успех
 								</option>
 								<option
 									value="Fail"
-									className="text-rose-700 dark:text-rose-400 font-bold"
-								>
+									className="text-rose-700 dark:text-rose-400 font-bold">
 									Провал
 								</option>
 							</select>
@@ -197,8 +192,7 @@ export function PcrModal({
 						<button
 							type="button"
 							onClick={onSubmit}
-							className={`mt-4 ${MD3.btnPrimary}`}
-						>
+							className={`mt-4 ${MD3.btnPrimary}`}>
 							<Save className="h-5 w-5" /> Добавить запись
 						</button>
 					</div>

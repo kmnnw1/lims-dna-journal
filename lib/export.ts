@@ -1,4 +1,4 @@
-import type {Specimen} from '@/types';
+import type { Specimen } from '@/types';
 
 /**
  * Порядок и список полей для экспорта.
@@ -55,7 +55,7 @@ export function exportToCsv(data: Specimen[]) {
 	const filename = `Журнал_проб_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.csv`;
 
 	// Создаём blob с BOM для корректного открытия в Excel
-	const blob = new Blob(['\uFEFF' + csvText], {type: 'text/csv;charset=utf-8'});
+	const blob = new Blob(['\uFEFF' + csvText], { type: 'text/csv;charset=utf-8' });
 
 	// Кроссбраузерная загрузка файла
 	if ((window.navigator as any).msSaveOrOpenBlob) {

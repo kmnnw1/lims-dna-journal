@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useRef, useCallback} from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 
 /**
  * Улучшенный pull-to-refresh у верхнего края страницы (touch):
@@ -76,10 +76,10 @@ export function usePullToRefresh(
 			armed = false;
 		};
 
-		elem.addEventListener('touchstart', onStart, {passive: true});
-		elem.addEventListener('touchmove', onMove, {passive: true});
-		elem.addEventListener('touchend', onEnd, {passive: true});
-		elem.addEventListener('touchcancel', onEnd, {passive: true});
+		elem.addEventListener('touchstart', onStart, { passive: true });
+		elem.addEventListener('touchmove', onMove, { passive: true });
+		elem.addEventListener('touchend', onEnd, { passive: true });
+		elem.addEventListener('touchcancel', onEnd, { passive: true });
 
 		return () => {
 			elem.removeEventListener('touchstart', onStart);
