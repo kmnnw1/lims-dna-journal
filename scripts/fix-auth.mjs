@@ -1,16 +1,15 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs'; // Используем библиотеку шифрования
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Шифруем пароль...');
-  // Превращаем 'admin' в зашифрованный хеш
   const hashedPassword = await bcrypt.hash('admin', 10);
 
   const admin = await prisma.user.upsert({
     where: { username: 'admin' },
-    update: { password: hashedPassword }, // Обновляем пароль у существующего юзера!
+    update: { password: hashedPassword },
     create: {
       username: 'admin',
       password: hashedPassword,
@@ -18,6 +17,21 @@ async function main() {
     },
   });
   console.log('Успех! Зашифрованный админ готов:', admin.username);
+
+  // === НОВЫЙ БЛОК ДЛЯ GITHUB ACTIONS ===
+  // Проверяем, пустая ли база. Если пустая — создаем тестовые данные для робота.
+  const count = await prisma.specimen.count();
+  if (count === 0) {
+    console.log('База пуста. Добавляем тестовые пробы для Playwright...');
+    await prisma.specimen.createMany({
+      data: [
+        { id: 'AP1932', taxon: 'Aspicilia asiatica', locality: 'Altai' },
+        { id: 'TEST-001', taxon: 'Test Taxon 1', locality: 'Lab 1' },
+        { id: 'TEST-002', taxon: 'Test Taxon 2', locality: 'Lab 2' },
+      ]
+    });
+    console.log('Тестовые пробы успешно добавлены!');
+  }
 }
 
 main()
