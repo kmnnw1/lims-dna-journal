@@ -31,16 +31,16 @@ import {
 import { signIn, signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { parseApiResponse } from '@/lib/api-client';
-import { BarcodeScanDialog } from '@/components/BarcodeScanDialog';
-import { MobileSpecimenCard } from '@/components/MobileSpecimenCard';
-import { HighlightMatch } from '@/lib/highlight';
+import { BarcodeScanDialog } from '@/components/features/BarcodeScanDialog';
+import { MobileSpecimenCard } from '@/components/features/MobileSpecimenCard';
+import { HighlightMatch } from '@/components/ui/HighlightMatch';
 import { loadFavoriteIds, saveFavoriteIds, toggleFavoriteId } from '@/lib/favorites';
-import { CommandPalette } from '@/components/CommandPalette';
-import { ShortcutsModal } from '@/components/ShortcutsModal';
+import { CommandPalette } from '@/components/ui/CommandPalette';
+import { ShortcutsModal } from '@/components/ui/ShortcutsModal';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { AddSpecimenModal } from '@/components/AddSpecimenModal';
-import { EditSpecimenModal } from '@/components/EditSpecimenModal';
-import { PcrModal } from '@/components/PcrModal';
+import { AddSpecimenModal } from '@/components/features/AddSpecimenModal';
+import { EditSpecimenModal } from '@/components/features/EditSpecimenModal';
+import { PcrModal } from '@/components/features/PcrModal';
 import { exportToCsv } from '@/lib/export';
 import {
 	Specimen,

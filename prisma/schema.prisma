@@ -4,19 +4,14 @@ generator client {
 
 datasource db {
 	provider = "sqlite"
-}
-
-enum Role {
-	ADMIN
-	EDITOR
-	READER
+	url      = env("DATABASE_URL")
 }
 
 model User {
 	id        String   @id @default(uuid())
 	username  String   @unique
 	password  String
-	role      Role     @default(EDITOR)
+	role      String   @default("EDITOR") // Было Role, стала обычная строка
 	createdAt DateTime @default(now())
 }
 

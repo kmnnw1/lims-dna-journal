@@ -25,10 +25,30 @@ export type ParsedSpecimenRow = {
 	_sources?: SourceRef[];
 };
 
-function cellText(v: unknown): string {
+// --- Умный парсинг сложных ячеек ---
+function cellText(v: any): string {
 	if (v === undefined || v === null) return '';
 	if (v instanceof Date) return v.toISOString().slice(0, 10);
 	if (typeof v === 'number' && Number.isFinite(v)) return String(v);
+
+	if (typeof v === 'object') {
+		if (Array.isArray(v.richText)) {
+			return v.richText.map((t: any) => t.text || '').join('').trim();
+		}
+		if (v.text && v.hyperlink) {
+			return String(v.text).trim();
+		}
+		if (v.result !== undefined) {
+			if (v.result instanceof Date) return v.result.toISOString().slice(0, 10);
+			return String(v.result).trim();
+		}
+		try {
+			return JSON.stringify(v);
+		} catch {
+			return '';
+		}
+	}
+
 	return String(v)
 		.trim()
 		.replace(/[\r\n]+/g, ' | ')
@@ -174,21 +194,15 @@ export function collectRowCellComments(sheet: ExcelJS.Worksheet, rowIndex0: numb
 	const texts: string[] = [];
 	row.eachCell({ includeEmpty: true }, (cell) => {
 		if (cell.note) {
+			const noteObj: any = cell.note;
 			const noteText =
-				typeof cell.note === 'string'
-					? cell.note
-					: cell.note.texts?.map((t) => t.text).join('') || '';
+				typeof noteObj === 'string'
+					? noteObj
+					: noteObj.texts?.map((t: any) => t.text).join('') || '';
 			if (noteText.trim()) texts.push(noteText.trim());
 		}
 	});
 	return texts.join(' | ');
-}
-
-function formatUtcYmd(d: Date): string {
-	const y = d.getUTCFullYear();
-	const m = String(d.getUTCMonth() + 1).padStart(2, '0');
-	const day = String(d.getUTCDate()).padStart(2, '0');
-	return `${y}-${m}-${day}`;
 }
 
 export function parseLabDate(raw: string): Date | null {
@@ -204,21 +218,9 @@ export function parseLabDate(raw: string): Date | null {
 	}
 
 	const ruMonths: Record<string, number> = {
-		янв: 0,
-		фев: 1,
-		мар: 2,
-		апр: 3,
-		май: 4,
-		мая: 4,
-		июн: 5,
-		июл: 6,
-		авг: 7,
-		сен: 8,
-		окт: 9,
-		ноя: 10,
-		nov: 10,
-		дек: 11,
-		dec: 11,
+		янв: 0, фев: 1, мар: 2, апр: 3, май: 4, мая: 4,
+		июн: 5, июл: 6, авг: 7, сен: 8, окт: 9, ноя: 10,
+		nov: 10, дек: 11, dec: 11,
 	};
 	for (const [m, idx] of Object.entries(ruMonths)) {
 		if (s.includes(m)) {
@@ -235,18 +237,8 @@ export function parseLabDate(raw: string): Date | null {
 	const romanMatch = s.match(romanRe);
 	if (romanMatch) {
 		const romans: Record<string, number> = {
-			i: 0,
-			ii: 1,
-			iii: 2,
-			iv: 3,
-			v: 4,
-			vi: 5,
-			vii: 6,
-			viii: 7,
-			ix: 8,
-			x: 9,
-			xi: 10,
-			xii: 11,
+			i: 0, ii: 1, iii: 2, iv: 3, v: 4, vi: 5,
+			vii: 6, viii: 7, ix: 8, x: 9, xi: 10, xii: 11,
 		};
 		const month = romans[romanMatch[2].toLowerCase()];
 		if (month !== undefined) {
@@ -275,19 +267,13 @@ export function parseLabDate(raw: string): Date | null {
 }
 
 export function extrDateString(parsed: Date | null): string | null {
-	if (!parsed) return null;
-	return formatUtcYmd(parsed);
+	if (!parsed || isNaN(parsed.getTime())) return null;
+	return parsed.toISOString();
 }
 
 const NOTE_EXTRA_KEYS = new Set([
-	'comment',
-	'herbarium',
-	'labNo',
-	'connections',
-	'pcr',
-	'sequence',
-	'recheck',
-	'todo',
+	'comment', 'herbarium', 'labNo', 'connections', 
+	'pcr', 'sequence', 'recheck', 'todo',
 ]);
 
 export function parseRowWithBindings(
@@ -506,6 +492,20 @@ function extractRawDataFromSheet(sheet: ExcelJS.Worksheet): unknown[][] {
 	return rawData;
 }
 
+// --- ВОЗВРАЩЕННАЯ ФУНКЦИЯ ДЛЯ НАСЛЕДИЯ ---
+function parseSheetLegacyRows(
+	sheet: ExcelJS.Worksheet,
+	sheetName: string,
+	rawData: unknown[][],
+): ParsedSpecimenRow[] {
+	const out: ParsedSpecimenRow[] = [];
+	for (let i = 2; i < rawData.length; i++) {
+		const parsed = parseRowLegacy(rawData[i], sheet, i, sheetName);
+		if (parsed) out.push(parsed);
+	}
+	return out;
+}
+
 export function parseSheetToRows(sheet: ExcelJS.Worksheet, sheetName: string): ParsedSpecimenRow[] {
 	const rawData = extractRawDataFromSheet(sheet);
 	if (!rawData.length) return [];
@@ -530,19 +530,6 @@ export function parseSheetToRows(sheet: ExcelJS.Worksheet, sheetName: string): P
 	}
 
 	return parseSheetLegacyRows(sheet, sheetName, rawData);
-}
-
-function parseSheetLegacyRows(
-	sheet: ExcelJS.Worksheet,
-	sheetName: string,
-	rawData: unknown[][],
-): ParsedSpecimenRow[] {
-	const out: ParsedSpecimenRow[] = [];
-	for (let i = 2; i < rawData.length; i++) {
-		const parsed = parseRowLegacy(rawData[i], sheet, i, sheetName);
-		if (parsed) out.push(parsed);
-	}
-	return out;
 }
 
 function pickNonEmpty(prev: string, next: string): string {
@@ -633,11 +620,6 @@ export function mergeById(rows: ParsedSpecimenRow[]): ParsedSpecimenRow[] {
 	});
 }
 
-/**
- * Инженерная интеграция: загрузка распарсенных данных в реляционную БД Prisma 7.
- * Решает проблему 2D-таблиц, разделяя образцы (Specimen) и попытки ПЦР (PcrAttempt),
- * а также сохраняет все неформатные данные в JSON (importNotes).
- */
 export async function processExcelToDatabase(buffer: any) {
 	const workbook = new ExcelJS.Workbook();
 	await workbook.xlsx.load(buffer);

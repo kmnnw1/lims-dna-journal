@@ -7,7 +7,7 @@
  * Добавляйте другие глобальные провайдеры здесь при необходимости.
  */
 import { SessionProvider } from 'next-auth/react';
-import { PwaBootstrap } from '@/components/PwaBootstrap';
+import { PwaBootstrap } from '@/components/ui/PwaBootstrap';
 
 type ProvidersProps = {
 	children: React.ReactNode;

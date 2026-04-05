@@ -1,106 +1,43 @@
-# Общие файлы и каталоги для игнорирования.
-# Больше примеров: https://github.com/github/gitignore/blob/main/Node.gitignore
-
-############
-# Node.js и зависимости
-############
+# Зависимости
 node_modules/
 .pnp/
 .pnp.*
-.yarn/
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
 
-############
-# Кэширование и тесты
-############
-coverage/
-.nyc_output/
-*.lcov
-
-############
-# Сборка и билд-артефакты
-############
+# Сборка Next.js
 .next/
 out/
 build/
 dist/
 
-############
-# Сторонние сервисы и деплой
-############
-.vercel/
-.backups/
-.local/
-.vscode/
-.idea/
-*.sublime-workspace
-*.sublime-project
+# Переменные окружения (КРИТИЧЕСКИ ВАЖНО)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-############
-# Логи и отладочная информация
-############
+# База данных SQLite (Не затирай чужие данные!)
+prisma/*.db
+prisma/*.db-journal
+
+# Дебаг и логи
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-.pnpm-debug.log*
+debug-output.txt
+*.log
 
-############
-# Окружение
-############
-.env*
-!.env.example
+# Следы AI-агентов
+AGENTS.md
+CLAUDE.md
+repomix-output.*
 
-############
-# ОС/Системные файлы
-############
+# Системные файлы macOS/Windows
 .DS_Store
 Thumbs.db
 
-############
-# Сертификаты, ключи, приватные файлы
-############
-*.pem
-*.key
-*.crt
-
-############
-# Таблицы и экспорт данных
-############
-*.xlsx
-*.csv
-
-############
-# TypeScript служебные
-############
+# Кэш TypeScript и тестирования
 *.tsbuildinfo
 next-env.d.ts
-
-############
-# Prisma и база данных
-############
-/app/generated/prisma/
-prisma/dev.db
-prisma/dev.db-journal
-prisma/migrations/
-
-############
-# Docker Compose: volume с данными пользователя
-############
-/lab-data/
-
-############
-# Локальные артефакты
-############
-/local/*
-
-############
-# Агентные файлы и Repomix
-############
-/AGENTS.md
-/CLAUDE.md
-repomix-output.xml
-repomix-output.txt
+coverage/
+local/

@@ -2,7 +2,7 @@
 
 import { Barcode, Camera, Activity, Share2, Copy, Star, Pencil } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { HighlightMatch } from '@/lib/highlight';
+import { HighlightMatch } from '@/components/ui/HighlightMatch';
 
 export type MobileSpecimenShape = {
 	id: string;
