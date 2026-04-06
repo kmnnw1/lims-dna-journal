@@ -1,124 +1,75 @@
 'use client';
 
-import React, { useState, forwardRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { X, Activity } from 'lucide-react';
+import { useState } from 'react';
+import { X, Play } from 'lucide-react';
 
-// Локальный хелпер для полей в стиле MD3 Filled
-const MD3Field = forwardRef<HTMLInputElement, { label: string; value: string } & React.InputHTMLAttributes<HTMLInputElement>>(({ label, value, className = '', ...props }, ref) => {
-	const baseClass = `w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-surface-container-highest)] px-5 pt-6 pb-2 text-base outline-none transition-all text-[var(--md-sys-color-on-surface)] ${className}`;
-	
-	return (
-		<div className="relative group w-full">
-			<input ref={ref} value={value} className={baseClass} {...props} />
-			<label className={`absolute left-5 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
-				${value ? 'top-1.5 text-xs' : 'top-4 text-base'}
-				group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-1.5 group-focus-within:text-xs
-			`}>
-				{label}
-			</label>
-		</div>
-	);
-});
-MD3Field.displayName = 'MD3Field';
-
-interface BatchPcrModalProps {
-	selectedSpecimenIds: string[];
-	onClose: () => void;
+interface Props {
+    selectedSpecimenIds: string[];
+    onClose: () => void;
 }
 
-export default function BatchPcrModal({ selectedSpecimenIds, onClose }: BatchPcrModalProps) {
-	const router = useRouter();
-	const [isLoading, setIsLoading] = useState(false);
-	const [primer, setPrimer] = useState('');
-	const [operator, setOperator] = useState('');
+export default function BatchPcrModal({ selectedSpecimenIds, onClose }: Props) {
+    const [loading, setLoading] = useState(false);
+    const [marker, setMarker] = useState('ITS');
 
-	// Заглушка для автодополнения (Combobox), позже привяжем к БД
-	const popularPrimers = ['ITS1F / ITS4', 'ML5 / ML6', 'NS1 / NS4'];
+    const handleRunBatch = async () => {
+        setLoading(true);
+        try {
+            await fetch('/api/pcr/batch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: selectedSpecimenIds, marker })
+            });
+            onClose();
+        } finally {
+            setLoading(false);
+        }
+    };
 
-	const handleBatchSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setIsLoading(true);
+    return (
+        <div 
+            role="dialog" 
+            aria-modal="true"
+            className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in"
+        >
+            <div className="bg-[var(--md-sys-color-surface-container-high)] w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl">
+                <div className="flex justify-between items-center mb-8">
+                    <h2 className="text-3xl font-normal tracking-tight">Массовый ПЦР</h2>
+                    <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-full transition-colors">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
 
-		try {
-			await fetch('/api/pcr/batch', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					specimenIds: selectedSpecimenIds,
-					primer,
-					operator,
-					date: new Date().toISOString(),
-				}),
-			});
-			router.refresh();
-			onClose();
-		} catch (error) {
-			console.error('Batch PCR Error:', error);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+                <div className="space-y-6">
+                    <div className="p-6 bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] rounded-[1.5rem]">
+                        <p className="text-sm font-medium opacity-80 uppercase tracking-wider mb-2">Выбрано объектов</p>
+                        <p className="text-4xl font-bold">{selectedSpecimenIds.length}</p>
+                    </div>
 
-	return (
-		<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-			<div className="bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem] shadow-2xl w-full max-w-md p-8 relative">
-				
-				<div className="mb-8 flex items-start justify-between gap-4">
-					<div>
-						<h2 className="text-3xl font-normal text-[var(--md-sys-color-on-surface)] tracking-tight">
-							Массовый ПЦР
-						</h2>
-						<p className="text-[var(--md-sys-color-primary)] font-medium mt-1">
-							Выбрано проб: {selectedSpecimenIds.length}
-						</p>
-					</div>
-					<button
-						type="button"
-						onClick={onClose}
-						className="p-3 rounded-full bg-[var(--md-sys-color-surface-container)] hover:bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] transition-all">
-						<X className="h-6 w-6" />
-					</button>
-				</div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium ml-4 text-[var(--md-sys-color-outline)]">Маркер для постановки</label>
+                        <div className="flex flex-wrap gap-2">
+                            {['ITS', 'SSU', 'LSU', 'MCM7'].map(m => (
+                                <button
+                                    key={m}
+                                    onClick={() => setMarker(m)}
+                                    className={`px-6 py-3 rounded-full text-sm font-bold transition-all ${marker === m ? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]' : 'bg-[var(--md-sys-color-surface-container-highest)] hover:brightness-110'}`}
+                                >
+                                    {m}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
-				<form onSubmit={handleBatchSubmit} className="space-y-5">
-					<MD3Field
-						label="Праймеры"
-						list="primers-list"
-						required
-						value={primer}
-						onChange={(e) => setPrimer(e.target.value)}
-					/>
-					<datalist id="primers-list">
-						{popularPrimers.map((p) => (
-							<option key={p} value={p} />
-						))}
-					</datalist>
-
-					<MD3Field
-						label="Оператор"
-						required
-						value={operator}
-						onChange={(e) => setOperator(e.target.value)}
-					/>
-
-					<div className="flex justify-end gap-3 mt-8">
-						<button
-							type="button"
-							onClick={onClose}
-							className="px-6 py-2.5 rounded-full text-sm font-medium text-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-primary)]/10 transition-all">
-							Отмена
-						</button>
-						<button
-							type="submit"
-							disabled={isLoading}
-							className="inline-flex items-center gap-2 px-8 py-2.5 rounded-full text-sm font-medium bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50">
-							<Activity className="w-5 h-5" />
-							{isLoading ? 'Обработка...' : 'Применить ко всем'}
-						</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	);
+                    <button
+                        onClick={handleRunBatch}
+                        disabled={loading}
+                        className="w-full py-4 mt-4 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] rounded-full font-bold flex items-center justify-center gap-3 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                        {loading ? 'Запуск...' : <><Play className="w-5 h-5 fill-current" /> Запустить очередь</>}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 }

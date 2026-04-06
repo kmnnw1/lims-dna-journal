@@ -63,8 +63,6 @@ export default function JournalPage() {
                 setSpecimens(data.specimens);
                 setTotalPages(data.totalPages || 1);
                 setTotalGlobal(data.total || 0);
-            } else if (Array.isArray(data)) {
-                setSpecimens(data);
             }
         } catch (error) {
             setSpecimens([]);
@@ -91,63 +89,19 @@ export default function JournalPage() {
         setSortConfig(curr => ({ key, direction: curr?.key === key && curr.direction === 'asc' ? 'desc' : 'asc' }));
     };
 
-    const handleAddSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await fetch('/api/specimens', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newRecordData) });
-        } finally {
-            setIsAddModalOpen(false);
-            setNewRecordData({ id: '', taxon: '', locality: '', extrLab: '', extrOperator: '', extrMethod: '', extrDateRaw: '' });
-            fetchSpecimens();
-        }
-    };
-
-    const handleEditSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingSpecimen) return;
-        try {
-            // Avoid repeating 'id': omit id from spread, explicitly set afterward
-            const { id, ...specimenData } = editingSpecimen;
-            await fetch('/api/specimens', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, ...specimenData })
-            });
-        } finally {
-            setEditingSpecimen(null);
-            fetchSpecimens();
-        }
-    };
-
-    const handlePcrSubmit = async () => {
-        if (!activePcrSpecimen) return;
-        try {
-            await fetch('/api/pcr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ specimenId: activePcrSpecimen.id, ...pcrForm, date: new Date().toISOString() }) });
-        } finally {
-            setActivePcrSpecimen(null);
-            fetchSpecimens();
-        }
-    };
-
     const handleStatusToggle = async (id: string, marker: string) => {
         const specimen = specimens.find(s => s.id === id);
         if (!specimen) return;
 
-        let statusKey: keyof Specimen;
-        if (marker === 'ITS') statusKey = 'itsStatus';
-        else if (marker === 'SSU') statusKey = 'ssuStatus';
+        let statusKey: keyof Specimen = 'itsStatus';
+        if (marker === 'SSU') statusKey = 'ssuStatus';
         else if (marker === 'LSU') statusKey = 'lsuStatus';
         else if (marker === 'MCM7') statusKey = 'mcm7Status';
-        else return;
 
         const currentStatus = specimen[statusKey];
-        let newStatus: string | null = '✓';
-        if (currentStatus === '✓') newStatus = '✕';
-        else if (currentStatus === '✕') newStatus = '?';
-        else if (currentStatus === '?') newStatus = null;
+        let newStatus: string | null = currentStatus === '✓' ? '✕' : currentStatus === '✕' ? '?' : currentStatus === '?' ? null : '✓';
 
         setSpecimens(prev => prev.map(s => s.id === id ? { ...s, [statusKey]: newStatus } : s));
-
         try {
             await fetch('/api/specimens', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ singleId: id, updateData: { [statusKey]: newStatus } }) });
         } catch { fetchSpecimens(); }
@@ -160,21 +114,16 @@ export default function JournalPage() {
             <div className="max-w-[1600px] mx-auto">
                 <JournalHeader 
                     userName={session?.user?.name || 'Администратор'}
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    onAddClick={() => setIsAddModalOpen(true)}
-                    onSignOut={() => signOut()}
-                    isDark={isDark}
-                    setIsDark={setIsDark}
+                    searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+                    onAddClick={() => setIsAddModalOpen(true)} onSignOut={() => signOut()}
+                    isDark={isDark} setIsDark={setIsDark}
                 />
                 
                 <StatsCards {...stats} />
 
                 <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 custom-scrollbar">
                     {(['all', 'success', 'error', 'fav'] as const).map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => setFilterType(type)}
+                        <button key={type} onClick={() => setFilterType(type)}
                             className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap border border-[var(--md-sys-color-outline-variant)] ${filterType === type ? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] border-transparent' : 'bg-transparent text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container)]'}`}
                         >
                             {type === 'all' && 'Все пробы'}
@@ -185,29 +134,22 @@ export default function JournalPage() {
                     ))}
                 </div>
 
-                <SpecimenTable 
-                    specimens={specimens} 
-                    loading={loading}
-                    selectedIds={selectedIds}
+                <SpecimenTable specimens={specimens} loading={loading} selectedIds={selectedIds}
                     onSelect={(id) => { const n = new Set(selectedIds); n.has(id) ? n.delete(id) : n.add(id); setSelectedIds(n); }}
                     onSelectAll={(ids) => setSelectedIds(selectedIds.size === ids.length ? new Set() : new Set(ids))}
-                    onEdit={setEditingSpecimen}
-                    onPcr={setActivePcrSpecimen} 
-                    onStatusClick={handleStatusToggle}
-                    searchQuery={debouncedSearch}
-                    sortConfig={sortConfig}
-                    onSort={handleSort}
+                    onEdit={setEditingSpecimen} onPcr={setActivePcrSpecimen} onStatusClick={handleStatusToggle}
+                    searchQuery={debouncedSearch} sortConfig={sortConfig} onSort={handleSort}
                 />
             </div>
 
-            <AddSpecimenModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} newRecord={newRecordData as any} setNewRecord={setNewRecordData as any} onSubmit={handleAddSubmit} validationError={false} />
-            <EditSpecimenModal specimen={editingSpecimen as any} onClose={() => setEditingSpecimen(null)} onChange={setEditingSpecimen as any} onSubmit={handleEditSubmit} />
-            <PcrModal open={!!activePcrSpecimen} specimenId={activePcrSpecimen?.id || ''} activeSpecimen={activePcrSpecimen} onClose={() => setActivePcrSpecimen(null)} pcrForm={pcrForm} setPcrForm={setPcrForm as any} onSubmit={handlePcrSubmit} isReader={session?.user?.role === 'READER'} />
+            <AddSpecimenModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} newRecord={newRecordData as any} setNewRecord={setNewRecordData as any} onSubmit={() => fetchSpecimens()} validationError={false} />
+            <EditSpecimenModal specimen={editingSpecimen as any} onClose={() => setEditingSpecimen(null)} onChange={setEditingSpecimen as any} onSubmit={() => fetchSpecimens()} />
+            <PcrModal open={!!activePcrSpecimen} specimenId={activePcrSpecimen?.id || ''} activeSpecimen={activePcrSpecimen} onClose={() => setActivePcrSpecimen(null)} pcrForm={pcrForm} setPcrForm={setPcrForm as any} onSubmit={() => fetchSpecimens()} isReader={session?.user?.role === 'READER'} />
 
             {isBatchModalOpen && <BatchPcrModal selectedSpecimenIds={Array.from(selectedIds)} onClose={() => { setIsBatchModalOpen(false); setSelectedIds(new Set()); fetchSpecimens(); }} />}
 
             {selectedIds.size > 0 && (
-                <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-[var(--md-sys-color-inverse-surface)] text-[var(--md-sys-color-inverse-on-surface)] rounded-[1.5rem] p-4 flex items-center justify-between shadow-2xl z-50 animate-in slide-in-from-bottom-8">
+                <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-[var(--md-sys-color-inverse-surface)] text-[var(--md-sys-color-inverse-on-surface)] rounded-[1.5rem] p-4 flex items-center justify-between shadow-2xl z-50">
                     <div className="flex items-center gap-4 pl-2">
                         <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[var(--md-sys-color-inverse-primary)] text-[var(--md-sys-color-primary)] font-bold text-sm">{selectedIds.size}</span>
                         <span className="font-medium">выбрано</span>
