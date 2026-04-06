@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = 'lj-shell-v2';
+const CACHE_NAME = 'lj-shell-v3';
+const API_CACHE = 'lj-api-v1';
 const PRECACHE_ASSETS = [
 	'/offline.html',
 	'/manifest.json',
@@ -11,31 +12,21 @@ const PRECACHE_ASSETS = [
 
 self.addEventListener('install', (event) => {
 	event.waitUntil(
-		caches
-			.open(CACHE_NAME)
+		caches.open(CACHE_NAME)
 			.then((cache) => cache.addAll(PRECACHE_ASSETS))
 			.then(() => self.skipWaiting())
-			.catch((err) => {
-				// Пропускаем ожидание даже при ошибке — важно для апгрейда!
-				console.warn('[SW] Cache install error:', err);
-				self.skipWaiting();
-			}),
 	);
 });
 
 self.addEventListener('activate', (event) => {
 	event.waitUntil(
-		// Удаляем старые кэши, если есть
-		caches
-			.keys()
-			.then((names) =>
-				Promise.all(
-					names.map((key) => {
-						if (key !== CACHE_NAME) return caches.delete(key);
-					}),
-				),
+		caches.keys().then((names) =>
+			Promise.all(
+				names.map((key) => {
+					if (key !== CACHE_NAME && key !== API_CACHE) return caches.delete(key);
+				})
 			)
-			.then(() => self.clients.claim()),
+		).then(() => self.clients.claim())
 	);
 });
 
@@ -43,45 +34,51 @@ self.addEventListener('fetch', (event) => {
 	const req = event.request;
 	if (req.method !== 'GET') return;
 
-	// Используем network-first для HTML, cache-first для статики
-	if (req.mode === 'navigate' || req.headers.get('Accept')?.includes('text/html')) {
-		// HTML-запросы: сеть с fallback в offline.html
+	const url = new URL(req.url);
+
+	// 1. Кэширование API (Network First). Позволяет читать журнал без интернета.
+	if (url.pathname.startsWith('/api/')) {
 		event.respondWith(
 			fetch(req)
 				.then((res) => {
-					// Опционально — можно добавить динамическое кэширование HTML страниц тут
+					const resClone = res.clone();
+					caches.open(API_CACHE).then((cache) => cache.put(req, resClone));
 					return res;
 				})
-				.catch(() => caches.match('/offline.html')),
+				.catch(async () => {
+					// Если сети нет, достаем последний успешный ответ из кэша
+					const cachedRes = await caches.match(req);
+					if (cachedRes) return cachedRes;
+					
+					// Если в кэше тоже пусто
+					return new Response(
+						JSON.stringify({ error: 'Офлайн режим. Данные не закэшированы.', specimens: [] }), 
+						{ headers: { 'Content-Type': 'application/json' } }
+					);
+				})
 		);
 		return;
 	}
 
-	// Для статических ассетов — cache first, fallback в сеть
+	// 2. HTML страницы (Network First с фоллбэком на offline.html)
+	if (req.mode === 'navigate' || req.headers.get('Accept')?.includes('text/html')) {
+		event.respondWith(
+			fetch(req).catch(() => caches.match('/offline.html'))
+		);
+		return;
+	}
+
+	// 3. Статика (Cache First)
 	event.respondWith(
 		caches.match(req).then((cached) => {
 			if (cached) return cached;
-			return fetch(req)
-				.then((res) => {
-					// Опционально: загружаемое можно кэшировать динамически
-					// копируем response (res.body считается уже потоковым и может быть использован только 1 раз)
-					if (
-						res.status === 200 &&
-						res.type === 'basic' &&
-						PRECACHE_ASSETS.some((path) => req.url.includes(path))
-					) {
-						const resClone = res.clone();
-						caches
-							.open(CACHE_NAME)
-							.then((cache) => cache.put(req, resClone))
-							.catch(() => {});
-					}
-					return res;
-				})
-				.catch(() => {
-					// Ничего не нашли — network и cache оба не сработали
-					return undefined;
-				});
-		}),
+			return fetch(req).then((res) => {
+				if (res.status === 200 && PRECACHE_ASSETS.some((path) => req.url.includes(path))) {
+					const resClone = res.clone();
+					caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone)).catch(() => {});
+				}
+				return res;
+			}).catch(() => undefined);
+		})
 	);
 });
