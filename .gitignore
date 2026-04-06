@@ -26,6 +26,7 @@ yarn-debug.log*
 yarn-error.log*
 debug-output.txt
 *.log
+scripts/debug.mjs
 
 # Следы AI-агентов
 AGENTS.md
@@ -42,6 +43,7 @@ Thumbs.db
 next-env.d.ts
 coverage/
 local/
+scripts/local-*.mjs
 
 # Playwright
 /test-results/

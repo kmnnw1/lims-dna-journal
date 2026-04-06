@@ -1,8 +1,3 @@
-#!/usr/bin/env node
-/**
- * Усовершенствованная подготовка проекта: Prisma 7, автоматизация версий и Husky.
- */
-
 import { execSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';

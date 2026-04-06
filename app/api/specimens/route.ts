@@ -126,49 +126,51 @@ export async function POST(request: Request) {
 	}
 }
 
-export async function PUT(request: Request) {
-	try {
-		await requireRole('EDITOR');
-		const body = await request.json();
-		
-		// Извлекаем как старые параметры, так и новые
-		const { ids, updateData, singleId, singleStatus, newAttempt, id, ...restData } = body;
+export async function PUT(req: Request) {
+    try {
+        const body = await req.json();
+        const { id, singleId, updateData, singleStatus, ...restData } = body;
 
-		if (newAttempt) {
-			await prisma.pcrAttempt.create({ data: newAttempt });
-			return NextResponse.json({ success: true });
-		}
+        // Логика для быстрого переключения статуса маркеров
+        if (singleId && updateData) {
+            await prisma.specimen.update({
+                where: { id: String(singleId) },
+                data: updateData
+            });
+            return NextResponse.json({ success: true });
+        }
 
-		if (singleId && singleStatus !== undefined) {
-			await prisma.specimen.update({
-				where: { id: singleId },
-				data: { itsStatus: singleStatus },
-			});
-			return NextResponse.json({ success: true });
-		}
+        // Поддержка легаси-обновления статуса (на всякий случай)
+        if (singleId && singleStatus !== undefined) {
+             await prisma.specimen.update({
+                where: { id: String(singleId) },
+                data: { itsStatus: singleStatus }
+            });
+            return NextResponse.json({ success: true });
+        }
 
-		if (singleId && updateData) {
-			await prisma.specimen.update({ where: { id: singleId }, data: updateData });
-			return NextResponse.json({ success: true });
-		}
+        // БЛОК: Для редактирования через модалку (исправление ошибки Prisma)
+        if (id && Object.keys(restData).length > 0) {
+            
+            // КРИТИЧНО: Удаляем вложенные массивы и даты перед обновлением, 
+            // иначе Prisma выдаст ошибку валидации (Invalid value provided).
+            delete restData.attempts;
+            delete restData.createdAt;
+            delete restData.updatedAt;
 
-		if (ids && Array.isArray(ids) && updateData) {
-			await prisma.specimen.updateMany({ where: { id: { in: ids } }, data: updateData });
-			return NextResponse.json({ success: true });
-		}
+            await prisma.specimen.update({
+                where: { id: String(id) },
+                data: restData
+            });
+            return NextResponse.json({ success: true });
+        }
 
-		// НОВЫЙ БЛОК: Для редактирования через нашу новую модалку
-		if (id && Object.keys(restData).length > 0) {
-			await prisma.specimen.update({ where: { id: String(id) }, data: restData });
-			return NextResponse.json({ success: true });
-		}
-
-		return NextResponse.json({ error: 'Неверные параметры запроса' }, { status: 400 });
-	} catch (e: any) {
-		return handleError(e);
-	}
+        return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
+    } catch (error) {
+        console.error('PUT Specimen Error:', error);
+        return NextResponse.json({ error: 'Failed to update specimen' }, { status: 500 });
+    }
 }
-
 export async function DELETE(request: Request) {
 	try {
 		await requireRole('ADMIN');
