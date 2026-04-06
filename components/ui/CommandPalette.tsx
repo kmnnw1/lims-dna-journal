@@ -52,13 +52,28 @@ export function CommandPalette({
 
 	const actions = useMemo(() => {
 		const a: { id: string; label: string; icon: ReactNode; run: () => void }[] = [
-			{ id: 'refresh', label: 'Обновить данные', icon: <RefreshCw className="h-5 w-5" />, run: onRefresh },
+			{
+				id: 'refresh',
+				label: 'Обновить данные',
+				icon: <RefreshCw className="h-5 w-5" />,
+				run: onRefresh,
+			},
 		];
 		if (!isReader) {
-			a.push({ id: 'new', label: 'Новая проба', icon: <Plus className="h-5 w-5" />, run: onNewSpecimen });
+			a.push({
+				id: 'new',
+				label: 'Новая проба',
+				icon: <Plus className="h-5 w-5" />,
+				run: onNewSpecimen,
+			});
 		}
 		if (isAdmin) {
-			a.push({ id: 'admin', label: 'Админ-панель', icon: <Settings className="h-5 w-5" />, run: () => window.location.assign('/admin') });
+			a.push({
+				id: 'admin',
+				label: 'Админ-панель',
+				icon: <Settings className="h-5 w-5" />,
+				run: () => window.location.assign('/admin'),
+			});
 		}
 		return a;
 	}, [isReader, isAdmin, onNewSpecimen, onRefresh]);
@@ -71,7 +86,8 @@ export function CommandPalette({
 				onClose();
 			}
 			if (['ArrowDown', 'ArrowUp'].includes(e.key)) {
-				const els = containerRef.current?.querySelectorAll<HTMLButtonElement>('button[data-cmd]');
+				const els =
+					containerRef.current?.querySelectorAll<HTMLButtonElement>('button[data-cmd]');
 				if (!els || els.length === 0) return;
 				const first = els[0];
 				const last = els[els.length - 1];
@@ -109,10 +125,12 @@ export function CommandPalette({
 				role="dialog"
 				aria-modal="true"
 				className="relative w-full max-w-2xl overflow-hidden rounded-[2.5rem] bg-[var(--md-sys-color-surface-container-low)] shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
-				
 				{/* MD3 Seamless Search Header */}
 				<div className="flex items-center gap-4 px-6 py-4 bg-[var(--md-sys-color-surface-container)]">
-					<Search className="h-6 w-6 shrink-0 text-[var(--md-sys-color-primary)]" aria-hidden />
+					<Search
+						className="h-6 w-6 shrink-0 text-[var(--md-sys-color-primary)]"
+						aria-hidden
+					/>
 					<input
 						ref={inputRef}
 						value={q}
@@ -148,13 +166,19 @@ export function CommandPalette({
 									type="button"
 									data-cmd
 									tabIndex={0}
-									onClick={() => { a.run(); onClose(); }}
+									onClick={() => {
+										a.run();
+										onClose();
+									}}
 									className="flex w-full items-center gap-4 rounded-[1rem] px-4 py-3.5 text-left text-base font-medium transition-all hover:bg-[var(--md-sys-color-primary-container)] hover:text-[var(--md-sys-color-on-primary-container)] text-[var(--md-sys-color-on-surface)]"
 									onKeyDown={(e) => {
 										// Arrow navigation logic
-										if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click();
+										if (e.key === 'Enter' || e.key === ' ')
+											e.currentTarget.click();
 									}}>
-									<span className="text-[var(--md-sys-color-primary)] opacity-80">{a.icon}</span>
+									<span className="text-[var(--md-sys-color-primary)] opacity-80">
+										{a.icon}
+									</span>
 									{a.label}
 								</button>
 							</li>
@@ -177,11 +201,15 @@ export function CommandPalette({
 										type="button"
 										data-cmd
 										tabIndex={0}
-										onClick={() => { onPickSpecimen(s.id); onClose(); }}
+										onClick={() => {
+											onPickSpecimen(s.id);
+											onClose();
+										}}
 										className="flex w-full items-center justify-between gap-4 rounded-[1rem] px-4 py-3 text-left transition-all hover:bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)]"
 										title={s.taxon || undefined}
 										onKeyDown={(e) => {
-											if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click();
+											if (e.key === 'Enter' || e.key === ' ')
+												e.currentTarget.click();
 										}}>
 										<span className="min-w-0 truncate font-mono font-bold text-lg text-[var(--md-sys-color-primary)]">
 											{s.id}
@@ -203,7 +231,10 @@ export function CommandPalette({
 						<FlaskConical className="h-4 w-4" /> Журнал ДНК
 					</span>
 					{isAdmin && (
-						<Link href="/admin" className="inline-flex items-center gap-1.5 text-[var(--md-sys-color-primary)] hover:underline" onClick={onClose}>
+						<Link
+							href="/admin"
+							className="inline-flex items-center gap-1.5 text-[var(--md-sys-color-primary)] hover:underline"
+							onClick={onClose}>
 							<ExternalLink className="h-4 w-4" /> Админ-панель
 						</Link>
 					)}

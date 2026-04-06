@@ -6,8 +6,31 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(__dirname, '..');
 
 // Папки и форматы, которые нам не нужны для архитектурного анализа
-const IGNORE_DIRS = new Set(['node_modules', '.git', '.next', 'out', 'build', 'dist', '.vercel', 'lab-data', 'local']);
-const IGNORE_EXTS = new Set(['.db', '.db-journal', '.png', '.jpg', '.jpeg', '.svg', '.ico', '.wav', '.xlsx', '.csv', '.pem', '.key']);
+const IGNORE_DIRS = new Set([
+	'node_modules',
+	'.git',
+	'.next',
+	'out',
+	'build',
+	'dist',
+	'.vercel',
+	'lab-data',
+	'local',
+]);
+const IGNORE_EXTS = new Set([
+	'.db',
+	'.db-journal',
+	'.png',
+	'.jpg',
+	'.jpeg',
+	'.svg',
+	'.ico',
+	'.wav',
+	'.xlsx',
+	'.csv',
+	'.pem',
+	'.key',
+]);
 
 function walkDir(dir, fileList = [], relativePath = '') {
 	const files = fs.readdirSync(dir);
@@ -25,7 +48,7 @@ function walkDir(dir, fileList = [], relativePath = '') {
 			const ext = path.extname(file).toLowerCase();
 			if (!IGNORE_EXTS.has(ext) && file !== 'project-structure.txt') {
 				// Заменяем обратные слеши Windows на прямые для удобства чтения
-				fileList.push(relPath.replace(/\\/g, '/')); 
+				fileList.push(relPath.replace(/\\/g, '/'));
 			}
 		}
 	}
@@ -35,7 +58,7 @@ function walkDir(dir, fileList = [], relativePath = '') {
 try {
 	const files = walkDir(rootDir);
 	const outputPath = path.join(rootDir, 'project-structure.txt');
-	
+
 	fs.writeFileSync(outputPath, files.join('\n'));
 	console.log(`\n✅ Рентген проекта завершен! Найдено файлов: ${files.length}`);
 	console.log(`Результат сохранен в файл: project-structure.txt`);

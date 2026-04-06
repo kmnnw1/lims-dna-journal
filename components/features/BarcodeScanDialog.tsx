@@ -71,7 +71,8 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 		const BarcodeDetector = (window as any).BarcodeDetector as BarcodeDetectorClass;
 		const detector = new BarcodeDetector({ formats: FORMATS });
 
-		navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+		navigator.mediaDevices
+			.getUserMedia({ video: { facingMode: 'environment' } })
 			.then((stream) => {
 				streamRef.current = stream;
 				if (videoRef.current) {
@@ -125,7 +126,9 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 				<h2 className="text-xl font-medium flex items-center gap-2">
 					<Camera className="w-5 h-5 text-[#E1AD01]" /> Сканирование
 				</h2>
-				<button onClick={onClose} className="p-3 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] transition-colors">
+				<button
+					onClick={onClose}
+					className="p-3 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] transition-colors">
 					<X className="w-6 h-6" />
 				</button>
 			</div>
@@ -134,11 +137,15 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 				<div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
 					{hasDetector && !error ? (
 						<div className="w-full aspect-square max-w-[300px] bg-black rounded-[3rem] overflow-hidden relative shadow-2xl border-8 border-[var(--md-sys-color-surface-container-highest)]">
-							<video ref={videoRef} playsInline className="w-full h-full object-cover grayscale-[0.3]" />
+							<video
+								ref={videoRef}
+								playsInline
+								className="w-full h-full object-cover grayscale-[0.3]"
+							/>
 							<div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none"></div>
-							
+
 							<div className="absolute top-1/2 left-0 w-full h-1 bg-[#E1AD01] shadow-[0_0_20px_#E1AD01] animate-pulse"></div>
-							
+
 							<div className="absolute inset-10 border-2 border-[#E1AD01]/30 rounded-2xl pointer-events-none"></div>
 						</div>
 					) : (
@@ -160,7 +167,8 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 							spellCheck={false}
 							autoFocus={!hasDetector || !!error}
 						/>
-						<label className={`absolute left-6 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
+						<label
+							className={`absolute left-6 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
 							${manual ? 'top-2 text-xs' : 'top-5 text-lg'}
 							group-focus-within:text-[#E1AD01] group-focus-within:top-2 group-focus-within:text-xs
 						`}>
@@ -172,8 +180,7 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 						type="button"
 						onClick={applyManual}
 						disabled={!manual.trim()}
-						className="w-full py-5 rounded-full bg-[#E1AD01] text-black font-bold text-lg shadow-lg disabled:opacity-50 active:scale-95 transition-all"
-					>
+						className="w-full py-5 rounded-full bg-[#E1AD01] text-black font-bold text-lg shadow-lg disabled:opacity-50 active:scale-95 transition-all">
 						Найти пробу ⛵
 					</button>
 				</div>

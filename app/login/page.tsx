@@ -3,15 +3,20 @@
 import { signIn } from 'next-auth/react';
 import { useState, Suspense, forwardRef } from 'react';
 import { FlaskConical, AlertCircle, ArrowRight } from 'lucide-react';
+import { AnimatedFlask } from '@/components/AnimatedFlask';
 
 // Локальный хелпер для полей MD3 Filled
-const MD3Field = forwardRef<HTMLInputElement, { label: string; value: string } & React.InputHTMLAttributes<HTMLInputElement>>(({ label, value, className = '', ...props }, ref) => {
+const MD3Field = forwardRef<
+	HTMLInputElement,
+	{ label: string; value: string } & React.InputHTMLAttributes<HTMLInputElement>
+>(({ label, value, className = '', ...props }, ref) => {
 	const baseClass = `w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-surface-container-highest)] px-6 pt-7 pb-3 text-base outline-none transition-all text-[var(--md-sys-color-on-surface)] ${className}`;
-	
+
 	return (
 		<div className="relative group w-full">
 			<input ref={ref} value={value} className={baseClass} {...props} />
-			<label className={`absolute left-6 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)] font-medium
+			<label
+				className={`absolute left-6 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)] font-medium
 				${value ? 'top-2 text-xs' : 'top-5 text-base'}
 				group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-2 group-focus-within:text-xs
 			`}>
@@ -60,10 +65,9 @@ function LoginContent() {
 
 			{/* MD3 Dialog Surface */}
 			<div className="w-full max-w-[440px] bg-[var(--md-sys-color-surface-container-low)] rounded-[3rem] shadow-2xl p-8 sm:p-12 relative z-10 animate-in fade-in zoom-in-95 duration-500">
-				
 				<div className="flex flex-col items-center text-center mb-10">
 					<div className="w-24 h-24 bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] rounded-[1.75rem] flex items-center justify-center mb-8 shadow-sm">
-						<FlaskConical className="w-12 h-12" strokeWidth={1.5} />
+						<AnimatedFlask />
 					</div>
 					<h1 className="text-4xl font-normal tracking-tight text-[var(--md-sys-color-on-surface)] mb-3">
 						Вход в систему

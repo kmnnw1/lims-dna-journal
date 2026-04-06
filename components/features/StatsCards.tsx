@@ -19,8 +19,12 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ total, successful, other
 						<FlaskConical className="w-6 h-6 md:w-8 md:h-8" strokeWidth={1.5} />
 					</div>
 					<div>
-						<p className="text-xs md:text-sm font-medium tracking-wide uppercase opacity-80 mb-0.5">Всего проб</p>
-						<p className="text-3xl md:text-4xl font-normal tabular-nums tracking-tight">{total}</p>
+						<p className="text-xs md:text-sm font-medium tracking-wide uppercase opacity-80 mb-0.5">
+							Всего проб
+						</p>
+						<p className="text-3xl md:text-4xl font-normal tabular-nums tracking-tight">
+							{total}
+						</p>
 					</div>
 				</div>
 			</div>
@@ -32,8 +36,12 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ total, successful, other
 						<CheckCircle className="w-6 h-6 md:w-8 md:h-8" strokeWidth={1.5} />
 					</div>
 					<div>
-						<p className="text-xs md:text-sm font-medium tracking-wide uppercase opacity-80 mb-0.5">Успешные ITS</p>
-						<p className="text-3xl md:text-4xl font-normal tabular-nums tracking-tight">{successful}</p>
+						<p className="text-xs md:text-sm font-medium tracking-wide uppercase opacity-80 mb-0.5">
+							Успешные ITS
+						</p>
+						<p className="text-3xl md:text-4xl font-normal tabular-nums tracking-tight">
+							{successful}
+						</p>
 					</div>
 				</div>
 			</div>
@@ -45,8 +53,12 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ total, successful, other
 						<Clock className="w-6 h-6 md:w-8 md:h-8" strokeWidth={1.5} />
 					</div>
 					<div>
-						<p className="text-xs md:text-sm font-medium tracking-wide uppercase opacity-80 mb-0.5">Остальные</p>
-						<p className="text-3xl md:text-4xl font-normal tabular-nums tracking-tight">{others}</p>
+						<p className="text-xs md:text-sm font-medium tracking-wide uppercase opacity-80 mb-0.5">
+							Остальные
+						</p>
+						<p className="text-3xl md:text-4xl font-normal tabular-nums tracking-tight">
+							{others}
+						</p>
 					</div>
 				</div>
 			</div>

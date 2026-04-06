@@ -62,20 +62,23 @@ export function MobileSpecimenCard({
 		} catch {}
 	};
 
-	// Динамические стили для MD3. 
+	// Динамические стили для MD3.
 	// Если карточка выбрана, она становится Primary Container.
 	let articleClass = 'transition-all duration-300 relative rounded-[2rem] p-5 shadow-sm ';
 	if (selected) {
-		articleClass += 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]';
+		articleClass +=
+			'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]';
 	} else {
-		articleClass += 'bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)]';
+		articleClass +=
+			'bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)]';
 	}
 
 	// Единый стиль кнопок MD3 (Tonal Icon Button)
 	const btnClass = `touch-target transition rounded-full p-2.5 outline-none 
-		${selected 
-			? 'bg-[var(--md-sys-color-on-primary-container)]/10 hover:bg-[var(--md-sys-color-on-primary-container)]/20 text-[var(--md-sys-color-on-primary-container)]' 
-			: 'bg-[var(--md-sys-color-surface-container-high)] hover:bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-on-surface)]'
+		${
+			selected
+				? 'bg-[var(--md-sys-color-on-primary-container)]/10 hover:bg-[var(--md-sys-color-on-primary-container)]/20 text-[var(--md-sys-color-on-primary-container)]'
+				: 'bg-[var(--md-sys-color-surface-container-high)] hover:bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-on-surface)]'
 		} active:scale-95`;
 
 	return (
@@ -106,7 +109,10 @@ export function MobileSpecimenCard({
 					)}
 					<div className="min-w-0 flex-1">
 						<div className="flex flex-wrap items-center gap-2 font-mono text-lg font-medium">
-							<Barcode className={`h-5 w-5 shrink-0 ${selected ? 'opacity-80' : 'text-[var(--md-sys-color-outline)]'}`} aria-hidden />
+							<Barcode
+								className={`h-5 w-5 shrink-0 ${selected ? 'opacity-80' : 'text-[var(--md-sys-color-outline)]'}`}
+								aria-hidden
+							/>
 							<span className="break-all tracking-tight">
 								<HighlightMatch text={s.id} query={searchQuery} />
 							</span>
@@ -122,11 +128,13 @@ export function MobileSpecimenCard({
 								</a>
 							)}
 						</div>
-						<p className={`mt-1 text-base leading-snug ${selected ? 'opacity-90' : 'text-[var(--md-sys-color-on-surface)]'}`}>
+						<p
+							className={`mt-1 text-base leading-snug ${selected ? 'opacity-90' : 'text-[var(--md-sys-color-on-surface)]'}`}>
 							{s.taxon || <span className="opacity-50">—</span>}
 						</p>
 						{s.locality && (
-							<p className={`mt-1 truncate text-sm ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-outline)]'}`}>
+							<p
+								className={`mt-1 truncate text-sm ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-outline)]'}`}>
 								{s.locality}
 							</p>
 						)}
@@ -142,7 +150,9 @@ export function MobileSpecimenCard({
 								className={`${btnClass} ${favorite ? '!text-[#f59e0b]' : ''}`}
 								aria-label={favorite ? 'Убрать из избранного' : 'В избранное'}
 								title={favorite ? 'Убрать из избранного' : 'В избранное'}>
-								<Star className={`h-4 w-4 transition-all ${favorite ? 'fill-current scale-110' : ''}`} />
+								<Star
+									className={`h-4 w-4 transition-all ${favorite ? 'fill-current scale-110' : ''}`}
+								/>
 							</button>
 						)}
 						<button
@@ -162,11 +172,21 @@ export function MobileSpecimenCard({
 					</div>
 					<div className="flex justify-end gap-2">
 						{!isReader && (
-							<button type="button" onClick={onEdit} className={btnClass} aria-label="Редактировать" title="Редактировать">
+							<button
+								type="button"
+								onClick={onEdit}
+								className={btnClass}
+								aria-label="Редактировать"
+								title="Редактировать">
 								<Pencil className="h-4 w-4" />
 							</button>
 						)}
-						<button type="button" onClick={onPcr} className={`${btnClass} ${(s.attempts?.length ?? 0) > 0 ? '!bg-[var(--md-sys-color-primary)] !text-[var(--md-sys-color-on-primary)]' : ''}`} aria-label="PCR" title="PCR">
+						<button
+							type="button"
+							onClick={onPcr}
+							className={`${btnClass} ${(s.attempts?.length ?? 0) > 0 ? '!bg-[var(--md-sys-color-primary)] !text-[var(--md-sys-color-on-primary)]' : ''}`}
+							aria-label="PCR"
+							title="PCR">
 							<Activity className="h-4 w-4" />
 						</button>
 					</div>
@@ -174,31 +194,38 @@ export function MobileSpecimenCard({
 			</div>
 
 			{s.notes && (
-				<div className={`mt-5 p-4 rounded-2xl text-sm line-clamp-3 whitespace-pre-wrap break-words
+				<div
+					className={`mt-5 p-4 rounded-2xl text-sm line-clamp-3 whitespace-pre-wrap break-words
 					${selected ? 'bg-black/10' : 'bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)]'}
 				`}>
 					{s.notes}
 				</div>
 			)}
 
-			<div className={`mt-5 pt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t text-sm
+			<div
+				className={`mt-5 pt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t text-sm
 				${selected ? 'border-[var(--md-sys-color-on-primary-container)]/20' : 'border-[var(--md-sys-color-outline-variant)]'}
 			`}>
 				<div className="flex flex-col gap-1">
-					<p className={`text-xs font-medium tracking-wide uppercase ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-primary)]'}`}>
+					<p
+						className={`text-xs font-medium tracking-wide uppercase ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-primary)]'}`}>
 						Выделение
 					</p>
 					<p className="font-medium">
 						{s.extrLab || '—'}
-						{s.extrOperator && <span className="font-normal opacity-70"> · {s.extrOperator}</span>}
+						{s.extrOperator && (
+							<span className="font-normal opacity-70"> · {s.extrOperator}</span>
+						)}
 					</p>
-					<p className={`text-xs ${selected ? 'opacity-80' : 'text-[var(--md-sys-color-outline)]'}`}>
+					<p
+						className={`text-xs ${selected ? 'opacity-80' : 'text-[var(--md-sys-color-outline)]'}`}>
 						{s.extrMethod || <span className="opacity-50">Нет данных</span>}
 					</p>
 				</div>
 
 				<div className="flex flex-col gap-2">
-					<p className={`text-xs font-medium tracking-wide uppercase ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-primary)]'}`}>
+					<p
+						className={`text-xs font-medium tracking-wide uppercase ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-primary)]'}`}>
 						Маркеры
 					</p>
 					<div className="flex flex-wrap gap-2 items-center">

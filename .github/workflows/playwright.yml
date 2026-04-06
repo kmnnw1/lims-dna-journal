@@ -1,34 +1,34 @@
 name: Playwright Tests
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    push:
+        branches: [main, master]
+    pull_request:
+        branches: [main, master]
 jobs:
-  test:
-    timeout-minutes: 60
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm install --force
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Setup Database and Environment
-      run: |
-        echo "NEXTAUTH_SECRET=test_super_secret_key_for_github_actions_32" >> .env
-        echo "NEXTAUTH_URL=http://localhost:3000" >> .env
-        echo "DATABASE_URL=file:./dev.db" >> .env
-        npx prisma db push
-        node scripts/fix-auth.mjs
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+    test:
+        timeout-minutes: 60
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
+            - name: Install dependencies
+              run: npm install --force
+            - name: Install Playwright Browsers
+              run: npx playwright install --with-deps
+            - name: Setup Database and Environment
+              run: |
+                  echo "NEXTAUTH_SECRET=test_super_secret_key_for_github_actions_32" >> .env
+                  echo "NEXTAUTH_URL=http://localhost:3000" >> .env
+                  echo "DATABASE_URL=file:./dev.db" >> .env
+                  npx prisma db push
+                  node scripts/fix-auth.mjs
+            - name: Run Playwright tests
+              run: npx playwright test
+            - uses: actions/upload-artifact@v4
+              if: ${{ !cancelled() }}
+              with:
+                  name: playwright-report
+                  path: playwright-report/
+                  retention-days: 30

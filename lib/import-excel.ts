@@ -33,7 +33,10 @@ function cellText(v: any): string {
 
 	if (typeof v === 'object') {
 		if (Array.isArray(v.richText)) {
-			return v.richText.map((t: any) => t.text || '').join('').trim();
+			return v.richText
+				.map((t: any) => t.text || '')
+				.join('')
+				.trim();
 		}
 		if (v.text && v.hyperlink) {
 			return String(v.text).trim();
@@ -218,9 +221,21 @@ export function parseLabDate(raw: string): Date | null {
 	}
 
 	const ruMonths: Record<string, number> = {
-		янв: 0, фев: 1, мар: 2, апр: 3, май: 4, мая: 4,
-		июн: 5, июл: 6, авг: 7, сен: 8, окт: 9, ноя: 10,
-		nov: 10, дек: 11, dec: 11,
+		янв: 0,
+		фев: 1,
+		мар: 2,
+		апр: 3,
+		май: 4,
+		мая: 4,
+		июн: 5,
+		июл: 6,
+		авг: 7,
+		сен: 8,
+		окт: 9,
+		ноя: 10,
+		nov: 10,
+		дек: 11,
+		dec: 11,
 	};
 	for (const [m, idx] of Object.entries(ruMonths)) {
 		if (s.includes(m)) {
@@ -237,8 +252,18 @@ export function parseLabDate(raw: string): Date | null {
 	const romanMatch = s.match(romanRe);
 	if (romanMatch) {
 		const romans: Record<string, number> = {
-			i: 0, ii: 1, iii: 2, iv: 3, v: 4, vi: 5,
-			vii: 6, viii: 7, ix: 8, x: 9, xi: 10, xii: 11,
+			i: 0,
+			ii: 1,
+			iii: 2,
+			iv: 3,
+			v: 4,
+			vi: 5,
+			vii: 6,
+			viii: 7,
+			ix: 8,
+			x: 9,
+			xi: 10,
+			xii: 11,
 		};
 		const month = romans[romanMatch[2].toLowerCase()];
 		if (month !== undefined) {
@@ -272,8 +297,14 @@ export function extrDateString(parsed: Date | null): string | null {
 }
 
 const NOTE_EXTRA_KEYS = new Set([
-	'comment', 'herbarium', 'labNo', 'connections', 
-	'pcr', 'sequence', 'recheck', 'todo',
+	'comment',
+	'herbarium',
+	'labNo',
+	'connections',
+	'pcr',
+	'sequence',
+	'recheck',
+	'todo',
 ]);
 
 export function parseRowWithBindings(

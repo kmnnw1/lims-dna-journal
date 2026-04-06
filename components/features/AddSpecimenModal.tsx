@@ -53,13 +53,9 @@ export function AddSpecimenModal({
 			aria-modal="true"
 			role="dialog"
 			tabIndex={-1}>
-			
 			<div className="w-full max-w-md p-6 sm:p-8 m-4 max-h-[90vh] overflow-y-auto custom-scrollbar relative bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem] shadow-2xl text-[var(--md-sys-color-on-surface)] transition-all transform scale-100">
-				
 				<div className="mb-6 sm:mb-8 flex items-center justify-between">
-					<h2 className="text-2xl sm:text-3xl font-normal tracking-tight">
-						Новая проба
-					</h2>
+					<h2 className="text-2xl sm:text-3xl font-normal tracking-tight">Новая проба</h2>
 					<button
 						type="button"
 						onClick={onClose}
@@ -69,7 +65,10 @@ export function AddSpecimenModal({
 					</button>
 				</div>
 
-				<form onSubmit={onSubmit} className="flex flex-col gap-4 sm:gap-5" autoComplete="off">
+				<form
+					onSubmit={onSubmit}
+					className="flex flex-col gap-4 sm:gap-5"
+					autoComplete="off">
 					<div className="relative group">
 						<input
 							ref={idInputRef}
@@ -79,14 +78,18 @@ export function AddSpecimenModal({
 							value={newRecord.id}
 							spellCheck={false}
 							onChange={(e) =>
-								setNewRecord({ ...newRecord, id: e.target.value.replace(/\s/g, '') })
+								setNewRecord({
+									...newRecord,
+									id: e.target.value.replace(/\s/g, ''),
+								})
 							}
 							className={`w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 bg-[var(--md-sys-color-surface-container-high)] px-5 pt-6 pb-2 text-base outline-none transition-all
 								${validationError ? 'border-[var(--md-sys-color-error)] text-[var(--md-sys-color-error)]' : 'border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)]'}
 							`}
 							data-testid="addspecimen-id"
 						/>
-						<label className={`absolute left-5 transition-all duration-200 pointer-events-none
+						<label
+							className={`absolute left-5 transition-all duration-200 pointer-events-none
 							${newRecord.id ? 'top-1.5 text-xs' : 'top-4 text-base'}
 							${validationError ? 'text-[var(--md-sys-color-error)]' : 'text-[var(--md-sys-color-outline)] group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-1.5 group-focus-within:text-xs'}
 						`}>
@@ -102,7 +105,8 @@ export function AddSpecimenModal({
 							className="w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-surface-container-high)] px-5 pt-6 pb-2 text-base outline-none transition-all"
 							data-testid="addspecimen-taxon"
 						/>
-						<label className={`absolute left-5 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
+						<label
+							className={`absolute left-5 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
 							${newRecord.taxon ? 'top-1.5 text-xs' : 'top-4 text-base'}
 							group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-1.5 group-focus-within:text-xs
 						`}>
@@ -115,11 +119,14 @@ export function AddSpecimenModal({
 							list="labs-list"
 							value={newRecord.extrLab}
 							maxLength={40}
-							onChange={(e) => setNewRecord({ ...newRecord, extrLab: e.target.value })}
+							onChange={(e) =>
+								setNewRecord({ ...newRecord, extrLab: e.target.value })
+							}
 							className="w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-surface-container-high)] px-5 pt-6 pb-2 text-base outline-none transition-all"
 							data-testid="addspecimen-lab"
 						/>
-						<label className={`absolute left-5 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
+						<label
+							className={`absolute left-5 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
 							${newRecord.extrLab ? 'top-1.5 text-xs' : 'top-4 text-base'}
 							group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-1.5 group-focus-within:text-xs
 						`}>
@@ -138,7 +145,8 @@ export function AddSpecimenModal({
 							className="w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-surface-container-high)] px-5 pt-6 pb-2 text-base outline-none transition-all"
 							data-testid="addspecimen-operator"
 						/>
-						<label className={`absolute left-5 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
+						<label
+							className={`absolute left-5 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
 							${newRecord.extrOperator ? 'top-1.5 text-xs' : 'top-4 text-base'}
 							group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-1.5 group-focus-within:text-xs
 						`}>

@@ -45,7 +45,7 @@ function handleError(e: any) {
 export async function GET(req: Request) {
 	try {
 		await requireRole('READER');
-		
+
 		// 1. Получаем параметры из URL для пагинации и поиска
 		const { searchParams } = new URL(req.url);
 		const page = parseInt(searchParams.get('page') || '1');
@@ -59,12 +59,9 @@ export async function GET(req: Request) {
 
 		// 2. Строим условия фильтрации (WHERE)
 		const where: any = {};
-		
+
 		if (search) {
-			where.OR = [
-				{ id: { contains: search } },
-				{ taxon: { contains: search } }
-			];
+			where.OR = [{ id: { contains: search } }, { taxon: { contains: search } }];
 		}
 
 		if (filterType === 'success') where.itsStatus = '✓';
@@ -87,15 +84,15 @@ export async function GET(req: Request) {
 				include: { attempts: true },
 			}),
 			prisma.specimen.count({ where }),
-			getDistinctFields()
+			getDistinctFields(),
 		]);
 
-		return NextResponse.json({ 
-			specimens, 
+		return NextResponse.json({
+			specimens,
 			suggestions,
 			total,
 			page,
-			totalPages: Math.ceil(total / limit)
+			totalPages: Math.ceil(total / limit),
 		});
 	} catch (e: any) {
 		return handleError(e);
@@ -127,49 +124,48 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(req: Request) {
-    try {
-        const body = await req.json();
-        const { id, singleId, updateData, singleStatus, ...restData } = body;
+	try {
+		const body = await req.json();
+		const { id, singleId, updateData, singleStatus, ...restData } = body;
 
-        // Логика для быстрого переключения статуса маркеров
-        if (singleId && updateData) {
-            await prisma.specimen.update({
-                where: { id: String(singleId) },
-                data: updateData
-            });
-            return NextResponse.json({ success: true });
-        }
+		// Логика для быстрого переключения статуса маркеров
+		if (singleId && updateData) {
+			await prisma.specimen.update({
+				where: { id: String(singleId) },
+				data: updateData,
+			});
+			return NextResponse.json({ success: true });
+		}
 
-        // Поддержка легаси-обновления статуса (на всякий случай)
-        if (singleId && singleStatus !== undefined) {
-             await prisma.specimen.update({
-                where: { id: String(singleId) },
-                data: { itsStatus: singleStatus }
-            });
-            return NextResponse.json({ success: true });
-        }
+		// Поддержка легаси-обновления статуса (на всякий случай)
+		if (singleId && singleStatus !== undefined) {
+			await prisma.specimen.update({
+				where: { id: String(singleId) },
+				data: { itsStatus: singleStatus },
+			});
+			return NextResponse.json({ success: true });
+		}
 
-        // БЛОК: Для редактирования через модалку (исправление ошибки Prisma)
-        if (id && Object.keys(restData).length > 0) {
-            
-            // КРИТИЧНО: Удаляем вложенные массивы и даты перед обновлением, 
-            // иначе Prisma выдаст ошибку валидации (Invalid value provided).
-            delete restData.attempts;
-            delete restData.createdAt;
-            delete restData.updatedAt;
+		// БЛОК: Для редактирования через модалку (исправление ошибки Prisma)
+		if (id && Object.keys(restData).length > 0) {
+			// КРИТИЧНО: Удаляем вложенные массивы и даты перед обновлением,
+			// иначе Prisma выдаст ошибку валидации (Invalid value provided).
+			delete restData.attempts;
+			delete restData.createdAt;
+			delete restData.updatedAt;
 
-            await prisma.specimen.update({
-                where: { id: String(id) },
-                data: restData
-            });
-            return NextResponse.json({ success: true });
-        }
+			await prisma.specimen.update({
+				where: { id: String(id) },
+				data: restData,
+			});
+			return NextResponse.json({ success: true });
+		}
 
-        return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
-    } catch (error) {
-        console.error('PUT Specimen Error:', error);
-        return NextResponse.json({ error: 'Failed to update specimen' }, { status: 500 });
-    }
+		return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
+	} catch (error) {
+		console.error('PUT Specimen Error:', error);
+		return NextResponse.json({ error: 'Failed to update specimen' }, { status: 500 });
+	}
 }
 export async function DELETE(request: Request) {
 	try {

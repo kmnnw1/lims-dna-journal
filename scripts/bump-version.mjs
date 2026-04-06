@@ -10,11 +10,11 @@ function getDiffStat() {
 	try {
 		const stat = execSync('git diff --cached --shortstat', { encoding: 'utf8' }).trim();
 		if (!stat) return { files: 0, lines: 0 };
-		
+
 		const files = parseInt(stat.match(/(\d+)\s+file/)?.[1] || '0', 10);
 		const insertions = parseInt(stat.match(/(\d+)\s+insertion/)?.[1] || '0', 10);
 		const deletions = parseInt(stat.match(/(\d+)\s+deletion/)?.[1] || '0', 10);
-		
+
 		return { files, lines: insertions + deletions };
 	} catch {
 		return { files: 0, lines: 0 };
@@ -35,12 +35,16 @@ if (lines > 5000) {
 	// Аномальный объем (например, Prettier пробежался или обновился package-lock)
 	// Это НЕ эпическая фича, это просто форматирование. Бампаем только Build.
 	build++;
-	console.log(`[SYSTEM] Автоматическое форматирование или лок-файл (${files} файлов, ${lines} строк). Инкремент: Build.`);
+	console.log(
+		`[SYSTEM] Автоматическое форматирование или лок-файл (${files} файлов, ${lines} строк). Инкремент: Build.`,
+	);
 } else if (files >= 5 || lines > 300) {
 	// Затронуто много файлов или логики — это полноценная фича (Patch)
 	patch++;
 	build = 0;
-	console.log(`[SYSTEM] Интеграция функционала (${files} файлов, ${lines} строк). Инкремент: Patch.`);
+	console.log(
+		`[SYSTEM] Интеграция функционала (${files} файлов, ${lines} строк). Инкремент: Patch.`,
+	);
 } else {
 	// 1-4 файла — это локальный фикс или рутина (Build)
 	build++;
