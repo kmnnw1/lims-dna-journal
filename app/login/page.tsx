@@ -62,8 +62,8 @@ function LoginContent() {
 			<div className="w-full max-w-[440px] bg-[var(--md-sys-color-surface-container-low)] rounded-[3rem] shadow-2xl p-8 sm:p-12 relative z-10 animate-in fade-in zoom-in-95 duration-500">
 				
 				<div className="flex flex-col items-center text-center mb-10">
-					<div className="w-24 h-24 bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] rounded-[1.75rem] flex items-center justify-center mb-8 shadow-sm rotate-3">
-						<FlaskConical className="w-12 h-12 -rotate-3" strokeWidth={1.5} />
+					<div className="w-24 h-24 bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] rounded-[1.75rem] flex items-center justify-center mb-8 shadow-sm">
+						<FlaskConical className="w-12 h-12" strokeWidth={1.5} />
 					</div>
 					<h1 className="text-4xl font-normal tracking-tight text-[var(--md-sys-color-on-surface)] mb-3">
 						Вход в систему

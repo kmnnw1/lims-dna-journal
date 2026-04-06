@@ -113,7 +113,9 @@ function UserRow({
 						</button>
 					</>
 				) : (
-					<span className="text-sm font-medium px-4 py-2 bg-[var(--md-sys-color-surface-container)] rounded-full text-[var(--md-sys-color-outline)]">Главный администратор</span>
+					<span className="text-sm font-medium px-4 py-2 bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-primary)] rounded-full shadow-sm">
+  Главный администратор
+</span>
 				)}
 			</div>
 		</div>
@@ -288,10 +290,10 @@ export default function AdminPage() {
 
 			<div className="max-w-6xl mx-auto">
 				<Link
-					href="/"
-					className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-[var(--md-sys-color-primary)] hover:opacity-80 transition-opacity bg-[var(--md-sys-color-surface-container)] px-5 py-2.5 rounded-full">
-					<ArrowLeft className="h-4 w-4" /> В журнал
-				</Link>
+	href="/"
+	className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-[var(--md-sys-color-primary)] hover:opacity-80 transition-opacity bg-[var(--md-sys-color-surface)] shadow-md hover:shadow-lg px-5 py-2.5 rounded-full">
+	<ArrowLeft className="h-4 w-4" /> В журнал
+</Link>
 
 				<h1 className="mb-10 flex items-center gap-4 text-4xl font-normal tracking-tight">
 					<span className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] shadow-sm">

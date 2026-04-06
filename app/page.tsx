@@ -8,10 +8,11 @@ import Link from 'next/link';
 import { Search, Plus, Settings, LogOut, Keyboard, Filter } from 'lucide-react';
 
 // Правильные импорты! (Используем обновленные компоненты из корня)
-import { StatsCards } from './components/StatsCards';
-import { SpecimenTable } from './components/SpecimenTable';
+import { StatsCards } from '@/components/features/StatsCards';
+import { SpecimenTable } from '@/components/features/SpecimenTable';
 import { AddSpecimenModal } from '@/components/features/AddSpecimenModal';
 import { EditSpecimenModal } from '@/components/features/EditSpecimenModal';
+
 
 export default function JournalPage() {
 	const { data: session, status } = useSession();
@@ -34,6 +35,9 @@ export default function JournalPage() {
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [editingSpecimen, setEditingSpecimen] = useState<any | null>(null);
 	const [newRecordData, setNewRecordData] = useState({ id: '', taxon: '', locality: '', extrLab: '', extrOperator: '', extrMethod: '', extrDateRaw: '' });
+
+	const [isPcrModalOpen, setIsPcrModalOpen] = useState(false);
+	const [selectedSpecimen, setSelectedSpecimen] = useState<any>(null);
 
 	useEffect(() => {
 		setPage(1);
@@ -140,6 +144,9 @@ export default function JournalPage() {
 		} catch (error) {}
 	};
 
+
+
+
 	if (status === 'loading') return null;
 
 	return (
@@ -148,9 +155,9 @@ export default function JournalPage() {
 				
 				<header className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-10">
 					<div className="flex items-center gap-5">
-						<div className="w-14 h-14 bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] rounded-[1.25rem] shadow-sm flex items-center justify-center text-2xl font-black">
+						<div className="w-14 h-14 bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] rounded-[1.25rem] shadow-sm flex items-center justify-center text-xl font-black">
 							ДНК
-						</div>
+							</div>
 						<div>
 							<h1 className="text-4xl font-normal tracking-tight">Журнал Проб</h1>
 							<p className="text-[var(--md-sys-color-outline)] text-sm font-medium mt-1">
@@ -171,23 +178,25 @@ export default function JournalPage() {
 							/>
 						</div>
 
-						<button className="hidden lg:flex items-center gap-2 px-5 py-4 bg-[var(--md-sys-color-surface-container)] hover:bg-[var(--md-sys-color-surface-container-high)] rounded-full transition-all font-medium text-sm">
-							<Keyboard className="w-5 h-5" /> Клавиши
-						</button>
-						
-						<button className="hidden lg:flex items-center gap-2 px-5 py-4 bg-[var(--md-sys-color-surface-container)] hover:bg-[var(--md-sys-color-surface-container-high)] rounded-full transition-all font-medium text-sm">
-							<Filter className="w-5 h-5" /> Умный фильтр
-						</button>
+						<button className="hidden lg:flex items-center gap-2 px-5 py-4 bg-[var(--md-sys-color-surface)] hover:shadow-md rounded-full transition-all font-medium text-sm shadow-sm">
+  <Keyboard className="w-5 h-5" /> Клавиши
+</button>
 
-						<button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 px-6 py-4 bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] hover:shadow-md rounded-[1rem] transition-all font-medium active:scale-95">
-							<Plus className="w-6 h-6" />
-							<span className="hidden sm:inline">Новая проба</span>
-						</button>
+<button className="hidden lg:flex items-center gap-2 px-5 py-4 bg-[var(--md-sys-color-surface)] hover:shadow-md rounded-full transition-all font-medium text-sm shadow-sm">
+  <Filter className="w-5 h-5" /> Умный фильтр
+</button>
 
-						<Link href="/admin" className="flex items-center gap-2 px-5 py-4 bg-[var(--md-sys-color-surface-container)] hover:bg-[var(--md-sys-color-surface-container-high)] rounded-[1rem] transition-all font-medium">
-							<Settings className="w-5 h-5" />
-							<span className="hidden sm:inline">Админ</span>
-						</Link>
+<button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 px-6 py-4 bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] hover:shadow-lg rounded-[1rem] transition-all font-medium active:scale-95 shadow-md">
+  <Plus className="w-6 h-6" />
+  <span className="hidden sm:inline">Новая проба</span>
+</button>
+
+<Link href="/admin" className="flex items-center gap-2 px-5 py-4 bg-[var(--md-sys-color-secondary-container)] hover:shadow-md rounded-[1rem] transition-all font-medium shadow-sm">
+  <Settings className="w-5 h-5" />
+  <span className="hidden sm:inline">Админ</span>
+</Link>
+
+					
 
 						<button onClick={() => signOut()} title="Выйти" className="p-4 bg-[var(--md-sys-color-surface-container)] hover:bg-[var(--md-sys-color-error-container)] hover:text-[var(--md-sys-color-on-error-container)] rounded-full transition-all flex items-center justify-center">
 							<LogOut className="w-5 h-5" />
@@ -205,15 +214,15 @@ export default function JournalPage() {
 								key={type}
 								onClick={() => setFilterType(type)}
 								className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap border border-[var(--md-sys-color-outline-variant)]
-									${isSelected 
-										? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] border-transparent' 
-										: 'bg-transparent text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container)]'
-									}`}
+  ${isSelected 
+    ? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] border-transparent' 
+    : 'bg-transparent text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container-high)]'
+  }`}
 							>
 								{type === 'all' && 'Все пробы'}
 								{type === 'success' && 'Успешные'}
 								{type === 'error' && 'С ошибками'}
-								{type === 'fav' && '⭐ Избранное'}
+								{type === 'fav' && 'Избранное'}
 							</button>
 						);
 					})}
@@ -232,7 +241,7 @@ export default function JournalPage() {
 						setSelectedIds(selectedIds.size === ids.length ? new Set() : new Set(ids));
 					}}
 					onEdit={setEditingSpecimen}
-					onPcr={() => {}} 
+					onPcr={() =>{}}
 					onStatusClick={handleStatusToggle}
 					searchQuery={debouncedSearch}
 					sortConfig={sortConfig}
@@ -279,6 +288,7 @@ export default function JournalPage() {
 				onChange={setEditingSpecimen}
 				onSubmit={handleEditSubmit} 
 			/>
+			
 
 			{selectedIds.size > 0 && (
 				<div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-[var(--md-sys-color-inverse-surface)] text-[var(--md-sys-color-inverse-on-surface)] rounded-[1.5rem] p-4 flex items-center justify-between shadow-2xl z-40 animate-in slide-in-from-bottom-8">
@@ -301,6 +311,8 @@ export default function JournalPage() {
 					</div>
 				</div>
 			)}
+			
+			
 		</main>
 	);
 }

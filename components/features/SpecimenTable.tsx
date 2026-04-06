@@ -64,37 +64,37 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 			<div className="overflow-x-auto custom-scrollbar">
 				<table className="w-full text-left border-collapse">
 					<thead>
-						<tr className="bg-[var(--md-sys-color-surface-container)] border-b border-[var(--md-sys-color-outline-variant)]/50">
-							<th className="p-5 w-14 text-center">
-								<div className="relative flex items-center justify-center">
-									<input
-										type="checkbox"
-										onChange={() => onSelectAll(specimens.map(s => s.id))}
-										checked={specimens.length > 0 && selectedIds.size === specimens.length}
-										className="peer size-5 cursor-pointer appearance-none rounded-md border-2 border-[var(--md-sys-color-outline)] checked:border-[var(--md-sys-color-primary)] checked:bg-[var(--md-sys-color-primary)] transition-all"
-										title="Выбрать все"
-									/>
-									<svg className="pointer-events-none absolute h-3.5 w-3.5 text-[var(--md-sys-color-on-primary)] opacity-0 peer-checked:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-								</div>
-							</th>
-							<th 
-								className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none whitespace-nowrap"
-								onClick={() => onSort('id')}
-							>
-								ID {renderSortIcon('id')}
-							</th>
-							<th 
-								className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none min-w-[180px]"
-								onClick={() => onSort('taxon')}
-							>
-								Таксон {renderSortIcon('taxon')}
-							</th>
-							<th className="p-5 text-[var(--md-sys-color-outline)] font-medium text-sm tracking-wide">Заметки</th>
-							<th className="p-5 text-[var(--md-sys-color-outline)] font-medium text-sm tracking-wide">Выделение</th>
-							<th className="p-5 text-[var(--md-sys-color-outline)] font-medium text-sm tracking-wide">Маркеры</th>
-							<th className="p-5 text-[var(--md-sys-color-outline)] font-medium text-sm tracking-wide text-right">Действия</th>
-						</tr>
-					</thead>
+	<tr className="bg-white dark:bg-zinc-800 border-b border-[var(--md-sys-color-outline-variant)]/50">
+		<th className="p-5 w-14 text-center">
+			<div className="relative flex items-center justify-center">
+				<input
+					type="checkbox"
+					onChange={() => onSelectAll(specimens.map(s => s.id))}
+					checked={specimens.length > 0 && selectedIds.size === specimens.length}
+					className="peer size-5 cursor-pointer appearance-none rounded-md border-2 border-[var(--md-sys-color-outline)] checked:border-[var(--md-sys-color-primary)] checked:bg-[var(--md-sys-color-primary)] transition-all"
+					title="Выбрать все"
+				/>
+				<svg className="pointer-events-none absolute h-3.5 w-3.5 text-[var(--md-sys-color-on-primary)] opacity-0 peer-checked:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+			</div>
+		</th>
+		<th 
+			className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors select-none whitespace-nowrap"
+			onClick={() => onSort('id')}
+		>
+			ID {renderSortIcon('id')}
+		</th>
+		<th 
+			className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors select-none min-w-[180px]"
+			onClick={() => onSort('taxon')}
+		>
+			Таксон {renderSortIcon('taxon')}
+		</th>
+		<th className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide">Заметки</th>
+		<th className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide">Выделение</th>
+		<th className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide">Маркеры</th>
+		<th className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide text-right">Действия</th>
+	</tr>
+</thead>
 					<tbody className="divide-y divide-[var(--md-sys-color-outline-variant)]/30">
 						{specimens.map((specimen) => {
 							const isSelected = selectedIds.has(specimen.id);
