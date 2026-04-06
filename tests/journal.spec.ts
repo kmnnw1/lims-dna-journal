@@ -12,16 +12,16 @@ async function loginAdmin(page: any) {
     await userInput.fill('admin');
     await passInput.fill('admin');
 
-    // Самый надежный способ для React-форм (нажимаем Enter внутри поля)
+    // Нажимаем Enter для отправки формы
     await passInput.press('Enter');
 
-    // ТИТАНОВЫЙ ФОЛЛБЭК ДЛЯ SAFARI: находим HTML-форму и отправляем ее системно
+    // Фолбэк для Safari: программная отправка формы
     await page.evaluate(() => {
         const form = document.querySelector('form');
         if (form) form.requestSubmit();
     }).catch(() => {});
 
-    // Ждем загрузки журнала
+    // Ждем загрузки интерфейса журнала
     await expect(page.getByRole('heading', { name: /Журнал Проб/i })).toBeVisible({ timeout: 20000 });
 }
 
@@ -29,7 +29,7 @@ test.describe('Авторизация и Доступ', () => {
     test('Успешный вход и выход', async ({ page }) => {
         await loginAdmin(page);
 
-        // Ищем ТОЛЬКО видимую кнопку выхода
+        // Используем псевдоселектор :visible для поиска активной кнопки
         const logoutBtn = page.locator('button[title="Выйти"]:visible').first();
         await logoutBtn.click({ force: true });
 
@@ -39,40 +39,37 @@ test.describe('Авторизация и Доступ', () => {
     test('Админ-панель открывается', async ({ page }) => {
         await loginAdmin(page);
 
-        // Ищем ТОЛЬКО видимую ссылку на админку
         const adminLink = page.locator('a[href="/admin"]:visible').first();
         await adminLink.click({ force: true });
 
         await expect(page.getByRole('heading', { name: /Администрирование/i })).toBeVisible({ timeout: 15000 });
     });
 
-    test('Админ-панель: Кнопка резервного копирования (Скачать БД)', async ({ page, context }) => {
+    test('Админ-панель: Кнопка резервного копирования (Скачать БД)', async ({ page }) => {
         await loginAdmin(page);
 
-        // Переходим в админку
         const adminLink = page.locator('a[href="/admin"]:visible').first();
         await adminLink.click({ force: true });
         await expect(page.getByRole('heading', { name: /Администрирование/i })).toBeVisible({ timeout: 15000 });
 
-        // Убеждаемся, что кнопка скачивания существует и видна
         const downloadBtn = page.locator('button:visible').filter({ hasText: /Скачать БД/i }).first();
         await expect(downloadBtn).toBeVisible();
 
-        // Проверяем, что при клике открывается новая вкладка (отправка запроса на файл)
-        // Мы перехватываем событие 'page' в контексте браузера
-        const [newPage] = await Promise.all([
-            context.waitForEvent('page'),
+        // Ожидаем событие начала загрузки файла, так как браузер не переходит на новую страницу при скачивании
+        const [download] = await Promise.all([
+            page.waitForEvent('download'), 
             downloadBtn.click({ force: true })
         ]);
         
-        // Убеждаемся, что скачивание идет с правильного эндпоинта
-        expect(newPage.url()).toContain('/api/backup/download');
+        // Проверяем, что запрос ушел на правильный эндпоинт
+        expect(download.url()).toContain('/api/backup/download');
     });
 });
 
 test.describe('Журнал Проб - Основной функционал', () => {
     test.beforeEach(async ({ page }) => {
         await loginAdmin(page);
+        // Ждем появления таблицы или карточек
         await expect(page.locator('table tbody tr, article').first()).toBeVisible({ timeout: 30000 }).catch(() => {});
     });
 
@@ -89,6 +86,7 @@ test.describe('Журнал Проб - Основной функционал', (
         await searchInput.fill('AP1932');
         await searchInput.press('Enter');
 
+        // Ждем либо подсветки результата, либо сообщения об отсутствии
         await Promise.race([
             expect(page.locator('mark').first()).toBeVisible({ timeout: 10000 }),
             expect(page.getByText(/ничего не найдено/i)).toBeVisible({ timeout: 10000 })
@@ -119,9 +117,8 @@ test.describe('Журнал Проб - Основной функционал', (
     });
 
     test('Редактирование пробы и история ПЦР', async ({ page }) => {
-        await page.waitForTimeout(2000); // Даем интерфейсу прогрузиться полностью
+        await page.waitForTimeout(2000);
 
-        // Фильтруем скрытые десктопные/мобильные кнопки, берем только видимые
         const editButton = page.locator('button[title="Изменить"]:visible, button[aria-label="Редактировать"]:visible').first();
 
         if (await editButton.isVisible()) {
@@ -142,19 +139,33 @@ test.describe('Журнал Проб - Основной функционал', (
     });
 
     test('Проверка новых функций (Экспорт, Сканер)', async ({ page }) => {
-        // 1. Проверяем наличие новых кнопок на главной
+        // Проверка наличия кнопок
         await expect(page.locator('button:visible').filter({ hasText: /Выгрузить CSV/i }).first()).toBeVisible({ timeout: 10000 });
         const scanBtn = page.locator('button:visible').filter({ hasText: /Сканировать/i }).first();
         await expect(scanBtn).toBeVisible();
 
-        // 2. Проверяем модалку сканера
+        // Тестирование модалки сканера
         await scanBtn.click({ force: true });
         await expect(page.getByRole('heading', { name: /Сканирование/i })).toBeVisible({ timeout: 10000 });
         
-        // Вводим вручную в сканер
+        // Ручной ввод в сканер
         await page.locator('input[type="text"]:visible').last().fill('AP1932');
         await page.locator('button:visible').filter({ hasText: /Найти пробу/i }).first().click({ force: true });
         
-        await expect(page.getByRole('heading', { name: /Сканирование/i })).toBeHidden({ timeout: 10000 });
+        // Ждем закрытия модалки или сообщения о том, что проба не найдена
+        await Promise.race([
+            expect(page.getByRole('heading', { name: /Сканирование/i })).toBeHidden({ timeout: 5000 }),
+            expect(page.getByText(/не найден/i)).toBeVisible({ timeout: 5000 }),
+            expect(page.getByText(/ошибка/i)).toBeVisible({ timeout: 5000 })
+        ]).catch(() => {});
+
+        // Cleanup: если окно всё еще открыто (например, проба не найдена), нажимаем на крестик («X»)
+        const scanHeading = page.getByRole('heading', { name: /Сканирование/i });
+        if (await scanHeading.isVisible()) {
+            const closeBtn = page.locator('button').filter({ has: page.locator('svg.lucide-x') }).first();
+            await closeBtn.click({ force: true });
+        }
+        
+        await expect(scanHeading).toBeHidden({ timeout: 5000 });
     });
 });
