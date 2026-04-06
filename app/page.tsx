@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useDebounce } from '@/hooks/useDebounce';
-import { Star } from 'lucide-react';
+import { Star, Download, Camera, Printer } from 'lucide-react';
 import type { Specimen } from '@/types';
 
 import { JournalHeader } from '@/components/features/JournalHeader';
@@ -14,6 +14,7 @@ import { AddSpecimenModal } from '@/components/features/AddSpecimenModal';
 import { EditSpecimenModal } from '@/components/features/EditSpecimenModal';
 import { PcrModal } from '@/components/features/PCRModal';
 import BatchPcrModal from '@/components/features/BatchPCRModal';
+import { BarcodeScanDialog } from '@/components/features/BarcodeScanDialog';
 
 export default function JournalPage() {
     const { data: session, status } = useSession();
@@ -38,6 +39,7 @@ export default function JournalPage() {
     const [editingSpecimen, setEditingSpecimen] = useState<Specimen | null>(null);
     const [activePcrSpecimen, setActivePcrSpecimen] = useState<Specimen | null>(null);
     const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+    const [isScanOpen, setIsScanOpen] = useState(false);
 
     const [newRecordData, setNewRecordData] = useState({ id: '', taxon: '', locality: '', extrLab: '', extrOperator: '', extrMethod: '', extrDateRaw: '' });
     const [pcrForm, setPcrForm] = useState({ volume: '25', marker: '', forwardPrimer: '', reversePrimer: '', dnaMatrix: '', result: 'Success' as const });
@@ -89,6 +91,39 @@ export default function JournalPage() {
         setSortConfig(curr => ({ key, direction: curr?.key === key && curr.direction === 'asc' ? 'desc' : 'asc' }));
     };
 
+    const handleAddSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await fetch('/api/specimens', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newRecordData) });
+        } finally {
+            setIsAddModalOpen(false);
+            setNewRecordData({ id: '', taxon: '', locality: '', extrLab: '', extrOperator: '', extrMethod: '', extrDateRaw: '' });
+            fetchSpecimens();
+        }
+    };
+
+    const handleEditSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingSpecimen) return;
+        try {
+            const { id, ...rest } = editingSpecimen;
+            await fetch('/api/specimens', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...rest }) });
+        } finally {
+            setEditingSpecimen(null);
+            fetchSpecimens();
+        }
+    };
+
+    const handlePcrSubmit = async () => {
+        if (!activePcrSpecimen) return;
+        try {
+            await fetch('/api/pcr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ specimenId: activePcrSpecimen.id, ...pcrForm, date: new Date().toISOString() }) });
+        } finally {
+            setActivePcrSpecimen(null);
+            fetchSpecimens();
+        }
+    };
+
     const handleStatusToggle = async (id: string, marker: string) => {
         const specimen = specimens.find(s => s.id === id);
         if (!specimen) return;
@@ -107,6 +142,51 @@ export default function JournalPage() {
         } catch { fetchSpecimens(); }
     };
 
+    const handleExportExcel = () => {
+        // Простой экспорт в CSV для Евгения
+        const csvContent = "data:text/csv;charset=utf-8," 
+            + "ID,Taxon,Locality,ITS,SSU,LSU,MCM7\n"
+            + specimens.map(s => `${s.id},${s.taxon || ''},${s.locality || ''},${s.itsStatus || ''},${s.ssuStatus || ''},${s.lsuStatus || ''},${s.mcm7Status || ''}`).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handlePrintLabels = () => {
+        // Генерация этикеток для выбранных проб
+        const idsToPrint = Array.from(selectedIds);
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Печать этикеток</title>
+                    <style>
+                        body { font-family: monospace; margin: 0; padding: 10px; }
+                        .label { border: 1px solid #000; padding: 10px; margin-bottom: 10px; width: 200px; text-align: center; }
+                        .id { font-size: 24px; font-weight: bold; }
+                        .barcode { font-size: 12px; margin-top: 5px; }
+                    </style>
+                </head>
+                <body>
+                    ${idsToPrint.map(id => `
+                        <div class="label">
+                            <div class="id">${id}</div>
+                            <div class="barcode">*${id}*</div>
+                        </div>
+                    `).join('')}
+                    <script>window.onload = function() { window.print(); window.close(); }</script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+    };
+
     if (status === 'loading') return null;
 
     return (
@@ -118,6 +198,15 @@ export default function JournalPage() {
                     onAddClick={() => setIsAddModalOpen(true)} onSignOut={() => signOut()}
                     isDark={isDark} setIsDark={setIsDark}
                 />
+
+                <div className="flex flex-wrap items-center gap-3 mb-6">
+                    <button onClick={() => setIsScanOpen(true)} className="flex items-center gap-2 px-5 py-2.5 bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] rounded-[1rem] font-medium hover:shadow-md transition-all active:scale-95">
+                        <Camera className="w-5 h-5" /> Сканировать (Штрихкод)
+                    </button>
+                    <button onClick={handleExportExcel} className="flex items-center gap-2 px-5 py-2.5 bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] rounded-[1rem] font-medium hover:shadow-md transition-all active:scale-95">
+                        <Download className="w-5 h-5" /> Выгрузить CSV
+                    </button>
+                </div>
                 
                 <StatsCards {...stats} />
 
@@ -142,11 +231,13 @@ export default function JournalPage() {
                 />
             </div>
 
-            <AddSpecimenModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} newRecord={newRecordData as any} setNewRecord={setNewRecordData as any} onSubmit={() => fetchSpecimens()} validationError={false} />
-            <EditSpecimenModal specimen={editingSpecimen as any} onClose={() => setEditingSpecimen(null)} onChange={setEditingSpecimen as any} onSubmit={() => fetchSpecimens()} />
-            <PcrModal open={!!activePcrSpecimen} specimenId={activePcrSpecimen?.id || ''} activeSpecimen={activePcrSpecimen} onClose={() => setActivePcrSpecimen(null)} pcrForm={pcrForm} setPcrForm={setPcrForm as any} onSubmit={() => fetchSpecimens()} isReader={session?.user?.role === 'READER'} />
+            <AddSpecimenModal open={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} newRecord={newRecordData as any} setNewRecord={setNewRecordData as any} onSubmit={handleAddSubmit} validationError={false} />
+            <EditSpecimenModal specimen={editingSpecimen as any} onClose={() => setEditingSpecimen(null)} onChange={setEditingSpecimen as any} onSubmit={handleEditSubmit} />
+            <PcrModal open={!!activePcrSpecimen} specimenId={activePcrSpecimen?.id || ''} activeSpecimen={activePcrSpecimen} onClose={() => setActivePcrSpecimen(null)} pcrForm={pcrForm} setPcrForm={setPcrForm as any} onSubmit={handlePcrSubmit} isReader={session?.user?.role === 'READER'} />
 
             {isBatchModalOpen && <BatchPcrModal selectedSpecimenIds={Array.from(selectedIds)} onClose={() => { setIsBatchModalOpen(false); setSelectedIds(new Set()); fetchSpecimens(); }} />}
+
+            <BarcodeScanDialog open={isScanOpen} onClose={() => setIsScanOpen(false)} onCode={(code) => { setSearchQuery(code); setIsScanOpen(false); }} />
 
             {selectedIds.size > 0 && (
                 <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-[var(--md-sys-color-inverse-surface)] text-[var(--md-sys-color-inverse-on-surface)] rounded-[1.5rem] p-4 flex items-center justify-between shadow-2xl z-50">
@@ -155,6 +246,9 @@ export default function JournalPage() {
                         <span className="font-medium">выбрано</span>
                     </div>
                     <div className="flex gap-2">
+                        <button onClick={handlePrintLabels} className="px-5 py-2.5 text-sm font-medium text-[var(--md-sys-color-inverse-primary)] hover:bg-white/10 rounded-full transition-colors flex items-center gap-2">
+                            <Printer className="w-4 h-4" /> Печать
+                        </button>
                         <button onClick={() => setSelectedIds(new Set())} className="px-5 py-2.5 text-sm font-medium text-[var(--md-sys-color-inverse-primary)] hover:bg-white/10 rounded-full transition-colors">Сбросить</button>
                         <button onClick={() => setIsBatchModalOpen(true)} className="px-6 py-2.5 bg-[var(--md-sys-color-inverse-primary)] text-[var(--md-sys-color-primary)] hover:brightness-110 text-sm font-medium rounded-full transition-all">Действия</button>
                     </div>
