@@ -55,13 +55,12 @@ test.describe('Авторизация и Доступ', () => {
         const downloadBtn = page.locator('button:visible').filter({ hasText: /Скачать БД/i }).first();
         await expect(downloadBtn).toBeVisible();
 
-        // Ожидаем событие начала загрузки файла, так как браузер не переходит на новую страницу при скачивании
+        // Ожидаем событие начала загрузки файла (наиболее надежно для API эндпоинтов)
         const [download] = await Promise.all([
             page.waitForEvent('download'), 
             downloadBtn.click({ force: true })
         ]);
         
-        // Проверяем, что запрос ушел на правильный эндпоинт
         expect(download.url()).toContain('/api/backup/download');
     });
 });
@@ -122,19 +121,32 @@ test.describe('Журнал Проб - Основной функционал', (
         const editButton = page.locator('button[title="Изменить"]:visible, button[aria-label="Редактировать"]:visible').first();
 
         if (await editButton.isVisible()) {
+            // 1. Открываем редактирование
             await editButton.click({ force: true });
-            await expect(page.getByRole('heading', { name: /Редактировать/i })).toBeVisible({ timeout: 10000 });
+            const editHeading = page.getByRole('heading', { name: /Редактировать/i });
+            await expect(editHeading).toBeVisible({ timeout: 10000 });
 
+            // 2. Закрываем через "Отмена"
             const cancelBtn = page.getByRole('button', { name: /Отмена/i }).and(page.locator(':visible')).first();
+            // Явно скроллим к кнопке, чтобы Firefox не жаловался на viewport
+            await cancelBtn.scrollIntoViewIfNeeded();
             await cancelBtn.click({ force: true });
 
-            await page.waitForTimeout(1000);
+            // КРИТИЧНО: Ждем, пока модалка редактирования полностью скроется, прежде чем кликать ПЦР
+            await expect(editHeading).toBeHidden({ timeout: 10000 });
 
+            // 3. Теперь открываем ПЦР
             const pcrButton = page.locator('button[title="ПЦР"]:visible, button[aria-label="PCR"]:visible').first();
+            await pcrButton.scrollIntoViewIfNeeded();
+            await pcrButton.hover(); // Наводим, чтобы кнопки в строке стали активными
             await pcrButton.click({ force: true });
-            await expect(page.getByRole('heading', { name: /Постановка ПЦР/i })).toBeVisible({ timeout: 10000 });
+
+            await expect(page.getByRole('heading', { name: /Постановка ПЦР/i })).toBeVisible({ timeout: 15000 });
             await expect(page.getByText(/История реакций/i)).toBeVisible({ timeout: 10000 });
+            
+            // Закрываем модалку ПЦР
             await page.keyboard.press('Escape');
+            await expect(page.getByRole('heading', { name: /Постановка ПЦР/i })).toBeHidden();
         }
     });
 
@@ -163,7 +175,11 @@ test.describe('Журнал Проб - Основной функционал', (
         const scanHeading = page.getByRole('heading', { name: /Сканирование/i });
         if (await scanHeading.isVisible()) {
             const closeBtn = page.locator('button').filter({ has: page.locator('svg.lucide-x') }).first();
-            await closeBtn.click({ force: true });
+            if (await closeBtn.isVisible()) {
+                await closeBtn.click({ force: true });
+            } else {
+                await page.keyboard.press('Escape');
+            }
         }
         
         await expect(scanHeading).toBeHidden({ timeout: 5000 });
