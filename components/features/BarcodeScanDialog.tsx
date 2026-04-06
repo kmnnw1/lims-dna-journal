@@ -32,6 +32,19 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 	const [hasDetector, setHasDetector] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
 
+	// Хелпер для тактильного отклика (вибрации)
+	const triggerHaptic = (type: 'success' | 'start') => {
+		if (typeof window !== 'undefined' && window.navigator.vibrate) {
+			if (type === 'success') {
+				// Сочный двойной отклик при успешном сканировании
+				window.navigator.vibrate([100, 50, 100]);
+			} else {
+				// Легкий щелчок при включении камеры
+				window.navigator.vibrate(10);
+			}
+		}
+	};
+
 	const stopCamera = useCallback(() => {
 		cancelAnimationFrame(rafRef.current);
 		streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -46,7 +59,7 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 		}
 
 		if (!('BarcodeDetector' in window)) {
-			setError('Сканер штрихкодов не поддерживается вашим браузером. Введите ID вручную.');
+			setError('Сканер не поддерживается. Введите ID вручную.');
 			setHasDetector(false);
 			return;
 		}
@@ -64,6 +77,7 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 				if (videoRef.current) {
 					videoRef.current.srcObject = stream;
 					videoRef.current.play();
+					triggerHaptic('start'); // Отклик при готовности сканера
 				}
 
 				const scan = async () => {
@@ -74,6 +88,7 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 					try {
 						const barcodes = await detector.detect(videoRef.current);
 						if (barcodes.length > 0) {
+							triggerHaptic('success'); // Победная вибрация!
 							stopCamera();
 							onCodeRef.current(barcodes[0].rawValue);
 							return;
@@ -83,7 +98,7 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 				};
 				rafRef.current = requestAnimationFrame(scan);
 			})
-			.catch((err) => {
+			.catch(() => {
 				setError('Нет доступа к камере. Введите ID вручную.');
 			});
 
@@ -92,6 +107,7 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 
 	const applyManual = () => {
 		if (manual.trim()) {
+			triggerHaptic('success');
 			stopCamera();
 			onCode(manual.trim());
 		}
@@ -107,7 +123,7 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 		<div className="fixed inset-0 z-[200] flex flex-col bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] animate-in slide-in-from-bottom-full duration-300">
 			<div className="flex items-center justify-between p-4 bg-[var(--md-sys-color-surface-container)]">
 				<h2 className="text-xl font-medium flex items-center gap-2">
-					<Camera className="w-5 h-5 text-[var(--md-sys-color-primary)]" /> Сканирование
+					<Camera className="w-5 h-5 text-[#E1AD01]" /> Сканирование
 				</h2>
 				<button onClick={onClose} className="p-3 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] transition-colors">
 					<X className="w-6 h-6" />
@@ -117,13 +133,16 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 			<div className="flex-1 flex flex-col p-6 max-w-md mx-auto w-full">
 				<div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
 					{hasDetector && !error ? (
-						<div className="w-full aspect-square max-w-[300px] bg-black rounded-3xl overflow-hidden relative shadow-inner border-4 border-[var(--md-sys-color-surface-container-highest)]">
-							<video ref={videoRef} playsInline className="w-full h-full object-cover" />
+						<div className="w-full aspect-square max-w-[300px] bg-black rounded-[3rem] overflow-hidden relative shadow-2xl border-8 border-[var(--md-sys-color-surface-container-highest)]">
+							<video ref={videoRef} playsInline className="w-full h-full object-cover grayscale-[0.3]" />
 							<div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none"></div>
-							<div className="absolute top-1/2 left-0 w-full h-0.5 bg-[var(--md-sys-color-primary)] shadow-[0_0_15px_var(--md-sys-color-primary)] animate-pulse"></div>
+							
+							<div className="absolute top-1/2 left-0 w-full h-1 bg-[#E1AD01] shadow-[0_0_20px_#E1AD01] animate-pulse"></div>
+							
+							<div className="absolute inset-10 border-2 border-[#E1AD01]/30 rounded-2xl pointer-events-none"></div>
 						</div>
 					) : (
-						<div className="text-[var(--md-sys-color-error)] bg-[var(--md-sys-color-error-container)] p-4 rounded-2xl text-center font-medium">
+						<div className="text-[var(--md-sys-color-error)] bg-[var(--md-sys-color-error-container)] p-6 rounded-3xl text-center font-medium shadow-sm">
 							{error}
 						</div>
 					)}
@@ -136,16 +155,16 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 							value={manual}
 							onChange={(e) => setManual(e.target.value)}
 							onKeyDown={onManualKeyDown}
-							className="w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-surface-container-high)] px-5 pt-6 pb-2 text-base outline-none transition-all text-[var(--md-sys-color-on-surface)]"
+							className="w-full rounded-t-[1.25rem] rounded-b-[0.5rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[#E1AD01] bg-[var(--md-sys-color-surface-container-high)] px-6 pt-7 pb-3 text-lg outline-none transition-all"
+							placeholder=" "
 							spellCheck={false}
-							maxLength={48}
 							autoFocus={!hasDetector || !!error}
 						/>
-						<label className={`absolute left-5 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
-							${manual ? 'top-1.5 text-xs' : 'top-4 text-base'}
-							group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-1.5 group-focus-within:text-xs
+						<label className={`absolute left-6 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
+							${manual ? 'top-2 text-xs' : 'top-5 text-lg'}
+							group-focus-within:text-[#E1AD01] group-focus-within:top-2 group-focus-within:text-xs
 						`}>
-							Ввести вручную
+							Введите ID пробы вручную
 						</label>
 					</div>
 
@@ -153,9 +172,9 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 						type="button"
 						onClick={applyManual}
 						disabled={!manual.trim()}
-						className="w-full py-4 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] font-bold disabled:opacity-50 active:scale-95 transition-all"
+						className="w-full py-5 rounded-full bg-[#E1AD01] text-black font-bold text-lg shadow-lg disabled:opacity-50 active:scale-95 transition-all"
 					>
-						Найти пробу
+						Найти пробу ⛵
 					</button>
 				</div>
 			</div>
