@@ -297,7 +297,7 @@ export default function JournalPage() {
 						<button
 							key={type}
 							onClick={() => setFilterType(type)}
-							className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap border border-[var(--md-sys-color-outline-variant)] ${filterType === type ? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] border-transparent' : 'bg-transparent text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container)]'}`}>
+							className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap border border-[var(--md-sys-color-outline-variant)] ${filterType === type ? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] border-transparent' : 'bg-transparent text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container-high)]'}`}>
 							{type === 'all' && 'Все пробы'}
 							{type === 'success' && 'Успешные'}
 							{type === 'error' && 'С ошибками'}
