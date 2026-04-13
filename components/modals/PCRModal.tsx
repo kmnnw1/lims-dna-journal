@@ -164,46 +164,51 @@ export function PcrModal({
 						</div>
 
 						<MD3Field
-							label="Прямой праймер"
-							value={pcrForm.forwardPrimer}
-							onChange={(e) => setPcrForm({ ...pcrForm, forwardPrimer: e.target.value })}
-						/>
+	label="Прямой праймер"
+	value={pcrForm.forwardPrimer}
+	onChange={(e) => setPcrForm({ ...pcrForm, forwardPrimer: e.target.value })}
+	className="!rounded-[0.5rem]"
+/>
 
-						<MD3Field
-							label="Обратный праймер"
-							value={pcrForm.reversePrimer}
-							onChange={(e) => setPcrForm({ ...pcrForm, reversePrimer: e.target.value })}
-						/>
+<MD3Field
+	label="Обратный праймер"
+	value={pcrForm.reversePrimer}
+	onChange={(e) => setPcrForm({ ...pcrForm, reversePrimer: e.target.value })}
+	className="!rounded-[0.5rem]"
+/>
 
-						<MD3Field
-							type="number"
-							label="Объем (мкл)"
-							value={pcrForm.volume}
-							onChange={(e) => setPcrForm({ ...pcrForm, volume: e.target.value })}
-						/>
+<MD3Field
+	type="number"
+	label="Объем (мкл)"
+	value={pcrForm.volume}
+	onChange={(e) => setPcrForm({ ...pcrForm, volume: e.target.value })}
+	className="!rounded-[0.5rem]"
+/>
 
-						<MD3Field
-							label="Матрица ДНК (мкл)"
-							value={pcrForm.dnaMatrix}
-							onChange={(e) => setPcrForm({ ...pcrForm, dnaMatrix: e.target.value })}
-						/>
+<MD3Field
+	label="Матрица ДНК (мкл)"
+	value={pcrForm.dnaMatrix}
+	onChange={(e) => setPcrForm({ ...pcrForm, dnaMatrix: e.target.value })}
+	className="!rounded-[0.5rem]"
+/>
 
 						{/* Результат (Select с цветом) */}
-						<div className="sm:col-span-2">
-							<MD3Field
-								isSelect
-								label="Результат"
-								value={pcrForm.result}
-								onChange={(e) => setPcrForm({ ...pcrForm, result: e.target.value as 'Success' | 'Failed' })}
-								className={pcrForm.result === 'Success' 
-									? 'text-green-600 dark:text-green-400 font-bold' 
-									: 'text-red-600 dark:text-red-400 font-bold'
-								}
-							>
-								<option value="Success" className="text-green-600 dark:text-green-400">✓ Успешно</option>
-								<option value="Failed" className="text-red-600 dark:text-red-400">✕ Ошибка</option>
-							</MD3Field>
-						</div>
+<div className="sm:col-span-2">
+	<MD3Field
+		isSelect
+		label="Результат"
+		value={pcrForm.result}
+		onChange={(e) => setPcrForm({ ...pcrForm, result: e.target.value as 'Success' | 'Failed' })}
+		className={`!rounded-t-[0.25rem] !rounded-b-[1rem] ${
+			pcrForm.result === 'Success' 
+				? 'text-green-600 dark:text-green-400 font-bold' 
+				: 'text-red-600 dark:text-red-400 font-bold'
+		}`}
+	>
+		<option value="Success" className="text-green-600 dark:text-green-400">✓ Успешно</option>
+		<option value="Failed" className="text-red-600 dark:text-red-400">✕ Ошибка</option>
+	</MD3Field>
+</div>
 					</div>
 
 					{/* Кнопки (кастомные, как в модалке редактирования) */}

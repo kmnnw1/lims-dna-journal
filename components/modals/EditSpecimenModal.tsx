@@ -95,7 +95,7 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Pro
 								onChange={(e) =>
 									onChange({ ...specimen, collector: e.target.value })
 								}
-								className="sm:col-span-2"
+								className="!rounded-[0.5rem]"
 							/>
 							<div className="sm:col-span-2">
 								<MD3Field
@@ -107,6 +107,7 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Pro
 									onChange={(e) =>
 										onChange({ ...specimen, notes: e.target.value })
 									}
+									className="!rounded-t-[0.25rem] !rounded-b-[1rem]"
 								/>
 							</div>
 						</div>
@@ -145,6 +146,7 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Pro
 								onChange={(e) =>
 									onChange({ ...specimen, extrMethod: e.target.value })
 								}
+								className="!rounded-t-[0.25rem] !rounded-b-[1rem]"
 							/>
 							<MD3Field
 								key={`field-${specimen.id}-extrDateRaw`}
@@ -154,6 +156,7 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Pro
 								onChange={(e) =>
 									onChange({ ...specimen, extrDateRaw: e.target.value })
 								}
+								className="!rounded-t-[0.25rem] !rounded-b-[1rem]"
 							/>
 						</div>
 					</section>
@@ -184,23 +187,25 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Pro
 								}
 							/>
 							<MD3Field
-								key={`field-${specimen.id}-measOperator`}
-								label="Кто измерял"
-								value={specimen.measOperator || ''}
-								maxLength={40}
-								onChange={(e) =>
-									onChange({ ...specimen, measOperator: e.target.value })
-								}
-							/>
-							<MD3Field
-								key={`field-${specimen.id}-measDate`}
-								label="Дата измерения"
-								value={specimen.measDate || ''}
-								maxLength={20}
-								onChange={(e) =>
-									onChange({ ...specimen, measDate: e.target.value })
-								}
-							/>
+							key={`field-${specimen.id}-measOperator`}
+							label="Кто измерял"
+							value={specimen.measOperator || ''}
+							maxLength={40}
+							onChange={(e) =>
+								onChange({ ...specimen, measOperator: e.target.value })
+							}
+							className="!rounded-t-[0.25rem] !rounded-b-[1rem]"
+						/>
+						<MD3Field
+							key={`field-${specimen.id}-measDate`}
+							label="Дата измерения"
+							value={specimen.measDate || ''}
+							maxLength={20}
+							onChange={(e) =>
+								onChange({ ...specimen, measDate: e.target.value })
+							}
+							className="!rounded-t-[0.25rem] !rounded-b-[1rem]"
+/>
 						</div>
 					</section>
 
