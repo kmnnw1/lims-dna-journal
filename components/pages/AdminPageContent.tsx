@@ -13,6 +13,7 @@ export function AdminPageContent(props: AdminPageProps) {
 		session,
 		status,
 		users,
+		adminCount,
 		username,
 		password,
 		role,
@@ -179,7 +180,14 @@ export function AdminPageContent(props: AdminPageProps) {
 						<div className="space-y-3">
 							{users.length > 0 ? (
 								users.map((u) => (
-									<AdminUserRow key={u.id} user={u} onUpdate={handleUpdateUser} onDelete={handleDeleteUser} />
+									<AdminUserRow 
+										key={u.id} 
+										user={u} 
+										currentUserId={(session?.user as any)?.id}
+										adminCount={adminCount}
+										onUpdate={handleUpdateUser} 
+										onDelete={handleDeleteUser} 
+									/>
 								))
 							) : loadingUsers ? (
 								<div className="text-base text-[var(--md-sys-color-outline)] p-4 text-center">Загрузка...</div>

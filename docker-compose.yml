@@ -1,6 +1,6 @@
 # Запуск: docker compose up --build
 # Перед стартом: скопируйте .env.example → .env и укажите NEXTAUTH_SECRET.
-# Каталог lab-data/ будет создан автоматически; для импорта положите туда data.xlsx или задайте свой путь через DATA_XLSX_PATH.
+# Каталог data/ будет создан автоматически; для импорта положите туда data.xlsx или задайте свой путь через DATA_XLSX_PATH.
 # Обработка логов и автоматический рестарт, изоляция данных и гибкость портов.
 
 services:
@@ -20,7 +20,7 @@ services:
             NODE_ENV: production
             NEXT_TELEMETRY_DISABLED: 1
         volumes:
-            - ./lab-data:/data
+            - ./data:/data
         restart: unless-stopped
         healthcheck:
             test: ['CMD-SHELL', 'curl -f http://localhost:3000/api/health || exit 1']

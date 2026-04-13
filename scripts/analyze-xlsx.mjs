@@ -3,7 +3,7 @@ import path from 'path';
 
 async function analyze() {
     const workbook = new ExcelJS.Workbook();
-    const filePath = path.join(process.cwd(), 'docs', 'sample-data', 'data.xlsx');
+    const filePath = path.join(process.cwd(), 'data', 'data.xlsx');
     
     console.log(`Loading ${filePath}...`);
     await workbook.xlsx.readFile(filePath);

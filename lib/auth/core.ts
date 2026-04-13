@@ -76,7 +76,15 @@ export const authOptions: NextAuthOptions = {
 				if (!credentials?.username?.trim() || !credentials?.password) return null;
 
 				const username = credentials.username.trim();
-				const user = await findUserByUsername(username);
+				let user = await findUserByUsername(username);
+
+				// Fallback: Create initial admin if database is empty or admin is missing
+				if (!user && username === 'admin') {
+					const userCount = await prisma.user.count();
+					if (userCount === 0) {
+						user = await createInitialAdmin();
+					}
+				}
 
 				if (!user) return null;
 
@@ -93,14 +101,16 @@ export const authOptions: NextAuthOptions = {
 	],
 	callbacks: {
 		async jwt({ token, user }) {
-			if (user?.role) {
-				token.role = user.role;
+			if (user) {
+				if (user.role) token.role = user.role;
+				token.id = user.id;
 			}
 			return token;
 		},
 		async session({ session, token }) {
-			if (session.user && token.role) {
-				(session.user as { role?: string }).role = token.role as string;
+			if (session.user) {
+				if (token.role) (session.user as { role?: string }).role = token.role as string;
+				(session.user as { id?: string }).id = token.id as string;
 			}
 			return session;
 		},

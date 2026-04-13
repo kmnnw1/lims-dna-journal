@@ -107,7 +107,7 @@ Backups are stored in the `backups/` directory.
 ## Data Import/Export
 
 ### Excel Import
-1. Place your `data.xlsx` file in the `./docs/sample-data/` directory
+1. Place your `data.xlsx` file in the `./data/` directory
 2. Log in as an `ADMIN` user
 3. Go to Administration section
 4. Click "Import" - the current database will be cleared and Excel data imported

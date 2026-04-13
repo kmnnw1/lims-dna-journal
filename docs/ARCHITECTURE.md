@@ -57,11 +57,14 @@ This is a Next.js 16 application for managing laboratory specimens and PCR testi
 ### `/docs` - Documentation & Development Files
 - **Purpose**: Project documentation and development resources
 - **Structure**:
-  - `sample-data/` - Sample data files for testing
   - `local-dev/` - Local development scripts and tools
 
 ### `/build` - Generated Artifacts
 - **Purpose**: Directory for build outputs and generated files (ignored by git)
+
+### `/data` - Data Storage
+- **Purpose**: Excel data files for import/export and persistent storage (ignored by git, except for .gitkeep)
+- **Contents**: `data.xlsx` (not tracked)
 
 ## Coding Conventions
 

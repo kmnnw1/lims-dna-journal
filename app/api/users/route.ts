@@ -25,7 +25,8 @@ export async function GET() {
 		});
 		return NextResponse.json(users);
 	} catch (e) {
-		const msg = e instanceof Error ? e.message : 'Ошибка';
+		console.error('[API/Users] GET Error:', e);
+		const msg = e instanceof Error ? e.message : 'Ошибка доступа';
 		return NextResponse.json({ error: msg }, { status: 403 });
 	}
 }
@@ -94,6 +95,17 @@ export async function PUT(req: Request) {
 			if (!ALLOWED_ROLES.has(role)) {
 				return NextResponse.json({ error: 'Недопустимая роль' }, { status: 400 });
 			}
+
+			// Блокируем понижение собственной роли
+			const session = await getServerSession(authOptions);
+			const currentUser = session?.user as { id?: string } | undefined;
+			if (currentUser?.id === id && role !== 'ADMIN') {
+				return NextResponse.json(
+					{ error: 'Нельзя понизить собственную роль, чтобы не потерять доступ к панели управления.' },
+					{ status: 400 }
+				);
+			}
+
 			data.role = role;
 		}
 
@@ -131,6 +143,24 @@ export async function DELETE(req: Request) {
 		const currentUser = session?.user as { id?: string } | undefined;
 		if (currentUser?.id === id) {
 			return NextResponse.json({ error: 'Нельзя удалить себя' }, { status: 400 });
+		}
+
+		// Не позволяем удалять администраторов (защита от удаления коллег-админов)
+		const targetUser = await prisma.user.findUnique({ where: { id: String(id) } });
+		if (!targetUser) {
+			return NextResponse.json({ error: 'Пользователь не найден' }, { status: 404 });
+		}
+
+		if (targetUser.role === 'ADMIN') {
+			const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
+			// Если админов 2 или меньше, запрещаем удаление коллеги-админа.
+			// (Один может быть 'admin', другой - текущий, или оба - просто админы).
+			if (adminCount <= 2) {
+				return NextResponse.json(
+					{ error: 'Для безопасности в системе должно оставаться минимум 2 администратора. Сначала создайте третьего или смените роль этого пользователя.' },
+					{ status: 400 }
+				);
+			}
 		}
 
 		await prisma.user.delete({ where: { id: String(id) } });

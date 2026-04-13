@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 async function parseAndSeed() {
     const workbook = new ExcelJS.Workbook();
-    const filePath = path.join(process.cwd(), 'docs', 'sample-data', 'data.xlsx');
+    const filePath = path.join(process.cwd(), 'data', 'data.xlsx');
     
     console.log(`Loading ${filePath}...`);
     await workbook.xlsx.readFile(filePath);

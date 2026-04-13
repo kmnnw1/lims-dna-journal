@@ -30,15 +30,26 @@ export function useAdminPage() {
 
 	const fetchUsers = useCallback(async () => {
 		setLoadingUsers(true);
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 10000);
+
 		try {
-			const res = await fetch('/api/users');
+			const res = await fetch('/api/users', { signal: controller.signal });
+			clearTimeout(timeoutId);
 			const result = await parseApiResponse<AdminUser[]>(res);
 			if (!result.ok) {
 				showToast(result.message, 'error');
 				return;
 			}
 			setUsers(Array.isArray(result.data) ? result.data : []);
+		} catch (err: any) {
+			if (err.name === 'AbortError') {
+				showToast('Превышено время ожидания списка пользователей', 'error');
+			} else {
+				showToast('Ошибка при загрузке списка пользователей', 'error');
+			}
 		} finally {
+			clearTimeout(timeoutId);
 			setLoadingUsers(false);
 		}
 	}, [showToast]);
@@ -144,10 +155,13 @@ export function useAdminPage() {
 		}
 	};
 
+	const adminCount = users.filter((u) => u.role === 'ADMIN').length;
+	
 	return {
 		session,
 		status,
 		users,
+		adminCount,
 		username,
 		password,
 		role,
