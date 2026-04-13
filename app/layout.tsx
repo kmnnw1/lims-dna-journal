@@ -1,12 +1,19 @@
 import type { Metadata, Viewport } from 'next';
-import { Roboto_Flex } from 'next/font/google';
-import { Providers } from '@/components/ui/Providers';
+import { Manrope, Inter } from 'next/font/google';
+import { Providers } from '@/components/layout/Providers';
 import './globals.css';
 
-// MD3 рекомендует использовать Roboto. Flex-версия дает отличную выразительность (Expressive).
-const roboto = Roboto_Flex({
+// Manrope — геометрический sans-serif с поддержкой кириллицы. Идеален для заголовков.
+// Inter — рабочая лошадка для основного текста. Оба шрифта премиального уровня.
+const manrope = Manrope({
 	subsets: ['cyrillic', 'latin'],
-	variable: '--font-roboto',
+	variable: '--font-manrope',
+	display: 'swap',
+});
+
+const inter = Inter({
+	subsets: ['cyrillic', 'latin'],
+	variable: '--font-inter',
 	display: 'swap',
 });
 
@@ -45,11 +52,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="ru" className={`${roboto.variable}`} suppressHydrationWarning>
+		<html lang="ru" className={`${manrope.variable} ${inter.variable}`} suppressHydrationWarning>
 			{/* Внедряем базовые токены MD3: цвет фона (Surface) и цвет текста (On Surface).
-				Также настраиваем цвет выделения текста (Selection) под наш Primary цвет.
+				suppressHydrationWarning на body помогает избежать конфликтов с расширениями браузера.
 			*/}
-			<body className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] selection:bg-[var(--md-sys-color-primary)] selection:text-[var(--md-sys-color-on-primary)] transition-colors duration-300 font-sans antialiased">
+			<body 
+				suppressHydrationWarning
+				className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] selection:bg-[var(--md-sys-color-primary)] selection:text-[var(--md-sys-color-on-primary)] transition-colors duration-300 font-sans antialiased"
+			>
 				<Providers>{children}</Providers>
 			</body>
 		</html>

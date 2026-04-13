@@ -1,50 +1,49 @@
-# Продвинутый Dockerfile для самостоятельного деплоя (Linux-сервер, поддержка production best practices)
+# Dockerfile для production-сборки. Использует интуитивный путь импорта /data/data.xlsx.
+# Запуск:
 #   docker compose up --build
-# NB: .env должен быть рядом с docker-compose.yaml (см. .env.example)
+# В контейнере данные и файл импорта доступны через том lab-data -> /data.
 
-FROM node:20-bookworm-slim
-
-# 1. Установка зависимостей отдельно (лучше слои кэша для prod/stage)
+FROM node:20-bookworm-slim AS build
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Копируем только необходимые файлы для npm install
 COPY package.json package-lock.json ./
+RUN npm ci
 
-# --force полу-защитит от peer/warn и ускорит layer reuse при нестрогой совместимости
-RUN npm ci --omit=dev
-
-# 2. Копируем только нужные директории (ускоряет сборку, не тащит тесты/мусор)
-COPY prisma ./prisma
-COPY public ./public
-COPY src ./src
-COPY .next ./.next
-COPY next.config.* ./
-COPY tsconfig*.json ./
-COPY .env.example ./
-
-# 3. Генерируем Prisma client и передаём всю сборку на следующий multi-stage для "чистой" финальной среды
+COPY . .
+RUN npm run build
 RUN npx prisma generate
 
-# 4. Собираем приложение
-RUN npm run build
+FROM node:20-bookworm-slim AS runtime
+WORKDIR /app
 
-# 5. Очищаем dev-зависимости (ещё минус размер)
-RUN npm prune --omit=dev
-
-# 6. Переменные окружения для Next.js/Prisma (можно переопределять внешне)
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATA_XLSX_PATH=/data/data.xlsx
 ENV DATABASE_URL=file:/data/dev.db
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-# 7. Настраиваем права безопасно
+COPY --from=build /app/package.json ./
+COPY --from=build /app/package-lock.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/.next ./.next
+COPY --from=build /app/public ./public
+COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/app ./app
+COPY --from=build /app/components ./components
+COPY --from=build /app/hooks ./hooks
+COPY --from=build /app/lib ./lib
+COPY --from=build /app/types ./types
+COPY --from=build /app/next.config.ts ./
+COPY --from=build /app/postcss.config.mjs ./
+COPY --from=build /app/tsconfig.json ./
+COPY --from=build /app/next-env.d.ts ./
+
 RUN mkdir -p /data && chown -R node:node /data /app
-
+VOLUME ["/data"]
 USER node
-
 EXPOSE 3000
-
-# 8. Лёгкий старт: прокидывает миграции и стартует app. Можно делать ENTRYPOINT-скрипт для гибкости.
-CMD npx prisma db push && npm run start
+ENTRYPOINT ["sh", "-c", "npx prisma db push && npm run start"]

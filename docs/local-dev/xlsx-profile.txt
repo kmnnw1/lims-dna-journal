@@ -1,0 +1,13 @@
+# XLSX Profile Output
+
+File: [filename]
+Sheets: [number]
+Sheet Details:
+- Sheet 1: [name] - [rows] rows, [cols] columns
+- Sheet 2: [name] - [rows] rows, [cols] columns
+
+Column Analysis:
+[Column details]
+
+Data Sample:
+[First few rows]

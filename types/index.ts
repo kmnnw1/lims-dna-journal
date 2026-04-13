@@ -27,20 +27,41 @@ export interface Specimen {
 	id: string;
 	taxon?: string;
 	locality?: string;
+	collector?: string;
+	collectedAt?: string;
+	collectNotes?: string;
 	extrLab?: string;
 	extrOperator?: string;
 	extrMethod?: string;
 	extrDateRaw?: string;
-	dnaConcentration?: string;
+	extrDate?: string;
 	dnaMeter?: string;
-	measOperator?: string;
 	measDate?: string;
-	notes?: string;
-	collector?: string;
+	measOperator?: string;
+	dnaConcentration?: string;
+	dnaProfile?: string;
+	measComm?: string;
+	imageUrl?: string;
 	itsStatus?: string;
+	itsGb?: string;
 	ssuStatus?: string;
+	ssuGb?: string;
 	lsuStatus?: string;
+	lsuGb?: string;
 	mcm7Status?: string;
+	mcm7Gb?: string;
+	rpb2Status?: string;
+	rpb2Gb?: string;
+	mtLsuStatus?: string;
+	mtLsuGb?: string;
+	mtSsuStatus?: string;
+	mtSsuGb?: string;
+	herbarium?: string;
+	labNo?: string;
+	notes?: string;
+	importOrigin?: string;
+	importRow?: number;
+	importNotes?: string;
 	attempts?: PcrAttempt[]; // Массив попыток ПЦР
 }
 

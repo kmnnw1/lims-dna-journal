@@ -42,6 +42,14 @@ model Specimen {
   lsuGb            String?
   mcm7Status       String?
   mcm7Gb           String?
+  rpb2Status       String?
+  rpb2Gb           String?
+  mtLsuStatus      String?
+  mtLsuGb          String?
+  mtSsuStatus      String?
+  mtSsuGb          String?
+  herbarium        String?
+  labNo            String?
   notes            String?
   importOrigin     String?
   importRow        Int?
@@ -70,6 +78,8 @@ model PcrAttempt {
   specimen         Specimen          @relation(fields: [specimenId], references: [id], onDelete: Cascade)
   sequencingResult SequencingResult?
   createdAt        DateTime          @default(now())
+
+  @@unique([specimenId, marker])
 }
 
 model SequencingResult {
@@ -80,4 +90,29 @@ model SequencingResult {
   chromatogram String?    
   qualityScore String?    
   createdAt    DateTime   @default(now())
+}
+
+model AuditLog {
+  id            String    @id @default(uuid())
+  userId        String
+  action        String    // CREATE_SPECIMEN, UPDATE_SPECIMEN, etc.
+  resourceType  String    // SPECIMEN, PCR_ATTEMPT, etc.
+  resourceId    String?   // ID of the affected resource
+  details       String?   // JSON string with action details
+  changes       String?   // JSON string with before/after values
+  ipAddress     String?   // IP address of the request
+  userAgent     String?   // User agent string
+  timestamp     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([timestamp])
+  @@index([resourceType, resourceId])
+}
+
+model AuthToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }

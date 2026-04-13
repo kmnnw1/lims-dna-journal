@@ -12,13 +12,13 @@ export const PCRStatusBadge: React.FC<PCRStatusBadgeProps> = ({ status, marker, 
 	const getStatusStyle = (s: string | null | undefined) => {
 		switch (s) {
 			case '✓':
-				return 'bg-[#4caf50]/15 text-[#2e7d32] dark:bg-[#81c784]/20 dark:text-[#a5d6a7] hover:bg-[#4caf50]/25';
+				return 'bg-[#059669] text-white border-transparent md-elevation-1 hover:md-elevation-2 shadow-[#059669]/30'; // MD3 Green Solid
 			case '✕':
-				return 'bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-on-error-container)] hover:brightness-95 dark:hover:brightness-110';
+				return 'bg-[#DC2626] text-white border-transparent md-elevation-1 hover:md-elevation-2 shadow-[#DC2626]/30'; // MD3 Red Solid
 			case '?':
-				return 'bg-[#ffeb3b]/20 text-[#f57f17] dark:bg-[#fbc02d]/20 dark:text-[#fff59d] hover:bg-[#ffeb3b]/30';
+				return 'bg-[#D97706] text-white border-transparent md-elevation-1 hover:md-elevation-2 shadow-[#D97706]/30'; // Warning Amber
 			default:
-				return 'bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-on-surface)]';
+				return 'bg-transparent border border-[var(--md-sys-color-outline-variant)] text-[var(--md-sys-color-outline)] hover:bg-[var(--md-sys-color-surface-container-high)] border-dashed';
 		}
 	};
 
@@ -29,8 +29,9 @@ export const PCRStatusBadge: React.FC<PCRStatusBadgeProps> = ({ status, marker, 
 				e.stopPropagation();
 				onClick();
 			}}
-			className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide uppercase transition-all duration-200 active:scale-95 ${getStatusStyle(status)}`}>
-			{marker} {status || '?'}
+            title={`Статус: ${status || 'Нет данных'}`}
+			className={`inline-flex items-center justify-center h-6 px-2.5 rounded-full text-[9px] font-black tracking-widest transition-all duration-300 active:scale-90 ${getStatusStyle(status)}`}>
+			{marker}
 		</button>
 	);
 };

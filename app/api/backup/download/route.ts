@@ -10,7 +10,8 @@ export async function GET() {
 	try {
 		// Защита: только для админов
 		const session = await getServerSession(authOptions);
-		if ((session?.user as any)?.role !== 'ADMIN') {
+		const user = session?.user as { role?: string } | undefined;
+		if (user?.role !== 'ADMIN') {
 			return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
 		}
 

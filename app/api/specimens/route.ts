@@ -1,182 +1,211 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-
-// Вспомогательный хелпер для проверки авторизации и роли
-async function requireRole(required: 'EDITOR' | 'ADMIN' | 'READER' | 'ANY' = 'ANY') {
-	const session = await getServerSession(authOptions);
-	if (!session) throw { statusCode: 401, message: 'Требуется вход в систему' };
-	const role = (session.user as any)?.role;
-	if (required === 'ADMIN' && role !== 'ADMIN')
-		throw { statusCode: 403, message: 'Доступ запрещён (требуется ADMIN)' };
-	if (required === 'EDITOR' && !['ADMIN', 'EDITOR'].includes(role))
-		throw { statusCode: 403, message: 'Доступ запрещён (требуется EDITOR)' };
-	if (required === 'READER' && !['ADMIN', 'EDITOR', 'READER'].includes(role))
-		throw { statusCode: 403, message: 'Доступ запрещён (требуется READER)' };
-	return session;
-}
-
-// Извлекаем уникальные значения для suggestions эффективнее
-async function getDistinctFields() {
-	const [labs, ops, methods] = await Promise.all([
-		prisma.specimen.findMany({ select: { extrLab: true }, distinct: ['extrLab'] }),
-		prisma.specimen.findMany({ select: { extrOperator: true }, distinct: ['extrOperator'] }),
-		prisma.specimen.findMany({ select: { extrMethod: true }, distinct: ['extrMethod'] }),
-	]);
-	return {
-		labs: labs.map((l: { extrLab: string | null }) => l.extrLab).filter(Boolean),
-		operators: ops.map((o: { extrOperator: string | null }) => o.extrOperator).filter(Boolean),
-		methods: methods.map((m: { extrMethod: string | null }) => m.extrMethod).filter(Boolean),
-	};
-}
-
-// Универсальный обработчик ошибок для API
-function handleError(e: any) {
-	console.error('[API Error]:', e); // Логируем реальную причину падения в терминал
-	const isPrismaConflict = e?.code === 'P2002';
-	const status = typeof e?.statusCode === 'number' ? e.statusCode : isPrismaConflict ? 409 : 500;
-	const message = isPrismaConflict
-		? 'Запись с таким ID уже существует'
-		: e?.message || 'Ошибка сервера';
-	return NextResponse.json({ error: message }, { status });
-}
+import type { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/database/prisma';
+import { logAuditAction } from '@/lib/database/audit-log';
+import {
+	type ApiUser,
+	requireRole,
+	handleError,
+	invalidateSpecimenCaches,
+	getDistinctFields,
+	buildCacheKey,
+	getCached,
+	setCache,
+} from './helpers';
 
 export async function GET(req: Request) {
 	try {
 		await requireRole('READER');
 
-		// 1. Получаем параметры из URL для пагинации и поиска
 		const { searchParams } = new URL(req.url);
 		const page = parseInt(searchParams.get('page') || '1');
-		const limit = parseInt(searchParams.get('limit') || '100'); // По умолчанию отдаем 100
+		const limit = parseInt(searchParams.get('limit') || '100');
 		const search = searchParams.get('search') || '';
 		const sortKey = searchParams.get('sortBy') || 'id';
 		const sortDir = searchParams.get('sortOrder') || 'asc';
 		const filterType = searchParams.get('filter') || 'all';
 
-		const skip = (page - 1) * limit;
+		if (page < 1) {
+			return NextResponse.json({ error: 'Номер страницы должен быть не менее 1' }, { status: 400 });
+		}
+		if (limit < 1 || limit > 1000) {
+			return NextResponse.json({ error: 'Размер страницы должен быть от 1 до 1000' }, { status: 400 });
+		}
 
-		// 2. Строим условия фильтрации (WHERE)
-		const where: any = {};
+		const cacheKey = buildCacheKey({ page, limit, search, sortKey, sortDir, filterType });
+		const cached = getCached(cacheKey);
+		if (cached) return NextResponse.json(cached);
+
+		const skip = (page - 1) * limit;
+		const where = {} as Prisma.SpecimenWhereInput;
 
 		if (search) {
-			where.OR = [{ id: { contains: search } }, { taxon: { contains: search } }];
+			Object.assign(where, { OR: [{ id: { contains: search } }, { taxon: { contains: search } }] });
 		}
-
 		if (filterType === 'success') where.itsStatus = '✓';
 		if (filterType === 'error') where.itsStatus = '✕';
-		// Если нужно избранное: if (filterType === 'fav') where.isFavorite = true;
 
-		// 3. Строим условия сортировки (ORDER BY)
-		const orderBy: any = {};
-		if (sortKey) {
-			orderBy[sortKey] = sortDir === 'asc' ? 'asc' : 'desc';
-		}
+		const orderBy = sortKey
+			? ({ [sortKey]: sortDir === 'asc' ? 'asc' : 'desc' } as Prisma.Enumerable<Prisma.SpecimenOrderByWithRelationInput>)
+			: undefined;
 
-		// 4. Выполняем запросы параллельно: данные, счетчик и подсказки
 		const [specimens, total, suggestions] = await Promise.all([
-			prisma.specimen.findMany({
-				where,
-				skip,
-				take: limit,
-				orderBy,
-				include: { attempts: true },
-			}),
+			prisma.specimen.findMany({ where, skip, take: limit, orderBy, include: { attempts: true } }),
 			prisma.specimen.count({ where }),
 			getDistinctFields(),
 		]);
 
-		return NextResponse.json({
-			specimens,
-			suggestions,
-			total,
-			page,
-			totalPages: Math.ceil(total / limit),
-		});
-	} catch (e: any) {
+		const response = { specimens, suggestions, total, page, totalPages: Math.ceil(total / limit) };
+		setCache(cacheKey, response, 300000);
+		return NextResponse.json(response);
+	} catch (e: unknown) {
 		return handleError(e);
 	}
 }
 
 export async function POST(request: Request) {
 	try {
-		await requireRole('EDITOR');
+		const session = await requireRole('EDITOR');
 		const data = await request.json();
 		const id = data?.id != null ? String(data.id).trim() : '';
+
 		if (!id) {
 			return NextResponse.json({ error: 'ID пробы обязателен' }, { status: 400 });
+		}
+		if (/\s/.test(id)) {
+			return NextResponse.json({ error: 'ID не должен содержать пробелов' }, { status: 400 });
+		}
+
+		const taxon = data?.taxon || '';
+		if (taxon && taxon.trim().length > 0 && taxon.trim().length < 3) {
+			return NextResponse.json({ error: 'Таксон должен содержать не менее 3 символов' }, { status: 400 });
 		}
 
 		const exists = await prisma.specimen.findUnique({ where: { id } });
 		if (exists) {
-			return NextResponse.json(
-				{ error: 'Проба с таким ID уже есть в базе' },
-				{ status: 409 },
-			);
+			return NextResponse.json({ error: 'Проба с таким ID уже есть в базе' }, { status: 409 });
 		}
 
 		const created = await prisma.specimen.create({ data });
+		invalidateSpecimenCaches();
+
+		const currentUser = session.user as ApiUser | undefined;
+		await logAuditAction({
+			userId: currentUser?.id || 'unknown',
+			action: 'CREATE_SPECIMEN',
+			resourceType: 'SPECIMEN',
+			resourceId: created.id,
+			details: { id: created.id, taxon: created.taxon },
+		});
+
 		return NextResponse.json(created);
-	} catch (e: any) {
+	} catch (e: unknown) {
 		return handleError(e);
 	}
 }
 
 export async function PUT(req: Request) {
 	try {
+		const session = await requireRole('EDITOR');
 		const body = await req.json();
 		const { id, singleId, updateData, singleStatus, ...restData } = body;
 
 		// Логика для быстрого переключения статуса маркеров
 		if (singleId && updateData) {
-			await prisma.specimen.update({
-				where: { id: String(singleId) },
-				data: updateData,
-			});
+			await prisma.specimen.update({ where: { id: String(singleId) }, data: updateData });
+			invalidateSpecimenCaches();
 			return NextResponse.json({ success: true });
 		}
 
-		// Поддержка легаси-обновления статуса (на всякий случай)
+		// Поддержка легаси-обновления статуса
 		if (singleId && singleStatus !== undefined) {
-			await prisma.specimen.update({
-				where: { id: String(singleId) },
-				data: { itsStatus: singleStatus },
+			const specimen = await prisma.specimen.findUnique({ where: { id: String(singleId) } });
+			await prisma.specimen.update({ where: { id: String(singleId) }, data: { itsStatus: singleStatus } });
+
+			const currentUser = session.user as ApiUser | undefined;
+			await logAuditAction({
+				userId: currentUser?.id || 'unknown',
+				action: 'UPDATE_SPECIMEN',
+				resourceType: 'SPECIMEN',
+				resourceId: String(singleId),
+				details: { singleStatus },
+				changes: specimen ? { itsStatus: { old: specimen.itsStatus, new: singleStatus } } : undefined,
 			});
+			invalidateSpecimenCaches();
 			return NextResponse.json({ success: true });
 		}
 
-		// БЛОК: Для редактирования через модалку (исправление ошибки Prisma)
+		// Редактирование через модалку
 		if (id && Object.keys(restData).length > 0) {
-			// КРИТИЧНО: Удаляем вложенные массивы и даты перед обновлением,
-			// иначе Prisma выдаст ошибку валидации (Invalid value provided).
+			const taxon = restData?.taxon || '';
+			if (taxon && taxon.trim().length > 0 && taxon.trim().length < 3) {
+				return NextResponse.json({ error: 'Таксон должен содержать не менее 3 символов' }, { status: 400 });
+			}
+
+			const oldSpecimen = await prisma.specimen.findUnique({ where: { id: String(id) } });
+
+			// КРИТИЧНО: Удаляем вложенные массивы и даты перед обновлением
 			delete restData.attempts;
 			delete restData.createdAt;
 			delete restData.updatedAt;
 
-			await prisma.specimen.update({
-				where: { id: String(id) },
-				data: restData,
+			await prisma.specimen.update({ where: { id: String(id) }, data: restData });
+
+			const currentUser = session.user as ApiUser | undefined;
+			const changes = oldSpecimen
+				? Object.keys(restData).reduce<Record<string, { old: unknown; new: unknown }>>((acc, key) => {
+						acc[key] = { old: (oldSpecimen as Record<string, unknown>)[key], new: restData[key] };
+						return acc;
+					}, {})
+				: undefined;
+
+			await logAuditAction({
+				userId: currentUser?.id || 'unknown',
+				action: 'UPDATE_SPECIMEN',
+				resourceType: 'SPECIMEN',
+				resourceId: String(id),
+				details: restData,
+				changes,
 			});
+
+			invalidateSpecimenCaches();
 			return NextResponse.json({ success: true });
 		}
 
 		return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
-	} catch (error) {
-		console.error('PUT Specimen Error:', error);
-		return NextResponse.json({ error: 'Failed to update specimen' }, { status: 500 });
+	} catch (e: unknown) {
+		return handleError(e);
 	}
 }
+
 export async function DELETE(request: Request) {
 	try {
-		await requireRole('ADMIN');
+		const session = await requireRole('ADMIN');
 		const body = await request.json();
 		if (body.ids && Array.isArray(body.ids) && body.ids.length > 0) {
+			const specimens = await prisma.specimen.findMany({
+				where: { id: { in: body.ids.map(String) } },
+				select: { id: true, taxon: true },
+			});
+
 			await prisma.specimen.deleteMany({ where: { id: { in: body.ids.map(String) } } });
+
+			const currentUser = session.user as ApiUser | undefined;
+			for (const specimen of specimens) {
+				await logAuditAction({
+					userId: currentUser?.id || 'unknown',
+					action: 'DELETE_SPECIMEN',
+					resourceType: 'SPECIMEN',
+					resourceId: specimen.id,
+					details: { taxon: specimen.taxon },
+				});
+			}
+
+			invalidateSpecimenCaches();
 			return NextResponse.json({ success: true });
 		}
 		return NextResponse.json({ error: 'Не указаны id для удаления' }, { status: 400 });
-	} catch (e: any) {
+	} catch (e: unknown) {
 		return handleError(e);
 	}
 }

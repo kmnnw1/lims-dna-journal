@@ -1,6 +1,6 @@
 import { execSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
+import fs, { existsSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -28,11 +28,29 @@ run('npm config set fund false', 'Настройка npm');
 
 const envPath = join(root, '.env');
 const examplePath = join(root, '.env.example');
+const dataDir = join(root, 'data');
+const legacyDataFile = join(root, 'data.xlsx');
+const newDataFile = join(dataDir, 'data.xlsx');
 
 if (!existsSync(envPath)) {
 	if (existsSync(examplePath)) {
 		copyFileSync(examplePath, envPath);
 		console.log('✅ Создан .env из .env.example');
+	}
+}
+
+if (!existsSync(dataDir)) {
+	await fs.promises.mkdir(dataDir, { recursive: true });
+	console.log('✅ Создан каталог ./data');
+}
+
+if (existsSync(legacyDataFile) && !existsSync(newDataFile)) {
+	copyFileSync(legacyDataFile, newDataFile);
+	try {
+		await fs.promises.unlink(legacyDataFile);
+		console.log('✅ Файл data.xlsx перемещён в ./data/data.xlsx');
+	} catch {
+		console.log('⚠️ Не удалось удалить старую копию data.xlsx, но новая папка создана.');
 	}
 }
 
@@ -55,6 +73,11 @@ if (!/^DATABASE_URL=/m.test(envText)) {
 } else {
 	const match = envText.match(/^DATABASE_URL=["']?(.+?)["']?$/m);
 	if (match) process.env.DATABASE_URL = match[1];
+}
+
+if (!/^DATA_XLSX_PATH=/m.test(envText)) {
+	envText += `\nDATA_XLSX_PATH="./data/data.xlsx"\n`;
+	modified = true;
 }
 
 if (modified) writeFileSync(envPath, envText);

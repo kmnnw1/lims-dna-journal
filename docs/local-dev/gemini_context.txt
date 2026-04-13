@@ -1,0 +1,24 @@
+# Context for Gemini AI Parser
+
+## Project Overview
+Lab Journal is a web application for DNA specimen tracking and PCR reaction management in a laboratory setting.
+
+## Excel Format (V.24)
+- Complex format with specimen data spread across multiple sheets (up to 9)
+- Each specimen may be analyzed from different aspects
+- Contains comments that should be removed before parsing
+- Fields include: General info, Taxon, Collector, Notes, DNA extraction, Laboratory, Locality, Lab technician
+
+## Parsing Requirements
+- Extract structured specimen data
+- Handle PCR reaction history
+- Support batch processing
+- Maintain data integrity
+
+## AI Instructions
+When parsing Excel data:
+1. Identify specimen records across sheets
+2. Extract all relevant fields
+3. Handle duplicate or related entries
+4. Clean comments and irrelevant data
+5. Output in consistent JSON format

@@ -1,0 +1,24 @@
+# Specifications for Lab Journal Project
+
+## Excel Parser Requirements
+- Support for complex V.24 format Excel files
+- Handle multiple sheets (up to 9)
+- Parse specimen data with various aspects
+- Remove comments before parsing
+- Use GPT-4o mini for intelligent parsing
+
+## Features
+- Specimen tracking
+- PCR reaction management
+- Barcode scanning (optional)
+- Data import/export
+- User management
+- Admin interface
+
+## Tech Stack
+- Next.js 16
+- React 19
+- Prisma ORM
+- SQLite
+- Docker
+- MD3 Design System

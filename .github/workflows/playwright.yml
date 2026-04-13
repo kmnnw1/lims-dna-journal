@@ -15,8 +15,12 @@ jobs:
                   node-version: lts/*
             - name: Install dependencies
               run: npm install --force
+            - name: Clean broken apt repos before playwright install
+              run: sudo rm -f /etc/apt/sources.list.d/*.list || true
             - name: Install Playwright Browsers
               run: npx playwright install --with-deps
+            - name: Generate Prisma Client
+              run: npx prisma generate
             - name: Setup Database and Environment
               run: |
                   echo "NEXTAUTH_SECRET=test_super_secret_key_for_github_actions_32" >> .env

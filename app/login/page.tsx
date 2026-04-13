@@ -1,61 +1,64 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useState, Suspense, forwardRef } from 'react';
-import { FlaskConical, AlertCircle, ArrowRight } from 'lucide-react';
-import { AnimatedFlask } from '@/components/AnimatedFlask';
+import { useState, useEffect, useRef, Suspense, forwardRef } from 'react';
+import { AlertCircle, ArrowRight } from 'lucide-react';
+import { AnimatedFlask } from '@/components/ui/AnimatedFlask';
+import { useSearchParams } from 'next/navigation';
+import { MD3Field } from '@/components/ui/MD3Field';
 
-// Локальный хелпер для полей MD3 Filled
-const MD3Field = forwardRef<
-	HTMLInputElement,
-	{ label: string; value: string } & React.InputHTMLAttributes<HTMLInputElement>
->(({ label, value, className = '', ...props }, ref) => {
-	const baseClass = `w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-surface-container-highest)] px-6 pt-7 pb-3 text-base outline-none transition-all text-[var(--md-sys-color-on-surface)] ${className}`;
-
-	return (
-		<div className="relative group w-full">
-			<input ref={ref} value={value} className={baseClass} {...props} />
-			<label
-				className={`absolute left-6 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)] font-medium
-				${value ? 'top-2 text-xs' : 'top-5 text-base'}
-				group-focus-within:text-[var(--md-sys-color-primary)] group-focus-within:top-2 group-focus-within:text-xs
-			`}>
-				{label}
-			</label>
-		</div>
-	);
-});
-MD3Field.displayName = 'MD3Field';
+import { useRouter } from 'next/navigation';
 
 function LoginContent() {
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const tokenParam = searchParams.get('token');
+	const autoSubmitted = useRef(false);
+	
 	const [username, setUsername] = useState('');
-	const [password, setPassword] = useState('');
+	const [password, setPassword] = useState(tokenParam || '');
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
+	const handleSubmit = async (e?: React.FormEvent) => {
+		if (e) e.preventDefault();
 		setError('');
 		setLoading(true);
 
 		try {
 			const res = await signIn('credentials', {
 				username,
-				password,
+				password: password.trim(),
+				token: password.trim(),
 				redirect: false,
 			});
 
 			if (res?.error) {
-				setError('Неверный логин или пароль');
+				setError('Неверный логин или токен');
+				setLoading(false);
 			} else {
-				window.location.href = '/';
+				// Принудительный редирект на главную
+				router.push('/');
+				router.refresh(); // Обновляем состояние сессии во всем приложении
+				
+				// Fallback в случае зависания роутера
+				setTimeout(() => {
+					window.location.href = '/';
+				}, 500);
 			}
-		} catch (err) {
+		} catch (_err) {
 			setError('Произошла ошибка при входе');
-		} finally {
 			setLoading(false);
 		}
 	};
+
+	// Auto-submit при наличии токена в URL (Hiddify-style)
+	useEffect(() => {
+		if (tokenParam && !autoSubmitted.current) {
+			autoSubmitted.current = true;
+			handleSubmit();
+		}
+	}, [tokenParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-[var(--md-sys-color-surface)] p-4 font-sans relative overflow-hidden transition-colors duration-300">
@@ -79,16 +82,15 @@ function LoginContent() {
 
 				<form onSubmit={handleSubmit} className="space-y-5">
 					<MD3Field
-						label="Имя пользователя"
+						label="Имя пользователя (только для legacy)"
 						type="text"
-						required
 						value={username}
 						onChange={(e) => setUsername(e.target.value)}
 						autoComplete="username"
 					/>
 
 					<MD3Field
-						label="Пароль"
+						label="Одноразовый Токен или Пароль"
 						type="password"
 						required
 						value={password}
@@ -106,7 +108,7 @@ function LoginContent() {
 					<button
 						type="submit"
 						disabled={loading}
-						className="w-full flex items-center justify-center gap-3 bg-[var(--md-sys-color-primary)] hover:brightness-110 text-[var(--md-sys-color-on-primary)] rounded-full px-8 py-5 text-lg font-medium shadow-md hover:shadow-lg active:scale-95 transition-all mt-6 disabled:opacity-70 disabled:active:scale-100">
+						className="w-full flex items-center justify-center gap-3 bg-[var(--md-sys-color-primary)] hover:brightness-110 text-[var(--md-sys-color-on-primary)] rounded-full px-8 py-5 text-lg font-medium md-elevation-1 hover:md-elevation-2 active:scale-95 transition-all mt-6 disabled:opacity-70 disabled:active:scale-100">
 						{loading ? (
 							<div className="w-7 h-7 border-4 border-white/30 border-t-white rounded-full animate-spin" />
 						) : (

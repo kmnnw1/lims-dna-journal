@@ -27,6 +27,15 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 		onCloseRef.current = onClose;
 	}, [onCode, onClose]);
 
+	useEffect(() => {
+		if (!open) return;
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') onCloseRef.current();
+		};
+		window.addEventListener('keydown', onKeyDown);
+		return () => window.removeEventListener('keydown', onKeyDown);
+	}, [open]);
+
 	const [error, setError] = useState('');
 	const [manual, setManual] = useState('');
 	const [hasDetector, setHasDetector] = useState(false);
@@ -59,20 +68,31 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 		}
 
 		if (!('BarcodeDetector' in window)) {
-			setError('Сканер не поддерживается. Введите ID вручную.');
-			setHasDetector(false);
+			queueMicrotask(() => {
+				setError('Сканер не поддерживается. Введите ID вручную.');
+				setHasDetector(false);
+			});
 			return;
 		}
 
-		setHasDetector(true);
-		setError('');
-		setManual('');
+		queueMicrotask(() => {
+			setHasDetector(true);
+			setError('');
+			setManual('');
+		});
+	const BarcodeDetector = (window as unknown as { BarcodeDetector?: BarcodeDetectorClass }).BarcodeDetector;
+	if (!BarcodeDetector) {
+		queueMicrotask(() => {
+			setError('Сканер не поддерживается. Введите ID вручную.');
+			setHasDetector(false);
+		});
+		return;
+	}
 
-		const BarcodeDetector = (window as any).BarcodeDetector as BarcodeDetectorClass;
-		const detector = new BarcodeDetector({ formats: FORMATS });
+	const detector = new BarcodeDetector({ formats: FORMATS });
 
-		navigator.mediaDevices
-			.getUserMedia({ video: { facingMode: 'environment' } })
+	navigator.mediaDevices
+		.getUserMedia({ video: { facingMode: 'environment' } })
 			.then((stream) => {
 				streamRef.current = stream;
 				if (videoRef.current) {
@@ -94,7 +114,7 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 							onCodeRef.current(barcodes[0].rawValue);
 							return;
 						}
-					} catch (err) {}
+					} catch (_err) {}
 					rafRef.current = requestAnimationFrame(scan);
 				};
 				rafRef.current = requestAnimationFrame(scan);

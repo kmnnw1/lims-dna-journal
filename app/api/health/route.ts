@@ -9,14 +9,12 @@ import { NextResponse } from 'next/server';
 export async function GET() {
 	let version = '0.0.0';
 	let name = 'lab-journal';
-	let packageTime: string | undefined;
 	try {
 		const pkgPath = join(process.cwd(), 'package.json');
 		const raw = readFileSync(pkgPath, 'utf8');
 		const pkg = JSON.parse(raw) as { version?: string; name?: string };
 		version = pkg.version ?? version;
 		name = pkg.name ?? name;
-		const stats = readFileSync(pkgPath); // just to check existence for mtime
 		// Note: getting mtime requires fs.statSync, not readFileSync, but avoids ESM vs CJS confusion
 		// So skip "build" time for now, unless need be
 	} catch {

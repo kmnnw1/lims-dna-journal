@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/database/prisma';
 import ExcelJS from 'exceljs';
 import fs from 'fs';
 import path from 'path';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { mergeById, parseSheetToRows, type ParsedSpecimenRow } from '@/lib/import-excel';
+import {
+	mergeById,
+	parseSheetToRows,
+	extractRawDataFromSheet,
+	cellText,
+	type ParsedSpecimenRow,
+} from '@/lib/excel';
+import { parseWithAI } from '@/lib/excel/ai-parser';
 
-/**
- * Проверка, что пользователь — админ, иначе выбрасывает 403.
- * Используйте для безопасности в каждом API-обработчике!
- */
 async function requireAdmin() {
 	const session = await getServerSession(authOptions);
 	if (!session || (session.user as { role?: string }).role !== 'ADMIN') {
@@ -19,16 +22,21 @@ async function requireAdmin() {
 }
 
 /**
- * Импортирует данные проб из указанного XLSX-файла (по умолчанию data.xlsx).
- * Перезаписывает всю таблицу specimen! Возвращает краткую статистику.
- * Только для ADMIN.
+ * Импортирует данные проб из XLSX-файла.
+ * ?useAI=true — использует Gemini для умного парсинга.
+ * Фоллбэк на regex-парсер если AI недоступен.
  */
-export async function GET() {
+export async function GET(req: Request) {
 	try {
 		await requireAdmin();
 
-		const rawPath = process.env.DATA_XLSX_PATH || 'data.xlsx';
-		const filePath = path.isAbsolute(rawPath) ? rawPath : path.join(process.cwd(), rawPath);
+		const { searchParams } = new URL(req.url);
+		const useAI = searchParams.get('useAI') === 'true';
+
+		const rawPath = process.env.DATA_XLSX_PATH || 'data/data.xlsx';
+		const filePath = path.isAbsolute(rawPath)
+			? rawPath
+			: path.join(/*turbopackIgnore: true*/ process.cwd(), rawPath);
 
 		if (!fs.existsSync(filePath)) {
 			return NextResponse.json(
@@ -37,29 +45,44 @@ export async function GET() {
 			);
 		}
 
-		// Чтение файла через ExcelJS
 		const workbook = new ExcelJS.Workbook();
 		await workbook.xlsx.readFile(filePath);
 
-		const dataToInsert: ParsedSpecimenRow[] = [];
+		let dataToInsert: ParsedSpecimenRow[] = [];
 		const sheetNames: string[] = [];
+		let aiUsed = false;
 
 		// Парсим каждый лист
-		workbook.eachSheet((sheet) => {
+		for (const sheet of workbook.worksheets) {
 			sheetNames.push(sheet.name);
+
+			// Попытка AI-парсинга если запрошено
+			if (useAI) {
+				const rawData = extractRawDataFromSheet(sheet);
+				const headers = rawData[0]?.map((c) => cellText(c)) || [];
+				const bodyRows = rawData.slice(1).map((r) =>
+					r.map((c) => cellText(c)),
+				);
+
+				const aiResult = await parseWithAI(bodyRows, sheet.name, headers);
+				if (aiResult && aiResult.length > 0) {
+					dataToInsert.push(...aiResult);
+					aiUsed = true;
+					continue; // Переходим к следующему листу
+				}
+			}
+
+			// Фоллбэк на стандартный regex-парсер
 			const rows = parseSheetToRows(sheet, sheet.name);
 			dataToInsert.push(...rows);
-		});
+		}
 
 		const uniqueData = mergeById(dataToInsert);
 
-		// Считаем до и после, чтобы вернуть точную статистику
 		const beforeCount = await prisma.specimen.count();
-
-		// Очищаем таблицу (hard reset)
 		await prisma.specimen.deleteMany({});
 
-		// Импортируем пачками — защищаемся от лимитов PostgreSQL/SQLite
+		// Импортируем пачками
 		const chunkSize = 500;
 		let inserted = 0;
 		for (let i = 0; i < uniqueData.length; i += chunkSize) {
@@ -68,24 +91,24 @@ export async function GET() {
 			inserted += result.count ?? chunk.length;
 		}
 
-		// Итоговый ответ с подробной статистикой импорта
 		return NextResponse.json({
 			success: true,
 			message: `Импортировано ${inserted} проб (листов: ${sheetNames.length}).`,
 			sheets: sheetNames,
 			totalRows: inserted,
 			previousCount: beforeCount,
+			aiUsed,
 		});
-	} catch (e: any) {
-		const status = e?.code === 403 ? 403 : 500;
-		const msg = e?.message || (e instanceof Error ? e.message : String(e));
+	} catch (e: unknown) {
+		const err = e as { code?: number; message?: string };
+		const status = err?.code === 403 ? 403 : 500;
+		const msg = err?.message || (e instanceof Error ? e.message : String(e));
 		return NextResponse.json({ error: msg }, { status });
 	}
 }
 
 /**
  * Очищает таблицу specimen по подтверждённому запросу.
- * Не требует загрузки файла. Только для ADMIN.
  */
 export async function POST(request: Request) {
 	try {
@@ -105,9 +128,10 @@ export async function POST(request: Request) {
 			previousCount: beforeCount,
 			message: `Удалено записей: ${result.count}`,
 		});
-	} catch (e: any) {
-		const status = e?.code === 403 ? 403 : 500;
-		const msg = e?.message || (e instanceof Error ? e.message : String(e));
+	} catch (e: unknown) {
+		const err = e as { code?: number; message?: string };
+		const status = err?.code === 403 ? 403 : 500;
+		const msg = err?.message || (e instanceof Error ? e.message : String(e));
 		return NextResponse.json({ error: msg }, { status });
 	}
 }

@@ -33,8 +33,10 @@ export function CommandPalette({
 
 	useEffect(() => {
 		if (open) {
-			setQ('');
-			setTimeout(() => inputRef.current?.focus(), 0);
+			setTimeout(() => {
+				setQ('');
+				inputRef.current?.focus();
+			}, 0);
 		}
 	}, [open]);
 

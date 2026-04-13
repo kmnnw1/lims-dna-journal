@@ -1,6 +1,6 @@
 'use client';
 
-import { Barcode, Camera, Activity, Share2, Copy, Star, Pencil } from 'lucide-react';
+import { Barcode, Camera, Activity, Copy, Star, Pencil } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { HighlightMatch } from '@/components/ui/HighlightMatch';
 
@@ -52,13 +52,6 @@ export function MobileSpecimenCard({
 			await navigator.clipboard.writeText(s.id);
 			setCopied(true);
 			setTimeout(() => setCopied(false), 1200);
-		} catch {}
-	};
-
-	const share = async () => {
-		try {
-			if (navigator.share) await navigator.share({ title: `Проба ${s.id}`, text: s.id });
-			else await copyId();
 		} catch {}
 	};
 

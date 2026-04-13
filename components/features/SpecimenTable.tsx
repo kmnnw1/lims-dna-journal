@@ -3,15 +3,16 @@
 import React from 'react';
 import { Pencil, FlaskConical, ChevronUp, ChevronDown } from 'lucide-react';
 import { PCRStatusBadge } from './PCRStatusBadge';
+import type { Specimen } from '@/types';
 
 interface SpecimenTableProps {
-	specimens: any[];
+	specimens: Specimen[];
 	loading: boolean;
 	selectedIds: Set<string>;
 	onSelect: (id: string) => void;
 	onSelectAll: (ids: string[]) => void;
-	onEdit: (specimen: any) => void;
-	onPcr: (specimen: any) => void;
+	onEdit: (specimen: Specimen) => void;
+	onPcr: (specimen: Specimen) => void;
 	onStatusClick: (specimenId: string, marker: string) => void;
 	searchQuery: string;
 	sortConfig: { key: string; direction: 'asc' | 'desc' } | null;
@@ -59,22 +60,33 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 
 	if (loading && specimens.length === 0) {
 		return (
-			<div className="flex flex-col items-center justify-center py-24 bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem]">
-				<div className="animate-spin rounded-full h-12 w-12 border-4 border-[var(--md-sys-color-surface-container-highest)] border-t-[var(--md-sys-color-primary)] mb-6"></div>
-				<p className="text-[var(--md-sys-color-outline)] font-medium text-lg">
-					Загрузка данных...
-				</p>
+			<div className="bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem] overflow-hidden shadow-sm p-4 space-y-4">
+				{[...Array(5)].map((_, i) => (
+					<div key={i} className="flex gap-4 p-4 items-center bg-[var(--md-sys-color-surface)] rounded-2xl animate-pulse">
+						<div className="h-5 w-5 rounded bg-[var(--md-sys-color-surface-container-highest)]" />
+						<div className="h-6 w-20 rounded-full bg-[var(--md-sys-color-surface-container-highest)]" />
+						<div className="flex-1 space-y-2">
+							<div className="h-5 w-1/3 rounded bg-[var(--md-sys-color-surface-container-highest)]" />
+							<div className="h-4 w-1/4 rounded bg-[var(--md-sys-color-surface-container-highest)]" />
+						</div>
+						<div className="flex gap-2">
+							<div className="h-8 w-12 rounded-xl bg-[var(--md-sys-color-surface-container-highest)]" />
+							<div className="h-8 w-12 rounded-xl bg-[var(--md-sys-color-surface-container-highest)]" />
+							<div className="h-8 w-12 rounded-xl bg-[var(--md-sys-color-surface-container-highest)]" />
+						</div>
+					</div>
+				))}
 			</div>
 		);
 	}
 
 	return (
-		<div className="bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem] overflow-hidden shadow-sm transition-all duration-300">
-			<div className="overflow-x-auto custom-scrollbar">
-				<table className="w-full text-left border-collapse">
-					<thead>
-	<tr className="bg-[var(--md-sys-color-surface)] dark:bg-[var(--md-sys-color-surface-container)] border-b border-[var(--md-sys-color-outline-variant)]/50">
-		<th className="p-5 w-14 text-center">
+		<div className="rounded-[2.5rem] overflow-hidden border border-[var(--md-sys-color-outline-variant)]/50 bg-[var(--md-sys-color-surface-container-lowest)] md-elevation-1 transition-all duration-300">
+			<div className="overflow-x-auto custom-scrollbar max-h-[75vh]">
+				<table className="w-full text-left border-collapse relative">
+					<thead className="sticky top-0 z-20 bg-[var(--md-sys-color-surface)]/80 backdrop-blur-xl md-elevation-1">
+	<tr className="border-b border-[var(--md-sys-color-outline-variant)]/50">
+		<th className="p-6 w-16 text-center">
 			<div className="relative flex items-center justify-center">
 				<input
 					type="checkbox"
@@ -83,15 +95,15 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 						specimens.length > 0 &&
 						selectedIds.size === specimens.length
 					}
-					className="peer size-5 cursor-pointer appearance-none rounded-md border-2 border-[var(--md-sys-color-outline)] checked:border-[var(--md-sys-color-primary)] checked:bg-[var(--md-sys-color-primary)] transition-all"
+					className="peer size-5 cursor-pointer appearance-none rounded-[4px] border-2 border-[var(--md-sys-color-outline)] checked:border-[var(--md-sys-color-primary)] checked:bg-[var(--md-sys-color-primary)] transition-all hover:scale-110"
 					title="Выбрать все"
 				/>
 				<svg
-					className="pointer-events-none absolute h-3.5 w-3.5 text-[var(--md-sys-color-on-primary)] opacity-0 peer-checked:opacity-100 transition-opacity"
+					className="pointer-events-none absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
 					viewBox="0 0 24 24"
 					fill="none"
 					stroke="currentColor"
-					strokeWidth="3"
+					strokeWidth="4"
 					strokeLinecap="round"
 					strokeLinejoin="round">
 					<polyline points="20 6 9 17 4 12"></polyline>
@@ -99,36 +111,36 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 			</div>
 		</th>
 		<th
-			className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none whitespace-nowrap"
+			className="p-6 text-[var(--md-sys-color-on-surface)] font-bold text-xs tracking-widest uppercase cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none whitespace-nowrap"
 			onClick={() => onSort('id')}>
 			ID {renderSortIcon('id')}
 		</th>
 		<th
-			className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none min-w-[180px]"
+			className="p-6 text-[var(--md-sys-color-on-surface)] font-bold text-xs tracking-widest uppercase cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none min-w-[180px]"
 			onClick={() => onSort('taxon')}>
 			Таксон {renderSortIcon('taxon')}
 		</th>
-		<th className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide">
+		<th className="p-6 text-[var(--md-sys-color-on-surface)] font-bold text-xs tracking-widest uppercase">
 			Заметки
 		</th>
-		<th className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide">
+		<th className="p-6 text-[var(--md-sys-color-on-surface)] font-bold text-xs tracking-widest uppercase">
 			Выделение
 		</th>
-		<th className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide">
+		<th className="p-6 text-[var(--md-sys-color-on-surface)] font-bold text-xs tracking-widest uppercase">
 			Маркеры
 		</th>
-		<th className="p-5 text-[var(--md-sys-color-on-surface)] font-medium text-sm tracking-wide text-right">
+		<th className="p-6 text-[var(--md-sys-color-on-surface)] font-bold text-xs tracking-widest uppercase text-right">
 			Действия
 		</th>
 	</tr>
 </thead>
-					<tbody className="divide-y divide-[var(--md-sys-color-outline-variant)]/30">
+					<tbody className="divide-y divide-[var(--md-sys-color-outline-variant)]/20">
 						{specimens.map((specimen) => {
 							const isSelected = selectedIds.has(specimen.id);
 							return (
 								<tr
 									key={specimen.id}
-									className={`group transition-colors duration-200 ${isSelected ? 'bg-[var(--md-sys-color-primary-container)]/30' : 'hover:bg-[var(--md-sys-color-surface-container-high)]'}`}>
+									className={`group md-state-layer transition-all duration-[var(--md-sys-motion-duration-medium)] ease-[var(--md-sys-motion-easing-standard)] ${isSelected ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]' : 'relative z-10 hover:z-20 bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]'}`}>
 									<td className="p-4 text-center">
 										<div className="relative flex items-center justify-center">
 											<input
@@ -182,7 +194,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 										</div>
 									</td>
 									<td className="p-4">
-										<div className="flex flex-wrap gap-2 max-w-[200px]">
+										<div className="inline-flex flex-wrap gap-1 max-w-[260px]">
 											<PCRStatusBadge
 												status={specimen.itsStatus}
 												marker="ITS"
@@ -197,6 +209,21 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 												status={specimen.lsuStatus}
 												marker="LSU"
 												onClick={() => onStatusClick(specimen.id, 'LSU')}
+											/>
+											<PCRStatusBadge
+												status={specimen.rpb2Status}
+												marker="RPB2"
+												onClick={() => onStatusClick(specimen.id, 'RPB2')}
+											/>
+											<PCRStatusBadge
+												status={specimen.mtLsuStatus}
+												marker="mtLSU"
+												onClick={() => onStatusClick(specimen.id, 'mtLSU')}
+											/>
+											<PCRStatusBadge
+												status={specimen.mtSsuStatus}
+												marker="mtSSU"
+												onClick={() => onStatusClick(specimen.id, 'mtSSU')}
 											/>
 										</div>
 									</td>

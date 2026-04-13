@@ -1,0 +1,5 @@
+# Requirements for local Python scripts
+pandas
+openpyxl
+requests
+google-generativeai

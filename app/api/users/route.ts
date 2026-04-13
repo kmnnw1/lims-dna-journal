@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/database/prisma';
 import { getServerSession } from 'next-auth/next';
 import bcrypt from 'bcryptjs';
 import { authOptions } from '@/lib/auth';
@@ -128,7 +128,8 @@ export async function DELETE(req: Request) {
 
 		// Не позволяем удалять собственного пользователя
 		const session = await getServerSession(authOptions);
-		if (session?.user && (session.user as any).id === id) {
+		const currentUser = session?.user as { id?: string } | undefined;
+		if (currentUser?.id === id) {
 			return NextResponse.json({ error: 'Нельзя удалить себя' }, { status: 400 });
 		}
 
