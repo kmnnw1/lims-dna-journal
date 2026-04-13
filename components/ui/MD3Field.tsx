@@ -8,11 +8,14 @@ type MD3FieldProps = {
 	isSelect?: boolean;
 	isArea?: boolean;
 	children?: React.ReactNode;
-} & React.InputHTMLAttributes<HTMLInputElement> & React.SelectHTMLAttributes<HTMLSelectElement> & React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+} & React.InputHTMLAttributes<HTMLInputElement> &
+	React.SelectHTMLAttributes<HTMLSelectElement> &
+	React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 export const MD3Field = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement, MD3FieldProps>(
 	({ label, value, isSelect, isArea, children, className = '', ...props }, ref) => {
-		const baseClass = `md-state-layer md-typescale-body-large w-full rounded-t-[var(--md-sys-shape-corner-xs)] rounded-b-none border-b border-[var(--md-sys-color-outline-variant)] focus:border-b-2 focus:border-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-surface-variant)] bg-[var(--md-sys-color-surface-container-highest)] px-4 pt-6 pb-2 outline-none transition-all duration-[var(--md-sys-motion-duration-medium)] ease-[var(--md-sys-motion-easing-standard)] text-[var(--md-sys-color-on-surface)] appearance-none ${className}`;
+		// Фон полей — как в ПЦР (surface-container-high)
+		const baseClass = `md-state-layer md-typescale-body-large w-full rounded-t-[1rem] rounded-b-[0.25rem] border-b border-[var(--md-sys-color-outline-variant)] focus:border-b-2 focus:border-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-surface-variant)] bg-[var(--md-sys-color-surface-container-highest)] px-4 pt-6 pb-2 outline-none transition-all duration-[var(--md-sys-motion-duration-medium)] ease-[var(--md-sys-motion-easing-standard)] text-[var(--md-sys-color-on-surface)] appearance-none ${className}`;
 
 		const inputRef = ref as React.LegacyRef<HTMLInputElement>;
 		const selectRef = ref as React.LegacyRef<HTMLSelectElement>;
@@ -42,12 +45,14 @@ export const MD3Field = forwardRef<HTMLInputElement | HTMLSelectElement | HTMLTe
 				</label>
 				{isSelect && (
 					<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[var(--md-sys-color-outline)]">
-						<svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+						<svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+							<path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+						</svg>
 					</div>
 				)}
 			</div>
 		);
-	},
+	}
 );
 
 MD3Field.displayName = 'MD3Field';
