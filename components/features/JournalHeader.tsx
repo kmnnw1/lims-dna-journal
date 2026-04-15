@@ -20,6 +20,13 @@ interface JournalHeaderProps {
 	onSignOut: () => void;
 	theme: 'light' | 'dark' | 'monet';
 	setTheme: (val: 'light' | 'dark' | 'monet') => void;
+	minConc: number | null;
+	setMinConc: (val: number | null) => void;
+	maxConc: number | null;
+	setMaxConc: (val: number | null) => void;
+	selectedOperator: string;
+	setSelectedOperator: (val: string) => void;
+	suggestions: { labs: string[], operators: string[], methods: string[] };
 }
 
 export function JournalHeader({
@@ -32,6 +39,13 @@ export function JournalHeader({
 	onSignOut,
 	theme,
 	setTheme,
+	minConc,
+	setMinConc,
+	maxConc,
+	setMaxConc,
+	selectedOperator,
+	setSelectedOperator,
+	suggestions,
 }: JournalHeaderProps) {
 	const roleColorClass = userRole === 'ADMIN'
 		? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]'
@@ -40,59 +54,102 @@ export function JournalHeader({
 		: 'bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-on-surface-variant)]';
 
 	return (
-		<header className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 mb-8 mt-2">
-			<div className="flex items-center gap-4">
+		<header className="flex items-center gap-3 mb-6 mt-1.5 px-1 sm:px-0 w-full">
+			<div className="flex-shrink-0">
 				<AnimatedFlask />
 			</div>
 
-			<div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-				<div className="relative flex-1 xl:w-[26rem] group flex items-center bg-[var(--md-sys-color-surface-container-high)] focus-within:bg-[var(--md-sys-color-surface)] border-2 border-transparent focus-within:border-[var(--md-sys-color-primary)] rounded-full transition-all pr-2">
-					<Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--md-sys-color-outline)] group-focus-within:text-[var(--md-sys-color-primary)] transition-colors pointer-events-none" />
-					<input
-						type="text"
-						placeholder="Поиск по ID или таксону..."
-						value={searchQuery}
-						onChange={(e) => setSearchQuery(e.target.value)}
-						className="flex-1 pl-12 pr-4 py-3.5 bg-transparent outline-none text-base placeholder:text-[var(--md-sys-color-outline)]"
-					/>
-					<div className="pl-2 border-l border-[var(--md-sys-color-outline-variant)]">
-						<QuickFilterBar filterType={filterType} onFilterChange={onFilterChange} />
+			<div className="flex flex-1 items-center gap-2 min-w-0">
+				{/* Группа поиска и быстрых фильтров */}
+				<div className="flex-1 flex items-center gap-2 min-w-0">
+					<div className="relative flex-1 group flex items-center bg-[var(--md-sys-color-surface-container-high)] focus-within:bg-[var(--md-sys-color-surface)] border-2 border-transparent focus-within:border-[var(--md-sys-color-primary)] rounded-full transition-all pr-2 max-w-[45rem]">
+						<Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[var(--md-sys-color-outline)] group-focus-within:text-[var(--md-sys-color-primary)] transition-colors pointer-events-none" />
+						<input
+							type="text"
+							placeholder="Поиск..."
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							className="flex-1 pl-10 sm:pl-12 pr-2 py-2 sm:py-3 bg-transparent outline-none text-sm sm:text-base placeholder:text-[var(--md-sys-color-outline)]"
+						/>
+						<div className="pl-1 sm:pl-2 border-l border-[var(--md-sys-color-outline-variant)]">
+							<QuickFilterBar 
+								filterType={filterType} 
+								onFilterChange={onFilterChange}
+								minConc={minConc}
+								setMinConc={setMinConc}
+								maxConc={maxConc}
+								setMaxConc={setMaxConc}
+								selectedOperator={selectedOperator}
+								setSelectedOperator={setSelectedOperator}
+								suggestions={suggestions}
+							/>
+						</div>
+					</div>
+
+					{/* Быстрые маркеры (из фильтра) */}
+					<div className="hidden xl:flex items-center gap-1.5 flex-shrink-0 pr-2">
+						{['ITS', 'SSU', 'LSU'].map((marker) => {
+							const isActive = searchQuery.toUpperCase().includes(marker);
+							return (
+								<button
+									key={marker}
+									onClick={() => {
+										// Тогглим маркер в строке поиска
+										if (isActive) {
+											setSearchQuery(searchQuery.replace(new RegExp(`${marker}\\s?`, 'gi'), '').trim());
+										} else {
+											setSearchQuery(`${searchQuery} ${marker}`.trim());
+										}
+									}}
+									className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest transition-all ${
+										isActive 
+											? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-md' 
+											: 'bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container-high)]'
+									}`}
+								>
+									{marker}
+								</button>
+							);
+						})}
 					</div>
 				</div>
 
-				{/* Кнопка смены темы (Цикл: Light -> Dark -> Monet) */}
-				<button
-					onClick={(e) => {
-						const x = e.clientX;
-						const y = e.clientY;
-						document.documentElement.style.setProperty('--target-x', `${x}px`);
-						document.documentElement.style.setProperty('--target-y', `${y}px`);
-						const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'monet' : 'light';
-						setTheme(next);
-					}}
-					title={`Тема: ${theme}`}
-					className="p-3.5 bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all flex items-center justify-center md-state-layer">
-					{theme === 'light' ? <Moon className="w-5 h-5" /> : theme === 'dark' ? <Sparkles className="w-5 h-5 text-amber-500" /> : <Sun className="w-5 h-5" />}
-				</button>
+				{/* Кнопки действий - Прижаты к правому краю */}
+				<div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-auto">
+					<button
+						onClick={(e) => {
+							const x = e.clientX;
+							const y = e.clientY;
+							document.documentElement.style.setProperty('--target-x', `${x}px`);
+							document.documentElement.style.setProperty('--target-y', `${y}px`);
+							const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'monet' : 'light';
+							setTheme(next);
+						}}
+						title={`Тема: ${theme}`}
+						className="p-2 sm:p-2.5 bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all flex items-center justify-center md-state-layer">
+						{theme === 'light' ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : theme === 'dark' ? <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" /> : <Sun className="w-4 h-4 sm:w-5 sm:h-5" />}
+					</button>
 
-				{/* Кнопка "Новая проба" была удалена по запросу */}
+					<Link
+						href="/admin"
+						className={`flex items-center justify-center gap-2 p-2 sm:px-4 sm:py-2.5 md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium md-state-layer ${
+							userRole === 'ADMIN' 
+								? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:brightness-110' 
+								: 'bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)]'
+						}`}>
+						<Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+						<span className="hidden lg:inline text-sm">{userRole === 'ADMIN' ? 'Настройки' : 'Профиль'}</span>
+					</Link>
 
-				{/* Кнопка "Настройки / Профиль" */}
-				<Link
-					href="/admin"
-					className={`flex items-center gap-2 px-5 py-3.5 md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium md-state-layer ${userRole === 'ADMIN' ? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]' : 'bg-[var(--md-sys-color-tertiary)] text-[var(--md-sys-color-on-tertiary)]'}`}>
-					<Settings className="w-5 h-5" />
-					<span className="hidden sm:inline">{userRole === 'ADMIN' ? 'Настройки' : 'Профиль'}</span>
-				</Link>
-
-				{/* Кнопка "Выход" */}
-				<button
-					onClick={onSignOut}
-					title="Выйти"
-					className="p-3.5 bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)] md-elevation-1 hover:md-elevation-2 hover:bg-[var(--md-sys-color-surface-container-high)] rounded-full transition-all flex items-center justify-center md-state-layer">
-					<LogOut className="w-5 h-5" />
-				</button>
+					<button
+						onClick={onSignOut}
+						title="Выйти"
+						className="p-2 sm:p-2.5 bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)] md-elevation-1 hover:md-elevation-2 hover:bg-[var(--md-sys-color-surface-container-high)] rounded-full transition-all flex items-center justify-center md-state-layer">
+						<LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+					</button>
+				</div>
 			</div>
 		</header>
 	);
 }
+

@@ -33,7 +33,7 @@ export function AnimatedFlask() {
             y: 12 + Math.random() * 8,
             vx: (Math.random() - 0.5) * 4,
             vy: state === 'flying' ? (-15 - Math.random() * 10) : ((Math.random() - 0.5) * 4),
-            r: 0.3 + Math.random() * 0.6,
+            r: 1.2 + Math.random() * 1.8, // Крупнее
             life: 0,
             maxLife: state === 'flying' ? 1.5 : (3 + Math.random() * 5)
         });
@@ -49,35 +49,24 @@ export function AnimatedFlask() {
         return () => clearInterval(interval);
     }, []);
 
-    // Границы колбы:
-    // Дно (дуга) ~ y: 21, x: 3..21
-    // Горлышко x: 10..14, y: 2..10
-    // Стенки (наклон) от y=10 до y=21
+    // Границы колбы
     const checkCollision = (p: Particle) => {
         const dt = 0.016;
         
-        // Idle поведение (внутри жидкости)
         if (p.state === 'idle') {
-            // Легкое броуновское движение
             p.vx += (Math.random() - 0.5) * 2;
             p.vy += (Math.random() - 0.5) * 2;
-            
-            // Затухание скорости
             p.vx *= 0.9;
             p.vy *= 0.9;
             
-            // Выталкивание со дна и стенок
             if (p.y > 20) { p.y = 20; p.vy *= -0.5; }
-            if (p.y < 12) { p.y = 12; p.vy *= -0.5; } // Поверхность воды
+            if (p.y < 12) { p.y = 12; p.vy *= -0.5; }
             
-            const leftBound = 4 + (21 - p.y) * 0.3; // Примерный наклон
+            const leftBound = 4 + (21 - p.y) * 0.3;
             const rightBound = 20 - (21 - p.y) * 0.3;
             if (p.x < leftBound) { p.x = leftBound; p.vx *= -0.8; }
             if (p.x > rightBound) { p.x = rightBound; p.vx *= -0.8; }
-        } 
-        // Полет наверх
-        else {
-            // Задержка выброса (если life < 0, ведем себя как idle)
+        } else {
             if (p.life < 0) {
                 p.vx += (Math.random() - 0.5) * 2;
                 p.vy += (Math.random() - 0.5) * 2;
@@ -90,33 +79,24 @@ export function AnimatedFlask() {
                 return;
             }
 
-            // Гравитация (отрицательная) - пузырь прет вверх
             p.vy -= 15 * dt; 
             
-            // Физика горлышка (при любом y <= 10.5 не даем вылететь по x)
-            if (p.y <= 10.5) {
-                if (p.x < 10.3) {
-                    p.x = 10.3;
-                    p.vx = Math.abs(p.vx) * 0.8 + 1; // Резкий отскок от стены горлышка
-                }
-                if (p.x > 13.7) {
-                    p.x = 13.7;
-                    p.vx = -Math.abs(p.vx) * 0.8 - 1;
-                }
-            } 
-            // Физика сужения (от 10 до 21 по Y)
-            else if (p.y > 10.5) {
+            if (p.y <= 11) {
+                // В горлышке пузыри должны быть узкими
+                const neckLeft = 10.5;
+                const neckRight = 13.5;
+                
+                // Ограничиваем радиус, чтобы не вылезать за стенки (ширина горла ~3.4)
+                if (p.r > 1.4) p.r = 1.4;
+
+                if (p.x < neckLeft + p.r) { p.x = neckLeft + p.r; p.vx = Math.abs(p.vx) * 0.8 + 1; }
+                if (p.x > neckRight - p.r) { p.x = neckRight - p.r; p.vx = -Math.abs(p.vx) * 0.8 - 1; }
+            } else if (p.y > 11) {
                 const widthAtY = 14 + (p.y - 10) * ((20 - 14) / 11);
                 const halfW = widthAtY / 2;
                 const center = 12;
-                if (p.x < center - halfW + 1) {
-                    p.x = center - halfW + 1;
-                    p.vx = Math.abs(p.vx) * 0.8 + Math.random() * 2; // Отскок влево вправо
-                }
-                if (p.x > center + halfW - 1) {
-                    p.x = center + halfW - 1;
-                    p.vx = -Math.abs(p.vx) * 0.8 - Math.random() * 2;
-                }
+                if (p.x < center - halfW + 1) { p.x = center - halfW + 1; p.vx = Math.abs(p.vx) * 0.8 + Math.random() * 2; }
+                if (p.x > center + halfW - 1) { p.x = center + halfW - 1; p.vx = -Math.abs(p.vx) * 0.8 - Math.random() * 2; }
             }
         }
 
@@ -136,7 +116,6 @@ export function AnimatedFlask() {
 
             if (p.life >= p.maxLife || p.y < -30) {
                 particles.current.splice(i, 1);
-                // Прячем элемент
                 const el = document.getElementById(`bubble-${p.id}`);
                 if (el) el.style.opacity = '0';
                 continue;
@@ -152,13 +131,17 @@ export function AnimatedFlask() {
                 el.setAttribute('cy', p.y.toString());
                 el.setAttribute('r', p.r.toString());
                 
-                // Цвет пузырей меняется когда они вылетают (меняют заливку чтобы быть цветными)
+                // Премиальная видимость с использованием Glow и Stroke
                 if (p.state === 'flying' && p.y < 9) {
-                     el.setAttribute('fill', 'var(--md-sys-color-inverse-primary)');
-                     el.style.filter = 'none';
+                     el.setAttribute('fill', 'var(--md-sys-color-primary-container)');
+                     el.setAttribute('stroke', 'var(--md-sys-color-primary)');
+                     el.setAttribute('stroke-width', '0.3');
+                     el.style.filter = 'url(#bubble-glow)';
                 } else {
                      el.setAttribute('fill', 'white');
-                     el.style.filter = 'none';
+                     el.setAttribute('stroke', 'var(--md-sys-color-outline-variant)');
+                     el.setAttribute('stroke-width', '0.2');
+                     el.style.filter = 'url(#bubble-glow)';
                 }
 
                 el.style.opacity = opacity.toString();
@@ -181,7 +164,7 @@ export function AnimatedFlask() {
             for(let i = 0; i < 5; i++) spawnBubble();
         }
         setIsAnimating(true);
-        rockRef.current = Math.min(2.0, rockRef.current + 0.5); // Накопление встряски
+        rockRef.current = Math.min(2.0, rockRef.current + 0.5);
     };
 
     const handleRelease = () => {
@@ -189,7 +172,7 @@ export function AnimatedFlask() {
         particles.current.forEach((p, index) => {
             if (p.state === 'idle') {
                 p.state = 'flying';
-                p.life = -Math.random() * 0.6; // Задержка выброса (stagger)
+                p.life = -Math.random() * 0.6;
                 p.maxLife = 1.5 + Math.random() * 0.5;
                 p.vy = -10 - Math.random() * 10;
                 p.vx = (Math.random() - 0.5) * 8;
@@ -256,6 +239,10 @@ export function AnimatedFlask() {
                         <clipPath id="flask-liquid-clip">
                             <use href="#flask-inner-mask" />
                         </clipPath>
+                        <filter id="bubble-glow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="0.4" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
                     </defs>
 
                     <g clipPath="url(#flask-liquid-clip)">
@@ -265,7 +252,6 @@ export function AnimatedFlask() {
                     </g>
 
                     <g stroke="none">
-                        {/* 100 DOM узлов для пула пузырей */}
                         {Array.from({ length: 150 }).map((_, i) => (
                             <circle key={i} id={`bubble-${i}`} cx="0" cy="0" r="0" style={{ opacity: 0 }} />
                         ))}
@@ -279,9 +265,7 @@ export function AnimatedFlask() {
                     </g>
                 </svg>
             </div>
-            {/* Глоу вокруг колбы */}
             <div className="absolute inset-[-4px] bg-[var(--md-sys-color-primary-container)] opacity-0 group-hover:opacity-10 rounded-full transition-all duration-700 blur-xl scale-90 group-hover:scale-110 -z-20" />
         </div>
     );
 }
-

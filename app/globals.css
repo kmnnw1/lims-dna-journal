@@ -99,39 +99,37 @@
     --md-sys-color-surface-tint: #2DD4BF;
   }
 
+  :root {
+    --monet-seed: #4F5B92;
+  }
+
   .monet {
-    /* Authentic MD3 Monet Theme (Material You / Dynamic Colors) */
-    --md-sys-color-primary: #4F5B92;
+    /* Dynamic MD3 Monet Theme (Material You / Dynamic Colors) */
+    --md-sys-color-primary: var(--monet-seed);
     --md-sys-color-on-primary: #ffffff;
-    --md-sys-color-primary-container: #DDE1FF;
-    --md-sys-color-on-primary-container: #09164B;
+    --md-sys-color-primary-container: color-mix(in srgb, var(--monet-seed), white 80%);
+    --md-sys-color-on-primary-container: color-mix(in srgb, var(--monet-seed), black 60%);
 
-    --md-sys-color-secondary-container: #E0E1F9;
-    --md-sys-color-on-secondary-container: #181A2C;
+    --md-sys-color-secondary-container: color-mix(in srgb, var(--monet-seed), white 85%);
+    --md-sys-color-on-secondary-container: color-mix(in srgb, var(--monet-seed), black 80%);
 
-    --md-sys-color-surface: #FAF8FF;
-    --md-sys-color-on-surface: #1B1B1F;
+    --md-sys-color-surface: color-mix(in srgb, var(--monet-seed), white 96%);
+    --md-sys-color-on-surface: color-mix(in srgb, var(--monet-seed), black 85%);
+    
     --md-sys-color-surface-container-lowest: #ffffff;
-    --md-sys-color-surface-container-low: #F4F3F9;
-    --md-sys-color-surface-container: #EEEDF3;
-    --md-sys-color-surface-container-high: #E8E7ED;
-    --md-sys-color-surface-container-highest: #E2E1E7;
+    --md-sys-color-surface-container-low: color-mix(in srgb, var(--monet-seed), white 92%);
+    --md-sys-color-surface-container: color-mix(in srgb, var(--monet-seed), white 88%);
+    --md-sys-color-surface-container-high: color-mix(in srgb, var(--monet-seed), white 84%);
+    --md-sys-color-surface-container-highest: color-mix(in srgb, var(--monet-seed), white 80%);
 
-    --md-sys-color-inverse-surface: #2f3036;
-    --md-sys-color-inverse-on-surface: #f1f0f7;
-
-    --md-sys-color-outline: #767680;
-    --md-sys-color-outline-variant: #C6C5D0;
+    --md-sys-color-outline: color-mix(in srgb, var(--monet-seed), black 40%);
+    --md-sys-color-outline-variant: color-mix(in srgb, var(--monet-seed), white 70%);
 
     --md-sys-color-error: #BA1A1A;
     --md-sys-color-error-container: #FFDAD6;
     --md-sys-color-on-error-container: #410002;
 
-    --md-sys-color-tertiary: #77536D;
-    --md-sys-color-tertiary-container: #FFD7F1;
-    --md-sys-color-on-tertiary-container: #2D1228;
-
-    --md-sys-color-surface-tint: #4F5B92;
+    --md-sys-color-surface-tint: var(--monet-seed);
   }
 
   body {

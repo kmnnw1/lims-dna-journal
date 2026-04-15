@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Database, FileSpreadsheet, ShieldAlert, Trash2, UserPlus, Download } from 'lucide-react';
+import { ArrowLeft, Database, FileSpreadsheet, ShieldAlert, Trash2, UserPlus, Download, Sparkles } from 'lucide-react';
 import { MD3Field } from '@/components/ui/MD3Field';
 import { AdminUserRow } from '@/components/pages/AdminUserRow';
 import { useAdminPage } from '@/hooks/useAdminPage';
@@ -15,6 +15,8 @@ export function AdminPageContent(props: AdminPageProps) {
 		status,
 		users,
 		adminCount,
+		firstName,
+		lastName,
 		username,
 		password,
 		role,
@@ -22,6 +24,8 @@ export function AdminPageContent(props: AdminPageProps) {
 		importBusy,
 		useAI,
 		loadingUsers,
+		setFirstName,
+		setLastName,
 		setUsername,
 		setPassword,
 		setRole,
@@ -137,26 +141,51 @@ export function AdminPageContent(props: AdminPageProps) {
 					<form onSubmit={handleCreateUser} className="rounded-[2rem] bg-[var(--md-sys-color-surface-container-low)] p-6 shadow-sm lg:col-span-1 h-fit">
 						<h2 className="mb-4 text-xl font-medium tracking-tight">Новый пользователь</h2>
 						<div className="space-y-4 mb-8">
+							<div className="grid grid-cols-2 gap-3">
+								<MD3Field
+									required
+									type="text"
+									label="Имя"
+									value={firstName}
+									onChange={(e) => setFirstName(e.target.value)}
+								/>
+								<MD3Field
+									required
+									type="text"
+									label="Фамилия"
+									value={lastName}
+									onChange={(e) => setLastName(e.target.value)}
+								/>
+							</div>
 							<MD3Field
 								required
 								type="text"
-								label="Логин"
+								label="Логин (авто)"
 								value={username}
-								minLength={3}
-								maxLength={24}
-								autoComplete="username"
-								onChange={(e) => setUsername(e.target.value.replace(/\s/g, '').toLowerCase())}
+								onChange={(e) => setUsername(e.target.value.toLowerCase())}
 							/>
-							<MD3Field
-								required
-								type="password"
-								label="Пароль"
-								value={password}
-								minLength={5}
-								maxLength={64}
-								autoComplete="new-password"
-								onChange={(e) => setPassword(e.target.value)}
-							/>
+							<div className="relative">
+								<MD3Field
+									required
+									type="text"
+									label="Пароль (авто)"
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+								/>
+								<button 
+									type="button"
+									onClick={() => {
+										const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+										let pass = '';
+										for (let i = 0; i < 8; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+										setPassword(pass);
+									}}
+									className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--md-sys-color-primary)] p-2 hover:bg-[var(--md-sys-color-primary-container)] rounded-full transition-colors"
+									title="Обновить пароль"
+								>
+									<Sparkles className="w-4 h-4" />
+								</button>
+							</div>
 							<MD3Field isSelect label="Роль" value={role} onChange={(e) => setRole(e.target.value)}>
 								<option value="EDITOR">Редактор (EDITOR)</option>
 								<option value="READER">Только чтение (READER)</option>

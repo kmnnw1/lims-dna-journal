@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { parseApiResponse } from '@/lib/api/api-client';
+import { transliterate } from '@/lib/translit';
 
 export type AdminUser = {
 	id: string;
@@ -13,6 +14,8 @@ export type AdminUser = {
 export function useAdminPage() {
 	const { data: session, status } = useSession();
 	const [users, setUsers] = useState<AdminUser[]>([]);
+	const [firstName, setFirstName] = useState('');
+	const [lastName, setLastName] = useState('');
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 	const [role, setRole] = useState('EDITOR');
@@ -58,6 +61,43 @@ export function useAdminPage() {
 		if (session?.user?.role === 'ADMIN') fetchUsers();
 	}, [session, fetchUsers]);
 
+	// Auto-generate credentials when names change
+	useEffect(() => {
+		if (!firstName && !lastName) return;
+		
+		// Map for quick collision lookup
+		const existingLogins = new Set(users.map(u => u.username.toLowerCase()));
+		
+		// Generate base login: name.surname (transliterated)
+		const firstTrans = transliterate(firstName);
+		const lastTrans = transliterate(lastName);
+		
+		if (!lastTrans) {
+			if (firstTrans) setUsername(firstTrans);
+			return;
+		}
+
+		const baseLogin = firstTrans ? `${firstTrans}.${lastTrans}` : lastTrans;
+		let suggestedLogin = baseLogin;
+		let counter = 1;
+
+		// Handle duplicates by adding numbers
+		while (existingLogins.has(suggestedLogin)) {
+			suggestedLogin = `${baseLogin}${counter}`;
+			counter++;
+		}
+		
+		setUsername(suggestedLogin);
+
+		// Generate random password if one isn't set yet or is short
+		if (password.length < 5) {
+			const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+			let pass = '';
+			for (let i = 0; i < 8; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+			setPassword(pass);
+		}
+	}, [firstName, lastName, users]);
+
 	const handleCreateUser = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!username.trim() || !password.trim()) {
@@ -77,6 +117,8 @@ export function useAdminPage() {
 			return;
 		}
 
+		setFirstName('');
+		setLastName('');
 		setUsername('');
 		setPassword('');
 		showToast('Пользователь создан', 'success');
@@ -162,6 +204,8 @@ export function useAdminPage() {
 		status,
 		users,
 		adminCount,
+		firstName,
+		lastName,
 		username,
 		password,
 		role,
@@ -169,6 +213,8 @@ export function useAdminPage() {
 		importBusy,
 		useAI,
 		loadingUsers,
+		setFirstName,
+		setLastName,
 		setUsername,
 		setPassword,
 		setRole,

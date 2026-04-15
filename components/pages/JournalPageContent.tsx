@@ -58,6 +58,13 @@ export function JournalPageContent() {
 		handleExportXLSX,
 		handleSignOut,
 		setPage,
+		minConc,
+		setMinConc,
+		maxConc,
+		setMaxConc,
+		selectedOperator,
+		setSelectedOperator,
+		suggestions,
 		toastMessage,
 		setToastMessage,
 	} = useJournalPage();
@@ -124,27 +131,28 @@ export function JournalPageContent() {
 					onSignOut={handleSignOut}
 					theme={theme}
 					setTheme={handleThemeToggle}
+					minConc={minConc}
+					setMinConc={setMinConc}
+					maxConc={maxConc}
+					setMaxConc={setMaxConc}
+					selectedOperator={selectedOperator}
+					setSelectedOperator={setSelectedOperator}
+					suggestions={suggestions}
 				/>
 
-				<div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-					<div className="flex-1 min-w-[200px]">
+				<div className="flex flex-row items-center justify-between gap-3 mb-4 bg-[var(--md-sys-color-surface-container-low)]/50 p-2 rounded-[2rem] border border-[var(--md-sys-color-outline-variant)]/20">
+					<div className="flex-1 overflow-x-auto no-scrollbar">
 						<StatsCards {...stats} />
 					</div>
 					
-					<div className="flex items-center gap-3 justify-end flex-wrap w-full lg:w-auto">
-						<button
-							onClick={() => setIsScanOpen(true)}
-							className="flex md:hidden items-center gap-2 px-5 py-2.5 bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-sm active:scale-95">
-							<Camera className="w-5 h-5" />
-							<span>Сканировать</span>
-						</button>
+					<div className="flex items-center gap-2 flex-shrink-0 pr-2">
 						<div className="relative" ref={exportRef}>
 							<button
 								onClick={() => setIsExportOpen(!isExportOpen)}
-								className="flex items-center gap-2 px-5 py-2.5 bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-sm active:scale-95">
-								<Download className="w-5 h-5" />
-								<span className="hidden sm:inline">Экспорт</span>
-								<ChevronDown className="w-4 h-4 ml-1" />
+								className="flex items-center gap-2 px-4 py-2 bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95">
+								<Download className="w-4 h-4 sm:w-5 sm:h-5" />
+								<span className="hidden lg:inline">Экспорт</span>
+								<ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
 							</button>
 							{isExportOpen && (
 								<div className="absolute top-full right-0 mt-2 min-w-[160px] py-2 bg-[var(--md-sys-color-surface-container-lowest)] rounded-2xl shadow-xl md-elevation-3 z-50 border border-[var(--md-sys-color-outline-variant)]/30">
@@ -169,9 +177,7 @@ export function JournalPageContent() {
 								</div>
 							)}
 						</div>
-						{totalPages > 1 && specimens.length > 5 && (
-							<PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
-						)}
+						<PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
 					</div>
 				</div>
 					
@@ -191,9 +197,7 @@ export function JournalPageContent() {
 					onSort={handleSort}
 				/>
 
-				<div className="mt-4 flex w-full justify-end">
-					<PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
-				</div>
+
 
 				{selectedIds.size > 0 && (
 					<div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-[var(--md-sys-color-inverse-surface)] text-[var(--md-sys-color-inverse-on-surface)] rounded-[1.5rem] p-4 flex items-center justify-between shadow-2xl z-50">

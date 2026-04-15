@@ -46,6 +46,12 @@ export function useJournalPage() {
 	const [filterType, setFilterType] = useState<'all' | 'success' | 'error' | 'fav'>('all');
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [toastMessage, setToastMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
+	const [suggestions, setSuggestions] = useState<{ labs: string[], operators: string[], methods: string[] }>({ labs: [], operators: [], methods: [] });
+	
+	const [minConc, setMinConc] = useState<number | null>(null);
+	const [maxConc, setMaxConc] = useState<number | null>(null);
+	const [selectedOperator, setSelectedOperator] = useState<string>('');
+	
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [editingSpecimen, setEditingSpecimen] = useState<Specimen | null>(null);
 	const [activePcrSpecimen, setActivePcrSpecimen] = useState<Specimen | null>(null);
@@ -71,7 +77,7 @@ export function useJournalPage() {
 
 	useEffect(() => {
 		setPage(1);
-	}, [debouncedSearch, filterType, sortConfig]);
+	}, [debouncedSearch, filterType, sortConfig, minConc, maxConc, selectedOperator]);
 
 	const fetchSpecimens = useCallback(async () => {
 		setLoading(true);
@@ -83,6 +89,9 @@ export function useJournalPage() {
 				filter: filterType,
 				sortBy: sortConfig?.key || 'id',
 				sortOrder: sortConfig?.direction || 'asc',
+				minConc: minConc?.toString() || '',
+				maxConc: maxConc?.toString() || '',
+				operator: selectedOperator,
 			});
 			const res = await fetch(`/api/specimens?${params.toString()}`);
 			const data = await res.json();
@@ -91,13 +100,14 @@ export function useJournalPage() {
 				setSpecimens(data.specimens);
 				setTotalPages(data.totalPages || 1);
 				setTotalGlobal(data.total || 0);
+				if (data.suggestions) setSuggestions(data.suggestions);
 			}
 		} catch {
 			setSpecimens([]);
 		} finally {
 			setLoading(false);
 		}
-	}, [page, debouncedSearch, filterType, sortConfig]);
+	}, [page, debouncedSearch, filterType, sortConfig, minConc, maxConc, selectedOperator]);
 
 	useEffect(() => {
 		if (status === 'unauthenticated') router.push('/login');
@@ -342,8 +352,14 @@ export function useJournalPage() {
 		handleExportXLSX,
 		handlePrintLabels,
 		handleSignOut,
-		fetchSpecimens,
 		setPage,
+		minConc,
+		setMinConc,
+		maxConc,
+		setMaxConc,
+		selectedOperator,
+		setSelectedOperator,
+		suggestions,
 		toastMessage,
 		setToastMessage,
 	};

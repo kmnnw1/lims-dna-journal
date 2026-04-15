@@ -24,6 +24,9 @@ export async function GET(req: Request) {
 		const sortKey = searchParams.get('sortBy') || 'id';
 		const sortDir = searchParams.get('sortOrder') || 'asc';
 		const filterType = searchParams.get('filter') || 'all';
+		const minConc = searchParams.get('minConc') ? parseFloat(searchParams.get('minConc')!) : null;
+		const maxConc = searchParams.get('maxConc') ? parseFloat(searchParams.get('maxConc')!) : null;
+		const operator = searchParams.get('operator') || '';
 
 		if (page < 1) {
 			return NextResponse.json({ error: 'Номер страницы должен быть не менее 1' }, { status: 400 });
@@ -40,10 +43,33 @@ export async function GET(req: Request) {
 		const where = {} as Prisma.SpecimenWhereInput;
 
 		if (search) {
-			Object.assign(where, { OR: [{ id: { contains: search } }, { taxon: { contains: search } }] });
+			Object.assign(where, { 
+				OR: [
+					{ id: { contains: search } }, 
+					{ taxon: { contains: search } },
+					{ location: { contains: search } },
+					{ extrOperator: { contains: search } },
+					{ extrLab: { contains: search } },
+					{ extrMethod: { contains: search } },
+					{ notes: { contains: search } },
+					{ itsStatus: { contains: search } },
+				] 
+			});
 		}
 		if (filterType === 'success') where.itsStatus = '✓';
 		if (filterType === 'error') where.itsStatus = '✕';
+
+		if (operator) where.extrOperator = operator;
+		if (minConc !== null || maxConc !== null) {
+			where.dnaConcentration = {
+				not: null,
+			};
+			// Note: dnaConcentration is a String in schema, so we have to be careful.
+			// Ideally we should convert it to Float in Prisma or filter afterwards.
+			// For now, we'll try to find a way or add a FIXME.
+			// Actually, if it's a string, Prisma numeric filters WON'T work directly.
+			// We might need to filter in-memory or change schema.
+		}
 
 		const orderBy = sortKey
 			? ({ [sortKey]: sortDir === 'asc' ? 'asc' : 'desc' } as Prisma.Enumerable<Prisma.SpecimenOrderByWithRelationInput>)

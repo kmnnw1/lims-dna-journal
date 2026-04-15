@@ -6,6 +6,13 @@ import { Filter, Check, X } from 'lucide-react';
 interface QuickFilterBarProps {
   filterType: 'all' | 'success' | 'error' | 'fav';
   onFilterChange: (filter: 'all' | 'success' | 'error' | 'fav') => void;
+  minConc: number | null;
+  setMinConc: (val: number | null) => void;
+  maxConc: number | null;
+  setMaxConc: (val: number | null) => void;
+  selectedOperator: string;
+  setSelectedOperator: (val: string) => void;
+  suggestions: { labs: string[], operators: string[], methods: string[] };
 }
 
 const filterButtons = [
@@ -14,12 +21,26 @@ const filterButtons = [
   { value: 'error', label: 'Ошибки' },
 ];
 
-export function QuickFilterBar({ filterType, onFilterChange }: QuickFilterBarProps) {
+export function QuickFilterBar({ 
+    filterType, 
+    onFilterChange,
+    minConc,
+    setMinConc,
+    maxConc,
+    setMaxConc,
+    selectedOperator,
+    setSelectedOperator,
+    suggestions
+}: QuickFilterBarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [activeMarkers, setActiveMarkers] = useState<Set<string>>(new Set(['ITS']));
-  const [selectedOperator, setSelectedOperator] = useState<string>('');
+  
+  // Local states for the form (Apply logic)
+  const [localMin, setLocalMin] = useState(minConc ?? 0);
+  const [localMax, setLocalMax] = useState(maxConc ?? 200);
+  const [localOperator, setLocalOperator] = useState(selectedOperator);
 
   useEffect(() => {
       const handleClick = (e: MouseEvent) => {
@@ -111,18 +132,46 @@ export function QuickFilterBar({ filterType, onFilterChange }: QuickFilterBarPro
                   </div>
 
                   {/* Диапазон */}
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                       <div className="flex justify-between items-center">
                           <label className="text-xs font-bold tracking-wider text-[var(--md-sys-color-outline)] uppercase">Концентрация ДНК</label>
-                          <span className="text-xs font-semibold text-[var(--md-sys-color-primary)]">15 - 120 нг/мкл</span>
+                          <span className="text-xs font-semibold text-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-primary-container)] px-2 py-0.5 rounded-full">
+                            {localMin} — {localMax} нг/мкл
+                          </span>
                       </div>
-                      <div className="relative w-full h-8 flex items-center group cursor-pointer">
-                          <div className="w-full h-2 rounded-full bg-[var(--md-sys-color-surface-container-high)] overflow-hidden">
-                              <div className="h-full bg-[var(--md-sys-color-primary)] w-3/4 ml-[10%]"></div>
-                          </div>
-                          {/* Thumbs - mock */}
-                          <div className="absolute left-[10%] w-5 h-5 -ml-2.5 bg-white border border-[var(--md-sys-color-outline-variant)] rounded-full shadow block"></div>
-                          <div className="absolute left-[85%] w-5 h-5 -ml-2.5 bg-white border border-[var(--md-sys-color-outline-variant)] rounded-full shadow block"></div>
+                      <div className="relative pt-4 px-2">
+                        {/* Real HTML5 dual slider hack or simple range */}
+                        <div className="relative h-2 rounded-full bg-[var(--md-sys-color-surface-container-high)]">
+                            <div 
+                              className="absolute h-full bg-[var(--md-sys-color-primary)] rounded-full"
+                              style={{ 
+                                left: `${(localMin / 200) * 100}%`, 
+                                right: `${100 - (localMax / 200) * 100}%` 
+                              }}
+                            />
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="200"
+                          value={localMin}
+                          onChange={(e) => {
+                            const val = Math.min(Number(e.target.value), localMax - 1);
+                            setLocalMin(val);
+                          }}
+                          className="absolute w-full -top-1 left-0 h-4 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[var(--md-sys-color-primary)] [&::-webkit-slider-thumb]:appearance-none"
+                        />
+                        <input
+                          type="range"
+                          min="0"
+                          max="200"
+                          value={localMax}
+                          onChange={(e) => {
+                            const val = Math.max(Number(e.target.value), localMin + 1);
+                            setLocalMax(val);
+                          }}
+                          className="absolute w-full -top-1 left-0 h-4 bg-transparent appearance-none pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[var(--md-sys-color-primary)] [&::-webkit-slider-thumb]:appearance-none"
+                        />
                       </div>
                   </div>
 
@@ -130,28 +179,42 @@ export function QuickFilterBar({ filterType, onFilterChange }: QuickFilterBarPro
                   <div className="space-y-3">
                       <label className="text-xs font-bold tracking-wider text-[var(--md-sys-color-outline)] uppercase">Исполнитель (Лаборант)</label>
                       <select 
-                          value={selectedOperator}
-                          onChange={(e) => setSelectedOperator(e.target.value)}
-                          className="w-full p-2.5 rounded-xl bg-[var(--md-sys-color-surface-container)] border border-transparent text-[var(--md-sys-color-on-surface)] focus:bg-[var(--md-sys-color-surface-container-high)] outline-none text-sm font-medium transition-all"
+                          value={localOperator}
+                          onChange={(e) => setLocalOperator(e.target.value)}
+                          className="w-full p-2.5 rounded-xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)]/30 text-[var(--md-sys-color-on-surface)] focus:bg-[var(--md-sys-color-surface-container-high)] outline-none text-sm font-medium transition-all"
                       >
                           <option value="">Любой</option>
-                          <option value="ivanov">Иванов И.И.</option>
-                          <option value="petrov">Петров П.П.</option>
-                          <option value="sidorova">Сидорова А.А.</option>
+                          {suggestions.operators.map(op => (
+                              <option key={op} value={op}>{op}</option>
+                          ))}
                       </select>
                   </div>
               </div>
 
               <div className="p-4 bg-[var(--md-sys-color-surface-container-lowest)] border-t border-[var(--md-sys-color-outline-variant)]/30 flex justify-end gap-3">
                   <button 
-                      onClick={() => { setActiveMarkers(new Set()); setSelectedOperator(''); onFilterChange('all'); }}
+                      onClick={() => { 
+                        setActiveMarkers(new Set()); 
+                        setLocalOperator(''); 
+                        setLocalMin(0);
+                        setLocalMax(200);
+                        setMinConc(null);
+                        setMaxConc(null);
+                        setSelectedOperator('');
+                        onFilterChange('all'); 
+                      }}
                       className="px-5 py-2 rounded-full text-sm font-semibold text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors"
                   >
                       Сбросить
                   </button>
                   <button 
-                      onClick={() => setIsOpen(false)}
-                      className="px-6 py-2 rounded-full text-sm font-bold bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:opacity-90 transition-opacity"
+                      onClick={() => {
+                        setMinConc(localMin);
+                        setMaxConc(localMax);
+                        setSelectedOperator(localOperator);
+                        setIsOpen(false);
+                      }}
+                      className="px-6 py-2 rounded-full text-sm font-bold bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:opacity-90 transition-opacity md-elevation-1"
                   >
                       Применить
                   </button>
