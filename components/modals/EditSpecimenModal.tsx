@@ -24,6 +24,14 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit, speci
 		return () => window.removeEventListener('keydown', onKeyDown);
 	}, [specimen, onClose]);
 
+	const taxons = useMemo(() => Array.from(new Set(specimens.map(s => s.taxon).filter(Boolean))), [specimens]);
+	const localities = useMemo(() => Array.from(new Set(specimens.map(s => s.locality).filter(Boolean))), [specimens]);
+	const collectors = useMemo(() => Array.from(new Set(specimens.map(s => s.collector).filter(Boolean))), [specimens]);
+	const labs = useMemo(() => Array.from(new Set(specimens.map(s => s.extrLab).filter(Boolean))), [specimens]);
+	const operators = useMemo(() => Array.from(new Set(specimens.map(s => s.extrOperator).filter(Boolean))), [specimens]);
+	const methods = useMemo(() => Array.from(new Set(specimens.map(s => s.extrMethod).filter(Boolean))), [specimens]);
+	const measOperators = useMemo(() => Array.from(new Set(specimens.map(s => s.measOperator).filter(Boolean))), [specimens]);
+
 	if (!specimen) return null;
 
 	const isEmpty =
@@ -39,14 +47,6 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit, speci
 		!specimen.dnaConcentration &&
 		!specimen.measOperator &&
 		!specimen.measDate;
-
-	const taxons = useMemo(() => Array.from(new Set(specimens.map(s => s.taxon).filter(Boolean))), [specimens]);
-	const localities = useMemo(() => Array.from(new Set(specimens.map(s => s.locality).filter(Boolean))), [specimens]);
-	const collectors = useMemo(() => Array.from(new Set(specimens.map(s => s.collector).filter(Boolean))), [specimens]);
-	const labs = useMemo(() => Array.from(new Set(specimens.map(s => s.extrLab).filter(Boolean))), [specimens]);
-	const operators = useMemo(() => Array.from(new Set(specimens.map(s => s.extrOperator).filter(Boolean))), [specimens]);
-	const methods = useMemo(() => Array.from(new Set(specimens.map(s => s.extrMethod).filter(Boolean))), [specimens]);
-	const measOperators = useMemo(() => Array.from(new Set(specimens.map(s => s.measOperator).filter(Boolean))), [specimens]);
 
 	return (
 		<div

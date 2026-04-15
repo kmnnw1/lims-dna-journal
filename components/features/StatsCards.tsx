@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FlaskConical, CheckCircle, Clock } from 'lucide-react';
+import { FlaskConical, Clock } from 'lucide-react';
 
 interface StatsCardsProps {
 	total: number;
@@ -11,19 +11,19 @@ interface StatsCardsProps {
 
 export const StatsCards: React.FC<StatsCardsProps> = ({ total, successful, others }) => {
 	const pct = total > 0 ? Math.round((successful / total) * 100) : 0;
-	const circumference = 2 * Math.PI * 18; // r=18
+	const circumference = 2 * Math.PI * 18;
 	const strokeDashoffset = circumference - (pct / 100) * circumference;
 
 	return (
-		<div className="flex flex-wrap items-center gap-2 mb-8">
+		<div className="flex flex-wrap items-center gap-2">
 			{/* Всего проб */}
 			<div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] transition-all hover:bg-[var(--md-sys-color-secondary-container-highest)]">
 				<FlaskConical className="w-3.5 h-3.5 opacity-70" strokeWidth={2} />
 				<span className="text-[10px] font-bold uppercase tracking-wider opacity-60">Всего</span>
 				<span className="text-base font-bold tabular-nums tracking-tight">{total}</span>
 			</div>
-...
-			{/* Успешные ITS — с кольцом прогресса (MD3 Tertiary Style) */}
+
+			{/* Успешные ITS */}
 			<div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] transition-all group">
 				<div className="relative w-6 h-6">
 					<svg className="w-6 h-6 -rotate-90" viewBox="0 0 40 40">

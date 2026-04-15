@@ -141,7 +141,7 @@ export function JournalPageContent() {
 				/>
 
 				<div className="flex flex-row items-center justify-between gap-3 mb-4 bg-[var(--md-sys-color-surface-container-low)]/50 p-2 rounded-[2rem] border border-[var(--md-sys-color-outline-variant)]/20">
-					<div className="flex-1 overflow-x-auto no-scrollbar">
+					<div className="flex-1 overflow-x-auto no-scrollbar flex items-center">
 						<StatsCards {...stats} />
 					</div>
 					
