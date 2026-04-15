@@ -11,31 +11,31 @@ export function useJournalPage() {
 	const router = useRouter();
 	const [specimens, setSpecimens] = useState<Specimen[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [isDark, setIsDark] = useState(false);
+	const [theme, setTheme] = useState<'light' | 'dark' | 'monet'>('light');
 
 	// Theme initialization & sync
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
-		const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-		const saved = localStorage.getItem('theme');
-		if (saved === 'dark' || (!saved && sysDark)) {
-			setIsDark(true);
-			document.documentElement.classList.add('dark');
+		const saved = localStorage.getItem('theme') as 'light' | 'dark' | 'monet' | null;
+		if (saved) {
+			setTheme(saved);
+			document.documentElement.classList.remove('dark', 'monet');
+			if (saved !== 'light') document.documentElement.classList.add(saved);
 		} else {
-			document.documentElement.classList.remove('dark');
+			const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+			if (sysDark) {
+				setTheme('dark');
+				document.documentElement.classList.add('dark');
+			}
 		}
 	}, []);
 
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
-		if (isDark) {
-			document.documentElement.classList.add('dark');
-			localStorage.setItem('theme', 'dark');
-		} else {
-			document.documentElement.classList.remove('dark');
-			localStorage.setItem('theme', 'light');
-		}
-	}, [isDark]);
+		document.documentElement.classList.remove('dark', 'monet');
+		if (theme !== 'light') document.documentElement.classList.add(theme);
+		localStorage.setItem('theme', theme);
+	}, [theme]);
 
 	const [page, setPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
@@ -68,11 +68,6 @@ export function useJournalPage() {
 		dnaMatrix: '',
 		result: 'Success' as 'Success' | 'Failed',
 	});
-
-	useEffect(() => {
-		if (isDark) document.documentElement.classList.add('dark');
-		else document.documentElement.classList.remove('dark');
-	}, [isDark]);
 
 	useEffect(() => {
 		setPage(1);
@@ -240,7 +235,7 @@ export function useJournalPage() {
 		}
 	};
 
-	const handleExportExcel = () => {
+	const handleExportCSV = () => {
 		const csvContent =
 			'data:text/csv;charset=utf-8,' +
 			'ID,Taxon,Locality,ITS,SSU,LSU,MCM7\n' +
@@ -258,6 +253,49 @@ export function useJournalPage() {
 		document.body.removeChild(link);
 	};
 
+	const handleExportXLSX = async () => {
+		try {
+			const ExcelJS = (await import('exceljs')).default;
+			const workbook = new ExcelJS.Workbook();
+			const sheet = workbook.addWorksheet('Пробы');
+			
+			sheet.columns = [
+				{ header: 'ID', key: 'id', width: 10 },
+				{ header: 'Таксон', key: 'taxon', width: 25 },
+				{ header: 'Локализация', key: 'locality', width: 25 },
+				{ header: 'ITS', key: 'itsStatus', width: 10 },
+				{ header: 'SSU', key: 'ssuStatus', width: 10 },
+				{ header: 'LSU', key: 'lsuStatus', width: 10 },
+				{ header: 'MCM7', key: 'mcm7Status', width: 10 },
+			];
+
+			specimens.forEach((s) => {
+				sheet.addRow({
+					id: s.id,
+					taxon: s.taxon || '',
+					locality: s.locality || '',
+					itsStatus: s.itsStatus || '',
+					ssuStatus: s.ssuStatus || '',
+					lsuStatus: s.lsuStatus || '',
+					mcm7Status: s.mcm7Status || '',
+				});
+			});
+
+			const buffer = await workbook.xlsx.writeBuffer();
+			const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `export_${new Date().toISOString().split('T')[0]}.xlsx`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(url);
+		} catch (error) {
+			setToastMessage({ text: 'Ошибка при формировании XLSX', type: 'error' });
+		}
+	};
+
 	const handlePrintLabels = () => {
 		alert('Функция печати этикеток будет реализована позже.');
 	};
@@ -267,8 +305,8 @@ export function useJournalPage() {
 		status,
 		specimens,
 		loading,
-		isDark,
-		setIsDark,
+		theme,
+		setTheme,
 		page,
 		totalPages,
 		totalGlobal,
@@ -300,7 +338,8 @@ export function useJournalPage() {
 		handleEditSubmit,
 		handlePcrSubmit,
 		handleStatusToggle,
-		handleExportExcel,
+		handleExportCSV,
+		handleExportXLSX,
 		handlePrintLabels,
 		handleSignOut,
 		fetchSpecimens,

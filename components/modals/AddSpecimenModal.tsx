@@ -1,8 +1,8 @@
 'use client';
 
 import { X } from 'lucide-react';
-import type { NewRecordForm } from '@/types';
-import { useRef, useEffect } from 'react';
+import type { NewRecordForm, Specimen } from '@/types';
+import { useRef, useEffect, useMemo } from 'react';
 import { MD3Field } from '@/components/ui/MD3Field';
 
 type Props = {
@@ -12,6 +12,7 @@ type Props = {
 	setNewRecord: (val: NewRecordForm) => void;
 	onSubmit: (e: React.FormEvent) => void;
 	validationError?: string;
+	specimens: Specimen[];
 };
 
 export function AddSpecimenModal({
@@ -21,6 +22,7 @@ export function AddSpecimenModal({
 	setNewRecord,
 	onSubmit,
 	validationError,
+	specimens = [],
 }: Props) {
 	const idInputRef = useRef<HTMLInputElement>(null);
 	const overlayRef = useRef<HTMLDivElement>(null);
@@ -30,6 +32,10 @@ export function AddSpecimenModal({
 			idInputRef.current.focus();
 		}
 	}, [open]);
+
+	const taxons = useMemo(() => Array.from(new Set(specimens.map(s => s.taxon).filter(Boolean))), [specimens]);
+	const labs = useMemo(() => Array.from(new Set(specimens.map(s => s.extrLab).filter(Boolean))), [specimens]);
+	const operators = useMemo(() => Array.from(new Set(specimens.map(s => s.extrOperator).filter(Boolean))), [specimens]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -88,6 +94,7 @@ export function AddSpecimenModal({
 
 				{/* Таксон —  — среднее скругление !rounded-[0.5rem] */}
 				<MD3Field
+					list="taxons-list"
 					label="Таксон"
 					value={newRecord.taxon}
 					maxLength={80}
@@ -117,6 +124,16 @@ export function AddSpecimenModal({
 				className="!bg-[var(--md-sys-color-surface-container-high)] !rounded-t-[0.25rem] !rounded-b-[1rem]"
 				data-testid="addspecimen-operator"
 			/>
+
+					<datalist id="taxons-list">
+						{taxons.map((t, i) => <option key={i} value={t as string} />)}
+					</datalist>
+					<datalist id="labs-list">
+						{labs.map((t, i) => <option key={i} value={t as string} />)}
+					</datalist>
+					<datalist id="ops-list">
+						{operators.map((t, i) => <option key={i} value={t as string} />)}
+					</datalist>
 
 					{/* Ошибка валидации */}
 					{validationError && (

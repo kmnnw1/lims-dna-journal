@@ -1,13 +1,19 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useState, useEffect, useRef, Suspense, forwardRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { AlertCircle, ArrowRight } from 'lucide-react';
-import { AnimatedFlask } from '@/components/ui/AnimatedFlask';
+import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { MD3Field } from '@/components/ui/MD3Field';
 
 import { useRouter } from 'next/navigation';
+
+// Динамический импорт для предотвращения Hydration Error (Math.random)
+const AnimatedFlask = dynamic(
+	() => import('@/components/ui/AnimatedFlask').then(mod => mod.AnimatedFlask),
+	{ ssr: false }
+);
 
 function LoginContent() {
 	const router = useRouter();
@@ -90,7 +96,7 @@ function LoginContent() {
 					/>
 
 					<MD3Field
-						label="Одноразовый Токен или Пароль"
+						label="Одноразовый токен или пароль"
 						type="password"
 						required
 						value={password}

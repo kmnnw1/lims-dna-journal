@@ -78,21 +78,8 @@ Represents individual PCR amplification attempts.
 
 **Relationships:**
 - `specimen`: Many-to-one with Specimen
-- `sequencingResult`: One-to-one with SequencingResult
 
-### SequencingResult
-Represents sequencing results from successful PCR attempts.
 
-**Fields:**
-- `id`: UUID primary key
-- `pcrAttemptId`: Foreign key to PcrAttempt (unique)
-- `sequenceData`: DNA sequence data
-- `chromatogram`: Chromatogram file/data
-- `qualityScore`: Sequencing quality score
-- `createdAt`: Record creation timestamp
-
-**Relationships:**
-- `pcrAttempt`: One-to-one with PcrAttempt
 
 ### AuditLog
 Tracks all changes and actions in the system for compliance and debugging.
@@ -120,22 +107,18 @@ Tracks all changes and actions in the system for compliance and debugging.
 User (1) ────► AuditLog (many)
 
 Specimen (1) ────► PcrAttempt (many)
-                    │
-                    ▼
-              SequencingResult (1)
 ```
 
 ## Data Flow
 
 1. **Specimen Collection**: Specimen records are created with collection and extraction data
 2. **PCR Attempts**: Multiple PCR attempts can be made per specimen
-3. **Sequencing**: Successful PCR attempts may lead to sequencing results
-4. **Audit Trail**: All changes are logged in AuditLog for compliance
+3. **Audit Trail**: All changes are logged in AuditLog for compliance
 
 ## Key Design Decisions
 
 - **UUID Primary Keys**: Ensures global uniqueness and prevents enumeration attacks
-- **Cascading Deletes**: Deleting a specimen automatically removes related PCR attempts and sequencing results
+- **Cascading Deletes**: Deleting a specimen automatically removes related PCR attempts
 - **Flexible Status Fields**: Status fields (itsStatus, ssuStatus, etc.) allow tracking progress through sequencing pipeline
 - **Import Tracking**: Fields like `importOrigin` and `importRow` help trace data provenance
 - **Comprehensive Auditing**: All actions are logged with detailed change tracking

@@ -22,11 +22,11 @@ export function useAdminPage() {
 	const [loadingUsers, setLoadingUsers] = useState(false);
 	const toastTimeout = useRef<NodeJS.Timeout | null>(null);
 
-	const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+	const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
 		setToast({ message, type });
 		if (toastTimeout.current) clearTimeout(toastTimeout.current);
 		toastTimeout.current = setTimeout(() => setToast(null), 4000);
-	};
+	}, []);
 
 	const fetchUsers = useCallback(async () => {
 		setLoadingUsers(true);

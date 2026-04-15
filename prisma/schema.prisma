@@ -76,20 +76,9 @@ model PcrAttempt {
   result           String
   resultNotes      String?
   specimen         Specimen          @relation(fields: [specimenId], references: [id], onDelete: Cascade)
-  sequencingResult SequencingResult?
   createdAt        DateTime          @default(now())
 
   @@unique([specimenId, marker])
-}
-
-model SequencingResult {
-  id           String     @id @default(uuid())
-  pcrAttemptId String     @unique
-  pcrAttempt   PcrAttempt @relation(fields: [pcrAttemptId], references: [id], onDelete: Cascade)
-  sequenceData String?    
-  chromatogram String?    
-  qualityScore String?    
-  createdAt    DateTime   @default(now())
 }
 
 model AuditLog {

@@ -22,6 +22,9 @@ scratch/
 .aider*
 .cursor/
 .windsurf/
+BRAIN_HISTORY.md
+dialogs/
+BRAIN_LOG.md
 
 # ------------------------------------------------------------------------------
 # 2. NODE.JS & MODERN JAVASCRIPT ECOSYSTEM

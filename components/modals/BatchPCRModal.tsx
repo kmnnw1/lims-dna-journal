@@ -13,8 +13,6 @@ export default function BatchPcrModal({ open, selectedSpecimenIds, onClose }: Pr
 	const [loading, setLoading] = useState(false);
 	const [marker, setMarker] = useState('ITS');
 
-	if (!open) return null;
-
 	useEffect(() => {
 		if (!open) return;
 		const onKeyDown = (e: KeyboardEvent) => {
@@ -23,6 +21,8 @@ export default function BatchPcrModal({ open, selectedSpecimenIds, onClose }: Pr
 		window.addEventListener('keydown', onKeyDown);
 		return () => window.removeEventListener('keydown', onKeyDown);
 	}, [open, onClose]);
+
+	if (!open) return null;
 
 	const handleRunBatch = async () => {
 		setLoading(true);

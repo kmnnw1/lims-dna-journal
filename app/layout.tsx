@@ -1,19 +1,17 @@
 import type { Metadata, Viewport } from 'next';
-import { Manrope, Inter } from 'next/font/google';
+import { Outfit, Montserrat } from 'next/font/google';
 import { Providers } from '@/components/layout/Providers';
 import './globals.css';
 
-// Manrope — геометрический sans-serif с поддержкой кириллицы. Идеален для заголовков.
-// Inter — рабочая лошадка для основного текста. Оба шрифта премиального уровня.
-const manrope = Manrope({
-	subsets: ['cyrillic', 'latin'],
-	variable: '--font-manrope',
+const outfit = Outfit({
+	subsets: ['latin'],
+	variable: '--font-outfit',
 	display: 'swap',
 });
 
-const inter = Inter({
+const montserrat = Montserrat({
 	subsets: ['cyrillic', 'latin'],
-	variable: '--font-inter',
+	variable: '--font-montserrat',
 	display: 'swap',
 });
 
@@ -52,7 +50,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="ru" className={`${manrope.variable} ${inter.variable}`} suppressHydrationWarning>
+		<html lang="ru" className={`${outfit.variable} ${montserrat.variable} font-sans`} suppressHydrationWarning>
 			{/* Внедряем базовые токены MD3: цвет фона (Surface) и цвет текста (On Surface).
 				suppressHydrationWarning на body помогает избежать конфликтов с расширениями браузера.
 			*/}

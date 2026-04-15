@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-import { Printer, Plus, Download, Camera } from 'lucide-react';
+import { Printer, Plus, Download, Camera, ChevronDown } from 'lucide-react';
 import { JournalHeader } from '@/components/features/JournalHeader';
 import { StatsCards } from '@/components/features/StatsCards';
 import { SpecimenTable } from '@/components/features/SpecimenTable';
@@ -22,7 +22,7 @@ export function JournalPageContent() {
 		status,
 		specimens,
 		loading,
-		isDark,
+		theme,
 		page,
 		totalPages,
 		searchQuery,
@@ -33,7 +33,7 @@ export function JournalPageContent() {
 		selectedIds,
 		setSelectedIds,
 		isAddModalOpen,
-		setIsDark,
+		setTheme,
 		setIsAddModalOpen,
 		editingSpecimen,
 		setEditingSpecimen,
@@ -54,12 +54,27 @@ export function JournalPageContent() {
 		handlePcrSubmit,
 		handleStatusToggle,
 		handlePrintLabels,
-		handleExportExcel,
+		handleExportCSV,
+		handleExportXLSX,
 		handleSignOut,
 		setPage,
 		toastMessage,
 		setToastMessage,
 	} = useJournalPage();
+
+	const [isExportOpen, setIsExportOpen] = useState(false);
+	const exportRef = useRef<HTMLDivElement>(null);
+
+	// Close export dropdown on outside click
+	useEffect(() => {
+		const handleClick = (e: MouseEvent) => {
+			if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+				setIsExportOpen(false);
+			}
+		};
+		document.addEventListener('mousedown', handleClick);
+		return () => document.removeEventListener('mousedown', handleClick);
+	}, []);
 
 	const handleSelect = (id: string) => {
 		setSelectedIds((current) => {
@@ -84,41 +99,83 @@ export function JournalPageContent() {
 		return () => clearTimeout(timer);
 	}, [toastMessage, setToastMessage]);
 
+	const handleThemeToggle = (newTheme: 'light' | 'dark' | 'monet') => {
+		if (!document.startViewTransition) {
+			setTheme(newTheme);
+			return;
+		}
+		document.startViewTransition(() => {
+			setTheme(newTheme);
+		});
+	};
+
 	if (status === 'loading') return null;
 
 	return (
-		<main className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] p-4 md:p-8 pb-32 transition-colors duration-300">
-			<div className="max-w-[1600px] mx-auto">
+		<main className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] p-3 md:p-6 pb-24 transition-colors duration-300">
+			<div className="w-full">
 				<JournalHeader
-					userName={session?.user?.name || 'Администратор'}
+					userName={session?.user?.name || 'Пользователь'}
+					userRole={(session?.user as any)?.role || 'READER'}
 					searchQuery={searchQuery}
 					setSearchQuery={setSearchQuery}
-					onAddClick={() => setIsAddModalOpen(true)}
+					filterType={filterType}
+					onFilterChange={setFilterType}
 					onSignOut={handleSignOut}
-					isDark={isDark}
-					setIsDark={setIsDark}
+					theme={theme}
+					setTheme={handleThemeToggle}
 				/>
 
-				<div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-					<QuickFilterBar filterType={filterType} onFilterChange={setFilterType} />
+				<div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+					<div className="flex-1 min-w-[200px]">
+						<StatsCards {...stats} />
+					</div>
 					
-					<div className="flex items-center gap-3">
+					<div className="flex items-center gap-3 justify-end flex-wrap w-full lg:w-auto">
 						<button
 							onClick={() => setIsScanOpen(true)}
-							className="flex items-center gap-2 px-5 py-2.5 bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-sm active:scale-95">
+							className="flex md:hidden items-center gap-2 px-5 py-2.5 bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-sm active:scale-95">
 							<Camera className="w-5 h-5" />
-							<span className="hidden sm:inline">Сканировать</span>
+							<span>Сканировать</span>
 						</button>
-						<button
-							onClick={handleExportExcel}
-							className="flex items-center gap-2 px-5 py-2.5 bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-sm active:scale-95">
-							<Download className="w-5 h-5" />
-							<span className="hidden sm:inline">Выгрузить CSV</span>
-						</button>
+						<div className="relative" ref={exportRef}>
+							<button
+								onClick={() => setIsExportOpen(!isExportOpen)}
+								className="flex items-center gap-2 px-5 py-2.5 bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-sm active:scale-95">
+								<Download className="w-5 h-5" />
+								<span className="hidden sm:inline">Экспорт</span>
+								<ChevronDown className="w-4 h-4 ml-1" />
+							</button>
+							{isExportOpen && (
+								<div className="absolute top-full right-0 mt-2 min-w-[160px] py-2 bg-[var(--md-sys-color-surface-container-lowest)] rounded-2xl shadow-xl md-elevation-3 z-50 border border-[var(--md-sys-color-outline-variant)]/30">
+									<button
+										onClick={() => {
+											setIsExportOpen(false);
+											handleExportCSV();
+										}}
+										className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors text-[var(--md-sys-color-on-surface)]"
+									>
+										Сохранить CSV
+									</button>
+									<button
+										onClick={() => {
+											setIsExportOpen(false);
+											handleExportXLSX();
+										}}
+										className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors text-[var(--md-sys-color-on-surface)]"
+									>
+										Сохранить Excel (.xlsx)
+									</button>
+								</div>
+							)}
+						</div>
+						{totalPages > 1 && specimens.length > 5 && (
+							<PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
+						)}
 					</div>
 				</div>
+					
 
-				<StatsCards {...stats} />
 
 				<SpecimenTable
 					specimens={specimens}
@@ -134,11 +191,19 @@ export function JournalPageContent() {
 					onSort={handleSort}
 				/>
 
-				<PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
+				<div className="mt-4 flex w-full justify-end">
+					<PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
+				</div>
 
 				{selectedIds.size > 0 && (
 					<div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-[var(--md-sys-color-inverse-surface)] text-[var(--md-sys-color-inverse-on-surface)] rounded-[1.5rem] p-4 flex items-center justify-between shadow-2xl z-50">
 						<div className="flex items-center gap-4 pl-2">
+							<button
+								onClick={() => setSelectedIds(new Set())}
+								className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+								title="Сбросить выделение">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+							</button>
 							<span className="flex items-center justify-center w-8 h-8 rounded-full bg-[var(--md-sys-color-inverse-primary)] text-[var(--md-sys-color-primary)] font-bold text-sm">
 								{selectedIds.size}
 							</span>
@@ -151,14 +216,9 @@ export function JournalPageContent() {
 								<Printer className="w-4 h-4" /> Печать
 							</button>
 							<button
-								onClick={() => setSelectedIds(new Set())}
-								className="px-5 py-2.5 text-sm font-medium text-[var(--md-sys-color-inverse-primary)] hover:bg-white/10 rounded-full transition-colors">
-								Сбросить
-							</button>
-							<button
 								onClick={() => setIsBatchModalOpen(true)}
 								className="px-5 py-2.5 text-sm font-medium text-[var(--md-sys-color-inverse-primary)] hover:bg-white/10 rounded-full transition-colors">
-								Batch PCR
+								Массовый ПЦР
 							</button>
 						</div>
 					</div>
@@ -170,7 +230,8 @@ export function JournalPageContent() {
 					onSubmit={handleAddSubmit}
 					newRecord={newRecordData}
 					setNewRecord={setNewRecordData}
-			/>
+					specimens={specimens}
+				/>
 				<PcrModal
 					open={Boolean(activePcrSpecimen)}
 					specimenId={activePcrSpecimen?.id || ''}
@@ -182,9 +243,10 @@ export function JournalPageContent() {
 				/>
 				<EditSpecimenModal
 					specimen={editingSpecimen}
-				onClose={() => setEditingSpecimen(null)}
-				onChange={(val) => val && setEditingSpecimen(val)}
-				onSubmit={handleEditSubmit}
+					onClose={() => setEditingSpecimen(null)}
+					onChange={(val) => val && setEditingSpecimen(val)}
+					onSubmit={handleEditSubmit}
+					specimens={specimens}
 				/>
 				<BatchPcrModal open={isBatchModalOpen} selectedSpecimenIds={[...selectedIds]} onClose={() => setIsBatchModalOpen(false)} />
 				<BarcodeScanDialog
@@ -197,7 +259,7 @@ export function JournalPageContent() {
 				/>
 			</div>
 
-			<FAB onClick={() => setIsAddModalOpen(true)} className="fixed bottom-6 right-6 z-50" aria-label="Добавить пробу">
+			<FAB onClick={() => setIsAddModalOpen(true)} className="fixed bottom-6 right-6 z-50 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]" aria-label="Добавить пробу">
 				<Plus className="w-6 h-6" />
 			</FAB>
 

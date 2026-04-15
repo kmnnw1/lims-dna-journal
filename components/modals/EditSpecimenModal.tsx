@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { X, Save } from 'lucide-react';
-import type { EditSpecimenForm } from '@/types';
+import type { EditSpecimenForm, Specimen } from '@/types';
 
 import { MD3Field } from '@/components/ui/MD3Field';
 
@@ -11,9 +11,10 @@ type Props = {
 	onClose: () => void;
 	onChange: (val: EditSpecimenForm) => void;
 	onSubmit: (e: React.FormEvent) => void;
+	specimens: Specimen[];
 };
 
-export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Props) {
+export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit, specimens = [] }: Props) {
 	useEffect(() => {
 		if (!specimen) return;
 		const onKeyDown = (e: KeyboardEvent) => {
@@ -38,6 +39,14 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Pro
 		!specimen.dnaConcentration &&
 		!specimen.measOperator &&
 		!specimen.measDate;
+
+	const taxons = useMemo(() => Array.from(new Set(specimens.map(s => s.taxon).filter(Boolean))), [specimens]);
+	const localities = useMemo(() => Array.from(new Set(specimens.map(s => s.locality).filter(Boolean))), [specimens]);
+	const collectors = useMemo(() => Array.from(new Set(specimens.map(s => s.collector).filter(Boolean))), [specimens]);
+	const labs = useMemo(() => Array.from(new Set(specimens.map(s => s.extrLab).filter(Boolean))), [specimens]);
+	const operators = useMemo(() => Array.from(new Set(specimens.map(s => s.extrOperator).filter(Boolean))), [specimens]);
+	const methods = useMemo(() => Array.from(new Set(specimens.map(s => s.extrMethod).filter(Boolean))), [specimens]);
+	const measOperators = useMemo(() => Array.from(new Set(specimens.map(s => s.measOperator).filter(Boolean))), [specimens]);
 
 	return (
 		<div
@@ -73,6 +82,7 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Pro
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<MD3Field
 								key={`field-${specimen.id}-taxon`}
+								list="edit-taxons-list"
 								label="Таксон"
 								value={specimen.taxon || ''}
 								maxLength={72}
@@ -80,6 +90,7 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Pro
 							/>
 							<MD3Field
 								key={`field-${specimen.id}-locality`}
+								list="edit-localities-list"
 								label="Место сбора (Locality)"
 								value={specimen.locality || ''}
 								maxLength={100}
@@ -89,6 +100,7 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Pro
 							/>
 							<MD3Field
 								key={`field-${specimen.id}-collector`}
+								list="edit-collectors-list"
 								label="Коллектор"
 								value={specimen.collector || ''}
 								maxLength={40}
@@ -188,6 +200,7 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Pro
 							/>
 							<MD3Field
 							key={`field-${specimen.id}-measOperator`}
+							list="edit-meas-ops-list"
 							label="Кто измерял"
 							value={specimen.measOperator || ''}
 							maxLength={40}
@@ -208,6 +221,15 @@ export function EditSpecimenModal({ specimen, onClose, onChange, onSubmit }: Pro
 />
 						</div>
 					</section>
+
+					{/* Datalists */}
+					<datalist id="edit-taxons-list">{taxons.map((t, i) => <option key={i} value={t as string} />)}</datalist>
+					<datalist id="edit-localities-list">{localities.map((t, i) => <option key={i} value={t as string} />)}</datalist>
+					<datalist id="edit-collectors-list">{collectors.map((t, i) => <option key={i} value={t as string} />)}</datalist>
+					<datalist id="labs-list">{labs.map((t, i) => <option key={i} value={t as string} />)}</datalist>
+					<datalist id="ops-list">{operators.map((t, i) => <option key={i} value={t as string} />)}</datalist>
+					<datalist id="methods-list">{methods.map((t, i) => <option key={i} value={t as string} />)}</datalist>
+					<datalist id="edit-meas-ops-list">{measOperators.map((t, i) => <option key={i} value={t as string} />)}</datalist>
 
 					{/* Кнопки */}
 					<div className="flex justify-end gap-3 pt-4">

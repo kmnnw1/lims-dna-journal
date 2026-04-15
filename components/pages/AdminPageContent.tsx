@@ -5,6 +5,7 @@ import { ArrowLeft, Database, FileSpreadsheet, ShieldAlert, Trash2, UserPlus, Do
 import { MD3Field } from '@/components/ui/MD3Field';
 import { AdminUserRow } from '@/components/pages/AdminUserRow';
 import { useAdminPage } from '@/hooks/useAdminPage';
+import { ERModelVisualizer } from '@/components/features/ERModelVisualizer';
 
 type AdminPageProps = ReturnType<typeof useAdminPage>;
 
@@ -56,7 +57,7 @@ export function AdminPageContent(props: AdminPageProps) {
 	}
 
 	return (
-		<div className="min-h-screen bg-[var(--md-sys-color-surface)] p-4 sm:p-8 text-[var(--md-sys-color-on-surface)] animate-in fade-in duration-300 pb-24">
+		<div className="min-h-screen bg-[var(--md-sys-color-surface)] p-3 sm:p-6 text-[var(--md-sys-color-on-surface)] animate-in fade-in duration-300 pb-20">
 			{toast && (
 				<div
 					className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-50 rounded-[1rem] px-6 py-4 shadow-xl backdrop-blur-md animate-in slide-in-from-bottom-5 font-medium tracking-wide ${
@@ -80,62 +81,61 @@ export function AdminPageContent(props: AdminPageProps) {
 					Администрирование
 				</h1>
 
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-					<div className="lg:col-span-3 rounded-[2.5rem] bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] p-8 shadow-sm">
-						<h2 className="mb-3 flex items-center gap-3 text-2xl font-normal tracking-tight">
-							<Database className="h-7 w-7" strokeWidth={1.5} />
-							Импорт проб из Excel
+				<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+					<div className="lg:col-span-3 rounded-[2rem] bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] p-6 shadow-sm">
+						<h2 className="mb-2 flex items-center gap-3 text-xl font-medium tracking-tight">
+							<Database className="h-6 w-6" strokeWidth={1.5} />
+							Управление базой данных
 						</h2>
-						<p className="mb-6 text-base opacity-80 max-w-3xl">
+						<p className="mb-4 text-sm opacity-80 max-w-3xl">
 							Импорт обрабатывает все листы файла
-							<code className="rounded bg-black/10 mx-1.5 px-2 py-0.5 font-mono text-sm dark:bg-white/10">
+							<code className="rounded bg-black/10 mx-1.5 px-2 py-0.5 font-mono text-xs dark:bg-white/10">
 								data.xlsx
 							</code>
 							в корне каталога сервера. Перед загрузкой текущая таблица проб очищается.
 						</p>
-						<div className="flex flex-wrap gap-4">
+						<div className="flex flex-wrap items-center gap-3">
 							<button
 								type="button"
 								onClick={() => window.open('/api/backup/download', '_blank')}
-								className="inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-primary)] px-8 py-3.5 text-base font-medium text-[var(--md-sys-color-on-primary)] shadow-sm transition-transform hover:scale-[1.02] active:scale-95">
-								<Download className="h-5 w-5" />
+								className="inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-primary)] px-6 py-2.5 text-sm font-medium text-[var(--md-sys-color-on-primary)] shadow-sm transition-transform hover:scale-[1.02] active:scale-95">
+								<Download className="h-4 w-4" />
 								Скачать БД
 							</button>
-
-							<div className="flex items-center gap-2">
-								<input
-									type="checkbox"
-									id="useAI"
-									checked={useAI}
-									onChange={(e) => setUseAI(e.target.checked)}
-									className="rounded border-[var(--md-sys-color-outline)]"
-								/>
-								<label htmlFor="useAI" className="text-sm text-[var(--md-sys-color-on-surface)]">
-									Использовать ИИ-очистку (Gemini)
-								</label>
-							</div>
 
 							<button
 								type="button"
 								disabled={importBusy}
 								onClick={handleImportFromExcel}
-								className="inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-on-secondary-container)] px-8 py-3.5 text-base font-medium text-[var(--md-sys-color-secondary-container)] shadow-sm transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-50">
-								<FileSpreadsheet className="h-5 w-5" />
-								Запустить импорт
+								className="inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-on-secondary-container)] px-6 py-2.5 text-sm font-medium text-[var(--md-sys-color-secondary-container)] shadow-sm transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-50">
+								<FileSpreadsheet className="h-4 w-4" />
+								Импорт
 							</button>
 							<button
 								type="button"
 								disabled={importBusy}
 								onClick={handleClearSpecimens}
-								className="inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-error-container)] px-8 py-3.5 text-base font-medium text-[var(--md-sys-color-on-error-container)] transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-50">
-								<Trash2 className="h-5 w-5" />
-								Очистить пробы
+								className="inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-error-container)] px-6 py-2.5 text-sm font-medium text-[var(--md-sys-color-on-error-container)] transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-50">
+								<Trash2 className="h-4 w-4" />
+								Очистить
 							</button>
+							<div className="flex items-center gap-2 ml-0 sm:ml-auto">
+								<input
+									type="checkbox"
+									id="useAI"
+									checked={useAI}
+									onChange={(e) => setUseAI(e.target.checked)}
+									className="rounded border-[var(--md-sys-color-outline)] appearance-none w-4 h-4 checked:bg-[var(--md-sys-color-primary)] ring-1 ring-[var(--md-sys-color-outline)]"
+								/>
+								<label htmlFor="useAI" className="text-sm font-medium text-[var(--md-sys-color-on-surface)] cursor-pointer">
+									ИИ-очистка
+								</label>
+							</div>
 						</div>
 					</div>
 
-					<form onSubmit={handleCreateUser} className="rounded-[2.5rem] bg-[var(--md-sys-color-surface-container-low)] p-8 shadow-sm lg:col-span-1 h-fit">
-						<h2 className="mb-6 text-2xl font-normal tracking-tight">Новый пользователь</h2>
+					<form onSubmit={handleCreateUser} className="rounded-[2rem] bg-[var(--md-sys-color-surface-container-low)] p-6 shadow-sm lg:col-span-1 h-fit">
+						<h2 className="mb-4 text-xl font-medium tracking-tight">Новый пользователь</h2>
 						<div className="space-y-4 mb-8">
 							<MD3Field
 								required
@@ -170,8 +170,8 @@ export function AdminPageContent(props: AdminPageProps) {
 						</button>
 					</form>
 
-					<div className="rounded-[2.5rem] bg-[var(--md-sys-color-surface-container-low)] p-8 shadow-sm lg:col-span-2">
-						<h2 className="mb-6 text-2xl font-normal tracking-tight flex items-center justify-between">
+					<div className="rounded-[2rem] bg-[var(--md-sys-color-surface-container-low)] p-6 shadow-sm lg:col-span-2">
+						<h2 className="mb-4 text-xl font-medium tracking-tight flex items-center justify-between">
 							Пользователи
 							{loadingUsers && (
 								<div className="animate-spin w-6 h-6 border-2 border-[var(--md-sys-color-primary)]/30 border-t-[var(--md-sys-color-primary)] rounded-full"></div>
@@ -194,6 +194,19 @@ export function AdminPageContent(props: AdminPageProps) {
 							) : (
 								<div className="text-base text-[var(--md-sys-color-outline)] p-4 text-center">Нет пользователей</div>
 							)}
+						</div>
+					</div>
+					
+					{/* Интеграция хайповой ER-модели базы данных */}
+					<div className="lg:col-span-3 rounded-[2rem] bg-[var(--md-sys-color-surface-container-lowest)] shadow-sm overflow-hidden border border-[var(--md-sys-color-outline-variant)]/30">
+						<div className="p-6 pb-2">
+							<h2 className="text-xl font-medium tracking-tight">System Architecture (ER Model)</h2>
+							<p className="text-sm opacity-70 mt-1 max-w-2xl">
+								Интерактивная визуализация связей сущностей базы данных лаборатории.
+							</p>
+						</div>
+						<div className="px-4 pb-4">
+							<ERModelVisualizer />
 						</div>
 					</div>
 				</div>

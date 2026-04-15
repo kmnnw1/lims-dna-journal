@@ -61,7 +61,7 @@
     --md-sys-shape-corner-xl: 28px;
     --md-sys-shape-corner-full: 9999px;
 
-    font-family: var(--font-inter), system-ui, sans-serif;
+    font-family: var(--font-outfit), system-ui, sans-serif;
   }
 
   .dark {
@@ -99,10 +99,44 @@
     --md-sys-color-surface-tint: #2DD4BF;
   }
 
+  .monet {
+    /* Authentic MD3 Monet Theme (Material You / Dynamic Colors) */
+    --md-sys-color-primary: #4F5B92;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-primary-container: #DDE1FF;
+    --md-sys-color-on-primary-container: #09164B;
+
+    --md-sys-color-secondary-container: #E0E1F9;
+    --md-sys-color-on-secondary-container: #181A2C;
+
+    --md-sys-color-surface: #FAF8FF;
+    --md-sys-color-on-surface: #1B1B1F;
+    --md-sys-color-surface-container-lowest: #ffffff;
+    --md-sys-color-surface-container-low: #F4F3F9;
+    --md-sys-color-surface-container: #EEEDF3;
+    --md-sys-color-surface-container-high: #E8E7ED;
+    --md-sys-color-surface-container-highest: #E2E1E7;
+
+    --md-sys-color-inverse-surface: #2f3036;
+    --md-sys-color-inverse-on-surface: #f1f0f7;
+
+    --md-sys-color-outline: #767680;
+    --md-sys-color-outline-variant: #C6C5D0;
+
+    --md-sys-color-error: #BA1A1A;
+    --md-sys-color-error-container: #FFDAD6;
+    --md-sys-color-on-error-container: #410002;
+
+    --md-sys-color-tertiary: #77536D;
+    --md-sys-color-tertiary-container: #FFD7F1;
+    --md-sys-color-on-tertiary-container: #2D1228;
+
+    --md-sys-color-surface-tint: #4F5B92;
+  }
+
   body {
     background-color: var(--md-sys-color-surface);
     color: var(--md-sys-color-on-surface);
-    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   /* MD3 Scrollbar Customization - Premium & Integrated */
@@ -199,4 +233,40 @@
 
 .animate-bubble {
 	animation: bubble 0.8s ease-out forwards;
+}
+
+/* ======================================= */
+/* View Transitions API (Dark/Light Mode)  */
+/* ======================================= */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+  animation: theme-ripple 0.8s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.transition-reverse::view-transition-old(root) {
+  z-index: 2;
+  animation: theme-ripple 0.8s cubic-bezier(0.2, 0, 0, 1) reverse;
+}
+.transition-reverse::view-transition-new(root) {
+  z-index: 1;
+  animation: none;
+}
+
+@keyframes theme-ripple {
+  from {
+    clip-path: circle(0px at var(--target-x, 50%) var(--target-y, 50%));
+  }
+  to {
+    clip-path: circle(2500px at var(--target-x, 50%) var(--target-y, 50%));
+  }
 }
