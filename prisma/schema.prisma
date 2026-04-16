@@ -55,6 +55,8 @@ model Specimen {
   importOrigin     String?
   importRow        Int?
   importNotes      String?      
+  reviewNotes      String?
+  reviewPhotos     String?      
   attempts         PcrAttempt[]
   deletedAt        DateTime?    
   createdAt        DateTime     @default(now())
