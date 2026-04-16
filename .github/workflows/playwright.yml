@@ -27,7 +27,7 @@ jobs:
                   echo "NEXTAUTH_URL=http://localhost:3000" >> .env
                   echo "DATABASE_URL=file:./dev.db" >> .env
                   npx prisma db push
-                  node scripts/fix-auth.mjs
+                  npx tsx scripts/fix-auth.ts
             - name: Run Playwright tests
               run: npx playwright test
             - uses: actions/upload-artifact@v4
