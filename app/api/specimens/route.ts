@@ -200,7 +200,7 @@ export async function DELETE(request: Request) {
                 select: { id: true, taxon: true },
             });
 
-            await prisma.specimen.updateMany({ 
+            await prisma.specimen.updateMany({
                 where: { id: { in: body.ids.map(String) } },
                 data: { deletedAt: new Date() }
             });

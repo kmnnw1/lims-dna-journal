@@ -9,24 +9,24 @@ const prisma = new PrismaClient({ adapter });
 async function parseAndSeed() {
     const workbook = new ExcelJS.Workbook();
     const filePath = path.join(process.cwd(), 'data', 'data.xlsx');
-    
+
     console.log(`Loading ${filePath}...`);
     await workbook.xlsx.readFile(filePath);
-    
+
     const sheet = workbook.getWorksheet('Home');
     if (!sheet) {
         console.error("No 'Home' sheet found.");
         process.exit(1);
     }
-    
+
     console.log(`Processing 'Home' sheet with ${sheet.rowCount} rows...`);
-    
+
     let successCount = 0;
-    
+
     for (let i = 3; i <= sheet.rowCount; i++) {
         const rawRow = sheet.getRow(i).values;
         if (!rawRow || rawRow.length < 3) continue;
-        
+
         // Extract cell values safely (handling formulas)
         const getVal = (colIdx) => {
             let val = rawRow[colIdx];
@@ -87,7 +87,7 @@ async function parseAndSeed() {
                 create: specimenData
             });
             successCount++;
-            
+
             if (successCount % 500 === 0) {
                 console.log(`...imported ${successCount} records.`);
             }
@@ -95,7 +95,7 @@ async function parseAndSeed() {
             console.error(`Error importing row ${i} (ID: ${id}):`, e.message);
         }
     }
-    
+
     console.log(`✅ successfully imported ${successCount} records.`);
     await prisma.$disconnect();
 }
