@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
 import path from 'path';
-import { PrismaClient } from '../prisma/generated/client/index.js';
+import { PrismaClient } from '../prisma/generated/client/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
 const adapter = new PrismaBetterSqlite3({ url: 'file:./prisma/dev.db' });
@@ -24,12 +24,13 @@ async function parseAndSeed() {
     let successCount = 0;
 
     for (let i = 3; i <= sheet.rowCount; i++) {
-        const rawRow = sheet.getRow(i).values;
-        if (!rawRow || rawRow.length < 3) continue;
+        const row = sheet.getRow(i);
+        const rawRow = row.values;
+        if (!rawRow || (Array.isArray(rawRow) && rawRow.length < 3)) continue;
 
         // Extract cell values safely (handling formulas)
-        const getVal = (colIdx) => {
-            let val = rawRow[colIdx];
+        const getVal = (colIdx: number) => {
+            let val = Array.isArray(rawRow) ? rawRow[colIdx] : (rawRow as any)[colIdx];
             if (val && typeof val === 'object' && 'result' in val) {
                 val = val.result;
             }
@@ -45,7 +46,7 @@ async function parseAndSeed() {
         const id = getVal(3); // ExcelJS values array is 1-indexed, starting from C = 3
         if (!id) continue;
 
-        const parseMarkerStatus = (val) => {
+        const parseMarkerStatus = (val: any) => {
             if (val === null || val === undefined) return null;
             if (val === '1' || val === 1 || String(val).toLowerCase() === 'yes' || String(val).toLowerCase().includes('rev')) return '✓';
             if (val === '0' || String(val).startsWith('#')) return '✕'; // Formula error typically means missing
@@ -91,7 +92,7 @@ async function parseAndSeed() {
             if (successCount % 500 === 0) {
                 console.log(`...imported ${successCount} records.`);
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error(`Error importing row ${i} (ID: ${id}):`, e.message);
         }
     }
