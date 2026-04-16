@@ -10,6 +10,7 @@ describe('AddSpecimenModal', () => {
     const defaultProps = {
         open: true,
         onClose: mockOnClose,
+        specimens: [],
         newRecord: {
             id: 'test-id',
             taxon: 'Test Taxon',
