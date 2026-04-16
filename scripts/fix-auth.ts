@@ -1,5 +1,6 @@
-import { PrismaClient } from '../prisma/generated/client/index.js';
+import { PrismaClient } from '../prisma/generated/client/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import * as bcrypt from 'bcryptjs';
 
 const adapter = new PrismaBetterSqlite3({ url: 'file:./prisma/dev.db' });
 const prisma = new PrismaClient({ adapter });
