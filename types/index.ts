@@ -62,6 +62,8 @@ export interface Specimen {
 	importOrigin?: string;
 	importRow?: number;
 	importNotes?: string;
+	reviewNotes?: string;
+	reviewPhotos?: string;
 	attempts?: PcrAttempt[]; // Массив попыток ПЦР
 }
 
