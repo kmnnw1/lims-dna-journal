@@ -6,12 +6,12 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-function run(cmd, title) {
+function run(cmd: string, title?: string) {
     if (title) console.log(`\n→ ${title}\n`);
     try {
-        execSync(cmd, { cwd: root, stdio: 'inherit', shell: true, env: process.env });
+        execSync(cmd, { cwd: root, stdio: 'inherit', shell: true, env: process.env } as any);
     } catch (err) {
-        console.error(`❌ Ошибка выполнения '${cmd}':\n`, err?.message || err);
+        console.error(`❌ Ошибка выполнения '${cmd}':\n`, (err as any)?.message || err);
         process.exit(1);
     }
 }
