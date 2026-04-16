@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { Prisma } from '../../../prisma/generated/client';
+import type { Prisma } from '../../../prisma/generated/client/client';
 import { prisma } from '@/lib/database/prisma';
 import { logAuditAction } from '@/lib/database/audit-log';
 import {
