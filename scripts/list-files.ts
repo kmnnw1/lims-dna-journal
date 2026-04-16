@@ -32,7 +32,7 @@ const IGNORE_EXTS = new Set([
     '.key',
 ]);
 
-function walkDir(dir, fileList = [], relativePath = '') {
+function walkDir(dir: string, fileList: string[] = [], relativePath: string = '') {
     const files = fs.readdirSync(dir);
 
     for (const file of files) {
