@@ -35,12 +35,22 @@
 2. Инициализируйте базу и соберите клиент: `npm run setup`
 3. Запустите в режиме разработки: `npm run dev`
 
+### Alpha Deployment (CI/CD)
+Система автоматически собирает и публикует Docker-образ при каждом пуше в ветку `main`:
+- **Registry**: `ghcr.io` (GitHub Container Registry)
+- **Image**: `ghcr.io/${{ github.repository }}:alpha`
+- **Workflow**: `.github/workflows/alpha-deploy.yml`
+
+Для развертывания на Альфа-сервере:
+1. Создайте директорию `/app` и `/app/data`.
+2. Настройте `.env` (см. раздел "Зависимости").
+3. Используйте [docker-compose.yml](file:///c:/Projects/Coursa2/lab-journal/docker-compose.yml) для запуска образа `ghcr.io/...:alpha`.
+
 ### Контейнеризация (Docker)
-Система поддерживает запуск через Docker Compose (рекомендуется для Linux-серверов):
-```bash
-docker compose up --build -d
-```
-Том базы данных монтируется в `./lab-data`.
+Рекомендуемый способ запуска для Linux-серверов:
+1. Сборка и запуск: `docker compose up --build -d`
+2. Том базы данных монтируется в `./data` (внутри контейнера `/data`).
+3. Для standalone-режима используется оптимизированный многоэтапный Dockerfile.
 
 ## Командный интерфейс (NPM)
 
