@@ -3,6 +3,7 @@ import { prisma } from '../database/prisma';
 import { ParsedSpecimenRow } from './types';
 import { parseSheetToRows } from './sheet-parsers';
 import { mergeById } from './merge-utils';
+import { Prisma } from '../../prisma/generated/client/client';
 
 export async function processExcelToDatabase(buffer: Buffer) {
     const workbook = new ExcelJS.Workbook();
@@ -25,7 +26,7 @@ export async function processExcelToDatabase(buffer: Buffer) {
     const mergedRows = mergeById(allParsedRows);
 
     await prisma.$transaction(
-        async (tx) => {
+        async (tx: Prisma.TransactionClient) => {
             for (const row of mergedRows) {
                 try {
                     const importNotesObj: Record<string, string> = {};
