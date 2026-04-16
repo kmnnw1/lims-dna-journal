@@ -11,7 +11,7 @@ const pageFile = path.join(rootDir, 'app', 'page.tsx');
 console.log('🚀 Начинаем операцию "Анти-Напарник"...');
 
 // Функция для рекурсивного перемещения файлов
-function moveFiles(src, dest) {
+function moveFiles(src: string, dest: string) {
     if (!fs.existsSync(src)) return;
     if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
 
