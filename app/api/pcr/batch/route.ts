@@ -52,7 +52,7 @@ export async function POST(request: Request) {
             select: { id: true }
         });
 
-        const existingIds = existingSpecimens.map(s => s.id);
+        const existingIds = existingSpecimens.map((s: { id: string }) => s.id);
         const missingIds = ids.filter(id => !existingIds.includes(id));
 
         if (missingIds.length > 0) {
