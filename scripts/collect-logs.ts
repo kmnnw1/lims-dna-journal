@@ -9,18 +9,18 @@ const ts = now.toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, '');
 const target = join(root, 'support', `logs-${ts}`);
 const patterns = ['*.log', 'npm-debug.log*', 'playwright-report', 'test-results', '.env', 'package.json', 'package-lock.json', 'Dockerfile', 'docker-compose.yml'];
 
-function collectFile(source, destination) {
+function collectFile(source: string, destination: string) {
     try {
         copyFileSync(source, destination);
         console.log(`✅ ${source} → ${destination}`);
-    } catch (error) {
+    } catch (error: any) {
         console.warn(`⚠️ Не удалось скопировать ${source}: ${error?.message || error}`);
     }
 }
 
-function globCopy(pattern) {
+function globCopy(pattern: string) {
     const [prefix, suffix] = pattern.split('*');
-    readdirSync(root).forEach((name) => {
+    readdirSync(root).forEach((name: string) => {
         if (pattern === name || (prefix && suffix && name.startsWith(prefix) && name.endsWith(suffix))) {
             const source = join(root, name);
             const dest = join(target, name);
@@ -29,7 +29,7 @@ function globCopy(pattern) {
     });
 }
 
-function copyTree(sourcePath, targetPath) {
+function copyTree(sourcePath: string, targetPath: string) {
     if (!existsSync(sourcePath)) return;
     mkdirSync(targetPath, { recursive: true });
     readdirSync(sourcePath).forEach((entry) => {
