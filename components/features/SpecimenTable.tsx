@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Pencil, FlaskConical, ChevronUp, ChevronDown } from 'lucide-react';
+import { Pencil, FlaskConical, ChevronUp, ChevronDown, History } from 'lucide-react';
 import { PCRStatusBadge } from './PCRStatusBadge';
 import type { Specimen } from '@/types';
 
@@ -17,6 +17,7 @@ interface SpecimenTableProps {
 	searchQuery: string;
 	sortConfig: { key: string; direction: 'asc' | 'desc' } | null;
 	onSort: (key: string) => void;
+	onHistory: (specimen: Specimen) => void;
 }
 
 export const SpecimenTable: React.FC<SpecimenTableProps> = ({
@@ -31,6 +32,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 	searchQuery,
 	sortConfig,
 	onSort,
+	onHistory,
 }) => {
 	// Хелпер для подсветки поиска (MD3 Tertiary Container Style)
 	const highlightText = (text: string | null | undefined, query: string) => {
@@ -98,11 +100,11 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 											specimens.length > 0 &&
 											selectedIds.size === specimens.length
 										}
-										className="peer size-5 cursor-pointer appearance-none rounded-[4px] border-2 border-[var(--md-sys-color-outline)] checked:border-[var(--md-sys-color-primary)] checked:bg-[var(--md-sys-color-primary)] transition-all hover:scale-110"
+										className="peer size-5 cursor-pointer appearance-none rounded-md border-2 border-[var(--md-sys-color-outline)] checked:border-[var(--md-sys-color-primary)] checked:bg-[var(--md-sys-color-primary)] transition-all hover:scale-110"
 										title="Выбрать все"
 									/>
 									<svg
-										className="pointer-events-none absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
+										className="pointer-events-none absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
 										viewBox="0 0 24 24"
 										fill="none"
 										stroke="currentColor"
@@ -255,6 +257,12 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 													className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-primary)] transition-all active:scale-95"
 													title="ПЦР">
 													<FlaskConical className="w-4 h-4" />
+												</button>
+												<button
+													onClick={() => onHistory(specimen)}
+													className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-primary)] transition-all active:scale-95"
+													title="История изменений">
+													<History className="w-4 h-4" />
 												</button>
 											</div>
 										)}

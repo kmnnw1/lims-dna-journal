@@ -11,15 +11,15 @@ export function useJournalPage() {
 	const router = useRouter();
 	const [specimens, setSpecimens] = useState<Specimen[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [theme, setTheme] = useState<'light' | 'dark' | 'monet'>('light');
+	const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
 	// Theme initialization & sync
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
-		const saved = localStorage.getItem('theme') as 'light' | 'dark' | 'monet' | null;
+		const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
 		if (saved) {
 			setTheme(saved);
-			document.documentElement.classList.remove('dark', 'monet');
+			document.documentElement.classList.remove('dark');
 			if (saved !== 'light') document.documentElement.classList.add(saved);
 		} else {
 			const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -32,7 +32,7 @@ export function useJournalPage() {
 
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
-		document.documentElement.classList.remove('dark', 'monet');
+		document.documentElement.classList.remove('dark');
 		if (theme !== 'light') document.documentElement.classList.add(theme);
 		localStorage.setItem('theme', theme);
 	}, [theme]);

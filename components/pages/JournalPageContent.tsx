@@ -13,8 +13,10 @@ import { EditSpecimenModal } from '@/components/modals/EditSpecimenModal';
 import { PcrModal } from '@/components/modals/PCRModal';
 import BatchPcrModal from '@/components/modals/BatchPCRModal';
 import { BarcodeScanDialog } from '@/components/features/BarcodeScanDialog';
+import { HistoryDialog } from '@/components/features/HistoryDialog';
 import { FAB } from '@/components/ui/FAB';
 import { useJournalPage } from '@/hooks/useJournalPage';
+import type { Specimen } from '@/types';
 
 export function JournalPageContent() {
 	const {
@@ -70,6 +72,7 @@ export function JournalPageContent() {
 	} = useJournalPage();
 
 	const [isExportOpen, setIsExportOpen] = useState(false);
+	const [historyTarget, setHistoryTarget] = useState<{ id: string; type: 'SPECIMEN' | 'PCR_ATTEMPT' } | null>(null);
 	const exportRef = useRef<HTMLDivElement>(null);
 
 	// Close export dropdown on outside click
@@ -106,7 +109,7 @@ export function JournalPageContent() {
 		return () => clearTimeout(timer);
 	}, [toastMessage, setToastMessage]);
 
-	const handleThemeToggle = (newTheme: 'light' | 'dark' | 'monet') => {
+	const handleThemeToggle = (newTheme: 'light' | 'dark') => {
 		if (!document.startViewTransition) {
 			setTheme(newTheme);
 			return;
@@ -114,6 +117,10 @@ export function JournalPageContent() {
 		document.startViewTransition(() => {
 			setTheme(newTheme);
 		});
+	};
+
+	const handleHistoryOpen = (specimen: Specimen) => {
+		setHistoryTarget({ id: specimen.id, type: 'SPECIMEN' });
 	};
 
 	if (status === 'loading') return null;
@@ -145,40 +152,46 @@ export function JournalPageContent() {
 						<StatsCards {...stats} />
 					</div>
 					
-					<div className="flex items-center gap-2 flex-shrink-0 pr-2">
-						<div className="relative" ref={exportRef}>
+						<div className="flex items-center gap-2 flex-shrink-0 pr-2">
 							<button
-								onClick={() => setIsExportOpen(!isExportOpen)}
-								className="flex items-center gap-2 px-4 py-2 bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95">
-								<Download className="w-4 h-4 sm:w-5 sm:h-5" />
-								<span className="hidden lg:inline">Экспорт</span>
-								<ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+								onClick={() => setIsScanOpen(true)}
+								className="flex lg:hidden items-center gap-2 px-4 py-2 bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95">
+								<Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+								<span className="hidden sm:inline">Сканировать</span>
 							</button>
-							{isExportOpen && (
-								<div className="absolute top-full right-0 mt-2 min-w-[160px] py-2 bg-[var(--md-sys-color-surface-container-lowest)] rounded-2xl shadow-xl md-elevation-3 z-50 border border-[var(--md-sys-color-outline-variant)]/30">
-									<button
-										onClick={() => {
-											setIsExportOpen(false);
-											handleExportCSV();
-										}}
-										className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors text-[var(--md-sys-color-on-surface)]"
-									>
-										Сохранить CSV
-									</button>
-									<button
-										onClick={() => {
-											setIsExportOpen(false);
-											handleExportXLSX();
-										}}
-										className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors text-[var(--md-sys-color-on-surface)]"
-									>
-										Сохранить Excel (.xlsx)
-									</button>
-								</div>
-							)}
+							<div className="relative" ref={exportRef}>
+								<button
+									onClick={() => setIsExportOpen(!isExportOpen)}
+									className="flex items-center gap-2 px-4 py-2 bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95">
+									<Download className="w-4 h-4 sm:w-5 sm:h-5" />
+									<span className="hidden lg:inline">Экспорт</span>
+									<ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+								</button>
+								{isExportOpen && (
+									<div className="absolute top-full right-0 mt-2 min-w-[160px] py-2 bg-[var(--md-sys-color-surface-container-lowest)] rounded-2xl shadow-xl md-elevation-3 z-50 border border-[var(--md-sys-color-outline-variant)]/30">
+										<button
+											onClick={() => {
+												setIsExportOpen(false);
+												handleExportCSV();
+											}}
+											className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors text-[var(--md-sys-color-on-surface)]"
+										>
+											Сохранить CSV
+										</button>
+										<button
+											onClick={() => {
+												setIsExportOpen(false);
+												handleExportXLSX();
+											}}
+											className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors text-[var(--md-sys-color-on-surface)]"
+										>
+											Сохранить Excel (.xlsx)
+										</button>
+									</div>
+								)}
+							</div>
+							<PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
 						</div>
-						<PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
-					</div>
 				</div>
 					
 
@@ -195,6 +208,7 @@ export function JournalPageContent() {
 					searchQuery={searchQuery}
 					sortConfig={sortConfig}
 					onSort={handleSort}
+					onHistory={handleHistoryOpen}
 				/>
 
 
@@ -261,10 +275,27 @@ export function JournalPageContent() {
 						setIsScanOpen(false);
 					}}
 				/>
+				<HistoryDialog
+					open={Boolean(historyTarget)}
+					onClose={() => setHistoryTarget(null)}
+					resourceId={historyTarget?.id || ''}
+					resourceType={historyTarget?.type || 'SPECIMEN'}
+					onRestoreSuccess={() => {
+						setToastMessage({ text: 'Данные успешно восстановлены к старой версии', type: 'success' });
+						// Триггерим рефреш через смену фильтра или страницы
+						setPage(page);
+					}}
+				/>
 			</div>
 
-			<FAB onClick={() => setIsAddModalOpen(true)} className="fixed bottom-6 right-6 z-50 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]" aria-label="Добавить пробу">
+			<FAB 
+				extended
+				onClick={() => setIsAddModalOpen(true)} 
+				className="fixed bottom-6 right-6 z-50 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] flex items-center gap-2 px-4 shadow-xl" 
+				aria-label="Добавить пробу"
+			>
 				<Plus className="w-6 h-6" />
+				<span className="font-medium mr-1">Новая проба</span>
 			</FAB>
 
 			{/* Toast/Snackbar */}

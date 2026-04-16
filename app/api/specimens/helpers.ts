@@ -30,9 +30,9 @@ export async function requireRole(required: 'EDITOR' | 'ADMIN' | 'READER' | 'ANY
 // Извлекаем уникальные значения для suggestions эффективнее
 export async function getDistinctFields() {
 	const [labs, ops, methods] = await Promise.all([
-		prisma.specimen.findMany({ select: { extrLab: true }, distinct: ['extrLab'] }),
-		prisma.specimen.findMany({ select: { extrOperator: true }, distinct: ['extrOperator'] }),
-		prisma.specimen.findMany({ select: { extrMethod: true }, distinct: ['extrMethod'] }),
+		prisma.specimen.findMany({ where: { deletedAt: null }, select: { extrLab: true }, distinct: ['extrLab'] }),
+		prisma.specimen.findMany({ where: { deletedAt: null }, select: { extrOperator: true }, distinct: ['extrOperator'] }),
+		prisma.specimen.findMany({ where: { deletedAt: null }, select: { extrMethod: true }, distinct: ['extrMethod'] }),
 	]);
 	return {
 		labs: labs.map((l: { extrLab: string | null }) => l.extrLab).filter(Boolean),
@@ -54,15 +54,46 @@ export function handleError(e: unknown) {
 }
 
 // Создание cache key на основе параметров запроса
-export function buildCacheKey(params: {
-	page: number;
-	limit: number;
-	search: string;
-	sortKey: string;
-	sortDir: string;
-	filterType: string;
+export function buildCacheKey(params: any) {
+	return `specimens:${JSON.stringify(params)}`;
+}
+
+// Централизованная сборка фильтров для Prisma
+export function buildSpecimenQuery(params: {
+	search?: string;
+	filterType?: string;
+	operator?: string;
+	minConc?: number | null;
+	maxConc?: number | null;
 }) {
-	return `specimens:${params.page}:${params.limit}:${params.search}:${params.sortKey}:${params.sortDir}:${params.filterType}`;
+	const where = { deletedAt: null } as any;
+
+	if (params.search) {
+		where.OR = [
+			{ id: { contains: params.search } },
+			{ taxon: { contains: params.search } },
+			{ locality: { contains: params.search } },
+			{ extrOperator: { contains: params.search } },
+			{ extrLab: { contains: params.search } },
+			{ extrMethod: { contains: params.search } },
+			{ notes: { contains: params.search } },
+			{ itsStatus: { contains: params.search } },
+		];
+	}
+
+	if (params.filterType === 'success') where.itsStatus = '✓';
+	if (params.filterType === 'error') where.itsStatus = '✕';
+	
+	if (params.operator) where.extrOperator = params.operator;
+
+	// Фильтрация по концентрации (ТЕПЕРЬ НА УРОВНЕ БД, ТАК КАК ТИП FLOAT)
+	if (params.minConc !== null || params.maxConc !== null) {
+		where.dnaConcentration = {};
+		if (params.minConc !== null) where.dnaConcentration.gte = params.minConc;
+		if (params.maxConc !== null) where.dnaConcentration.lte = params.maxConc;
+	}
+
+	return where;
 }
 
 export { getCached, setCache };

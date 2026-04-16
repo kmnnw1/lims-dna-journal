@@ -5,7 +5,6 @@ import { ArrowLeft, Database, FileSpreadsheet, ShieldAlert, Trash2, UserPlus, Do
 import { MD3Field } from '@/components/ui/MD3Field';
 import { AdminUserRow } from '@/components/pages/AdminUserRow';
 import { useAdminPage } from '@/hooks/useAdminPage';
-import { ERModelVisualizer } from '@/components/features/ERModelVisualizer';
 
 type AdminPageProps = ReturnType<typeof useAdminPage>;
 
@@ -226,18 +225,6 @@ export function AdminPageContent(props: AdminPageProps) {
 						</div>
 					</div>
 					
-					{/* Интеграция хайповой ER-модели базы данных */}
-					<div className="lg:col-span-3 rounded-[2rem] bg-[var(--md-sys-color-surface-container-lowest)] shadow-sm overflow-hidden border border-[var(--md-sys-color-outline-variant)]/30">
-						<div className="p-6 pb-2">
-							<h2 className="text-xl font-medium tracking-tight">System Architecture (ER Model)</h2>
-							<p className="text-sm opacity-70 mt-1 max-w-2xl">
-								Интерактивная визуализация связей сущностей базы данных лаборатории.
-							</p>
-						</div>
-						<div className="px-4 pb-4">
-							<ERModelVisualizer />
-						</div>
-					</div>
 				</div>
 			</div>
 		</div>

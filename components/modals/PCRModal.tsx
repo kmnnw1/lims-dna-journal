@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, History, FlaskConical } from 'lucide-react';
+import { X, Save, History, FlaskConical, Pencil, Plus, Trash2 } from 'lucide-react';
 import type { Specimen, PcrAttempt } from '@/types';
 import { MD3Field } from '@/components/ui/MD3Field';
 import { Button } from '@/components/ui/Button';
@@ -18,6 +18,7 @@ interface Props {
 		reversePrimer: string;
 		dnaMatrix: string;
 		result: 'Success' | 'Failed';
+		id?: string; // ID для редактирования существующей попытки
 	};
 	setPcrForm: React.Dispatch<React.SetStateAction<{
 		volume: string;
@@ -26,6 +27,7 @@ interface Props {
 		reversePrimer: string;
 		dnaMatrix: string;
 		result: 'Success' | 'Failed';
+		id?: string;
 	}>>;
 	onSubmit: () => void;
 	isReader?: boolean;
@@ -42,10 +44,11 @@ export function PcrModal({
 }: Props) {
 	const [history, setHistory] = useState<PcrAttempt[]>([]);
 	const [loadingHistory, setLoadingHistory] = useState(false);
+	const [isEditing, setIsEditing] = useState(false);
 
-	useEffect(() => {
-		if (open && specimenId) {
-			setTimeout(() => setLoadingHistory(true), 0);
+	const fetchHistory = () => {
+		if (specimenId) {
+			setLoadingHistory(true);
 			fetch(`/api/pcr?specimenId=${specimenId}`)
 				.then((res) => res.json())
 				.then((data) => {
@@ -57,6 +60,10 @@ export function PcrModal({
 					setLoadingHistory(false);
 				});
 		}
+	};
+
+	useEffect(() => {
+		if (open) fetchHistory();
 	}, [open, specimenId]);
 
 	useEffect(() => {
@@ -68,170 +75,153 @@ export function PcrModal({
 		return () => window.removeEventListener('keydown', onKeyDown);
 	}, [open, onClose]);
 
+	const handleEditAttempt = (attempt: PcrAttempt) => {
+		setPcrForm({
+			id: attempt.id,
+			marker: attempt.marker || '',
+			forwardPrimer: attempt.forwardPrimer || '',
+			reversePrimer: attempt.reversePrimer || '',
+			volume: attempt.volume || '',
+			dnaMatrix: attempt.dnaMatrix || '',
+			result: attempt.result === 'Success' ? 'Success' : 'Failed'
+		});
+		setIsEditing(true);
+	};
+
+	const handleResetForm = () => {
+		setPcrForm({
+			marker: '',
+			forwardPrimer: '',
+			reversePrimer: '',
+			volume: '',
+			dnaMatrix: '',
+			result: 'Failed'
+		});
+		setIsEditing(false);
+	};
+
+	const handleDeleteAttempt = async (id: string) => {
+		if (!confirm('Вы уверены, что хотите удалить эту запись ПЦР?')) return;
+		try {
+			const res = await fetch(`/api/pcr?id=${id}`, { method: 'DELETE' });
+			if (res.ok) {
+				fetchHistory();
+				handleResetForm();
+			}
+		} catch (error) {
+			console.error('Failed to delete PCR attempt:', error);
+		}
+	};
+
 	if (!open) return null;
 
 	return (
-		<div
-	role="dialog"
-	aria-modal="true"
-	className="fixed inset-0 z-[140] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-	<div className="my-6 w-full max-w-2xl p-6 sm:p-8 relative bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem] shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-		
-		{/* ===== ЗАГОЛОВОК ===== */}
-		<div className="mb-6 flex items-center justify-between gap-4">
-			<div>
-				<h2 className="text-2xl sm:text-3xl font-normal text-[var(--md-sys-color-on-surface)] tracking-tight">
-					Постановка ПЦР
-				</h2>
-				<p className="text-lg text-[var(--md-sys-color-primary)] font-mono mt-1 font-bold">
-					{specimenId}
-				</p>
-			</div>
-			<button
-				type="button"
-				onClick={onClose}
-				className="inline-flex items-center justify-center p-3 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] active:scale-95 transition-all"
-				aria-label="Закрыть">
-				<X className="h-6 w-6" />
-			</button>
-		</div>
-
-		{/* ===== ОСНОВНАЯ ЛОГИКА ===== */}
-		<div className="space-y-6">
-			
-			{/* БЛОК 1: ИСТОРИЯ ПЦР */}
-			<section className="bg-[var(--md-sys-color-surface-container-high)] p-5 sm:p-6 rounded-[2rem] shadow-inner">
-				<h3 className="mb-4 text-sm font-medium tracking-wide text-[var(--md-sys-color-primary)] flex items-center gap-2">
-					<History className="w-5 h-5" /> История реакций
-				</h3>
+		<div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+			<div className="my-6 w-full max-w-2xl p-6 sm:p-8 relative bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem] shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
 				
-				{loadingHistory ? (
-					<div className="text-center py-6 text-[var(--md-sys-color-outline)]">
-						Загрузка истории...
+				<div className="mb-6 flex items-center justify-between gap-4">
+					<div>
+						<h2 className="text-2xl sm:text-3xl font-normal text-[var(--md-sys-color-on-surface)] tracking-tight">
+							История и постановка ПЦР
+						</h2>
+						<p className="text-lg text-[var(--md-sys-color-primary)] font-mono mt-1 font-bold">
+							{specimenId}
+						</p>
 					</div>
-				) : history.length === 0 ? (
-					<div className="bg-[var(--md-sys-color-surface-container)] p-6 rounded-2xl text-center text-[var(--md-sys-color-outline)] border border-dashed border-[var(--md-sys-color-outline-variant)]">
-						Для этой пробы еще не было постановок ПЦР
-					</div>
-				) : (
-					<div className="space-y-3">
-						{history.map((item, idx) => (
-							<div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[var(--md-sys-color-surface-container)] rounded-2xl gap-4">
-								<div>
-									<p className="font-bold text-lg">{item.marker}</p>
-									<p className="text-sm opacity-70 mt-1">
-										Праймеры: {item.forwardPrimer} / {item.reversePrimer}
-									</p>
-									<p className="text-xs opacity-50 mt-1">
-										{new Date(item.date).toLocaleString()}
-									</p>
+					<button onClick={onClose} className="p-3 rounded-full hover:bg-black/10 transition-all"><X className="h-6 w-6" /></button>
+				</div>
+
+				<div className="space-y-6">
+					{/* History Section */}
+					<section className="bg-[var(--md-sys-color-surface-container-high)] p-6 rounded-[2rem] shadow-inner">
+						<h3 className="mb-4 text-sm font-black uppercase tracking-[0.2em] text-[var(--md-sys-color-primary)] flex items-center gap-2">
+							<History className="w-5 h-5" /> История реакций
+						</h3>
+						
+						{loadingHistory ? (
+							<div className="text-center py-6 opacity-50">Загрузка...</div>
+						) : history.length === 0 ? (
+							<div className="text-center py-8 opacity-40 border-2 border-dashed border-[var(--md-sys-color-outline-variant)] rounded-2xl">Пока пусто</div>
+						) : (
+							<div className="space-y-3">
+								{history.map((item) => (
+									<div key={item.id} className="group flex items-center justify-between p-4 bg-[var(--md-sys-color-surface-container)] rounded-2xl hover:shadow-md transition-all">
+										<div className="flex-1">
+											<div className="flex items-center gap-3">
+												<span className="font-black text-xl tracking-tighter text-[var(--md-sys-color-primary)]">{item.marker}</span>
+												<span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${item.result === 'Success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+													{item.result === 'Success' ? 'Успех' : 'Ошибка'}
+												</span>
+											</div>
+											<p className="text-xs opacity-60 mt-1">{item.forwardPrimer} / {item.reversePrimer} • {new Date(item.date).toLocaleDateString()}</p>
+										</div>
+										{!isReader && (
+											<div className="flex items-center gap-1">
+												<button 
+													onClick={() => handleEditAttempt(item)} 
+													className="p-2 opacity-0 group-hover:opacity-100 hover:bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] rounded-full transition-all"
+													title="Редактировать"
+												>
+													<Pencil className="w-4 h-4" />
+												</button>
+												<button 
+													onClick={() => handleDeleteAttempt(item.id)} 
+													className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-50 text-red-500 rounded-full transition-all"
+													title="Удалить"
+												>
+													<Trash2 className="w-4 h-4" />
+												</button>
+											</div>
+										)}
+									</div>
+								))}
+							</div>
+						)}
+					</section>
+
+					{/* Edit/Add Form Section */}
+					{!isReader && (
+						<section className="bg-[var(--md-sys-color-surface-container-high)] p-6 rounded-[2rem] shadow-inner border-2 border-[var(--md-sys-color-primary)]/10">
+							<div className="flex items-center justify-between mb-4">
+								<h3 className="text-sm font-black uppercase tracking-[0.2em] text-[var(--md-sys-color-primary)] flex items-center gap-2">
+									{isEditing ? <Pencil className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+									{isEditing ? 'Редактировать пробу' : 'Новая реакция'}
+								</h3>
+								{isEditing && (
+									<button onClick={handleResetForm} className="text-xs font-bold text-[var(--md-sys-color-primary)] hover:underline">Отмена / Создать новую</button>
+								)}
+							</div>
+
+							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+								<div className="sm:col-span-2">
+									<MD3Field isSelect label="Маркер" value={pcrForm.marker} onChange={(e) => setPcrForm({ ...pcrForm, marker: e.target.value })}>
+										<option value=""></option>
+										{['ITS', 'SSU', 'LSU', 'MCM7', 'RPB2', 'mtLSU', 'mtSSU'].map(m => <option key={m} value={m}>{m}</option>)}
+									</MD3Field>
 								</div>
-								<div className={`px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap self-start sm:self-auto ${
-									item.result === 'Success' 
-										? 'bg-green-500/20 text-green-700 dark:text-green-400' 
-										: 'bg-red-500/20 text-red-700 dark:text-red-400'
-								}`}>
-									{item.result === 'Success' ? '✓ Успех' : '✕ Ошибка'}
+								<MD3Field label="Прямой праймер" value={pcrForm.forwardPrimer} onChange={(e) => setPcrForm({ ...pcrForm, forwardPrimer: e.target.value })} />
+								<MD3Field label="Обратный праймер" value={pcrForm.reversePrimer} onChange={(e) => setPcrForm({ ...pcrForm, reversePrimer: e.target.value })} />
+								<MD3Field type="number" label="Объем (мкл)" value={pcrForm.volume} onChange={(e) => setPcrForm({ ...pcrForm, volume: e.target.value })} />
+								<MD3Field label="Матрица ДНК (мкл)" value={pcrForm.dnaMatrix} onChange={(e) => setPcrForm({ ...pcrForm, dnaMatrix: e.target.value })} />
+								<div className="sm:col-span-2">
+									<MD3Field isSelect label="Результат" value={pcrForm.result} onChange={(e) => setPcrForm({ ...pcrForm, result: e.target.value as any })}>
+										<option value="Success">✓ Успешно</option>
+										<option value="Failed">✕ Ошибка</option>
+									</MD3Field>
 								</div>
 							</div>
-						))}
-					</div>
-				)}
-			</section>
 
-			{/* БЛОК 2: НОВАЯ РЕАКЦИЯ (только для редакторов) */}
-			{!isReader && (
-				<section className="bg-[var(--md-sys-color-surface-container-high)] p-5 sm:p-6 rounded-[2rem] shadow-inner">
-					<h3 className="mb-4 text-sm font-medium tracking-wide text-[var(--md-sys-color-primary)] flex items-center gap-2">
-						<FlaskConical className="w-5 h-5" /> Новая реакция
-					</h3>
-
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-						{/* Маркер (Select) */}
-						<div className="sm:col-span-2">
-							<MD3Field
-								isSelect
-								label="Маркер"
-								value={pcrForm.marker}
-								onChange={(e) => setPcrForm({ ...pcrForm, marker: e.target.value })}
-							>
-								<option value=""></option>
-								<option value="ITS">ITS</option>
-								<option value="SSU">SSU</option>
-								<option value="LSU">LSU</option>
-								<option value="MCM7">MCM7</option>
-							</MD3Field>
-						</div>
-
-						<MD3Field
-	label="Прямой праймер"
-	value={pcrForm.forwardPrimer}
-	onChange={(e) => setPcrForm({ ...pcrForm, forwardPrimer: e.target.value })}
-	className="!rounded-[0.5rem]"
-/>
-
-<MD3Field
-	label="Обратный праймер"
-	value={pcrForm.reversePrimer}
-	onChange={(e) => setPcrForm({ ...pcrForm, reversePrimer: e.target.value })}
-	className="!rounded-[0.5rem]"
-/>
-
-<MD3Field
-	type="number"
-	label="Объем (мкл)"
-	value={pcrForm.volume}
-	onChange={(e) => setPcrForm({ ...pcrForm, volume: e.target.value })}
-	className="!rounded-[0.5rem]"
-/>
-
-<MD3Field
-	label="Матрица ДНК (мкл)"
-	value={pcrForm.dnaMatrix}
-	onChange={(e) => setPcrForm({ ...pcrForm, dnaMatrix: e.target.value })}
-	className="!rounded-[0.5rem]"
-/>
-
-						{/* Результат (Select с цветом) */}
-<div className="sm:col-span-2">
-	<MD3Field
-		isSelect
-		label="Результат"
-		value={pcrForm.result}
-		onChange={(e) => setPcrForm({ ...pcrForm, result: e.target.value as 'Success' | 'Failed' })}
-		className={`!rounded-t-[0.25rem] !rounded-b-[1rem] ${
-			pcrForm.result === 'Success' 
-				? 'text-green-600 dark:text-green-400 font-bold' 
-				: 'text-red-600 dark:text-red-400 font-bold'
-		}`}
-	>
-		<option value="Success" className="text-green-600 dark:text-green-400">✓ Успешно</option>
-		<option value="Failed" className="text-red-600 dark:text-red-400">✕ Ошибка</option>
-	</MD3Field>
-</div>
-					</div>
-
-					{/* Кнопки (кастомные, как в модалке редактирования) */}
-					<div className="flex justify-end gap-3 pt-6">
-						<button
-							type="button"
-							onClick={onClose}
-							className="px-6 py-3 rounded-full text-sm font-medium text-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-primary)]/10 transition-all">
-							Отмена
-						</button>
-						<button
-							type="button"
-							onClick={onSubmit}
-							disabled={!pcrForm.marker}
-							className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50">
-							<Save className="h-5 w-5" />
-							Сохранить
-						</button>
-					</div>
-				</section>
-			)}
+							<div className="flex justify-end gap-3 pt-6">
+								<Button variant="tonal" onClick={onClose}>Отмена</Button>
+								<Button onClick={onSubmit} disabled={!pcrForm.marker} className="gap-2">
+									<Save className="h-5 w-5" />
+									{isEditing ? 'Обновить изменения' : 'Сохранить реакцию'}
+								</Button>
+							</div>
+						</section>
+					)}
+				</div>
+			</div>
 		</div>
-	</div>
-</div>
 	);
 }

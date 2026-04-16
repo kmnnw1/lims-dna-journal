@@ -1,8 +1,10 @@
 import ExcelJS from 'exceljs';
 import path from 'path';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../prisma/generated/client/index.js';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaBetterSqlite3({ url: 'file:./prisma/dev.db' });
+const prisma = new PrismaClient({ adapter });
 
 async function parseAndSeed() {
     const workbook = new ExcelJS.Workbook();

@@ -1,11 +1,13 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../prisma/generated/client/client';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
+const adapter = new PrismaBetterSqlite3({ url: 'file:./prisma/dev.db' });
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 export const prisma =
 	globalForPrisma.prisma ||
 	new PrismaClient({
-		// Оставляем только 'error', убираем 'query' и 'info'
+		adapter,
 		log: ['error'],
 	});
 

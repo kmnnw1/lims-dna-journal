@@ -1,8 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import crypto from 'crypto';
-import { execSync } from 'child_process';
+import { PrismaClient } from '../prisma/generated/client/client';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import * as crypto from 'crypto';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaBetterSqlite3({ url: 'file:./prisma/dev.db' });
+const prisma = new PrismaClient({ adapter });
 
 async function generateToken() {
 	try {

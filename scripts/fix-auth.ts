@@ -1,7 +1,8 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { PrismaClient } from '../prisma/generated/client/index.js';
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
-const prisma = new PrismaClient();
+const adapter = new PrismaBetterSqlite3({ url: 'file:./prisma/dev.db' });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
 	console.log('Шифруем пароль...');

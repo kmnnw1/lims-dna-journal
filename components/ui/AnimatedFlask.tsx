@@ -18,7 +18,7 @@ export function AnimatedFlask() {
     const [isAnimating, setIsAnimating] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const requestRef = useRef<number>(0);
-    
+
     // Храним частицы в ref, чтобы не дергать React render 60 раз в секунду
     const particles = useRef<Particle[]>([]);
     const nextId = useRef(0);
@@ -52,16 +52,16 @@ export function AnimatedFlask() {
     // Границы колбы
     const checkCollision = (p: Particle) => {
         const dt = 0.016;
-        
+
         if (p.state === 'idle') {
             p.vx += (Math.random() - 0.5) * 2;
             p.vy += (Math.random() - 0.5) * 2;
             p.vx *= 0.9;
             p.vy *= 0.9;
-            
+
             if (p.y > 20) { p.y = 20; p.vy *= -0.5; }
             if (p.y < 12) { p.y = 12; p.vy *= -0.5; }
-            
+
             const leftBound = 4 + (21 - p.y) * 0.3;
             const rightBound = 20 - (21 - p.y) * 0.3;
             if (p.x < leftBound) { p.x = leftBound; p.vx *= -0.8; }
@@ -72,20 +72,20 @@ export function AnimatedFlask() {
                 p.vy += (Math.random() - 0.5) * 2;
                 p.vx *= 0.9;
                 p.vy *= 0.9;
-                if (p.y < 12) { p.y = 12; p.vy *= -0.5; } 
+                if (p.y < 12) { p.y = 12; p.vy *= -0.5; }
                 p.life += dt;
                 p.x += p.vx * dt;
                 p.y += p.vy * dt;
                 return;
             }
 
-            p.vy -= 15 * dt; 
-            
+            p.vy -= 15 * dt;
+
             if (p.y <= 11) {
                 // В горлышке пузыри должны быть узкими
                 const neckLeft = 10.5;
                 const neckRight = 13.5;
-                
+
                 // Ограничиваем радиус, чтобы не вылезать за стенки (ширина горла ~3.4)
                 if (p.r > 1.4) p.r = 1.4;
 
@@ -121,7 +121,7 @@ export function AnimatedFlask() {
                 continue;
             }
 
-            const opacity = p.state === 'flying' 
+            const opacity = p.state === 'flying'
                 ? Math.max(0, 1 - (p.life / p.maxLife))
                 : Math.min(0.8, p.life * 2);
 
@@ -130,18 +130,18 @@ export function AnimatedFlask() {
                 el.setAttribute('cx', p.x.toString());
                 el.setAttribute('cy', p.y.toString());
                 el.setAttribute('r', p.r.toString());
-                
+
                 // Премиальная видимость с использованием Glow и Stroke
                 if (p.state === 'flying' && p.y < 9) {
-                     el.setAttribute('fill', 'var(--md-sys-color-primary-container)');
-                     el.setAttribute('stroke', 'var(--md-sys-color-primary)');
-                     el.setAttribute('stroke-width', '0.3');
-                     el.style.filter = 'url(#bubble-glow)';
+                    el.setAttribute('fill', 'var(--md-sys-color-primary-container)');
+                    el.setAttribute('stroke', 'var(--md-sys-color-primary)');
+                    el.setAttribute('stroke-width', '0.3');
+                    el.style.filter = 'url(#bubble-glow)';
                 } else {
-                     el.setAttribute('fill', 'white');
-                     el.setAttribute('stroke', 'var(--md-sys-color-outline-variant)');
-                     el.setAttribute('stroke-width', '0.2');
-                     el.style.filter = 'url(#bubble-glow)';
+                    el.setAttribute('fill', 'white');
+                    el.setAttribute('stroke', 'var(--md-sys-color-outline-variant)');
+                    el.setAttribute('stroke-width', '0.2');
+                    el.style.filter = 'url(#bubble-glow)';
                 }
 
                 el.style.opacity = opacity.toString();
@@ -161,7 +161,7 @@ export function AnimatedFlask() {
 
     const handlePump = () => {
         if (particles.current.filter(p => p.state === 'idle').length < 60) {
-            for(let i = 0; i < 5; i++) spawnBubble();
+            for (let i = 0; i < 5; i++) spawnBubble();
         }
         setIsAnimating(true);
         rockRef.current = Math.min(2.0, rockRef.current + 0.5);

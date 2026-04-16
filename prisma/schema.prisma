@@ -1,10 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "./generated/client"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  // url      = env("DATABASE_URL")
 }
 
 model User {
@@ -30,7 +31,7 @@ model Specimen {
   dnaMeter         String?
   measDate         DateTime?
   measOperator     String?
-  dnaConcentration String?
+  dnaConcentration Float?
   dnaProfile       String?
   measComm         String?
   imageUrl         String?
@@ -55,8 +56,11 @@ model Specimen {
   importRow        Int?
   importNotes      String?      
   attempts         PcrAttempt[]
+  deletedAt        DateTime?    
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
+
+  @@index([deletedAt])
 }
 
 model PcrAttempt {
@@ -76,9 +80,12 @@ model PcrAttempt {
   result           String
   resultNotes      String?
   specimen         Specimen          @relation(fields: [specimenId], references: [id], onDelete: Cascade)
+  deletedAt        DateTime?    
   createdAt        DateTime          @default(now())
 
-  @@unique([specimenId, marker])
+  @@index([specimenId])
+  @@index([marker])
+  @@index([deletedAt])
 }
 
 model AuditLog {

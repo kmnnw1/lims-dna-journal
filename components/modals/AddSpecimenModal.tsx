@@ -74,56 +74,52 @@ export function AddSpecimenModal({
 				</div>
 
 				<form onSubmit={onSubmit} className="space-y-5" autoComplete="off">
-					{/* ID пробы — стандартное MD3 скругление */}
 					<MD3Field
-					ref={idInputRef}
-					required
-					label="ID пробы *"
-					value={newRecord.id}
-					maxLength={30}
-					spellCheck={false}
-					onChange={(e) =>
-						setNewRecord({
-							...newRecord,
-							id: e.target.value.replace(/\s/g, ''),
-						})
-					}
-					className="!bg-[var(--md-sys-color-surface-container-high)]"
-					data-testid="addspecimen-id"
-				/>
+						ref={idInputRef}
+						required
+						label="ID пробы *"
+						value={newRecord.id}
+						maxLength={30}
+						spellCheck={false}
+						onChange={(e) =>
+							setNewRecord({
+								...newRecord,
+								id: e.target.value.replace(/\s/g, ''),
+							})
+						}
+						className="!bg-[var(--md-sys-color-surface-container-high)]"
+						data-testid="addspecimen-id"
+					/>
 
-				{/* Таксон —  — среднее скругление !rounded-[0.5rem] */}
-				<MD3Field
-					list="taxons-list"
-					label="Таксон"
-					value={newRecord.taxon}
-					maxLength={80}
-					onChange={(e) => setNewRecord({ ...newRecord, taxon: e.target.value })}
-					className="!bg-[var(--md-sys-color-surface-container-high)] !rounded-[0.5rem]"
-					data-testid="addspecimen-lab"
-				/>
+					<MD3Field
+						list="taxons-list"
+						label="Таксон"
+						value={newRecord.taxon}
+						maxLength={80}
+						onChange={(e) => setNewRecord({ ...newRecord, taxon: e.target.value })}
+						className="!bg-[var(--md-sys-color-surface-container-high)] !rounded-[0.5rem]"
+						data-testid="addspecimen-taxon"
+					/>
 
-				{/* Лаборатория — среднее скругление !rounded-[0.5rem] */}
-				<MD3Field
-					list="labs-list"
-					label="Лаборатория"
-					value={newRecord.extrLab}
-					maxLength={40}
-					onChange={(e) => setNewRecord({ ...newRecord, extrLab: e.target.value })}
-					className="!bg-[var(--md-sys-color-surface-container-high)] !rounded-[0.5rem]"
-					data-testid="addspecimen-lab"
-				/>
+					<MD3Field
+						list="labs-list"
+						label="Лаборатория"
+						value={newRecord.extrLab}
+						maxLength={40}
+						onChange={(e) => setNewRecord({ ...newRecord, extrLab: e.target.value })}
+						className="!bg-[var(--md-sys-color-surface-container-high)] !rounded-[0.5rem]"
+						data-testid="addspecimen-lab"
+					/>
 
-				{/* Лаборант —  */}
-				<MD3Field
-				list="ops-list"
-				label="Лаборант"
-				value={newRecord.extrOperator}
-				maxLength={40}
-				onChange={(e) => setNewRecord({ ...newRecord, extrOperator: e.target.value })}
-				className="!bg-[var(--md-sys-color-surface-container-high)] !rounded-t-[0.25rem] !rounded-b-[1rem]"
-				data-testid="addspecimen-operator"
-			/>
+					<MD3Field
+						list="ops-list"
+						label="Лаборант"
+						value={newRecord.extrOperator}
+						maxLength={40}
+						onChange={(e) => setNewRecord({ ...newRecord, extrOperator: e.target.value })}
+						className="!bg-[var(--md-sys-color-surface-container-high)] !rounded-t-[0.25rem] !rounded-b-[1rem]"
+						data-testid="addspecimen-operator"
+					/>
 
 					<datalist id="taxons-list">
 						{taxons.map((t, i) => <option key={i} value={t as string} />)}
@@ -135,14 +131,12 @@ export function AddSpecimenModal({
 						{operators.map((t, i) => <option key={i} value={t as string} />)}
 					</datalist>
 
-					{/* Ошибка валидации */}
 					{validationError && (
 						<div className="bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-on-error-container)] p-4 rounded-2xl text-sm font-medium">
 							{validationError}
 						</div>
 					)}
 
-					{/* Кнопки */}
 					<div className="flex justify-end gap-3 pt-4">
 						<button
 							type="button"

@@ -15,11 +15,7 @@ interface QuickFilterBarProps {
   suggestions: { labs: string[], operators: string[], methods: string[] };
 }
 
-const filterButtons = [
-  { value: 'all', label: 'Все' },
-  { value: 'success', label: 'Успешные' },
-  { value: 'error', label: 'Ошибки' },
-];
+
 
 export function QuickFilterBar({ 
     filterType, 
@@ -86,26 +82,6 @@ export function QuickFilterBar({
               </div>
 
               <div className="p-5 space-y-6">
-                  {/* Быстрые статусы */}
-                  <div className="relative flex p-1 bg-[var(--md-sys-color-surface-container-highest)] rounded-xl">
-                      {filterButtons.map((button) => (
-                          <button
-                              key={button.value}
-                              onClick={() => {
-                                  onFilterChange(button.value as any);
-                                  // setIsOpen(false); // Опционально: можно не закрывать
-                              }}
-                              className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-all duration-200 text-center ${
-                                  filterType === button.value
-                                  ? 'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] shadow flex items-center justify-center gap-1.5'
-                                  : 'text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-on-surface)]'
-                              }`}
-                          >
-                              {filterType === button.value && <Check className="w-3.5 h-3.5 text-[var(--md-sys-color-primary)]" />}
-                              {button.label}
-                          </button>
-                      ))}
-                  </div>
 
                   {/* Маркеры */}
                   <div className="space-y-3">
