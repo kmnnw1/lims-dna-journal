@@ -1,5 +1,5 @@
 # Stage 1: Dependencies
-FROM node:20-bookworm-slim AS deps
+FROM node:22-bookworm-slim AS deps
 WORKDIR /app
 
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
@@ -9,7 +9,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 # Stage 2: Builder
-FROM node:20-bookworm-slim AS builder
+FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -22,7 +22,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Stage 3: Runner
-FROM node:20-bookworm-slim AS runner
+FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
