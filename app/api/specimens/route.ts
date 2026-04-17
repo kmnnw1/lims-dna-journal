@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
-import type { Prisma } from '../../../prisma/generated/client/client';
+import { db } from '@/lib/db/drizzle';
+import { specimens as specimensTable } from '@/lib/db/schema';
+import { count, asc, desc } from 'drizzle-orm';
 import { prisma } from '@/lib/database/prisma';
 import { logAuditAction } from '@/lib/database/audit-log';
+import { buildDrizzleQuery, getDrizzleDistinctFields } from './drizzle-helpers';
 import {
     type ApiUser,
     requireRole,
     handleError,
     invalidateSpecimenCaches,
-    getDistinctFields,
     buildCacheKey,
-    buildSpecimenQuery,
     getCached,
     setCache,
 } from './helpers';
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '100');
         const search = searchParams.get('search') || '';
-        const sortKey = searchParams.get('sortBy') || 'id';
+        const sortKey = (searchParams.get('sortBy') || 'id') as any;
         const sortDir = searchParams.get('sortOrder') || 'asc';
         const filterType = searchParams.get('filter') || 'all';
         const minConc = searchParams.get('minConc') ? parseFloat(searchParams.get('minConc')!) : null;
@@ -41,20 +42,22 @@ export async function GET(req: Request) {
         if (cached) return NextResponse.json(cached);
 
         const skip = (page - 1) * limit;
-        const where = buildSpecimenQuery({ search, filterType, operator, minConc, maxConc });
+        const where = buildDrizzleQuery({ search, filterType, operator, minConc, maxConc });
 
-        const orderBy = sortKey
-            ? ({ [sortKey]: sortDir === 'asc' ? 'asc' : 'desc' } as Prisma.Enumerable<Prisma.SpecimenOrderByWithRelationInput>)
-            : undefined;
-
-        const [specimens, total, suggestions] = await Promise.all([
-            prisma.specimen.findMany({ where, skip, take: limit, orderBy, include: { attempts: true } }),
-            prisma.specimen.count({ where }),
-            getDistinctFields(),
+        const [results, totalCount, suggestions] = await Promise.all([
+            db.select().from(specimensTable)
+              .where(where)
+              .limit(limit)
+              .offset(skip)
+              .orderBy(sortDir === 'asc' ? asc(specimensTable[sortKey]) : desc(specimensTable[sortKey])),
+            db.select({ count: count() }).from(specimensTable).where(where),
+            getDrizzleDistinctFields(),
         ]);
 
+        const total = totalCount[0]?.count || 0;
+
         const response = {
-            specimens: specimens.map((s: any) => ({
+            specimens: results.map((s) => ({
                 ...s,
                 taxon: s.taxon || '',
                 notes: s.notes || '',
@@ -122,14 +125,12 @@ export async function PUT(req: Request) {
         const body = await req.json();
         const { id, singleId, updateData, singleStatus, ...restData } = body;
 
-        // Логика для быстрого переключения статуса маркеров
         if (singleId && updateData) {
             await prisma.specimen.update({ where: { id: String(singleId) }, data: updateData });
             invalidateSpecimenCaches();
             return NextResponse.json({ success: true });
         }
 
-        // Поддержка легаси-обновления статуса
         if (singleId && singleStatus !== undefined) {
             const specimen = await prisma.specimen.findUnique({ where: { id: String(singleId) } });
             await prisma.specimen.update({ where: { id: String(singleId) }, data: { itsStatus: singleStatus } });
@@ -147,7 +148,6 @@ export async function PUT(req: Request) {
             return NextResponse.json({ success: true });
         }
 
-        // Редактирование через модалку
         if (id && Object.keys(restData).length > 0) {
             const taxon = restData?.taxon || '';
             if (taxon && taxon.trim().length > 0 && taxon.trim().length < 3) {
@@ -156,7 +156,6 @@ export async function PUT(req: Request) {
 
             const oldSpecimen = await prisma.specimen.findUnique({ where: { id: String(id) } });
 
-            // КРИТИЧНО: Удаляем вложенные массивы и даты перед обновлением
             delete restData.attempts;
             delete restData.createdAt;
             delete restData.updatedAt;
@@ -195,7 +194,7 @@ export async function DELETE(request: Request) {
         const session = await requireRole('ADMIN');
         const body = await request.json();
         if (body.ids && Array.isArray(body.ids) && body.ids.length > 0) {
-            const specimens = await prisma.specimen.findMany({
+            const specimensList = await prisma.specimen.findMany({
                 where: { id: { in: body.ids.map(String) } },
                 select: { id: true, taxon: true },
             });
@@ -206,7 +205,7 @@ export async function DELETE(request: Request) {
             });
 
             const currentUser = session.user as ApiUser | undefined;
-            for (const specimen of specimens) {
+            for (const specimen of specimensList) {
                 await logAuditAction({
                     userId: currentUser?.id || 'unknown',
                     action: 'DELETE_SPECIMEN',
