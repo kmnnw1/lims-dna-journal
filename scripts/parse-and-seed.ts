@@ -30,7 +30,9 @@ async function parseAndSeed() {
 
 		// Extract cell values safely (handling formulas)
 		const getVal = (colIdx: number) => {
-			let val = Array.isArray(rawRow) ? rawRow[colIdx] : (rawRow as any)[colIdx];
+			let val = Array.isArray(rawRow)
+				? rawRow[colIdx]
+				: (rawRow as Record<number, unknown>)[colIdx];
 			if (val && typeof val === 'object' && 'result' in val) {
 				val = val.result;
 			}
@@ -46,7 +48,7 @@ async function parseAndSeed() {
 		const id = getVal(3); // ExcelJS values array is 1-indexed, starting from C = 3
 		if (!id) continue;
 
-		const parseMarkerStatus = (val: any) => {
+		const parseMarkerStatus = (val: unknown) => {
 			if (val === null || val === undefined) return null;
 			if (
 				val === '1' ||
@@ -98,8 +100,8 @@ async function parseAndSeed() {
 			if (successCount % 500 === 0) {
 				console.log(`...imported ${successCount} records.`);
 			}
-		} catch (e: any) {
-			console.error(`Error importing row ${i} (ID: ${id}):`, e.message);
+		} catch (e: unknown) {
+			console.error(`Error importing row ${i} (ID: ${id}):`, (e as Error).message);
 		}
 	}
 

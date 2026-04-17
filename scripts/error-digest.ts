@@ -12,10 +12,11 @@ if (!existsSync(targetDir)) {
 
 function runCheck(name: string, cmd: string): string {
 	try {
-		const output = execSync(cmd, { encoding: 'utf8', stdio: 'pipe' });
+		execSync(cmd, { encoding: 'utf8', stdio: 'pipe' });
 		return `### ✅ ${name}\nNo errors found.\n`;
-	} catch (error: any) {
-		const output = error.stdout || error.stderr || error.message;
+	} catch (error: unknown) {
+		const err = error as { stdout?: string; stderr?: string; message?: string };
+		const output = err.stdout || err.stderr || err.message;
 		return `### ❌ ${name}\n\`\`\`text\n${output}\n\`\`\`\n`;
 	}
 }

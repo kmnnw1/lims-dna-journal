@@ -33,8 +33,8 @@ async function main() {
 		const data = await response.json();
 		console.log('Remote OTA manifest:');
 		console.log(JSON.stringify(data, null, 2));
-	} catch (error) {
-		console.error('OTA check failed:', (error as any)?.message || error);
+	} catch (error: unknown) {
+		console.error('OTA check failed:', (error as Error)?.message || error);
 	}
 }
 

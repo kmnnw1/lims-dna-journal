@@ -26,8 +26,8 @@ function collectFile(source: string, destination: string) {
 	try {
 		copyFileSync(source, destination);
 		console.log(`✅ ${source} → ${destination}`);
-	} catch (error: any) {
-		console.warn(`⚠️ Не удалось скопировать ${source}: ${error?.message || error}`);
+	} catch (error: unknown) {
+		console.warn(`⚠️ Не удалось скопировать ${source}: ${(error as Error)?.message || error}`);
 	}
 }
 

@@ -9,9 +9,10 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 function run(cmd: string, title?: string) {
 	if (title) console.log(`\n→ ${title}\n`);
 	try {
+		// biome-ignore lint/suspicious/noExplicitAny: execSync options type is complex in node:child_process
 		execSync(cmd, { cwd: root, stdio: 'inherit', shell: true, env: process.env } as any);
 	} catch (err) {
-		console.error(`❌ Ошибка выполнения '${cmd}':\n`, (err as any)?.message || err);
+		console.error(`❌ Ошибка выполнения '${cmd}':\n`, (err as Error)?.message || err);
 		process.exit(1);
 	}
 }
