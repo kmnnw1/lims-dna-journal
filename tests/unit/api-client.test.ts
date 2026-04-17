@@ -22,10 +22,11 @@ describe('parseApiResponse', () => {
 		expect((r as { message: string }).message.toLowerCase()).toContain('некорректный');
 	});
 
-	it('should handle empty body gracefully', async () => {
+	it('should handle empty body as ok with empty object', async () => {
 		const res = new Response(null, { status: 200 });
 		const r = await parseApiResponse(res);
-		expect(r.ok).toBe(false);
+		expect(r.ok).toBe(true);
+		expect((r as any).data).toEqual({});
 	});
 
 	it('should prioritize top-level message over error if both are present', async () => {

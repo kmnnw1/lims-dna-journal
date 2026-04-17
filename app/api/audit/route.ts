@@ -23,7 +23,8 @@ export async function GET(req: Request) {
 			logs = await getResourceAuditHistory(resourceType, resourceId, limit);
 		} else {
 			// Глобальный лог (только ADMIN)
-			if ((session.user as any).role !== 'ADMIN') {
+			const user = session.user as { role?: string };
+			if (user.role !== 'ADMIN') {
 				return NextResponse.json(
 					{ error: 'Недостаточно прав для просмотра глобального лога' },
 					{ status: 403 },
