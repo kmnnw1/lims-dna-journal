@@ -47,8 +47,9 @@ export function useAdminPage() {
 				return;
 			}
 			setUsers(Array.isArray(result.data) ? result.data : []);
-		} catch (err: any) {
-			if (err.name === 'AbortError') {
+		} catch (err: unknown) {
+			const error = err as Error;
+			if (error.name === 'AbortError') {
 				showToast('Превышено время ожидания списка пользователей', 'error');
 			} else {
 				showToast('Ошибка при загрузке списка пользователей', 'error');

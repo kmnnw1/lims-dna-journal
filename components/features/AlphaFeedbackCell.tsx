@@ -1,6 +1,7 @@
 'use client';
 
 import { Camera, Image as ImageIcon, Loader2, X } from 'lucide-react';
+import Image from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { Specimen } from '@/types';
 
@@ -54,30 +55,33 @@ export const AlphaFeedbackCell: React.FC<AlphaFeedbackCellProps> = ({ specimen, 
 		return () => clearTimeout(timer);
 	}, [notes, specimen.id, specimen.reviewNotes, onUpdate, photos]);
 
-	const uploadFile = async (file: File) => {
-		setIsUploading(true);
-		const formData = new FormData();
-		formData.append('file', file);
-		formData.append('specimenId', specimen.id);
+	const uploadFile = useCallback(
+		async (file: File) => {
+			setIsUploading(true);
+			const formData = new FormData();
+			formData.append('file', file);
+			formData.append('specimenId', specimen.id);
 
-		try {
-			const res = await fetch('/api/upload/feedback', {
-				method: 'POST',
-				body: formData,
-			});
-			const data = await res.json();
+			try {
+				const res = await fetch('/api/upload/feedback', {
+					method: 'POST',
+					body: formData,
+				});
+				const data = await res.json();
 
-			if (data.url) {
-				const newPhotos = [...photos, data.url];
-				setPhotos(newPhotos);
-				await onUpdate(specimen.id, { reviewPhotos: JSON.stringify(newPhotos) });
+				if (data.url) {
+					const newPhotos = [...photos, data.url];
+					setPhotos(newPhotos);
+					await onUpdate(specimen.id, { reviewPhotos: JSON.stringify(newPhotos) });
+				}
+			} catch (error) {
+				console.error('Failed to upload image:', error);
+			} finally {
+				setIsUploading(false);
 			}
-		} catch (error) {
-			console.error('Failed to upload image:', error);
-		} finally {
-			setIsUploading(false);
-		}
-	};
+		},
+		[photos, specimen.id, onUpdate],
+	);
 
 	const handlePaste = useCallback(
 		async (e: React.ClipboardEvent) => {
@@ -145,9 +149,12 @@ export const AlphaFeedbackCell: React.FC<AlphaFeedbackCellProps> = ({ specimen, 
 						key={idx}
 						className="relative group overflow-hidden rounded-xl border border-[var(--md-sys-color-outline-variant)] shadow-md transition-all hover:shadow-lg"
 					>
-						<img
+						<Image
 							src={url}
 							alt="Фидбек"
+							width={48}
+							height={48}
+							unoptimized
 							className="w-12 h-12 object-cover cursor-pointer hover:opacity-90"
 							onClick={() => window.open(url, '_blank')}
 						/>

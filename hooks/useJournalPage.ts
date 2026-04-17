@@ -180,7 +180,7 @@ export function useJournalPage() {
 	});
 
 	const pcrMutation = useMutation({
-		mutationFn: async (payload: any) => {
+		mutationFn: async (payload: Record<string, unknown>) => {
 			const res = await fetch('/api/pcr', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },

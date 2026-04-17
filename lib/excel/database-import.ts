@@ -8,6 +8,7 @@ import { ParsedSpecimenRow } from './types';
 export async function processExcelToDatabase(buffer: Buffer) {
 	const workbook = new ExcelJS.Workbook();
 	// ExcelJS workbook.xlsx.load expects a certain Buffer type, casting to any for compatibility
+	// biome-ignore lint/suspicious/noExplicitAny: ExcelJS workbook.xlsx.load expects a certain Buffer type
 	await workbook.xlsx.load(buffer as any);
 
 	const results = {

@@ -17,7 +17,7 @@ type DBNode = {
 	label: string;
 	desc: string;
 	fullDesc: { key: string; name: string }[];
-	icon: any;
+	icon: React.ElementType;
 	baseX: number;
 	baseY: number;
 	phaseX: number;

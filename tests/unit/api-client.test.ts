@@ -26,7 +26,7 @@ describe('parseApiResponse', () => {
 		const res = new Response(null, { status: 200 });
 		const r = await parseApiResponse(res);
 		expect(r.ok).toBe(true);
-		expect((r as any).data).toEqual({});
+		expect((r as { data: unknown }).data).toEqual({});
 	});
 
 	it('should prioritize top-level message over error if both are present', async () => {
