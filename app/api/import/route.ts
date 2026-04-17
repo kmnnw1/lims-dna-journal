@@ -12,6 +12,7 @@ import {
 	cellText,
 	type ParsedSpecimenRow,
 } from '@/lib/excel';
+import { logAuditAction } from '@/lib/database/audit-log';
 import { parseWithAI } from '@/lib/excel/ai-parser';
 
 async function requireAdmin() {
@@ -29,6 +30,7 @@ async function requireAdmin() {
 export async function GET(req: Request) {
 	try {
 		await requireAdmin();
+		const session = await getServerSession(authOptions);
 
 		const { searchParams } = new URL(req.url);
 		const useAI = searchParams.get('useAI') === 'true';
@@ -90,6 +92,20 @@ export async function GET(req: Request) {
 			const result = await prisma.specimen.createMany({ data: chunk });
 			inserted += result.count ?? chunk.length;
 		}
+
+		const currentUser = session?.user as { id?: string } | undefined;
+		await logAuditAction({
+			userId: currentUser?.id || 'admin-system',
+			action: 'IMPORT_SPECIMENS',
+			resourceType: 'IMPORT',
+			details: { 
+				count: inserted, 
+				sheets: sheetNames, 
+				aiUsed, 
+				previousCount: beforeCount,
+				newCount: beforeCount + inserted
+			},
+		});
 
 		return NextResponse.json({
 			success: true,
