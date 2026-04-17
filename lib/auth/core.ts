@@ -47,15 +47,10 @@ export const authOptions: NextAuthOptions = {
 				
 				// Hiddify-style token login (Zero-Day Protection)
 				if (passOrToken) {
-					// Dev/Test bypass for E2E tests
-					if (process.env.NODE_ENV !== 'production' && process.env.TEST_TOKEN === passOrToken) {
-						return { id: 'admin', name: 'admin', role: 'ADMIN' } as NextAuthUser & { role: string };
-					}
 
 					const authToken = await prisma.authToken.findUnique({ where: { token: passOrToken } });
-					const isTestToken = process.env.NODE_ENV !== 'production' && passOrToken === 'test-token-123';
 
-					if (authToken && (!authToken.used || isTestToken) && (authToken.expiresAt > new Date() || isTestToken)) {
+					if (authToken && !authToken.used && authToken.expiresAt > new Date()) {
 						// Invalidate token
 						await prisma.authToken.update({
 							where: { id: authToken.id },
@@ -80,13 +75,6 @@ export const authOptions: NextAuthOptions = {
 				const username = credentials.username.trim();
 				let user = await findUserByUsername(username);
 
-				// Fallback: Create initial admin if database is empty or admin is missing
-				if (!user && username === 'admin') {
-					const userCount = await prisma.user.count();
-					if (userCount === 0) {
-						user = await createInitialAdmin();
-					}
-				}
 
 				if (!user) return null;
 
