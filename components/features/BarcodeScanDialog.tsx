@@ -44,7 +44,7 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	// Хелпер для тактильного отклика (вибрации)
-	const triggerHaptic = (type: 'success' | 'start') => {
+	const triggerHaptic = useCallback((type: 'success' | 'start') => {
 		if (typeof window !== 'undefined' && window.navigator.vibrate) {
 			if (type === 'success') {
 				// Сочный двойной отклик при успешном сканировании
@@ -54,7 +54,7 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 				window.navigator.vibrate(10);
 			}
 		}
-	};
+	}, []);
 
 	const stopCamera = useCallback(() => {
 		cancelAnimationFrame(rafRef.current);
