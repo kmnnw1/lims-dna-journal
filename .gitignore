@@ -101,8 +101,9 @@ id_ed25519
 # ------------------------------------------------------------------------------
 # 5. DATABASE & PRISMA (HIDE "NUMBERS")
 # ------------------------------------------------------------------------------
-# Prisma Migrations - HIDDEN from Git to remove "numeric" clutter while preserved on disk
+# Prisma Migrations & Generated Client
 prisma/migrations/
+prisma/generated/
 
 # SQLite & General DB files
 *.db
