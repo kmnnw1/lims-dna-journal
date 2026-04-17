@@ -1,4 +1,4 @@
-import { PrismaClient } from '@/prisma/generated/client';
+import { PrismaClient } from '../prisma/generated/client';
 import { writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
