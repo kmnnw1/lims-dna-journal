@@ -1,9 +1,9 @@
 'use client';
 
+import { ChevronDown, ChevronUp, FlaskConical, History, Pencil } from 'lucide-react';
 import React from 'react';
-import { Pencil, FlaskConical, ChevronUp, ChevronDown, History } from 'lucide-react';
-import { PCRStatusBadge } from './PCRStatusBadge';
 import type { Specimen } from '@/types';
+import { PCRStatusBadge } from './PCRStatusBadge';
 
 interface SpecimenTableProps {
 	specimens: Specimen[];
@@ -42,7 +42,8 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 			part.toLowerCase() === query.toLowerCase() ? (
 				<mark
 					key={i}
-					className="bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] rounded px-0.5 font-bold">
+					className="bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] rounded px-0.5 font-bold"
+				>
 					{part}
 				</mark>
 			) : (
@@ -60,14 +61,17 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 		);
 	};
 
-	const hasAnyNotes = specimens.some(s => s.notes || s.collectNotes);
+	const hasAnyNotes = specimens.some((s) => s.notes || s.collectNotes);
 	const hideActions = selectedIds.size > 1;
 
 	if (loading && specimens.length === 0) {
 		return (
 			<div className="bg-[var(--md-sys-color-surface-container-lowest)] rounded-[2.5rem] overflow-hidden shadow-sm p-4 space-y-4">
 				{[...Array(5)].map((_, i) => (
-					<div key={i} className="flex gap-4 p-4 items-center bg-[var(--md-sys-color-surface)] rounded-2xl animate-pulse">
+					<div
+						key={i}
+						className="flex gap-4 p-4 items-center bg-[var(--md-sys-color-surface)] rounded-2xl animate-pulse"
+					>
 						<div className="h-5 w-5 rounded bg-[var(--md-sys-color-surface-container-highest)]" />
 						<div className="h-6 w-20 rounded-full bg-[var(--md-sys-color-surface-container-highest)]" />
 						<div className="flex-1 space-y-2">
@@ -110,31 +114,36 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 										stroke="currentColor"
 										strokeWidth="4"
 										strokeLinecap="round"
-										strokeLinejoin="round">
+										strokeLinejoin="round"
+									>
 										<polyline points="20 6 9 17 4 12"></polyline>
 									</svg>
 								</div>
 							</th>
 							<th
 								className="sticky left-12 z-50 bg-[var(--md-sys-color-surface)] px-3 py-3 w-24 text-[var(--md-sys-color-on-surface)] font-bold tracking-widest uppercase cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none whitespace-nowrap border-b border-[var(--md-sys-color-outline-variant)]/50 border-r border-[var(--md-sys-color-outline-variant)]/30"
-								onClick={() => onSort('id')}>
+								onClick={() => onSort('id')}
+							>
 								ID {renderSortIcon('id')}
 							</th>
 							<th
 								className="px-4 py-3 text-[var(--md-sys-color-on-surface)] font-bold tracking-widest uppercase cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none whitespace-nowrap border-b border-[var(--md-sys-color-outline-variant)]/50"
-								onClick={() => onSort('taxon')}>
+								onClick={() => onSort('taxon')}
+							>
 								Таксон {renderSortIcon('taxon')}
 							</th>
 							{hasAnyNotes && (
-								<th 
+								<th
 									className="px-4 py-3 text-[var(--md-sys-color-on-surface)] font-bold tracking-widest uppercase cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none whitespace-nowrap border-b border-[var(--md-sys-color-outline-variant)]/50"
-									onClick={() => onSort('notes')}>
+									onClick={() => onSort('notes')}
+								>
 									Заметки {renderSortIcon('notes')}
 								</th>
 							)}
-							<th 
+							<th
 								className="px-4 py-3 text-[var(--md-sys-color-on-surface)] font-bold tracking-widest uppercase cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none whitespace-nowrap border-b border-[var(--md-sys-color-outline-variant)]/50"
-								onClick={() => onSort('extrLab')}>
+								onClick={() => onSort('extrLab')}
+							>
 								Выделение {renderSortIcon('extrLab')}
 							</th>
 							<th className="px-4 py-3 text-[var(--md-sys-color-on-surface)] font-bold tracking-widest uppercase whitespace-nowrap border-b border-[var(--md-sys-color-outline-variant)]/50">
@@ -149,13 +158,18 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 						{specimens.map((specimen) => {
 							const isSelected = selectedIds.has(specimen.id);
 							// Динамический фон для липких колонок. Если строка выбрана - заливаем акцентом, иначе поверхностью
-							const stickyBgClass = isSelected ? 'bg-[var(--md-sys-color-primary-container)]' : 'bg-[var(--md-sys-color-surface)] group-hover:bg-[var(--md-sys-color-surface-container-lowest)]';
+							const stickyBgClass = isSelected
+								? 'bg-[var(--md-sys-color-primary-container)]'
+								: 'bg-[var(--md-sys-color-surface)] group-hover:bg-[var(--md-sys-color-surface-container-lowest)]';
 
 							return (
 								<tr
 									key={specimen.id}
-									className={`group transition-colors duration-150 ${isSelected ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]' : 'hover:bg-[var(--md-sys-color-surface-container-lowest)] bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]'}`}>
-									<td className={`sticky left-0 z-30 ${stickyBgClass} px-3 py-2 w-12 text-center border-b border-[var(--md-sys-color-outline-variant)]/20 border-r border-[var(--md-sys-color-outline-variant)]/10`}>
+									className={`group transition-colors duration-150 ${isSelected ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]' : 'hover:bg-[var(--md-sys-color-surface-container-lowest)] bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]'}`}
+								>
+									<td
+										className={`sticky left-0 z-30 ${stickyBgClass} px-3 py-2 w-12 text-center border-b border-[var(--md-sys-color-outline-variant)]/20 border-r border-[var(--md-sys-color-outline-variant)]/10`}
+									>
 										<div className="relative flex items-center justify-center">
 											<input
 												type="checkbox"
@@ -170,12 +184,15 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 												stroke="currentColor"
 												strokeWidth="3"
 												strokeLinecap="round"
-												strokeLinejoin="round">
+												strokeLinejoin="round"
+											>
 												<polyline points="20 6 9 17 4 12"></polyline>
 											</svg>
 										</div>
 									</td>
-									<td className={`sticky left-12 z-30 ${stickyBgClass} px-3 py-2 w-24 border-b border-[var(--md-sys-color-outline-variant)]/20 border-r border-[var(--md-sys-color-outline-variant)]/30 font-mono text-sm text-[var(--md-sys-color-primary)] font-medium tracking-tight whitespace-nowrap`}>
+									<td
+										className={`sticky left-12 z-30 ${stickyBgClass} px-3 py-2 w-24 border-b border-[var(--md-sys-color-outline-variant)]/20 border-r border-[var(--md-sys-color-outline-variant)]/30 font-mono text-sm text-[var(--md-sys-color-primary)] font-medium tracking-tight whitespace-nowrap`}
+									>
 										{highlightText(specimen.id, searchQuery)}
 									</td>
 									<td className="px-4 py-2 border-b border-[var(--md-sys-color-outline-variant)]/20">
@@ -201,7 +218,8 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 										<div className="flex flex-col gap-0">
 											<span
 												className="text-[var(--md-sys-color-on-surface)] text-sm font-medium truncate max-w-[120px] block"
-												title={specimen.extrLab || 'Не указана'}>
+												title={specimen.extrLab || 'Не указана'}
+											>
 												{specimen.extrLab || '—'}
 											</span>
 											<span className="text-[var(--md-sys-color-outline)] text-[11px]">
@@ -249,19 +267,22 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 												<button
 													onClick={() => onEdit(specimen)}
 													className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-primary)] transition-all active:scale-95"
-													title="Изменить">
+													title="Изменить"
+												>
 													<Pencil className="w-4 h-4" />
 												</button>
 												<button
 													onClick={() => onPcr(specimen)}
 													className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-primary)] transition-all active:scale-95"
-													title="ПЦР">
+													title="ПЦР"
+												>
 													<FlaskConical className="w-4 h-4" />
 												</button>
 												<button
 													onClick={() => onHistory(specimen)}
 													className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-primary)] transition-all active:scale-95"
-													title="История изменений">
+													title="История изменений"
+												>
 													<History className="w-4 h-4" />
 												</button>
 											</div>

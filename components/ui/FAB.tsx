@@ -9,10 +9,14 @@ const fabVariants = cva(
 	{
 		variants: {
 			variant: {
-				primary: 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]',
-				secondary: 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]',
-				tertiary: 'bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)]',
-				surface: 'bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-primary)]',
+				primary:
+					'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]',
+				secondary:
+					'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]',
+				tertiary:
+					'bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)]',
+				surface:
+					'bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-primary)]',
 			},
 			size: {
 				small: 'w-10 h-10 rounded-[var(--md-sys-shape-corner-md)]',
@@ -25,7 +29,7 @@ const fabVariants = cva(
 			variant: 'primary',
 			size: 'medium',
 		},
-	}
+	},
 );
 
 export interface FABProps
@@ -39,12 +43,15 @@ const FAB = forwardRef<HTMLButtonElement, FABProps>(
 		const isExtended = extended || size === 'extended';
 		return (
 			<button
-				className={cn(fabVariants({ variant, size: isExtended ? 'extended' : size }), className)}
+				className={cn(
+					fabVariants({ variant, size: isExtended ? 'extended' : size }),
+					className,
+				)}
 				ref={ref}
 				{...props}
 			/>
 		);
-	}
+	},
 );
 FAB.displayName = 'FAB';
 

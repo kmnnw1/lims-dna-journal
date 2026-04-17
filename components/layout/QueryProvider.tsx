@@ -18,7 +18,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 						refetchOnWindowFocus: false, // Отключаем лишние перезапросы при смене вкладок
 					},
 				},
-			})
+			}),
 	);
 
 	return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;

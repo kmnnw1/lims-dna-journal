@@ -3,10 +3,10 @@
  * Usage: node scripts/backup-db.mjs
  */
 
+import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { existsSync } from 'fs';
 
 async function main() {
 	try {

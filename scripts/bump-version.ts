@@ -1,6 +1,6 @@
 import { execSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /**
@@ -50,7 +50,9 @@ if (lines > 1000 && files > 10) {
 	// Полноценная фича или фикс логики (Patch)
 	patch++;
 	build = 0;
-	console.log(`[SYSTEM] Функциональное изменение (${files} ф. / ${lines} стр.). Инкремент: Patch.`);
+	console.log(
+		`[SYSTEM] Функциональное изменение (${files} ф. / ${lines} стр.). Инкремент: Patch.`,
+	);
 } else {
 	// Точечные правки (Build)
 	build++;
@@ -63,6 +65,6 @@ console.log(`[SYSTEM] Версия обновлена: ${initialVersion} -> ${pk
 
 try {
 	execSync('git add package.json', { cwd: root });
-} catch (e) {
+} catch (_e) {
 	console.warn('[ERROR] Не удалось проиндексировать package.json');
 }

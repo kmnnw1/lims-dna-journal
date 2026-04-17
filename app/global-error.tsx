@@ -1,7 +1,7 @@
 'use client';
 
-import { RotateCcw, AlertTriangle } from 'lucide-react';
-import { Outfit, Montserrat } from 'next/font/google';
+import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { Montserrat, Outfit } from 'next/font/google';
 import './globals.css';
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
@@ -22,18 +22,24 @@ export default function GlobalError({
 						<div className="w-20 h-20 bg-[var(--md-sys-color-error-container)] rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
 							<AlertTriangle className="w-10 h-10 text-[var(--md-sys-color-on-error-container)]" />
 						</div>
-						<h1 className="text-3xl font-medium tracking-tight mb-3 font-outfit">Что-то пошло не так</h1>
+						<h1 className="text-3xl font-medium tracking-tight mb-3 font-outfit">
+							Что-то пошло не так
+						</h1>
 						<p className="text-[var(--md-sys-color-on-surface-variant)] mb-8 max-w-sm mx-auto">
-							Произошла непредвиденная ошибка приложения. Мы уже работаем над её устранением.
+							Произошла непредвиденная ошибка приложения. Мы уже работаем над её
+							устранением.
 						</p>
 						<button
 							onClick={() => reset()}
-							className="inline-flex items-center gap-2 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] px-8 py-3.5 rounded-full font-medium hover:opacity-90 transition-all active:scale-95 shadow-md">
+							className="inline-flex items-center gap-2 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] px-8 py-3.5 rounded-full font-medium hover:opacity-90 transition-all active:scale-95 shadow-md"
+						>
 							<RotateCcw className="w-5 h-5" />
 							<span>Перезагрузить страницу</span>
 						</button>
 						{error.digest && (
-							<p className="text-xs text-[var(--md-sys-color-outline)] mt-6 font-mono opacity-60">Error Digest: {error.digest}</p>
+							<p className="text-xs text-[var(--md-sys-color-outline)] mt-6 font-mono opacity-60">
+								Error Digest: {error.digest}
+							</p>
 						)}
 					</div>
 				</div>

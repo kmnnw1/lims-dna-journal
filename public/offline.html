@@ -145,7 +145,7 @@
 			window.addEventListener('online', () => {
 				setTimeout(() => location.reload(), 300);
 			});
-			function vibrate() {
+			function _vibrate() {
 				if (navigator.vibrate)
 					try {
 						navigator.vibrate(20);

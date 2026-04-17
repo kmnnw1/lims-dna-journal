@@ -11,7 +11,7 @@ export function loadFavoriteIds(): Set<string> {
 		const idSet = new Set<string>();
 		for (const x of parsed) if (typeof x === 'string') idSet.add(x);
 		return idSet;
-	} catch (e) {
+	} catch (_e) {
 		// Можно залогировать e при необходимости
 		return new Set();
 	}

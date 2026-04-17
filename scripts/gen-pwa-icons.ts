@@ -4,9 +4,9 @@
  * Требует: sharp, Node.js ≥14
  */
 
-import sharp from 'sharp';
 import { promises as fs } from 'fs';
-import { join, dirname } from 'path';
+import { dirname, join } from 'path';
+import sharp from 'sharp';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

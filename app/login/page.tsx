@@ -1,18 +1,16 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
-import { useState, useEffect, useRef, Suspense } from 'react';
 import { AlertCircle, ArrowRight } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { MD3Field } from '@/components/ui/MD3Field';
-
-import { useRouter } from 'next/navigation';
 
 // Динамический импорт для предотвращения Hydration Error (Math.random)
 const AnimatedFlask = dynamic(
-	() => import('@/components/ui/AnimatedFlask').then(mod => mod.AnimatedFlask),
-	{ ssr: false }
+	() => import('@/components/ui/AnimatedFlask').then((mod) => mod.AnimatedFlask),
+	{ ssr: false },
 );
 
 function LoginContent() {
@@ -20,7 +18,7 @@ function LoginContent() {
 	const searchParams = useSearchParams();
 	const tokenParam = searchParams.get('token');
 	const autoSubmitted = useRef(false);
-	
+
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState(tokenParam || '');
 	const [error, setError] = useState('');
@@ -46,7 +44,7 @@ function LoginContent() {
 				// Принудительный редирект на главную
 				router.push('/');
 				router.refresh(); // Обновляем состояние сессии во всем приложении
-				
+
 				// Fallback в случае зависания роутера
 				setTimeout(() => {
 					window.location.href = '/';
@@ -64,7 +62,7 @@ function LoginContent() {
 			autoSubmitted.current = true;
 			handleSubmit();
 		}
-	}, [tokenParam]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [tokenParam, handleSubmit]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-[var(--md-sys-color-surface)] p-4 font-sans relative overflow-hidden transition-colors duration-300">
@@ -114,7 +112,8 @@ function LoginContent() {
 					<button
 						type="submit"
 						disabled={loading}
-						className="w-full flex items-center justify-center gap-3 bg-[var(--md-sys-color-primary)] hover:brightness-110 text-[var(--md-sys-color-on-primary)] rounded-full px-8 py-5 text-lg font-medium md-elevation-1 hover:md-elevation-2 active:scale-95 transition-all mt-6 disabled:opacity-70 disabled:active:scale-100">
+						className="w-full flex items-center justify-center gap-3 bg-[var(--md-sys-color-primary)] hover:brightness-110 text-[var(--md-sys-color-on-primary)] rounded-full px-8 py-5 text-lg font-medium md-elevation-1 hover:md-elevation-2 active:scale-95 transition-all mt-6 disabled:opacity-70 disabled:active:scale-100"
+					>
 						{loading ? (
 							<div className="w-7 h-7 border-4 border-white/30 border-t-white rounded-full animate-spin" />
 						) : (
@@ -137,7 +136,8 @@ export default function LoginPage() {
 				<div className="min-h-screen bg-[var(--md-sys-color-surface)] flex items-center justify-center">
 					<div className="animate-spin w-10 h-10 border-4 border-[var(--md-sys-color-primary)]/30 border-t-[var(--md-sys-color-primary)] rounded-full"></div>
 				</div>
-			}>
+			}
+		>
 			<LoginContent />
 		</Suspense>
 	);

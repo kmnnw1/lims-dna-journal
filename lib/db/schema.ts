@@ -1,5 +1,5 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
+import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 /**
  * Схема данных для Drizzle ORM синхронизированная с Prisma.
@@ -11,7 +11,9 @@ export const users = sqliteTable('User', {
 	username: text('username').unique().notNull(),
 	password: text('password').notNull(),
 	role: text('role').notNull().default('EDITOR'),
-	createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
+	createdAt: integer('createdAt', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(strftime('%s', 'now') * 1000)`),
 });
 
 export const specimens = sqliteTable('Specimen', {
@@ -56,14 +58,20 @@ export const specimens = sqliteTable('Specimen', {
 	reviewNotes: text('reviewNotes'),
 	reviewPhotos: text('reviewPhotos'),
 	deletedAt: integer('deletedAt', { mode: 'timestamp' }),
-	createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
-	updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
+	createdAt: integer('createdAt', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(strftime('%s', 'now') * 1000)`),
+	updatedAt: integer('updatedAt', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(strftime('%s', 'now') * 1000)`),
 });
 
 export const pcrAttempts = sqliteTable('PcrAttempt', {
 	id: text('id').primaryKey(),
 	specimenId: text('specimenId').notNull(),
-	date: integer('date', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
+	date: integer('date', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(strftime('%s', 'now') * 1000)`),
 	marker: text('marker'),
 	forwardPrimer: text('forwardPrimer'),
 	reversePrimer: text('reversePrimer'),
@@ -77,7 +85,9 @@ export const pcrAttempts = sqliteTable('PcrAttempt', {
 	result: text('result').notNull(),
 	resultNotes: text('resultNotes'),
 	deletedAt: integer('deletedAt', { mode: 'timestamp' }),
-	createdAt: integer('createdAt', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
+	createdAt: integer('createdAt', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(strftime('%s', 'now') * 1000)`),
 });
 
 export const auditLogs = sqliteTable('AuditLog', {
@@ -90,5 +100,7 @@ export const auditLogs = sqliteTable('AuditLog', {
 	changes: text('changes'),
 	ipAddress: text('ipAddress'),
 	userAgent: text('userAgent'),
-	timestamp: integer('timestamp', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
+	timestamp: integer('timestamp', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(strftime('%s', 'now') * 1000)`),
 });

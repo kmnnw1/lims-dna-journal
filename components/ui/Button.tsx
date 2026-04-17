@@ -10,9 +10,11 @@ const buttonVariants = cva(
 		variants: {
 			variant: {
 				filled: 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:md-elevation-1',
-				outlined: 'border border-[var(--md-sys-color-outline)] bg-transparent text-[var(--md-sys-color-primary)] focus-visible:border-[var(--md-sys-color-primary)] active:border-[var(--md-sys-color-primary)]',
+				outlined:
+					'border border-[var(--md-sys-color-outline)] bg-transparent text-[var(--md-sys-color-primary)] focus-visible:border-[var(--md-sys-color-primary)] active:border-[var(--md-sys-color-primary)]',
 				text: 'bg-transparent text-[var(--md-sys-color-primary)] px-3',
-				elevated: 'bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-primary)] md-elevation-1 hover:md-elevation-2',
+				elevated:
+					'bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-primary)] md-elevation-1 hover:md-elevation-2',
 				tonal: 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] hover:md-elevation-1',
 			},
 			size: {
@@ -25,7 +27,7 @@ const buttonVariants = cva(
 			variant: 'filled',
 			size: 'medium',
 		},
-	}
+	},
 );
 
 export interface ButtonProps
@@ -41,7 +43,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 				{...props}
 			/>
 		);
-	}
+	},
 );
 Button.displayName = 'Button';
 

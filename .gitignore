@@ -5,8 +5,9 @@
 # and professional repository state. Categories are non-redundant.
 
 # ------------------------------------------------------------------------------
-# 1. CORE ASSISTANT & INTERNAL (AGENT META)
+# 1. AUXILIARY & INTERNAL DATA
 # ------------------------------------------------------------------------------
+.internal_data/
 brain/
 SESSION_LOG.md
 THOUGHTS.md
@@ -330,6 +331,8 @@ support/
 public/lottie/
 scripts/local-*.mjs
 scripts/debug.mjs
+scripts/meta-sync.ps1
+scripts/silent-ci.ps1
 
 # ------------------------------------------------------------------------------
 # END OF GITIGNORE

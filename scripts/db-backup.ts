@@ -1,7 +1,7 @@
-import { PrismaClient } from '../prisma/generated/client';
 import { writeFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PrismaClient } from '../prisma/generated/client';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
@@ -30,7 +30,9 @@ async function main() {
 		writeFileSync(backupPath, JSON.stringify(backup, null, '\t') + '\n');
 
 		console.log(`✅ Бекап успешно создан: ${backupPath}`);
-		console.log(`📊 Экспортировано: ${users.length} пользователей, ${specimens.length} проб, ${pcrAttempts.length} ПЦР-попыток.`);
+		console.log(
+			`📊 Экспортировано: ${users.length} пользователей, ${specimens.length} проб, ${pcrAttempts.length} ПЦР-попыток.`,
+		);
 	} catch (e) {
 		console.error('❌ Ошибка при создании бекапа:', e);
 		process.exit(1);

@@ -25,9 +25,21 @@ export async function parseApiResponse<T>(
 	// При ошибке ищем `message`, затем `error`, затем статус
 	if (!res.ok) {
 		let msg = '';
-		if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string' && data.message.trim().length > 0) {
+		if (
+			data &&
+			typeof data === 'object' &&
+			'message' in data &&
+			typeof data.message === 'string' &&
+			data.message.trim().length > 0
+		) {
 			msg = data.message.trim();
-		} else if (data && typeof data === 'object' && 'error' in data && typeof data.error === 'string' && data.error.trim().length > 0) {
+		} else if (
+			data &&
+			typeof data === 'object' &&
+			'error' in data &&
+			typeof data.error === 'string' &&
+			data.error.trim().length > 0
+		) {
 			msg = data.error.trim();
 		} else if (typeof data === 'string' && data.trim().length > 0) {
 			msg = data.trim();
@@ -38,10 +50,22 @@ export async function parseApiResponse<T>(
 	}
 
 	// Даже если res.ok, проверим, нет ли на верхнем уровне стандартных error-сообщений
-	if (data && typeof data === 'object' && 'error' in data && typeof data.error === 'string' && data.error.trim().length > 0) {
+	if (
+		data &&
+		typeof data === 'object' &&
+		'error' in data &&
+		typeof data.error === 'string' &&
+		data.error.trim().length > 0
+	) {
 		return { ok: false, message: data.error.trim() };
 	}
-	if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string' && data.message.trim().length > 0) {
+	if (
+		data &&
+		typeof data === 'object' &&
+		'message' in data &&
+		typeof data.message === 'string' &&
+		data.message.trim().length > 0
+	) {
 		return { ok: false, message: data.message.trim() };
 	}
 

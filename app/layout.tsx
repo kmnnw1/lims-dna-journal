@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
-import { Outfit, Montserrat } from 'next/font/google';
-import { Providers } from '@/components/layout/Providers';
+import { Montserrat, Outfit } from 'next/font/google';
 import { PageTransition } from '@/components/layout/PageTransition';
+import { Providers } from '@/components/layout/Providers';
 import './globals.css';
 
 const outfit = Outfit({
@@ -51,11 +51,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="ru" className={`${outfit.variable} ${montserrat.variable} font-sans`} suppressHydrationWarning>
+		<html
+			lang="ru"
+			className={`${outfit.variable} ${montserrat.variable} font-sans`}
+			suppressHydrationWarning
+		>
 			{/* Внедряем базовые токены MD3: цвет фона (Surface) и цвет текста (On Surface).
 				suppressHydrationWarning на body помогает избежать конфликтов с расширениями браузера.
 			*/}
-			<body 
+			<body
 				suppressHydrationWarning
 				className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] selection:bg-[var(--md-sys-color-primary)] selection:text-[var(--md-sys-color-on-primary)] transition-colors duration-300 font-sans antialiased"
 			>

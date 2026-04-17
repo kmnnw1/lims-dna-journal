@@ -1,6 +1,14 @@
 import ExcelJS from 'exceljs';
-import { ParsedSpecimenRow, ColumnBinding } from './types';
-import { cellText, getByKey, collectRowCellComments, parseLabDate, extractEmbeddedDate, extrDateString, isGarbageId } from './cell-parsers';
+import {
+	cellText,
+	collectRowCellComments,
+	extractEmbeddedDate,
+	extrDateString,
+	getByKey,
+	isGarbageId,
+	parseLabDate,
+} from './cell-parsers';
+import { ColumnBinding, ParsedSpecimenRow } from './types';
 
 const NOTE_EXTRA_KEYS = new Set([
 	'comment',

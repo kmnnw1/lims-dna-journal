@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Play } from 'lucide-react';
+import { Play, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface Props {
 	open: boolean;
@@ -42,13 +42,15 @@ export default function BatchPcrModal({ open, selectedSpecimenIds, onClose }: Pr
 		<div
 			role="dialog"
 			aria-modal="true"
-			className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in">
+			className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in"
+		>
 			<div className="bg-[var(--md-sys-color-surface-container-high)] w-full max-w-lg rounded-[2.5rem] p-8 md-elevation-3">
 				<div className="flex justify-between items-center mb-8">
 					<h2 className="text-3xl font-normal tracking-tight">Массовый ПЦР</h2>
 					<button
 						onClick={onClose}
-						className="p-3 hover:bg-white/10 rounded-full transition-colors">
+						className="p-3 hover:bg-white/10 rounded-full transition-colors"
+					>
 						<X className="w-6 h-6" />
 					</button>
 				</div>
@@ -70,7 +72,8 @@ export default function BatchPcrModal({ open, selectedSpecimenIds, onClose }: Pr
 								<button
 									key={m}
 									onClick={() => setMarker(m)}
-									className={`px-6 py-3 rounded-full text-sm font-bold transition-all ${marker === m ? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]' : 'bg-[var(--md-sys-color-surface-container-highest)] hover:brightness-110'}`}>
+									className={`px-6 py-3 rounded-full text-sm font-bold transition-all ${marker === m ? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]' : 'bg-[var(--md-sys-color-surface-container-highest)] hover:brightness-110'}`}
+								>
 									{m}
 								</button>
 							))}
@@ -80,7 +83,8 @@ export default function BatchPcrModal({ open, selectedSpecimenIds, onClose }: Pr
 					<button
 						onClick={handleRunBatch}
 						disabled={loading}
-						className="w-full py-4 mt-4 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] rounded-full font-bold flex items-center justify-center gap-3 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50">
+						className="w-full py-4 mt-4 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] rounded-full font-bold flex items-center justify-center gap-3 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50"
+					>
 						{loading ? (
 							'Запуск...'
 						) : (

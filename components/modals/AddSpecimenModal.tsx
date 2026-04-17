@@ -1,9 +1,9 @@
 'use client';
 
 import { X } from 'lucide-react';
-import type { NewRecordForm, Specimen } from '@/types';
-import { useRef, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { MD3Field } from '@/components/ui/MD3Field';
+import type { NewRecordForm, Specimen } from '@/types';
 
 type Props = {
 	open: boolean;
@@ -33,9 +33,18 @@ export function AddSpecimenModal({
 		}
 	}, [open]);
 
-	const taxons = useMemo(() => Array.from(new Set(specimens.map(s => s.taxon).filter(Boolean))), [specimens]);
-	const labs = useMemo(() => Array.from(new Set(specimens.map(s => s.extrLab).filter(Boolean))), [specimens]);
-	const operators = useMemo(() => Array.from(new Set(specimens.map(s => s.extrOperator).filter(Boolean))), [specimens]);
+	const taxons = useMemo(
+		() => Array.from(new Set(specimens.map((s) => s.taxon).filter(Boolean))),
+		[specimens],
+	);
+	const labs = useMemo(
+		() => Array.from(new Set(specimens.map((s) => s.extrLab).filter(Boolean))),
+		[specimens],
+	);
+	const operators = useMemo(
+		() => Array.from(new Set(specimens.map((s) => s.extrOperator).filter(Boolean))),
+		[specimens],
+	);
 
 	useEffect(() => {
 		if (!open) return;
@@ -58,7 +67,8 @@ export function AddSpecimenModal({
 			role="dialog"
 			aria-modal="true"
 			className="fixed inset-0 z-[140] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-			onClick={handleOverlayClick}>
+			onClick={handleOverlayClick}
+		>
 			<div className="my-6 w-full max-w-md p-6 sm:p-8 relative bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem] shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
 				<div className="mb-6 flex items-center justify-between gap-4">
 					<h2 className="text-2xl sm:text-3xl font-normal text-[var(--md-sys-color-on-surface)] tracking-tight">
@@ -68,7 +78,8 @@ export function AddSpecimenModal({
 						type="button"
 						onClick={onClose}
 						className="inline-flex items-center justify-center p-3 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] active:scale-95 transition-all"
-						aria-label="Закрыть">
+						aria-label="Закрыть"
+					>
 						<X className="h-6 w-6" />
 					</button>
 				</div>
@@ -116,19 +127,27 @@ export function AddSpecimenModal({
 						label="Лаборант"
 						value={newRecord.extrOperator}
 						maxLength={40}
-						onChange={(e) => setNewRecord({ ...newRecord, extrOperator: e.target.value })}
+						onChange={(e) =>
+							setNewRecord({ ...newRecord, extrOperator: e.target.value })
+						}
 						className="!bg-[var(--md-sys-color-surface-container-high)] !rounded-t-[0.25rem] !rounded-b-[1rem]"
 						data-testid="addspecimen-operator"
 					/>
 
 					<datalist id="taxons-list">
-						{taxons.map((t, i) => <option key={i} value={t as string} />)}
+						{taxons.map((t, i) => (
+							<option key={i} value={t as string} />
+						))}
 					</datalist>
 					<datalist id="labs-list">
-						{labs.map((t, i) => <option key={i} value={t as string} />)}
+						{labs.map((t, i) => (
+							<option key={i} value={t as string} />
+						))}
 					</datalist>
 					<datalist id="ops-list">
-						{operators.map((t, i) => <option key={i} value={t as string} />)}
+						{operators.map((t, i) => (
+							<option key={i} value={t as string} />
+						))}
 					</datalist>
 
 					{validationError && (
@@ -141,12 +160,14 @@ export function AddSpecimenModal({
 						<button
 							type="button"
 							onClick={onClose}
-							className="px-6 py-3 rounded-full text-sm font-medium text-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-primary)]/10 transition-all">
+							className="px-6 py-3 rounded-full text-sm font-medium text-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-primary)]/10 transition-all"
+						>
 							Отмена
 						</button>
 						<button
 							type="submit"
-							className="px-8 py-3 rounded-full text-sm font-medium bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-md hover:shadow-lg active:scale-95 transition-all">
+							className="px-8 py-3 rounded-full text-sm font-medium bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-md hover:shadow-lg active:scale-95 transition-all"
+						>
 							Сохранить
 						</button>
 					</div>

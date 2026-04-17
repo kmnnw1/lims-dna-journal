@@ -1,6 +1,6 @@
-import { specimens } from '@/lib/db/schema';
+import { and, eq, gte, isNull, like, lte, or, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
-import { and, or, like, eq, gte, lte, sql, isNull } from 'drizzle-orm';
+import { specimens } from '@/lib/db/schema';
 
 /**
  * Высокопроизводительный построитель запросов для Drizzle.
@@ -17,37 +17,50 @@ export function buildDrizzleQuery(params: {
 
 	if (params.search) {
 		const s = `%${params.search}%`;
-		conditions.push(or(
-			like(specimens.id, s),
-			like(specimens.taxon, s),
-			like(specimens.locality, s),
-			like(specimens.extrOperator, s),
-			like(specimens.extrLab, s),
-			like(specimens.extrMethod, s),
-			like(specimens.notes, s),
-			like(specimens.itsStatus, s)
-		) as any);
+		conditions.push(
+			or(
+				like(specimens.id, s),
+				like(specimens.taxon, s),
+				like(specimens.locality, s),
+				like(specimens.extrOperator, s),
+				like(specimens.extrLab, s),
+				like(specimens.extrMethod, s),
+				like(specimens.notes, s),
+				like(specimens.itsStatus, s),
+			) as any,
+		);
 	}
 
 	if (params.filterType === 'success') conditions.push(eq(specimens.itsStatus, '✓'));
 	if (params.filterType === 'error') conditions.push(eq(specimens.itsStatus, '✕'));
-	
+
 	if (params.operator) conditions.push(eq(specimens.extrOperator, params.operator));
 
-	if (params.minConc !== null) conditions.push(gte(specimens.dnaConcentration as any, params.minConc));
-	if (params.maxConc !== null) conditions.push(lte(specimens.dnaConcentration as any, params.maxConc));
+	if (params.minConc !== null)
+		conditions.push(gte(specimens.dnaConcentration as any, params.minConc));
+	if (params.maxConc !== null)
+		conditions.push(lte(specimens.dnaConcentration as any, params.maxConc));
 
 	return and(...conditions);
 }
 
 export async function getDrizzleDistinctFields() {
-	const labs = await db.selectDistinct({ val: specimens.extrLab }).from(specimens).where(isNull(specimens.deletedAt));
-	const operators = await db.selectDistinct({ val: specimens.extrOperator }).from(specimens).where(isNull(specimens.deletedAt));
-	const methods = await db.selectDistinct({ val: specimens.extrMethod }).from(specimens).where(isNull(specimens.deletedAt));
+	const labs = await db
+		.selectDistinct({ val: specimens.extrLab })
+		.from(specimens)
+		.where(isNull(specimens.deletedAt));
+	const operators = await db
+		.selectDistinct({ val: specimens.extrOperator })
+		.from(specimens)
+		.where(isNull(specimens.deletedAt));
+	const methods = await db
+		.selectDistinct({ val: specimens.extrMethod })
+		.from(specimens)
+		.where(isNull(specimens.deletedAt));
 
 	return {
-		labs: labs.map(n => n.val).filter(Boolean) as string[],
-		operators: operators.map(o => o.val).filter(Boolean) as string[],
-		methods: methods.map(m => m.val).filter(Boolean) as string[],
+		labs: labs.map((n) => n.val).filter(Boolean) as string[],
+		operators: operators.map((o) => o.val).filter(Boolean) as string[],
+		methods: methods.map((m) => m.val).filter(Boolean) as string[],
 	};
 }

@@ -1,6 +1,6 @@
 import { prisma } from './prisma';
 
-export type AuditAction = 
+export type AuditAction =
 	| 'CREATE_SPECIMEN'
 	| 'UPDATE_SPECIMEN'
 	| 'DELETE_SPECIMEN'
@@ -69,7 +69,11 @@ export async function getUserAuditHistory(userId: string, limit = 100) {
 /**
  * Получает историю действий для конкретного ресурса
  */
-export async function getResourceAuditHistory(resourceType: string, resourceId: string, limit = 50) {
+export async function getResourceAuditHistory(
+	resourceType: string,
+	resourceId: string,
+	limit = 50,
+) {
 	try {
 		return await prisma.auditLog.findMany({
 			where: {
@@ -98,11 +102,11 @@ export async function getAuditLogs(filters?: {
 }) {
 	try {
 		const where: Record<string, unknown> = {};
-		
+
 		if (filters?.userId) where.userId = filters.userId;
 		if (filters?.action) where.action = filters.action;
 		if (filters?.resourceType) where.resourceType = filters.resourceType;
-		
+
 		if (filters?.startDate || filters?.endDate) {
 			where.timestamp = {};
 			const timestampFilter = where.timestamp as Record<string, Date>;

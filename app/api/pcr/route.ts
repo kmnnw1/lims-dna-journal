@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/database/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { logAuditAction } from '@/lib/database/audit-log';
+import { prisma } from '@/lib/database/prisma';
 
 type ApiUser = { id?: string; role?: string };
 
@@ -58,7 +58,17 @@ export async function POST(req: Request) {
 		const user = session.user as ApiUser;
 		const body = await req.json();
 
-		const { specimenId, marker, result, volume, dnaMatrix, forwardPrimer, reversePrimer, date, id } = body;
+		const {
+			specimenId,
+			marker,
+			result,
+			volume,
+			dnaMatrix,
+			forwardPrimer,
+			reversePrimer,
+			date,
+			id,
+		} = body;
 
 		if (!specimenId || !marker) {
 			return NextResponse.json({ error: 'specimenId и marker обязательны' }, { status: 400 });
@@ -77,19 +87,21 @@ export async function POST(req: Request) {
 					forwardPrimer,
 					reversePrimer,
 					date: date ? new Date(date) : new Date(),
-				}
+				},
 			});
 
 			await logAuditAction({
 				userId: user.id!,
-				action: 'UPDATE_SPECIMEN', 
+				action: 'UPDATE_SPECIMEN',
 				resourceType: 'PCR_ATTEMPT',
 				resourceId: attempt.id,
 				details: { specimenId, marker: oldAttempt?.marker },
-				changes: oldAttempt ? {
-					result: { old: oldAttempt.result, new: result },
-					marker: { old: oldAttempt.marker, new: marker }
-				} : undefined
+				changes: oldAttempt
+					? {
+							result: { old: oldAttempt.result, new: result },
+							marker: { old: oldAttempt.marker, new: marker },
+						}
+					: undefined,
 			});
 		} else {
 			// Создание новой попытки (уникальности больше нет)
@@ -103,7 +115,7 @@ export async function POST(req: Request) {
 					forwardPrimer,
 					reversePrimer,
 					date: date ? new Date(date) : new Date(),
-				}
+				},
 			});
 
 			await logAuditAction({
@@ -111,29 +123,37 @@ export async function POST(req: Request) {
 				action: 'CREATE_PCR_ATTEMPT',
 				resourceType: 'PCR_ATTEMPT',
 				resourceId: attempt.id,
-				details: { specimenId, marker, result }
+				details: { specimenId, marker, result },
 			});
 		}
 
 		// Update Specimen Status (берем из последней актуальной попытки для этого маркера)
 		const latestAttempt = await prisma.pcrAttempt.findFirst({
 			where: { specimenId, marker, deletedAt: null },
-			orderBy: { date: 'desc' }
+			orderBy: { date: 'desc' },
 		});
 
 		if (latestAttempt) {
 			const statusValue = latestAttempt.result === 'Success' ? '✓' : '✕';
 			let statusField = '';
 			switch (marker.toUpperCase()) {
-				case 'ITS': statusField = 'itsStatus'; break;
-				case 'SSU': statusField = 'ssuStatus'; break;
-				case 'LSU': statusField = 'lsuStatus'; break;
-				case 'MCM7': statusField = 'mcm7Status'; break;
+				case 'ITS':
+					statusField = 'itsStatus';
+					break;
+				case 'SSU':
+					statusField = 'ssuStatus';
+					break;
+				case 'LSU':
+					statusField = 'lsuStatus';
+					break;
+				case 'MCM7':
+					statusField = 'mcm7Status';
+					break;
 			}
 			if (statusField) {
 				await prisma.specimen.update({
 					where: { id: specimenId },
-					data: { [statusField]: statusValue }
+					data: { [statusField]: statusValue },
 				});
 			}
 		}
@@ -155,7 +175,7 @@ export async function DELETE(req: Request) {
 
 		const deleted = await prisma.pcrAttempt.update({
 			where: { id },
-			data: { deletedAt: new Date() }
+			data: { deletedAt: new Date() },
 		});
 
 		await logAuditAction({
@@ -163,7 +183,7 @@ export async function DELETE(req: Request) {
 			action: 'DELETE_SPECIMEN',
 			resourceType: 'PCR_ATTEMPT',
 			resourceId: id,
-			details: { marker: deleted.marker, specimenId: deleted.specimenId }
+			details: { marker: deleted.marker, specimenId: deleted.specimenId },
 		});
 
 		return NextResponse.json({ success: true });

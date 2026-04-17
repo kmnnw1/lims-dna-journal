@@ -7,7 +7,7 @@ export function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivEl
 		<div
 			className={cn(
 				'animate-pulse rounded-2xl bg-[var(--md-sys-color-surface-container-high)] border border-[var(--md-sys-color-surface-container-highest)]/50',
-				className
+				className,
 			)}
 			{...props}
 		/>

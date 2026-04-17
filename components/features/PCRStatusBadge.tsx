@@ -29,8 +29,9 @@ export const PCRStatusBadge: React.FC<PCRStatusBadgeProps> = ({ status, marker, 
 				e.stopPropagation();
 				onClick();
 			}}
-            title={`Статус: ${status || 'Нет данных'}`}
-			className={`inline-flex items-center justify-center h-6 px-2.5 rounded-full text-[9px] font-black tracking-widest transition-all duration-300 active:scale-90 ${getStatusStyle(status)}`}>
+			title={`Статус: ${status || 'Нет данных'}`}
+			className={`inline-flex items-center justify-center h-6 px-2.5 rounded-full text-[9px] font-black tracking-widest transition-all duration-300 active:scale-90 ${getStatusStyle(status)}`}
+		>
 			{marker}
 		</button>
 	);

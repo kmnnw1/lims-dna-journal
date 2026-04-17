@@ -25,7 +25,8 @@ export function HighlightMatch({ text, query }: Props) {
 				part.toLowerCase() === query.trim().toLowerCase() ? (
 					<mark
 						key={i}
-						className="bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] px-1 rounded-md font-bold transition-all shadow-sm">
+						className="bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] px-1 rounded-md font-bold transition-all shadow-sm"
+					>
 						{part}
 					</mark>
 				) : (

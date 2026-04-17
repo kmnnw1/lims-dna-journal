@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Keyboard } from 'lucide-react';
+import { Keyboard, X } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 
 type Shortcut = {
@@ -32,21 +32,22 @@ function formatKeys(keys: string | string[]) {
 					{k}
 				</kbd>
 			))
-		.reduce(
-			(prev, curr, i) =>
-				prev === null
-					? [curr]
-					: [
-							...prev,
-							<span
-								key={`or-${i}`}
-								className="mx-2 text-xs font-medium text-[var(--md-sys-color-outline)] uppercase tracking-wider">
-								или
-							</span>,
-							curr,
-						],
-			null as unknown as React.ReactElement[],
-		);
+			.reduce(
+				(prev, curr, i) =>
+					prev === null
+						? [curr]
+						: [
+								...prev,
+								<span
+									key={`or-${i}`}
+									className="mx-2 text-xs font-medium text-[var(--md-sys-color-outline)] uppercase tracking-wider"
+								>
+									или
+								</span>,
+								curr,
+							],
+				null as unknown as React.ReactElement[],
+			);
 	}
 	return <kbd className={kbdClass}>{keys}</kbd>;
 }
@@ -74,7 +75,8 @@ export function ShortcutsModal({ open, onClose, isReader }: Props) {
 			className="fixed inset-0 z-[125] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm print:hidden"
 			tabIndex={-1}
 			aria-modal="true"
-			aria-label="Горячие клавиши">
+			aria-label="Горячие клавиши"
+		>
 			<button
 				type="button"
 				className="absolute inset-0 cursor-default"
@@ -88,7 +90,8 @@ export function ShortcutsModal({ open, onClose, isReader }: Props) {
 				ref={dialogRef}
 				role="dialog"
 				tabIndex={0}
-				className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] bg-[var(--md-sys-color-surface-container-low)] shadow-2xl focus-visible:outline-none animate-in fade-in zoom-in-95 duration-200">
+				className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] bg-[var(--md-sys-color-surface-container-low)] shadow-2xl focus-visible:outline-none animate-in fade-in zoom-in-95 duration-200"
+			>
 				<div className="px-8 pt-8 pb-6 flex items-center justify-between bg-[var(--md-sys-color-surface-container)]">
 					<h2 className="text-2xl font-normal text-[var(--md-sys-color-on-surface)] flex items-center gap-3">
 						<Keyboard className="h-7 w-7 text-[var(--md-sys-color-primary)]" />
@@ -97,7 +100,8 @@ export function ShortcutsModal({ open, onClose, isReader }: Props) {
 					<button
 						type="button"
 						onClick={onClose}
-						className="p-3 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] transition-all">
+						className="p-3 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] transition-all"
+					>
 						<X className="h-6 w-6" />
 					</button>
 				</div>
@@ -106,7 +110,8 @@ export function ShortcutsModal({ open, onClose, isReader }: Props) {
 					{SHORTCUTS(isReader).map((row, idx) => (
 						<div
 							key={idx}
-							className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-4 rounded-[1.5rem] hover:bg-[var(--md-sys-color-surface-container)] transition-colors">
+							className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-4 rounded-[1.5rem] hover:bg-[var(--md-sys-color-surface-container)] transition-colors"
+						>
 							<div className="flex flex-col gap-1">
 								<span className="text-base font-medium text-[var(--md-sys-color-on-surface)]">
 									{row.description}

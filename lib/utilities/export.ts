@@ -58,9 +58,19 @@ export function exportToCsv(data: Specimen[]) {
 	const blob = new Blob(['\uFEFF' + csvText], { type: 'text/csv;charset=utf-8' });
 
 	// Кроссбраузерная загрузка файла
-	if ((window.navigator as unknown as { msSaveOrOpenBlob?: (blob: Blob, filename: string) => void }).msSaveOrOpenBlob) {
+	if (
+		(
+			window.navigator as unknown as {
+				msSaveOrOpenBlob?: (blob: Blob, filename: string) => void;
+			}
+		).msSaveOrOpenBlob
+	) {
 		// IE/Safari (редко)
-		((window.navigator as unknown as { msSaveOrOpenBlob: (blob: Blob, filename: string) => void }).msSaveOrOpenBlob)(blob, filename);
+		(
+			window.navigator as unknown as {
+				msSaveOrOpenBlob: (blob: Blob, filename: string) => void;
+			}
+		).msSaveOrOpenBlob(blob, filename);
 	} else {
 		const link = document.createElement('a');
 		link.href = URL.createObjectURL(blob);

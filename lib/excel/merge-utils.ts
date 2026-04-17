@@ -1,5 +1,5 @@
+import { extractEmbeddedDate, extrDateString, parseLabDate } from './cell-parsers';
 import { ParsedSpecimenRow, SourceRef } from './types';
-import { parseLabDate, extractEmbeddedDate, extrDateString } from './cell-parsers';
 
 function pickNonEmpty(prev: string, next: string): string {
 	return next?.trim() ? next.trim() : prev?.trim() || '';

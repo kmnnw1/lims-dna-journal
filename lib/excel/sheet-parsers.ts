@@ -1,7 +1,12 @@
 import ExcelJS from 'exceljs';
-import { ParsedSpecimenRow, ColumnBinding } from './types';
-import { cellText, headerToCanonicalKey, findHeaderRowIndex, buildColumnBindings } from './cell-parsers';
-import { parseRowWithBindings, parseRowLegacy, parseLySheetRows } from './row-parsers';
+import {
+	buildColumnBindings,
+	cellText,
+	findHeaderRowIndex,
+	headerToCanonicalKey,
+} from './cell-parsers';
+import { parseLySheetRows, parseRowLegacy, parseRowWithBindings } from './row-parsers';
+import { ColumnBinding, ParsedSpecimenRow } from './types';
 
 export function extractRawDataFromSheet(sheet: ExcelJS.Worksheet): unknown[][] {
 	const rawData: unknown[][] = [];

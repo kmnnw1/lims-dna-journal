@@ -1,13 +1,13 @@
 'use client';
 
-import Link from 'next/link';
-import { Search, Plus, Settings, LogOut, Moon, Sun, Sparkles, Check } from 'lucide-react';
+import { Check, LogOut, Moon, Plus, Search, Settings, Sparkles, Sun } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { QuickFilterBar } from './QuickFilterBar';
 
 const AnimatedFlask = dynamic(
-	() => import('@/components/ui/AnimatedFlask').then(mod => mod.AnimatedFlask),
-	{ ssr: false }
+	() => import('@/components/ui/AnimatedFlask').then((mod) => mod.AnimatedFlask),
+	{ ssr: false },
 );
 
 interface JournalHeaderProps {
@@ -26,7 +26,7 @@ interface JournalHeaderProps {
 	setMaxConc: (val: number | null) => void;
 	selectedOperator: string;
 	setSelectedOperator: (val: string) => void;
-	suggestions: { labs: string[], operators: string[], methods: string[] };
+	suggestions: { labs: string[]; operators: string[]; methods: string[] };
 }
 
 export function JournalHeader({
@@ -47,11 +47,12 @@ export function JournalHeader({
 	setSelectedOperator,
 	suggestions,
 }: JournalHeaderProps) {
-	const roleColorClass = userRole === 'ADMIN'
-		? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]'
-		: userRole === 'EDITOR'
-		? 'bg-[var(--md-sys-color-tertiary)] text-[var(--md-sys-color-on-tertiary)]'
-		: 'bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-on-surface-variant)]';
+	const _roleColorClass =
+		userRole === 'ADMIN'
+			? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]'
+			: userRole === 'EDITOR'
+				? 'bg-[var(--md-sys-color-tertiary)] text-[var(--md-sys-color-on-tertiary)]'
+				: 'bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-on-surface-variant)]';
 
 	return (
 		<header className="flex items-center gap-3 mb-6 mt-1.5 px-1 sm:px-0 w-full">
@@ -71,7 +72,7 @@ export function JournalHeader({
 							onChange={(e) => setSearchQuery(e.target.value)}
 							className="flex-1 pl-10 sm:pl-12 pr-2 py-2 sm:py-3 bg-transparent outline-none text-sm sm:text-base placeholder:text-[var(--md-sys-color-outline)]"
 						/>
-						
+
 						{/* Встроенные статусы-фильтры */}
 						<div className="hidden sm:flex items-center p-1 bg-[var(--md-sys-color-surface-container-low)] rounded-full mr-2">
 							{[
@@ -85,8 +86,8 @@ export function JournalHeader({
 										key={btn.value}
 										onClick={() => onFilterChange(btn.value as any)}
 										className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 ${
-											active 
-												? 'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-primary)] shadow-sm' 
+											active
+												? 'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-primary)] shadow-sm'
 												: 'text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-on-surface)]'
 										}`}
 									>
@@ -98,8 +99,8 @@ export function JournalHeader({
 						</div>
 
 						<div className="pl-1 sm:pl-2 border-l border-[var(--md-sys-color-outline-variant)]">
-							<QuickFilterBar 
-								filterType={filterType} 
+							<QuickFilterBar
+								filterType={filterType}
 								onFilterChange={onFilterChange}
 								minConc={minConc}
 								setMinConc={setMinConc}
@@ -125,25 +126,34 @@ export function JournalHeader({
 							setTheme(next);
 						}}
 						title={`Тема: ${theme}`}
-						className="p-2 sm:p-2.5 bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all flex items-center justify-center md-state-layer">
-						{theme === 'light' ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : <Sun className="w-4 h-4 sm:w-5 sm:h-5" />}
+						className="p-2 sm:p-2.5 bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all flex items-center justify-center md-state-layer"
+					>
+						{theme === 'light' ? (
+							<Moon className="w-4 h-4 sm:w-5 sm:h-5" />
+						) : (
+							<Sun className="w-4 h-4 sm:w-5 sm:h-5" />
+						)}
 					</button>
 
 					<Link
 						href="/admin"
 						className={`flex items-center justify-center gap-2 p-2 sm:px-4 sm:py-2.5 md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium md-state-layer ${
-							userRole === 'ADMIN' 
-								? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:brightness-110' 
+							userRole === 'ADMIN'
+								? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:brightness-110'
 								: 'bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)]'
-						}`}>
+						}`}
+					>
 						<Settings className="w-4 h-4 sm:w-5 sm:h-5" />
-						<span className="hidden lg:inline text-sm">{userRole === 'ADMIN' ? 'Настройки' : 'Профиль'}</span>
+						<span className="hidden lg:inline text-sm">
+							{userRole === 'ADMIN' ? 'Настройки' : 'Профиль'}
+						</span>
 					</Link>
 
 					<button
 						onClick={onSignOut}
 						title="Выйти"
-						className="p-2 sm:p-2.5 bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)] md-elevation-1 hover:md-elevation-2 hover:bg-[var(--md-sys-color-surface-container-high)] rounded-full transition-all flex items-center justify-center md-state-layer">
+						className="p-2 sm:p-2.5 bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)] md-elevation-1 hover:md-elevation-2 hover:bg-[var(--md-sys-color-surface-container-high)] rounded-full transition-all flex items-center justify-center md-state-layer"
+					>
 						<LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
 					</button>
 				</div>
@@ -151,4 +161,3 @@ export function JournalHeader({
 		</header>
 	);
 }
-

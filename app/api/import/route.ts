@@ -1,18 +1,18 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/database/prisma';
 import ExcelJS from 'exceljs';
 import fs from 'fs';
-import path from 'path';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
+import path from 'path';
 import { authOptions } from '@/lib/auth';
-import {
-	mergeById,
-	parseSheetToRows,
-	extractRawDataFromSheet,
-	cellText,
-	type ParsedSpecimenRow,
-} from '@/lib/excel';
 import { logAuditAction } from '@/lib/database/audit-log';
+import { prisma } from '@/lib/database/prisma';
+import {
+	cellText,
+	extractRawDataFromSheet,
+	mergeById,
+	type ParsedSpecimenRow,
+	parseSheetToRows,
+} from '@/lib/excel';
 import { parseWithAI } from '@/lib/excel/ai-parser';
 
 async function requireAdmin() {
@@ -50,7 +50,7 @@ export async function GET(req: Request) {
 		const workbook = new ExcelJS.Workbook();
 		await workbook.xlsx.readFile(filePath);
 
-		let dataToInsert: ParsedSpecimenRow[] = [];
+		const dataToInsert: ParsedSpecimenRow[] = [];
 		const sheetNames: string[] = [];
 		let aiUsed = false;
 
@@ -62,9 +62,7 @@ export async function GET(req: Request) {
 			if (useAI) {
 				const rawData = extractRawDataFromSheet(sheet);
 				const headers = rawData[0]?.map((c) => cellText(c)) || [];
-				const bodyRows = rawData.slice(1).map((r) =>
-					r.map((c) => cellText(c)),
-				);
+				const bodyRows = rawData.slice(1).map((r) => r.map((c) => cellText(c)));
 
 				const aiResult = await parseWithAI(bodyRows, sheet.name, headers);
 				if (aiResult && aiResult.length > 0) {
@@ -98,12 +96,12 @@ export async function GET(req: Request) {
 			userId: currentUser?.id || 'admin-system',
 			action: 'IMPORT_SPECIMENS',
 			resourceType: 'IMPORT',
-			details: { 
-				count: inserted, 
-				sheets: sheetNames, 
-				aiUsed, 
+			details: {
+				count: inserted,
+				sheets: sheetNames,
+				aiUsed,
 				previousCount: beforeCount,
-				newCount: beforeCount + inserted
+				newCount: beforeCount + inserted,
 			},
 		});
 

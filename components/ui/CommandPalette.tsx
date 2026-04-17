@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { FlaskConical, Search, Plus, Settings, RefreshCw, ExternalLink } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ExternalLink, FlaskConical, Plus, RefreshCw, Search, Settings } from 'lucide-react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 type Spec = { id: string; taxon?: string | null };
 
@@ -106,7 +106,7 @@ export function CommandPalette({
 		};
 		window.addEventListener('keydown', handleKeyDown);
 		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [open, filtered.length, actions.length, onClose]);
+	}, [open, onClose]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -122,7 +122,7 @@ export function CommandPalette({
 	return (
 		<AnimatePresence>
 			{open && (
-				<motion.div 
+				<motion.div
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
 					exit={{ opacity: 0 }}
@@ -154,7 +154,8 @@ export function CommandPalette({
 								autoComplete="off"
 								onKeyDown={(e) => {
 									if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-										const ul = containerRef.current?.querySelector('button[data-cmd]');
+										const ul =
+											containerRef.current?.querySelector('button[data-cmd]');
 										if (ul) {
 											(ul as HTMLButtonElement).focus();
 											e.preventDefault();
@@ -187,7 +188,8 @@ export function CommandPalette({
 											onKeyDown={(e) => {
 												if (e.key === 'Enter' || e.key === ' ')
 													e.currentTarget.click();
-											}}>
+											}}
+										>
 											<span className="text-[var(--md-sys-color-primary)] opacity-80">
 												{a.icon}
 											</span>
@@ -222,7 +224,8 @@ export function CommandPalette({
 												onKeyDown={(e) => {
 													if (e.key === 'Enter' || e.key === ' ')
 														e.currentTarget.click();
-												}}>
+												}}
+											>
 												<span className="min-w-0 truncate font-mono font-bold text-lg text-[var(--md-sys-color-primary)]">
 													{s.id}
 												</span>
@@ -246,7 +249,8 @@ export function CommandPalette({
 								<Link
 									href="/admin"
 									className="inline-flex items-center gap-1.5 text-[var(--md-sys-color-primary)] hover:underline"
-									onClick={onClose}>
+									onClick={onClose}
+								>
 									<ExternalLink className="h-4 w-4" /> Админ-панель
 								</Link>
 							)}

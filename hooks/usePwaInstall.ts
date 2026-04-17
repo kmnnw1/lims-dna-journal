@@ -92,7 +92,7 @@ export function usePwaInstall() {
 		try {
 			await beforeInstall.prompt();
 			await beforeInstall.userChoice;
-		} catch (e) {
+		} catch (_e) {
 			// Можно логировать ошибки, если нужно
 		} finally {
 			setBeforeInstall(null);

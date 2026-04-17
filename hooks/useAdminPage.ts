@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { parseApiResponse } from '@/lib/api/api-client';
 import { transliterate } from '@/lib/translit';
 
@@ -19,7 +19,9 @@ export function useAdminPage() {
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 	const [role, setRole] = useState('EDITOR');
-	const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' } | null>(null);
+	const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' } | null>(
+		null,
+	);
 	const [importBusy, setImportBusy] = useState(false);
 	const [useAI, setUseAI] = useState(false);
 	const [loadingUsers, setLoadingUsers] = useState(false);
@@ -64,14 +66,14 @@ export function useAdminPage() {
 	// Auto-generate credentials when names change
 	useEffect(() => {
 		if (!firstName && !lastName) return;
-		
+
 		// Map for quick collision lookup
-		const existingLogins = new Set(users.map(u => u.username.toLowerCase()));
-		
+		const existingLogins = new Set(users.map((u) => u.username.toLowerCase()));
+
 		// Generate base login: name.surname (transliterated)
 		const firstTrans = transliterate(firstName);
 		const lastTrans = transliterate(lastName);
-		
+
 		if (!lastTrans) {
 			if (firstTrans) setUsername(firstTrans);
 			return;
@@ -86,17 +88,18 @@ export function useAdminPage() {
 			suggestedLogin = `${baseLogin}${counter}`;
 			counter++;
 		}
-		
+
 		setUsername(suggestedLogin);
 
 		// Generate random password if one isn't set yet or is short
 		if (password.length < 5) {
 			const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
 			let pass = '';
-			for (let i = 0; i < 8; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+			for (let i = 0; i < 8; i++)
+				pass += chars.charAt(Math.floor(Math.random() * chars.length));
 			setPassword(pass);
 		}
-	}, [firstName, lastName, users]);
+	}, [firstName, lastName, users, password.length]);
 
 	const handleCreateUser = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -186,7 +189,11 @@ export function useAdminPage() {
 		setImportBusy(true);
 		try {
 			const res = await fetch(`/api/import?useAI=${useAI}`);
-			const result = await parseApiResponse<{ message?: string; sheets?: number; rows?: number }>(res);
+			const result = await parseApiResponse<{
+				message?: string;
+				sheets?: number;
+				rows?: number;
+			}>(res);
 			if (!result.ok) {
 				showToast(result.message, 'error');
 				return;
@@ -198,7 +205,7 @@ export function useAdminPage() {
 	};
 
 	const adminCount = users.filter((u) => u.role === 'ADMIN').length;
-	
+
 	return {
 		session,
 		status,

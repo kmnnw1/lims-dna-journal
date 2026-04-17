@@ -1,21 +1,21 @@
+import bcrypt from 'bcryptjs';
 import type { NextAuthOptions, User as NextAuthUser, Session } from 'next-auth';
-import { logAuditAction } from '@/lib/database/audit-log';
 import type { JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { logAuditAction } from '@/lib/database/audit-log';
 import { prisma } from '@/lib/database/prisma';
-import bcrypt from 'bcryptjs';
 
 async function findUserByUsername(username: string) {
 	try {
 		return await prisma.user.findUnique({
 			where: { username },
 		});
-	} catch (e) {
+	} catch (_e) {
 		return null;
 	}
 }
 
-async function createInitialAdmin() {
+async function _createInitialAdmin() {
 	const hashed = await bcrypt.hash('admin', 10);
 	try {
 		return await prisma.user.create({
@@ -39,17 +39,26 @@ export const authOptions: NextAuthOptions = {
 		CredentialsProvider({
 			name: 'Вход',
 			credentials: {
-				username: { label: 'Логин', type: 'text', placeholder: 'Только для старых аккаунтов' },
-				password: { label: 'Токен или Пароль', type: 'password', placeholder: 'Вставьте токен или пароль' },
+				username: {
+					label: 'Логин',
+					type: 'text',
+					placeholder: 'Только для старых аккаунтов',
+				},
+				password: {
+					label: 'Токен или Пароль',
+					type: 'password',
+					placeholder: 'Вставьте токен или пароль',
+				},
 				token: { label: 'Токен', type: 'text' },
 			},
 			async authorize(credentials) {
 				const passOrToken = credentials?.token || credentials?.password;
-				
+
 				// Hiddify-style token login (Zero-Day Protection)
 				if (passOrToken) {
-
-					const authToken = await prisma.authToken.findUnique({ where: { token: passOrToken } });
+					const authToken = await prisma.authToken.findUnique({
+						where: { token: passOrToken },
+					});
 
 					if (authToken && !authToken.used && authToken.expiresAt > new Date()) {
 						// Invalidate token
@@ -57,12 +66,16 @@ export const authOptions: NextAuthOptions = {
 							where: { id: authToken.id },
 							data: { used: true },
 						});
-						
+
 						// Create initial admin user if not exists to satisfy foreign keys for audits
 						let user = await findUserByUsername('admin');
 						if (!user) {
 							user = await prisma.user.create({
-								data: { username: 'admin', password: 'no_password_auth_only_token', role: 'ADMIN' }
+								data: {
+									username: 'admin',
+									password: 'no_password_auth_only_token',
+									role: 'ADMIN',
+								},
 							});
 						}
 
@@ -70,10 +83,14 @@ export const authOptions: NextAuthOptions = {
 							userId: user.id || 'admin-auto',
 							action: 'LOGIN',
 							resourceType: 'AUTH',
-							details: { method: 'hiddify_token' }
+							details: { method: 'hiddify_token' },
 						});
 
-						return { id: user.id, name: user.username, role: user.role } as NextAuthUser & { role: string };
+						return {
+							id: user.id,
+							name: user.username,
+							role: user.role,
+						} as NextAuthUser & { role: string };
 					}
 				}
 
@@ -85,23 +102,30 @@ export const authOptions: NextAuthOptions = {
 						let user = await findUserByUsername('admin');
 						if (!user) {
 							user = await prisma.user.create({
-								data: { username: 'admin', password: 'ci_test_no_password', role: 'ADMIN' }
+								data: {
+									username: 'admin',
+									password: 'ci_test_no_password',
+									role: 'ADMIN',
+								},
 							});
 						}
 						await logAuditAction({
 							userId: user.id,
 							action: 'LOGIN',
 							resourceType: 'AUTH',
-							details: { method: 'ci_test_token' }
+							details: { method: 'ci_test_token' },
 						});
-						return { id: user.id, name: user.username, role: user.role } as NextAuthUser & { role: string };
+						return {
+							id: user.id,
+							name: user.username,
+							role: user.role,
+						} as NextAuthUser & { role: string };
 					}
 					return null;
 				}
 
 				const username = credentials.username.trim();
-				let user = await findUserByUsername(username);
-
+				const user = await findUserByUsername(username);
 
 				if (!user) return null;
 
@@ -112,7 +136,7 @@ export const authOptions: NextAuthOptions = {
 					userId: user.id,
 					action: 'LOGIN',
 					resourceType: 'AUTH',
-					details: { method: 'password' }
+					details: { method: 'password' },
 				});
 
 				return {

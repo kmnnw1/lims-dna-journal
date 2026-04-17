@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState, useCallback } from 'react';
-import { signOut, useSession } from 'next-auth/react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { signOut, useSession } from 'next-auth/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { Specimen } from '@/types';
 
@@ -11,26 +11,31 @@ export function useJournalPage() {
 	const { data: session, status } = useSession();
 	const router = useRouter();
 	const queryClient = useQueryClient();
-	
+
 	const [theme, setTheme] = useState<'light' | 'dark'>('light');
 	const [page, setPage] = useState(1);
 	const [searchQuery, setSearchQuery] = useState('');
 	const debouncedSearch = useDebounce(searchQuery, 400);
-	const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+	const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(
+		null,
+	);
 	const [filterType, setFilterType] = useState<'all' | 'success' | 'error' | 'fav'>('all');
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-	const [toastMessage, setToastMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
-	
+	const [toastMessage, setToastMessage] = useState<{
+		text: string;
+		type: 'error' | 'success';
+	} | null>(null);
+
 	const [minConc, setMinConc] = useState<number | null>(null);
 	const [maxConc, setMaxConc] = useState<number | null>(null);
 	const [selectedOperator, setSelectedOperator] = useState<string>('');
-	
+
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [editingSpecimen, setEditingSpecimen] = useState<Specimen | null>(null);
 	const [activePcrSpecimen, setActivePcrSpecimen] = useState<Specimen | null>(null);
 	const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
 	const [isScanOpen, setIsScanOpen] = useState(false);
-	
+
 	const [newRecordData, setNewRecordData] = useState({
 		id: '',
 		taxon: '',
@@ -40,7 +45,7 @@ export function useJournalPage() {
 		extrMethod: '',
 		extrDateRaw: '',
 	});
-	
+
 	const [pcrForm, setPcrForm] = useState({
 		volume: '25',
 		marker: '',
@@ -77,11 +82,22 @@ export function useJournalPage() {
 	// Reset page on filter change
 	useEffect(() => {
 		setPage(1);
-	}, [debouncedSearch, filterType, sortConfig, minConc, maxConc, selectedOperator]);
+	}, []);
 
 	// Fetch Query
 	const { data, isLoading: loading } = useQuery({
-		queryKey: ['specimens', { page, search: debouncedSearch, filter: filterType, sort: sortConfig, minConc, maxConc, operator: selectedOperator }],
+		queryKey: [
+			'specimens',
+			{
+				page,
+				search: debouncedSearch,
+				filter: filterType,
+				sort: sortConfig,
+				minConc,
+				maxConc,
+				operator: selectedOperator,
+			},
+		],
 		queryFn: async () => {
 			const params = new URLSearchParams({
 				page: page.toString(),
@@ -125,12 +141,18 @@ export function useJournalPage() {
 			setIsAddModalOpen(false);
 			setToastMessage({ text: 'Проба успешно добавлена', type: 'success' });
 			setNewRecordData({
-				id: '', taxon: '', locality: '', extrLab: '', extrOperator: '', extrMethod: '', extrDateRaw: '',
+				id: '',
+				taxon: '',
+				locality: '',
+				extrLab: '',
+				extrOperator: '',
+				extrMethod: '',
+				extrDateRaw: '',
 			});
 		},
 		onError: (error: Error) => {
 			setToastMessage({ text: error.message, type: 'error' });
-		}
+		},
 	});
 
 	const editMutation = useMutation({
@@ -154,7 +176,7 @@ export function useJournalPage() {
 		},
 		onError: (error: Error) => {
 			setToastMessage({ text: error.message, type: 'error' });
-		}
+		},
 	});
 
 	const pcrMutation = useMutation({
@@ -176,7 +198,7 @@ export function useJournalPage() {
 		},
 		onError: (error: Error) => {
 			setToastMessage({ text: error.message, type: 'error' });
-		}
+		},
 	});
 
 	const stats = useMemo(() => {
@@ -230,7 +252,13 @@ export function useJournalPage() {
 
 		const currentStatus = specimen[statusKey];
 		const newStatus: string | null =
-			currentStatus === '✓' ? '✕' : currentStatus === '✕' ? '?' : currentStatus === '?' ? null : '✓';
+			currentStatus === '✓'
+				? '✕'
+				: currentStatus === '✕'
+					? '?'
+					: currentStatus === '?'
+						? null
+						: '✓';
 
 		try {
 			// Оптимистичное обновление или просто мутация
@@ -249,9 +277,12 @@ export function useJournalPage() {
 		const csvContent =
 			'data:text/csv;charset=utf-8,' +
 			'ID,Taxon,Locality,ITS,SSU,LSU,MCM7\n' +
-			specimens.map((s: Specimen) =>
-					`${s.id},${s.taxon || ''},${s.locality || ''},${s.itsStatus || ''},${s.ssuStatus || ''},${s.lsuStatus || ''},${s.mcm7Status || ''}`,
-				).join('\n');
+			specimens
+				.map(
+					(s: Specimen) =>
+						`${s.id},${s.taxon || ''},${s.locality || ''},${s.itsStatus || ''},${s.ssuStatus || ''},${s.lsuStatus || ''},${s.mcm7Status || ''}`,
+				)
+				.join('\n');
 		const encodedUri = encodeURI(csvContent);
 		const link = document.createElement('a');
 		link.setAttribute('href', encodedUri);
@@ -279,7 +310,9 @@ export function useJournalPage() {
 				sheet.addRow({ ...s });
 			});
 			const buffer = await workbook.xlsx.writeBuffer();
-			const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+			const blob = new Blob([buffer], {
+				type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			});
 			const url = window.URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;
@@ -288,7 +321,7 @@ export function useJournalPage() {
 			link.click();
 			document.body.removeChild(link);
 			window.URL.revokeObjectURL(url);
-		} catch (error) {
+		} catch (_error) {
 			setToastMessage({ text: 'Ошибка при формировании XLSX', type: 'error' });
 		}
 	};
@@ -302,13 +335,57 @@ export function useJournalPage() {
 	}, [status, router]);
 
 	return {
-		session, status, specimens, loading: loading || addMutation.isPending || editMutation.isPending || pcrMutation.isPending,
-		theme, setTheme, page, totalPages, totalGlobal, searchQuery, setSearchQuery, filterType, setFilterType,
-		sortConfig, setSortConfig, selectedIds, setSelectedIds, isAddModalOpen, setIsAddModalOpen,
-		editingSpecimen, setEditingSpecimen, activePcrSpecimen, setActivePcrSpecimen, isBatchModalOpen, setIsBatchModalOpen,
-		isScanOpen, setIsScanOpen, newRecordData, setNewRecordData, pcrForm, setPcrForm, stats, handleSort,
-		handleAddSubmit, handleEditSubmit, handlePcrSubmit, handleStatusToggle, handleExportCSV, handleExportXLSX,
-		handlePrintLabels, handleSignOut, setPage, minConc, setMinConc, maxConc, setMaxConc, selectedOperator,
-		setSelectedOperator, suggestions, toastMessage, setToastMessage,
+		session,
+		status,
+		specimens,
+		loading:
+			loading || addMutation.isPending || editMutation.isPending || pcrMutation.isPending,
+		theme,
+		setTheme,
+		page,
+		totalPages,
+		totalGlobal,
+		searchQuery,
+		setSearchQuery,
+		filterType,
+		setFilterType,
+		sortConfig,
+		setSortConfig,
+		selectedIds,
+		setSelectedIds,
+		isAddModalOpen,
+		setIsAddModalOpen,
+		editingSpecimen,
+		setEditingSpecimen,
+		activePcrSpecimen,
+		setActivePcrSpecimen,
+		isBatchModalOpen,
+		setIsBatchModalOpen,
+		isScanOpen,
+		setIsScanOpen,
+		newRecordData,
+		setNewRecordData,
+		pcrForm,
+		setPcrForm,
+		stats,
+		handleSort,
+		handleAddSubmit,
+		handleEditSubmit,
+		handlePcrSubmit,
+		handleStatusToggle,
+		handleExportCSV,
+		handleExportXLSX,
+		handlePrintLabels,
+		handleSignOut,
+		setPage,
+		minConc,
+		setMinConc,
+		maxConc,
+		setMaxConc,
+		selectedOperator,
+		setSelectedOperator,
+		suggestions,
+		toastMessage,
+		setToastMessage,
 	};
 }

@@ -263,7 +263,11 @@ export function collectRowCellComments(sheet: ExcelJS.Worksheet, rowIndex0: numb
 				const obj = noteObj as Record<string, unknown>;
 				if ('texts' in obj && Array.isArray(obj.texts)) {
 					noteText = obj.texts
-						.map((t: unknown) => (t && typeof t === 'object' && 'text' in t) ? String((t as Record<string, unknown>).text) : '')
+						.map((t: unknown) =>
+							t && typeof t === 'object' && 'text' in t
+								? String((t as Record<string, unknown>).text)
+								: '',
+						)
 						.join('');
 				}
 			}

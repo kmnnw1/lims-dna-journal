@@ -1,7 +1,7 @@
 'use client';
 
-import { Barcode, Camera, Activity, Copy, Star, Pencil } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { Activity, Barcode, Camera, Copy, Pencil, Star } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
 import { HighlightMatch } from '@/components/ui/HighlightMatch';
 
 export type MobileSpecimenShape = {
@@ -95,7 +95,8 @@ export function MobileSpecimenCard({
 								strokeWidth="3"
 								strokeLinecap="round"
 								strokeLinejoin="round"
-								aria-hidden>
+								aria-hidden
+							>
 								<polyline points="20 6 9 17 4 12"></polyline>
 							</svg>
 						</div>
@@ -115,19 +116,22 @@ export function MobileSpecimenCard({
 									target="_blank"
 									rel="noopener noreferrer"
 									className="shrink-0 p-1 rounded-full bg-[var(--md-sys-color-primary)]/10"
-									title="Просмотреть гель">
+									title="Просмотреть гель"
+								>
 									<Camera className="h-4 w-4 text-[var(--md-sys-color-primary)]" />
 									<span className="sr-only">Гель</span>
 								</a>
 							)}
 						</div>
 						<p
-							className={`mt-1 text-base leading-snug ${selected ? 'opacity-90' : 'text-[var(--md-sys-color-on-surface)]'}`}>
+							className={`mt-1 text-base leading-snug ${selected ? 'opacity-90' : 'text-[var(--md-sys-color-on-surface)]'}`}
+						>
 							{s.taxon || <span className="opacity-50">—</span>}
 						</p>
 						{s.locality && (
 							<p
-								className={`mt-1 truncate text-sm ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-outline)]'}`}>
+								className={`mt-1 truncate text-sm ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-outline)]'}`}
+							>
 								{s.locality}
 							</p>
 						)}
@@ -142,7 +146,8 @@ export function MobileSpecimenCard({
 								onClick={onToggleFavorite}
 								className={`${btnClass} ${favorite ? '!text-[#f59e0b]' : ''}`}
 								aria-label={favorite ? 'Убрать из избранного' : 'В избранное'}
-								title={favorite ? 'Убрать из избранного' : 'В избранное'}>
+								title={favorite ? 'Убрать из избранного' : 'В избранное'}
+							>
 								<Star
 									className={`h-4 w-4 transition-all ${favorite ? 'fill-current scale-110' : ''}`}
 								/>
@@ -154,11 +159,13 @@ export function MobileSpecimenCard({
 							className={`${btnClass} relative`}
 							aria-label="Скопировать ID"
 							title="Скопировать ID"
-							disabled={copied}>
+							disabled={copied}
+						>
 							<Copy className="h-4 w-4" />
 							<span
 								className={`absolute right-0 top-0 -translate-y-full text-[10px] px-2 py-1 rounded-lg whitespace-nowrap bg-[var(--md-sys-color-on-surface)] text-[var(--md-sys-color-surface)] transition pointer-events-none ${copied ? 'opacity-100' : 'opacity-0'}`}
-								aria-live="polite">
+								aria-live="polite"
+							>
 								Скопировано
 							</span>
 						</button>
@@ -170,7 +177,8 @@ export function MobileSpecimenCard({
 								onClick={onEdit}
 								className={btnClass}
 								aria-label="Редактировать"
-								title="Редактировать">
+								title="Редактировать"
+							>
 								<Pencil className="h-4 w-4" />
 							</button>
 						)}
@@ -179,7 +187,8 @@ export function MobileSpecimenCard({
 							onClick={onPcr}
 							className={`${btnClass} ${(s.attempts?.length ?? 0) > 0 ? '!bg-[var(--md-sys-color-primary)] !text-[var(--md-sys-color-on-primary)]' : ''}`}
 							aria-label="PCR"
-							title="PCR">
+							title="PCR"
+						>
 							<Activity className="h-4 w-4" />
 						</button>
 					</div>
@@ -190,7 +199,8 @@ export function MobileSpecimenCard({
 				<div
 					className={`mt-5 p-4 rounded-2xl text-sm line-clamp-3 whitespace-pre-wrap break-words
 					${selected ? 'bg-black/10' : 'bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)]'}
-				`}>
+				`}
+				>
 					{s.notes}
 				</div>
 			)}
@@ -198,10 +208,12 @@ export function MobileSpecimenCard({
 			<div
 				className={`mt-5 pt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t text-sm
 				${selected ? 'border-[var(--md-sys-color-on-primary-container)]/20' : 'border-[var(--md-sys-color-outline-variant)]'}
-			`}>
+			`}
+			>
 				<div className="flex flex-col gap-1">
 					<p
-						className={`text-xs font-medium tracking-wide uppercase ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-primary)]'}`}>
+						className={`text-xs font-medium tracking-wide uppercase ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-primary)]'}`}
+					>
 						Выделение
 					</p>
 					<p className="font-medium">
@@ -211,14 +223,16 @@ export function MobileSpecimenCard({
 						)}
 					</p>
 					<p
-						className={`text-xs ${selected ? 'opacity-80' : 'text-[var(--md-sys-color-outline)]'}`}>
+						className={`text-xs ${selected ? 'opacity-80' : 'text-[var(--md-sys-color-outline)]'}`}
+					>
 						{s.extrMethod || <span className="opacity-50">Нет данных</span>}
 					</p>
 				</div>
 
 				<div className="flex flex-col gap-2">
 					<p
-						className={`text-xs font-medium tracking-wide uppercase ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-primary)]'}`}>
+						className={`text-xs font-medium tracking-wide uppercase ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-primary)]'}`}
+					>
 						Маркеры
 					</p>
 					<div className="flex flex-wrap gap-2 items-center">

@@ -10,13 +10,14 @@ const textFieldVariants = cva(
 		variants: {
 			variant: {
 				filled: 'rounded-t-[var(--md-sys-shape-corner-xs)] rounded-b-none border-b border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-highest)] focus-visible:border-b-2 focus-visible:border-[var(--md-sys-color-primary)] hover:bg-[var(--md-sys-color-surface-variant)]',
-				outlined: 'rounded-[var(--md-sys-shape-corner-sm)] bg-transparent border border-[var(--md-sys-color-outline)] focus-visible:border-2 focus-visible:border-[var(--md-sys-color-primary)]',
+				outlined:
+					'rounded-[var(--md-sys-shape-corner-sm)] bg-transparent border border-[var(--md-sys-color-outline)] focus-visible:border-2 focus-visible:border-[var(--md-sys-color-primary)]',
 			},
 		},
 		defaultVariants: {
 			variant: 'filled',
 		},
-	}
+	},
 );
 
 export interface TextFieldProps
@@ -33,7 +34,7 @@ const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
 				{...props}
 			/>
 		);
-	}
+	},
 );
 TextField.displayName = 'TextField';
 

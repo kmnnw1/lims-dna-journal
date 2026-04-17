@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 /**
  * Улучшенный pull-to-refresh у верхнего края страницы (touch):
@@ -87,7 +87,7 @@ export function usePullToRefresh(
 			elem.removeEventListener('touchend', onEnd);
 			elem.removeEventListener('touchcancel', onEnd);
 		};
-	}, [onRefresh, disabled, threshold, allowEditable]);
+	}, [onRefresh, disabled, threshold, isFocusInEditable]);
 
 	return ref;
 }

@@ -1,29 +1,29 @@
 import { execSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import fs, { existsSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
+import fs, { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 function run(cmd: string, title?: string) {
-    if (title) console.log(`\n→ ${title}\n`);
-    try {
-        execSync(cmd, { cwd: root, stdio: 'inherit', shell: true, env: process.env } as any);
-    } catch (err) {
-        console.error(`❌ Ошибка выполнения '${cmd}':\n`, (err as any)?.message || err);
-        process.exit(1);
-    }
+	if (title) console.log(`\n→ ${title}\n`);
+	try {
+		execSync(cmd, { cwd: root, stdio: 'inherit', shell: true, env: process.env } as any);
+	} catch (err) {
+		console.error(`❌ Ошибка выполнения '${cmd}':\n`, (err as any)?.message || err);
+		process.exit(1);
+	}
 }
 
 run('npm config set fund false', 'Настройка npm');
 
 (function checkNodeVersion(required = 20) {
-    const major = Number.parseInt(process.version.slice(1).split('.')[0] ?? '0', 10);
-    if (major < required) {
-        console.error(`❌ Требуется Node.js ${required}+. Обнаружено: ${process.version}`);
-        process.exit(1);
-    }
+	const major = Number.parseInt(process.version.slice(1).split('.')[0] ?? '0', 10);
+	if (major < required) {
+		console.error(`❌ Требуется Node.js ${required}+. Обнаружено: ${process.version}`);
+		process.exit(1);
+	}
 })();
 
 const envPath = join(root, '.env');
@@ -33,51 +33,51 @@ const legacyDataFile = join(root, 'data.xlsx');
 const newDataFile = join(dataDir, 'data.xlsx');
 
 if (!existsSync(envPath)) {
-    if (existsSync(examplePath)) {
-        copyFileSync(examplePath, envPath);
-        console.log('✅ Создан .env из .env.example');
-    }
+	if (existsSync(examplePath)) {
+		copyFileSync(examplePath, envPath);
+		console.log('✅ Создан .env из .env.example');
+	}
 }
 
 if (!existsSync(dataDir)) {
-    await fs.promises.mkdir(dataDir, { recursive: true });
-    console.log('✅ Создан каталог ./data');
+	await fs.promises.mkdir(dataDir, { recursive: true });
+	console.log('✅ Создан каталог ./data');
 }
 
 if (existsSync(legacyDataFile) && !existsSync(newDataFile)) {
-    copyFileSync(legacyDataFile, newDataFile);
-    try {
-        await fs.promises.unlink(legacyDataFile);
-        console.log('✅ Файл data.xlsx перемещён в ./data/data.xlsx');
-    } catch {
-        console.log('⚠️ Не удалось удалить старую копию data.xlsx, но новая папка создана.');
-    }
+	copyFileSync(legacyDataFile, newDataFile);
+	try {
+		await fs.promises.unlink(legacyDataFile);
+		console.log('✅ Файл data.xlsx перемещён в ./data/data.xlsx');
+	} catch {
+		console.log('⚠️ Не удалось удалить старую копию data.xlsx, но новая папка создана.');
+	}
 }
 
 let envText = readFileSync(envPath, 'utf8');
 let modified = false;
 
 if (/^NEXTAUTH_SECRET=\s*$/m.test(envText) || /^NEXTAUTH_SECRET=$/m.test(envText)) {
-    const secret = randomBytes(32).toString('base64');
-    envText = envText.replace(/^NEXTAUTH_SECRET=.*$/m, `NEXTAUTH_SECRET="${secret}"`);
-    modified = true;
-    process.env.NEXTAUTH_SECRET = secret;
+	const secret = randomBytes(32).toString('base64');
+	envText = envText.replace(/^NEXTAUTH_SECRET=.*$/m, `NEXTAUTH_SECRET="${secret}"`);
+	modified = true;
+	process.env.NEXTAUTH_SECRET = secret;
 }
 
 // Указываем правильный путь в папку prisma/
 if (!/^DATABASE_URL=/m.test(envText)) {
-    const dbUrl = 'file:./prisma/dev.db';
-    envText += `\nDATABASE_URL="${dbUrl}"\n`;
-    modified = true;
-    process.env.DATABASE_URL = dbUrl;
+	const dbUrl = 'file:./prisma/dev.db';
+	envText += `\nDATABASE_URL="${dbUrl}"\n`;
+	modified = true;
+	process.env.DATABASE_URL = dbUrl;
 } else {
-    const match = envText.match(/^DATABASE_URL=["']?(.+?)["']?$/m);
-    if (match) process.env.DATABASE_URL = match[1];
+	const match = envText.match(/^DATABASE_URL=["']?(.+?)["']?$/m);
+	if (match) process.env.DATABASE_URL = match[1];
 }
 
 if (!/^DATA_XLSX_PATH=/m.test(envText)) {
-    envText += `\nDATA_XLSX_PATH="./data/data.xlsx"\n`;
-    modified = true;
+	envText += `\nDATA_XLSX_PATH="./data/data.xlsx"\n`;
+	modified = true;
 }
 
 if (modified) writeFileSync(envPath, envText);
@@ -88,9 +88,9 @@ run('npx prisma db push', 'Синхронизация схемы БД');
 run('npx husky', 'Инициализация Git Hooks (Husky)');
 
 try {
-    run('npx prettier --write .', 'Причесываем код перед стартом');
-} catch (e) {
-    console.log('ℹ️ Проблемы с форматированием, пропускаем.');
+	run('npx prettier --write .', 'Причесываем код перед стартом');
+} catch (_e) {
+	console.log('ℹ️ Проблемы с форматированием, пропускаем.');
 }
 
 console.log('\n🟢 Готово! Версионирование автоматизировано.\n👉 Запуск: npm run dev\n');

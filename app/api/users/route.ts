@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/database/prisma';
-import { getServerSession } from 'next-auth/next';
 import bcrypt from 'bcryptjs';
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/database/prisma';
 
 // Вспомогательная функция проверки роли администратора.
 // Можно расширить аудит/логирование действий.
@@ -101,8 +101,10 @@ export async function PUT(req: Request) {
 			const currentUser = session?.user as { id?: string } | undefined;
 			if (currentUser?.id === id && role !== 'ADMIN') {
 				return NextResponse.json(
-					{ error: 'Нельзя понизить собственную роль, чтобы не потерять доступ к панели управления.' },
-					{ status: 400 }
+					{
+						error: 'Нельзя понизить собственную роль, чтобы не потерять доступ к панели управления.',
+					},
+					{ status: 400 },
 				);
 			}
 
@@ -157,8 +159,10 @@ export async function DELETE(req: Request) {
 			// (Один может быть 'admin', другой - текущий, или оба - просто админы).
 			if (adminCount <= 2) {
 				return NextResponse.json(
-					{ error: 'Для безопасности в системе должно оставаться минимум 2 администратора. Сначала создайте третьего или смените роль этого пользователя.' },
-					{ status: 400 }
+					{
+						error: 'Для безопасности в системе должно оставаться минимум 2 администратора. Сначала создайте третьего или смените роль этого пользователя.',
+					},
+					{ status: 400 },
 				);
 			}
 		}
