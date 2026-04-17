@@ -3,15 +3,52 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { Specimen } from '@/types';
 
 export function useJournalPage() {
 	const { data: session, status } = useSession();
 	const router = useRouter();
-	const [specimens, setSpecimens] = useState<Specimen[]>([]);
-	const [loading, setLoading] = useState(true);
+	const queryClient = useQueryClient();
+	
 	const [theme, setTheme] = useState<'light' | 'dark'>('light');
+	const [page, setPage] = useState(1);
+	const [searchQuery, setSearchQuery] = useState('');
+	const debouncedSearch = useDebounce(searchQuery, 400);
+	const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+	const [filterType, setFilterType] = useState<'all' | 'success' | 'error' | 'fav'>('all');
+	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+	const [toastMessage, setToastMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
+	
+	const [minConc, setMinConc] = useState<number | null>(null);
+	const [maxConc, setMaxConc] = useState<number | null>(null);
+	const [selectedOperator, setSelectedOperator] = useState<string>('');
+	
+	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+	const [editingSpecimen, setEditingSpecimen] = useState<Specimen | null>(null);
+	const [activePcrSpecimen, setActivePcrSpecimen] = useState<Specimen | null>(null);
+	const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+	const [isScanOpen, setIsScanOpen] = useState(false);
+	
+	const [newRecordData, setNewRecordData] = useState({
+		id: '',
+		taxon: '',
+		locality: '',
+		extrLab: '',
+		extrOperator: '',
+		extrMethod: '',
+		extrDateRaw: '',
+	});
+	
+	const [pcrForm, setPcrForm] = useState({
+		volume: '25',
+		marker: '',
+		forwardPrimer: '',
+		reversePrimer: '',
+		dnaMatrix: '',
+		result: 'Success' as 'Success' | 'Failed',
+	});
 
 	// Theme initialization & sync
 	useEffect(() => {
@@ -37,51 +74,15 @@ export function useJournalPage() {
 		localStorage.setItem('theme', theme);
 	}, [theme]);
 
-	const [page, setPage] = useState(1);
-	const [totalPages, setTotalPages] = useState(1);
-	const [totalGlobal, setTotalGlobal] = useState(0);
-	const [searchQuery, setSearchQuery] = useState('');
-	const debouncedSearch = useDebounce(searchQuery, 400);
-	const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
-	const [filterType, setFilterType] = useState<'all' | 'success' | 'error' | 'fav'>('all');
-	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-	const [toastMessage, setToastMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
-	const [suggestions, setSuggestions] = useState<{ labs: string[], operators: string[], methods: string[] }>({ labs: [], operators: [], methods: [] });
-	
-	const [minConc, setMinConc] = useState<number | null>(null);
-	const [maxConc, setMaxConc] = useState<number | null>(null);
-	const [selectedOperator, setSelectedOperator] = useState<string>('');
-	
-	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-	const [editingSpecimen, setEditingSpecimen] = useState<Specimen | null>(null);
-	const [activePcrSpecimen, setActivePcrSpecimen] = useState<Specimen | null>(null);
-	const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
-	const [isScanOpen, setIsScanOpen] = useState(false);
-	const [newRecordData, setNewRecordData] = useState({
-		id: '',
-		taxon: '',
-		locality: '',
-		extrLab: '',
-		extrOperator: '',
-		extrMethod: '',
-		extrDateRaw: '',
-	});
-	const [pcrForm, setPcrForm] = useState({
-		volume: '25',
-		marker: '',
-		forwardPrimer: '',
-		reversePrimer: '',
-		dnaMatrix: '',
-		result: 'Success' as 'Success' | 'Failed',
-	});
-
+	// Reset page on filter change
 	useEffect(() => {
 		setPage(1);
 	}, [debouncedSearch, filterType, sortConfig, minConc, maxConc, selectedOperator]);
 
-	const fetchSpecimens = useCallback(async () => {
-		setLoading(true);
-		try {
+	// Fetch Query
+	const { data, isLoading: loading } = useQuery({
+		queryKey: ['specimens', { page, search: debouncedSearch, filter: filterType, sort: sortConfig, minConc, maxConc, operator: selectedOperator }],
+		queryFn: async () => {
 			const params = new URLSearchParams({
 				page: page.toString(),
 				limit: '50',
@@ -94,25 +95,89 @@ export function useJournalPage() {
 				operator: selectedOperator,
 			});
 			const res = await fetch(`/api/specimens?${params.toString()}`);
-			const data = await res.json();
+			if (!res.ok) throw new Error('Failed to fetch specimens');
+			return res.json();
+		},
+		enabled: status === 'authenticated',
+	});
 
-			if (data && Array.isArray(data.specimens)) {
-				setSpecimens(data.specimens);
-				setTotalPages(data.totalPages || 1);
-				setTotalGlobal(data.total || 0);
-				if (data.suggestions) setSuggestions(data.suggestions);
+	const specimens = data?.specimens || [];
+	const totalPages = data?.totalPages || 1;
+	const totalGlobal = data?.total || 0;
+	const suggestions = data?.suggestions || { labs: [], operators: [], methods: [] };
+
+	// Mutations
+	const addMutation = useMutation({
+		mutationFn: async (payload: typeof newRecordData) => {
+			const res = await fetch('/api/specimens', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload),
+			});
+			if (!res.ok) {
+				const error = await res.json();
+				throw new Error(error.error || 'Ошибка сохранения');
 			}
-		} catch {
-			setSpecimens([]);
-		} finally {
-			setLoading(false);
+			return res.json();
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['specimens'] });
+			setIsAddModalOpen(false);
+			setToastMessage({ text: 'Проба успешно добавлена', type: 'success' });
+			setNewRecordData({
+				id: '', taxon: '', locality: '', extrLab: '', extrOperator: '', extrMethod: '', extrDateRaw: '',
+			});
+		},
+		onError: (error: Error) => {
+			setToastMessage({ text: error.message, type: 'error' });
 		}
-	}, [page, debouncedSearch, filterType, sortConfig, minConc, maxConc, selectedOperator]);
+	});
 
-	useEffect(() => {
-		if (status === 'unauthenticated') router.push('/login');
-		if (status === 'authenticated') fetchSpecimens();
-	}, [status, fetchSpecimens, router]);
+	const editMutation = useMutation({
+		mutationFn: async (specimen: Specimen) => {
+			const { id, ...rest } = specimen;
+			const res = await fetch('/api/specimens', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id, ...rest }),
+			});
+			if (!res.ok) {
+				const error = await res.json();
+				throw new Error(error.error || 'Ошибка редактирования');
+			}
+			return res.json();
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['specimens'] });
+			setEditingSpecimen(null);
+			setToastMessage({ text: 'Проба успешно обновлена', type: 'success' });
+		},
+		onError: (error: Error) => {
+			setToastMessage({ text: error.message, type: 'error' });
+		}
+	});
+
+	const pcrMutation = useMutation({
+		mutationFn: async (payload: any) => {
+			const res = await fetch('/api/pcr', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload),
+			});
+			if (!res.ok) {
+				const error = await res.json();
+				throw new Error(error.error || 'Ошибка ПЦР');
+			}
+			return res.json();
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ['specimens'] });
+			setActivePcrSpecimen(null);
+		},
+		onError: (error: Error) => {
+			setToastMessage({ text: error.message, type: 'error' });
+		}
+	});
 
 	const stats = useMemo(() => {
 		const list = Array.isArray(specimens) ? specimens : [];
@@ -136,82 +201,22 @@ export function useJournalPage() {
 
 	const handleAddSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		try {
-			const res = await fetch('/api/specimens', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(newRecordData),
-			});
-			if (!res.ok) {
-				const error = await res.json();
-				setToastMessage({ text: error.error || 'Ошибка сохранения', type: 'error' });
-				return;
-			}
-		} catch (error) {
-			setToastMessage({ text: 'Ошибка сети. Проверьте подключение.', type: 'error' });
-			return;
-		}
-		setIsAddModalOpen(false);
-		setToastMessage({ text: 'Проба успешно добавлена', type: 'success' });
-		setNewRecordData({
-			id: '',
-			taxon: '',
-			locality: '',
-			extrLab: '',
-			extrOperator: '',
-			extrMethod: '',
-			extrDateRaw: '',
-		});
-		fetchSpecimens();
+		addMutation.mutate(newRecordData);
 	};
 
 	const handleEditSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!editingSpecimen) return;
-		try {
-			const { id, ...rest } = editingSpecimen;
-			const res = await fetch('/api/specimens', {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ id, ...rest }),
-			});
-			if (!res.ok) {
-				const error = await res.json();
-				setToastMessage({ text: error.error || 'Ошибка редактирования', type: 'error' });
-				return;
-			}
-		} catch (error) {
-			setToastMessage({ text: 'Ошибка сети. Проверьте подключение.', type: 'error' });
-			return;
-		}
-		setEditingSpecimen(null);
-		setToastMessage({ text: 'Проба успешно обновлена', type: 'success' });
-		fetchSpecimens();
+		if (editingSpecimen) editMutation.mutate(editingSpecimen);
 	};
 
 	const handlePcrSubmit = async () => {
-		if (!activePcrSpecimen) return;
-		try {
-			const res = await fetch('/api/pcr', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					specimenId: activePcrSpecimen.id,
-					...pcrForm,
-					date: new Date().toISOString(),
-				}),
+		if (activePcrSpecimen) {
+			pcrMutation.mutate({
+				specimenId: activePcrSpecimen.id,
+				...pcrForm,
+				date: new Date().toISOString(),
 			});
-			if (!res.ok) {
-				const error = await res.json();
-				setToastMessage({ text: `Ошибка ПЦР: ${error.error}`, type: 'error' });
-				return;
-			}
-		} catch (error) {
-			setToastMessage({ text: `Ошибка сети: ${error}`, type: 'error' });
-			return;
 		}
-		setActivePcrSpecimen(null);
-		fetchSpecimens();
 	};
 
 	const handleStatusToggle = async (id: string, marker: string) => {
@@ -225,23 +230,18 @@ export function useJournalPage() {
 
 		const currentStatus = specimen[statusKey];
 		const newStatus: string | null =
-			currentStatus === '✓'
-				? '✕'
-				: currentStatus === '✕'
-					? '?'
-					: currentStatus === '?'
-						? null
-						: '✓';
+			currentStatus === '✓' ? '✕' : currentStatus === '✕' ? '?' : currentStatus === '?' ? null : '✓';
 
-		setSpecimens((prev) => prev.map((s) => (s.id === id ? { ...s, [statusKey]: newStatus } : s)));
 		try {
+			// Оптимистичное обновление или просто мутация
 			await fetch('/api/specimens', {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ singleId: id, updateData: { [statusKey]: newStatus } }),
 			});
+			queryClient.invalidateQueries({ queryKey: ['specimens'] });
 		} catch {
-			fetchSpecimens();
+			queryClient.invalidateQueries({ queryKey: ['specimens'] });
 		}
 	};
 
@@ -249,11 +249,9 @@ export function useJournalPage() {
 		const csvContent =
 			'data:text/csv;charset=utf-8,' +
 			'ID,Taxon,Locality,ITS,SSU,LSU,MCM7\n' +
-			specimens
-				.map((s) =>
+			specimens.map((s) =>
 					`${s.id},${s.taxon || ''},${s.locality || ''},${s.itsStatus || ''},${s.ssuStatus || ''},${s.lsuStatus || ''},${s.mcm7Status || ''}`,
-				)
-				.join('\n');
+				).join('\n');
 		const encodedUri = encodeURI(csvContent);
 		const link = document.createElement('a');
 		link.setAttribute('href', encodedUri);
@@ -268,7 +266,6 @@ export function useJournalPage() {
 			const ExcelJS = (await import('exceljs')).default;
 			const workbook = new ExcelJS.Workbook();
 			const sheet = workbook.addWorksheet('Пробы');
-			
 			sheet.columns = [
 				{ header: 'ID', key: 'id', width: 10 },
 				{ header: 'Таксон', key: 'taxon', width: 25 },
@@ -278,19 +275,9 @@ export function useJournalPage() {
 				{ header: 'LSU', key: 'lsuStatus', width: 10 },
 				{ header: 'MCM7', key: 'mcm7Status', width: 10 },
 			];
-
 			specimens.forEach((s) => {
-				sheet.addRow({
-					id: s.id,
-					taxon: s.taxon || '',
-					locality: s.locality || '',
-					itsStatus: s.itsStatus || '',
-					ssuStatus: s.ssuStatus || '',
-					lsuStatus: s.lsuStatus || '',
-					mcm7Status: s.mcm7Status || '',
-				});
+				sheet.addRow({ ...s });
 			});
-
 			const buffer = await workbook.xlsx.writeBuffer();
 			const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 			const url = window.URL.createObjectURL(blob);
@@ -310,57 +297,18 @@ export function useJournalPage() {
 		alert('Функция печати этикеток будет реализована позже.');
 	};
 
+	useEffect(() => {
+		if (status === 'unauthenticated') router.push('/login');
+	}, [status, router]);
+
 	return {
-		session,
-		status,
-		specimens,
-		loading,
-		theme,
-		setTheme,
-		page,
-		totalPages,
-		totalGlobal,
-		searchQuery,
-		setSearchQuery,
-		filterType,
-		setFilterType,
-		sortConfig,
-		setSortConfig,
-		selectedIds,
-		setSelectedIds,
-		isAddModalOpen,
-		setIsAddModalOpen,
-		editingSpecimen,
-		setEditingSpecimen,
-		activePcrSpecimen,
-		setActivePcrSpecimen,
-		isBatchModalOpen,
-		setIsBatchModalOpen,
-		isScanOpen,
-		setIsScanOpen,
-		newRecordData,
-		setNewRecordData,
-		pcrForm,
-		setPcrForm,
-		stats,
-		handleSort,
-		handleAddSubmit,
-		handleEditSubmit,
-		handlePcrSubmit,
-		handleStatusToggle,
-		handleExportCSV,
-		handleExportXLSX,
-		handlePrintLabels,
-		handleSignOut,
-		setPage,
-		minConc,
-		setMinConc,
-		maxConc,
-		setMaxConc,
-		selectedOperator,
-		setSelectedOperator,
-		suggestions,
-		toastMessage,
-		setToastMessage,
+		session, status, specimens, loading: loading || addMutation.isPending || editMutation.isPending || pcrMutation.isPending,
+		theme, setTheme, page, totalPages, totalGlobal, searchQuery, setSearchQuery, filterType, setFilterType,
+		sortConfig, setSortConfig, selectedIds, setSelectedIds, isAddModalOpen, setIsAddModalOpen,
+		editingSpecimen, setEditingSpecimen, activePcrSpecimen, setActivePcrSpecimen, isBatchModalOpen, setIsBatchModalOpen,
+		isScanOpen, setIsScanOpen, newRecordData, setNewRecordData, pcrForm, setPcrForm, stats, handleSort,
+		handleAddSubmit, handleEditSubmit, handlePcrSubmit, handleStatusToggle, handleExportCSV, handleExportXLSX,
+		handlePrintLabels, handleSignOut, setPage, minConc, setMinConc, maxConc, setMaxConc, selectedOperator,
+		setSelectedOperator, suggestions, toastMessage, setToastMessage,
 	};
 }
