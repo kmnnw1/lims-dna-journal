@@ -9,8 +9,9 @@ async function loginAdmin(page: Page) {
     // Находим поле для токена
     const tokenInput = page.locator('input[type="password"]').first();
 
-    // Используем тестовый токен из .env
-    await tokenInput.fill('test-token-123');
+    // Используем тестовый токен (на сервере должен быть AUTH_TEST_TOKEN)
+    const testToken = process.env.TEST_TOKEN || 'test-token-123';
+    await tokenInput.fill(testToken);
 
     // Нажимаем Enter для отправки формы
     await tokenInput.press('Enter');
