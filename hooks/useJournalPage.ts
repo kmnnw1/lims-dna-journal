@@ -220,7 +220,7 @@ export function useJournalPage() {
 	};
 
 	const handleStatusToggle = async (id: string, marker: string) => {
-		const specimen = specimens.find((s) => s.id === id);
+		const specimen = specimens.find((s: Specimen) => s.id === id);
 		if (!specimen) return;
 
 		let statusKey: keyof Specimen = 'itsStatus';
@@ -249,7 +249,7 @@ export function useJournalPage() {
 		const csvContent =
 			'data:text/csv;charset=utf-8,' +
 			'ID,Taxon,Locality,ITS,SSU,LSU,MCM7\n' +
-			specimens.map((s) =>
+			specimens.map((s: Specimen) =>
 					`${s.id},${s.taxon || ''},${s.locality || ''},${s.itsStatus || ''},${s.ssuStatus || ''},${s.lsuStatus || ''},${s.mcm7Status || ''}`,
 				).join('\n');
 		const encodedUri = encodeURI(csvContent);
@@ -275,7 +275,7 @@ export function useJournalPage() {
 				{ header: 'LSU', key: 'lsuStatus', width: 10 },
 				{ header: 'MCM7', key: 'mcm7Status', width: 10 },
 			];
-			specimens.forEach((s) => {
+			specimens.forEach((s: Specimen) => {
 				sheet.addRow({ ...s });
 			});
 			const buffer = await workbook.xlsx.writeBuffer();
