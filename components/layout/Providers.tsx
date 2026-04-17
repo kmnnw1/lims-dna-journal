@@ -8,6 +8,7 @@
  */
 import { SessionProvider } from 'next-auth/react';
 import { PwaBootstrap } from '@/components/layout/PwaBootstrap';
+import { QueryProvider } from '@/components/layout/QueryProvider';
 
 type ProvidersProps = {
 	children: React.ReactNode;
@@ -16,9 +17,11 @@ type ProvidersProps = {
 export function Providers({ children }: ProvidersProps) {
 	return (
 		<SessionProvider refetchOnWindowFocus={false}>
-			{/* PWA bootstrapper. Появляется один раз на уровне всего приложения */}
-			<PwaBootstrap />
-			{children}
+			<QueryProvider>
+				{/* PWA bootstrapper. Появляется один раз на уровне всего приложения */}
+				<PwaBootstrap />
+				{children}
+			</QueryProvider>
 		</SessionProvider>
 	);
 }
