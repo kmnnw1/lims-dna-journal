@@ -4,7 +4,7 @@ import { AlertCircle, ArrowRight } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { MD3Field } from '@/components/ui/MD3Field';
 
 // Динамический импорт для предотвращения Hydration Error (Math.random)
@@ -24,37 +24,40 @@ function LoginContent() {
 	const [error, setError] = useState('');
 	const [loading, setLoading] = useState(false);
 
-	const handleSubmit = async (e?: React.FormEvent) => {
-		if (e) e.preventDefault();
-		setError('');
-		setLoading(true);
+	const handleSubmit = useCallback(
+		async (e?: React.FormEvent) => {
+			if (e) e.preventDefault();
+			setError('');
+			setLoading(true);
 
-		try {
-			const res = await signIn('credentials', {
-				username,
-				password: password.trim(),
-				token: password.trim(),
-				redirect: false,
-			});
+			try {
+				const res = await signIn('credentials', {
+					username,
+					password: password.trim(),
+					token: password.trim(),
+					redirect: false,
+				});
 
-			if (res?.error) {
-				setError('Неверный логин или токен');
+				if (res?.error) {
+					setError('Неверный логин или токен');
+					setLoading(false);
+				} else {
+					// Принудительный редирект на главную
+					router.push('/');
+					router.refresh(); // Обновляем состояние сессии во всем приложении
+
+					// Fallback в случае зависания роутера
+					setTimeout(() => {
+						window.location.href = '/';
+					}, 500);
+				}
+			} catch (_err) {
+				setError('Произошла ошибка при входе');
 				setLoading(false);
-			} else {
-				// Принудительный редирект на главную
-				router.push('/');
-				router.refresh(); // Обновляем состояние сессии во всем приложении
-
-				// Fallback в случае зависания роутера
-				setTimeout(() => {
-					window.location.href = '/';
-				}, 500);
 			}
-		} catch (_err) {
-			setError('Произошла ошибка при входе');
-			setLoading(false);
-		}
-	};
+		},
+		[username, password, router],
+	);
 
 	// Auto-submit при наличии токена в URL (Hiddify-style)
 	useEffect(() => {
