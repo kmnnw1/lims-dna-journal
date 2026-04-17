@@ -1,6 +1,6 @@
 {
 	"name": "lab-journal",
-	"version": "0.1.23.44",
+	"version": "0.1.23.45",
 	"description": "Система управления лабораторной информацией (LIMS) для учёта генетического материала и протоколирования ПЦР-исследований.",
 	"private": true,
 	"scripts": {
@@ -34,7 +34,7 @@
 		"@prisma/client": "^7.7.0",
 		"@tailwindcss/postcss": "^4.0.0",
 		"bcryptjs": "^3.0.3",
-		"better-sqlite3": "^11.8.2",
+		"better-sqlite3": "^12.9.0",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"exceljs": "^4.4.0",
