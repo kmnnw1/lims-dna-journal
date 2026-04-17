@@ -1,7 +1,7 @@
 'use client';
 
 import { FlaskConical, History, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { MD3Field } from '@/components/ui/MD3Field';
 import type { PcrAttempt, Specimen } from '@/types';
@@ -47,8 +47,9 @@ export function PcrModal({
 	const [history, setHistory] = useState<PcrAttempt[]>([]);
 	const [loadingHistory, setLoadingHistory] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
+	const dialogRef = useRef<HTMLDivElement>(null);
 
-	const fetchHistory = () => {
+	const fetchHistory = useCallback(() => {
 		if (specimenId) {
 			setLoadingHistory(true);
 			fetch(`/api/pcr?specimenId=${specimenId}`)
@@ -62,7 +63,7 @@ export function PcrModal({
 					setLoadingHistory(false);
 				});
 		}
-	};
+	}, [specimenId]);
 
 	useEffect(() => {
 		if (open) fetchHistory();
@@ -118,8 +119,15 @@ export function PcrModal({
 	if (!open) return null;
 
 	return (
-		<div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-			<div className="my-6 w-full max-w-2xl p-6 sm:p-8 relative bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem] shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+		<div className="fixed inset-0 z-[125] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm print:hidden">
+			<div
+				ref={dialogRef}
+				role="dialog"
+				aria-modal="true"
+				aria-label="История и постановка ПЦР"
+				tabIndex={0}
+				className="my-6 w-full max-w-2xl p-6 sm:p-8 relative bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem] shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar focus-visible:outline-none animate-in fade-in zoom-in-95 duration-200"
+			>
 				<div className="mb-6 flex items-center justify-between gap-4">
 					<div>
 						<h2 className="text-2xl sm:text-3xl font-normal text-[var(--md-sys-color-on-surface)] tracking-tight">
@@ -282,7 +290,7 @@ export function PcrModal({
 										onChange={(e) =>
 											setPcrForm({
 												...pcrForm,
-												result: e.target.value as any,
+												result: e.target.value as 'Success' | 'Failed',
 											})
 										}
 									>

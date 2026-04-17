@@ -71,12 +71,7 @@ export function ShortcutsModal({ open, onClose, isReader }: Props) {
 	if (!open) return null;
 
 	return (
-		<div
-			className="fixed inset-0 z-[125] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm print:hidden"
-			tabIndex={-1}
-			aria-modal="true"
-			aria-label="Горячие клавиши"
-		>
+		<div className="fixed inset-0 z-[125] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm print:hidden">
 			<button
 				type="button"
 				className="absolute inset-0 cursor-default"
@@ -89,6 +84,8 @@ export function ShortcutsModal({ open, onClose, isReader }: Props) {
 			<div
 				ref={dialogRef}
 				role="dialog"
+				aria-modal="true"
+				aria-label="Горячие клавиши"
 				tabIndex={0}
 				className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] bg-[var(--md-sys-color-surface-container-low)] shadow-2xl focus-visible:outline-none animate-in fade-in zoom-in-95 duration-200"
 			>
