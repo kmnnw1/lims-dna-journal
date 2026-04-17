@@ -49,7 +49,7 @@ export async function GET(req: Request) {
               .where(where)
               .limit(limit)
               .offset(skip)
-              .orderBy(sortDir === 'asc' ? asc(specimensTable[sortKey]) : desc(specimensTable[sortKey])),
+              .orderBy(sortDir === 'asc' ? asc((specimensTable as any)[sortKey]) : desc((specimensTable as any)[sortKey])),
             db.select({ count: count() }).from(specimensTable).where(where),
             getDrizzleDistinctFields(),
         ]);
