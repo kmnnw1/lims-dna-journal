@@ -63,10 +63,10 @@ export function PaginationControls({ page, totalPages, onPageChange, className =
           onChange={handleInputChange}
           onBlur={handleInputBlur}
           onKeyDown={handleKeyDown}
-          className="w-8 sm:w-10 bg-transparent text-center font-bold text-sm outline-none text-[var(--md-sys-color-primary)] selection:bg-[var(--md-sys-color-primary-container)]"
+          className="w-10 sm:w-12 bg-[var(--md-sys-color-surface-container-highest)] rounded-md py-0.5 text-center font-bold text-base outline-none text-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/30 selection:bg-[var(--md-sys-color-primary)] selection:text-[var(--md-sys-color-on-primary)] transition-all"
           title="Введите номер страницы"
         />
-        <span className="text-[10px] sm:text-xs font-medium text-[var(--md-sys-color-outline)] uppercase tracking-tighter">
+        <span className="text-[11px] sm:text-[13px] font-bold text-[var(--md-sys-color-on-surface-variant)] uppercase tracking-tight">
           из {totalPages}
         </span>
       </div>
