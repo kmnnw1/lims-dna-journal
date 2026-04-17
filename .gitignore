@@ -332,7 +332,6 @@ public/lottie/
 scripts/local-*.mjs
 scripts/debug.mjs
 scripts/meta-sync.ps1
-scripts/silent-ci.ps1
 
 # ------------------------------------------------------------------------------
 # END OF GITIGNORE

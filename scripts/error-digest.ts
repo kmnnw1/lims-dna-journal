@@ -1,0 +1,37 @@
+import { execSync } from 'node:child_process';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const root = process.cwd();
+const targetDir = join(root, '.internal_data');
+const digestPath = join(targetDir, 'error_digest.md');
+
+if (!existsSync(targetDir)) {
+	mkdirSync(targetDir, { recursive: true });
+}
+
+function runCheck(name: string, cmd: string): string {
+	try {
+		const output = execSync(cmd, { encoding: 'utf8', stdio: 'pipe' });
+		return `### ✅ ${name}\nNo errors found.\n`;
+	} catch (error: any) {
+		const output = error.stdout || error.stderr || error.message;
+		return `### ❌ ${name}\n\`\`\`text\n${output}\n\`\`\`\n`;
+	}
+}
+
+async function generateDigest() {
+	console.log('📝 Generating error digest...');
+
+	let content = `# Project Error Digest 🕵️‍♂️\n`;
+	content += `Last Update: ${new Date().toLocaleString()}\n\n`;
+
+	content += runCheck('Biome Lint', 'npm run lint --silent');
+	content += runCheck('TypeScript Check', 'npm run check --silent');
+	content += runCheck('Unit Tests', 'npm test -- --run --silent');
+
+	writeFileSync(digestPath, content);
+	console.log(`🟢 Digest updated: ${digestPath}`);
+}
+
+generateDigest();
