@@ -55,7 +55,7 @@ describe('AddSpecimenModal', () => {
 	it('should call onClose when overlay clicked', () => {
 		render(<AddSpecimenModal {...defaultProps} />);
 
-		const overlay = screen.getByRole('dialog').parentElement!;
+		const overlay = screen.getByRole('dialog');
 		fireEvent.click(overlay);
 
 		expect(mockOnClose).toHaveBeenCalledTimes(1);
@@ -94,7 +94,7 @@ describe('AddSpecimenModal', () => {
 	it('should call onSubmit when form submitted', () => {
 		render(<AddSpecimenModal {...defaultProps} />);
 
-		const form = screen.getByRole('form');
+		const form = screen.getByLabelText('Форма добавления пробы');
 		fireEvent.submit(form);
 
 		expect(mockOnSubmit).toHaveBeenCalledTimes(1);

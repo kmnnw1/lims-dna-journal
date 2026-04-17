@@ -84,7 +84,12 @@ export function AddSpecimenModal({
 					</button>
 				</div>
 
-				<form onSubmit={onSubmit} className="space-y-5" autoComplete="off">
+				<form
+					onSubmit={onSubmit}
+					className="space-y-5"
+					autoComplete="off"
+					aria-label="Форма добавления пробы"
+				>
 					<MD3Field
 						ref={idInputRef}
 						required
