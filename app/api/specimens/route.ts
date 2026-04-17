@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 		const page = parseInt(searchParams.get('page') || '1');
 		const limit = parseInt(searchParams.get('limit') || '100');
 		const search = searchParams.get('search') || '';
-		const sortKey = (searchParams.get('sortBy') || 'id') as any;
+		const sortKey = (searchParams.get('sortBy') || 'id') as keyof typeof specimensTable;
 		const sortDir = searchParams.get('sortOrder') || 'asc';
 		const filterType = searchParams.get('filter') || 'all';
 		const minConc = searchParams.get('minConc')
@@ -73,8 +73,10 @@ export async function GET(req: Request) {
 				.offset(skip)
 				.orderBy(
 					sortDir === 'asc'
-						? asc((specimensTable as any)[sortKey])
-						: desc((specimensTable as any)[sortKey]),
+						? // biome-ignore lint/suspicious/noExplicitAny: dynamic column selection in Drizzle
+							asc((specimensTable as any)[sortKey])
+						: // biome-ignore lint/suspicious/noExplicitAny: dynamic column selection in Drizzle
+							desc((specimensTable as any)[sortKey]),
 				),
 			db.select({ count: count() }).from(specimensTable).where(where),
 			getDrizzleDistinctFields(),

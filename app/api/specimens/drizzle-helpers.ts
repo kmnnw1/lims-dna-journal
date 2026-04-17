@@ -37,8 +37,10 @@ export function buildDrizzleQuery(params: {
 	if (params.operator) conditions.push(eq(specimens.extrOperator, params.operator));
 
 	if (params.minConc !== null)
+		// biome-ignore lint/suspicious/noExplicitAny: Drizzle comparisons can be strict with column types
 		conditions.push(gte(specimens.dnaConcentration as any, params.minConc));
 	if (params.maxConc !== null)
+		// biome-ignore lint/suspicious/noExplicitAny: Drizzle comparisons can be strict with column types
 		conditions.push(lte(specimens.dnaConcentration as any, params.maxConc));
 
 	return and(...conditions);

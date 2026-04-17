@@ -71,7 +71,7 @@ export function handleError(e: unknown) {
 }
 
 // Создание cache key на основе параметров запроса
-export function buildCacheKey(params: any) {
+export function buildCacheKey(params: Record<string, unknown>) {
 	return `specimens:${JSON.stringify(params)}`;
 }
 
@@ -83,7 +83,7 @@ export function buildSpecimenQuery(params: {
 	minConc?: number | null;
 	maxConc?: number | null;
 }) {
-	const where = { deletedAt: null } as any;
+	const where: Record<string, unknown> = { deletedAt: null };
 
 	if (params.search) {
 		where.OR = [
@@ -105,9 +105,10 @@ export function buildSpecimenQuery(params: {
 
 	// Фильтрация по концентрации (ТЕПЕРЬ НА УРОВНЕ БД, ТАК КАК ТИП FLOAT)
 	if (params.minConc !== null || params.maxConc !== null) {
-		where.dnaConcentration = {};
-		if (params.minConc !== null) where.dnaConcentration.gte = params.minConc;
-		if (params.maxConc !== null) where.dnaConcentration.lte = params.maxConc;
+		const dnaConc: Record<string, number> = {};
+		if (params.minConc !== null) dnaConc.gte = params.minConc as number;
+		if (params.maxConc !== null) dnaConc.lte = params.maxConc as number;
+		where.dnaConcentration = dnaConc;
 	}
 
 	return where;
