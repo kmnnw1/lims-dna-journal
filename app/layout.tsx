@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Outfit, Montserrat } from 'next/font/google';
 import { Providers } from '@/components/layout/Providers';
+import { PageTransition } from '@/components/layout/PageTransition';
 import './globals.css';
 
 const outfit = Outfit({
@@ -58,7 +59,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				suppressHydrationWarning
 				className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] selection:bg-[var(--md-sys-color-primary)] selection:text-[var(--md-sys-color-on-primary)] transition-colors duration-300 font-sans antialiased"
 			>
-				<Providers>{children}</Providers>
+				<Providers>
+					<PageTransition>{children}</PageTransition>
+				</Providers>
 			</body>
 		</html>
 	);
