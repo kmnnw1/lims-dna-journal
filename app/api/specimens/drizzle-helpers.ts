@@ -1,6 +1,6 @@
 import { specimens } from '@/lib/db/schema';
 import { db } from '@/lib/db/drizzle';
-import { and, or, like, eq, gte, lte, sql } from 'drizzle-orm';
+import { and, or, like, eq, gte, lte, sql, isNull } from 'drizzle-orm';
 
 /**
  * Высокопроизводительный построитель запросов для Drizzle.
@@ -13,7 +13,7 @@ export function buildDrizzleQuery(params: {
 	minConc?: number | null;
 	maxConc?: number | null;
 }) {
-	const conditions = [eq(specimens.deletedAt, null as any)];
+	const conditions = [isNull(specimens.deletedAt)];
 
 	if (params.search) {
 		const s = `%${params.search}%`;
@@ -41,9 +41,9 @@ export function buildDrizzleQuery(params: {
 }
 
 export async function getDrizzleDistinctFields() {
-	const labs = await db.selectDistinct({ val: specimens.extrLab }).from(specimens).where(eq(specimens.deletedAt, null as any));
-	const operators = await db.selectDistinct({ val: specimens.extrOperator }).from(specimens).where(eq(specimens.deletedAt, null as any));
-	const methods = await db.selectDistinct({ val: specimens.extrMethod }).from(specimens).where(eq(specimens.deletedAt, null as any));
+	const labs = await db.selectDistinct({ val: specimens.extrLab }).from(specimens).where(isNull(specimens.deletedAt));
+	const operators = await db.selectDistinct({ val: specimens.extrOperator }).from(specimens).where(isNull(specimens.deletedAt));
+	const methods = await db.selectDistinct({ val: specimens.extrMethod }).from(specimens).where(isNull(specimens.deletedAt));
 
 	return {
 		labs: labs.map(n => n.val).filter(Boolean) as string[],
