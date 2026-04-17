@@ -3,6 +3,14 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/**
+ * Профессиональный скрипт версионирования (SemVer 2.0).
+ * Логика:
+ * - Build: Технические правки, рефакторинг, фиксы.
+ * - Patch: Новые UI-элементы, небольшие фичи.
+ * - Minor: Крупные инфраструктурные изменения или новые модули.
+ */
+
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pkgPath = join(root, 'package.json');
 
@@ -23,40 +31,38 @@ function getDiffStat() {
 
 const { files, lines } = getDiffStat();
 if (lines === 0 && files === 0) {
-	console.log('[SYSTEM] Изменений в отслеживаемых файлах не обнаружено.');
+	console.log('[SYSTEM] Изменений в отслеживаемых файлах не обнаружено. Пропуск бампа.');
 	process.exit(0);
 }
 
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
 let [major, minor, patch, build] = pkg.version.split('.').map(Number);
+const initialVersion = pkg.version;
 
-// Умная логика: защищаем Major и Minor от случайных бампов
-if (lines > 5000) {
-	// Аномальный объем (например, Prettier пробежался или обновился package-lock)
-	// Это НЕ эпическая фича, это просто форматирование. Бампаем только Build.
-	build++;
-	console.log(
-		`[SYSTEM] Автоматическое форматирование или лок-файл (${files} файлов, ${lines} строк). Инкремент: Build.`,
-	);
-} else if (files >= 5 || lines > 300) {
-	// Затронуто много файлов или логики — это полноценная фича (Patch)
+// Определение типа инкремента (Heuristic 2026)
+if (lines > 1000 && files > 10) {
+	// Масштабная модернизация (Minor)
+	minor++;
+	patch = 0;
+	build = 0;
+	console.log(`[SYSTEM] Пакетная модернизация (${files} ф. / ${lines} стр.). Инкремент: Minor.`);
+} else if (files >= 3 || lines > 150) {
+	// Полноценная фича или фикс логики (Patch)
 	patch++;
 	build = 0;
-	console.log(
-		`[SYSTEM] Интеграция функционала (${files} файлов, ${lines} строк). Инкремент: Patch.`,
-	);
+	console.log(`[SYSTEM] Функциональное изменение (${files} ф. / ${lines} стр.). Инкремент: Patch.`);
 } else {
-	// 1-4 файла — это локальный фикс или рутина (Build)
+	// Точечные правки (Build)
 	build++;
-	console.log(`[SYSTEM] Локальные правки (${files} файлов, ${lines} строк). Инкремент: Build.`);
+	console.log(`[SYSTEM] Техническая правка (${files} ф. / ${lines} стр.). Инкремент: Build.`);
 }
 
 pkg.version = [major, minor, patch, build].join('.');
 writeFileSync(pkgPath, JSON.stringify(pkg, null, '\t') + '\n');
-console.log(`[SYSTEM] Версия проекта: ${pkg.version}`);
+console.log(`[SYSTEM] Версия обновлена: ${initialVersion} -> ${pkg.version}`);
 
 try {
 	execSync('git add package.json', { cwd: root });
 } catch (e) {
-	console.warn('[ERROR] Не удалось выполнить индексацию файла package.json');
+	console.warn('[ERROR] Не удалось проиндексировать package.json');
 }
