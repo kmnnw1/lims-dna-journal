@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull, like, lte, or, sql } from 'drizzle-orm';
+import { and, eq, gte, isNull, like, lte, or, SQL, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
 import { specimens } from '@/lib/db/schema';
 
@@ -27,7 +27,7 @@ export function buildDrizzleQuery(params: {
 				like(specimens.extrMethod, s),
 				like(specimens.notes, s),
 				like(specimens.itsStatus, s),
-			) as any,
+			) as unknown as SQL,
 		);
 	}
 
