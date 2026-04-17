@@ -25,7 +25,7 @@ export function AnimatedFlask() {
 	const rockRef = useRef(0); // Сила раскачивания 0..1
 
 	// Спавн 1 частицы
-	const spawnBubble = (xPos?: number, state: 'idle' | 'flying' = 'idle') => {
+	const spawnBubble = useCallback((xPos?: number, state: 'idle' | 'flying' = 'idle') => {
 		particles.current.push({
 			id: nextId.current++,
 			state,
@@ -37,7 +37,7 @@ export function AnimatedFlask() {
 			life: 0,
 			maxLife: state === 'flying' ? 1.5 : 3 + Math.random() * 5,
 		});
-	};
+	}, []);
 
 	// Автоматическая генерация (1 пузырек каждые 2 сек)
 	useEffect(() => {
@@ -50,7 +50,7 @@ export function AnimatedFlask() {
 	}, [spawnBubble]);
 
 	// Границы колбы
-	const checkCollision = (p: Particle) => {
+	const checkCollision = useCallback((p: Particle) => {
 		const dt = 0.016;
 
 		if (p.state === 'idle') {
@@ -130,7 +130,7 @@ export function AnimatedFlask() {
 		p.x += p.vx * dt;
 		p.y += p.vy * dt;
 		p.life += dt;
-	};
+	}, []);
 
 	const runPhysics = useCallback(() => {
 		requestRef.current = requestAnimationFrame(runPhysics);
