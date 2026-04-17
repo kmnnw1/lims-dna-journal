@@ -1,6 +1,6 @@
 {
 	"name": "lab-journal",
-	"version": "0.1.23.45",
+	"version": "0.1.23.46",
 	"description": "Система управления лабораторной информацией (LIMS) для учёта генетического материала и протоколирования ПЦР-исследований.",
 	"private": true,
 	"scripts": {
@@ -60,7 +60,7 @@
 		"@types/react": "^19.2.5",
 		"@types/react-dom": "^19.1.5",
 		"@types/uuid": "^10.0.0",
-		"cross-env": "^7.0.3",
+		"cross-env": "^10.1.0",
 		"eslint": "^9.2.0",
 		"eslint-config-next": "16.2.4",
 		"husky": "^9.1.7",
