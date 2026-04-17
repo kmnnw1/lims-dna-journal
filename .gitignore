@@ -244,8 +244,8 @@ $RECYCLE.BIN/
 # ------------------------------------------------------------------------------
 # 10. IDE & TEXT EDITORS (THE ARCHITECT'S WORKBENCH)
 # ------------------------------------------------------------------------------
-# VS Code
-.vscode/
+# VS Code (Allow shared config, ignore local state)
+.vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json

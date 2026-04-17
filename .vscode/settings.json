@@ -1,0 +1,14 @@
+{
+	"editor.defaultFormatter": "biomejs.biome",
+	"editor.formatOnSave": true,
+	"editor.codeActionsOnSave": {
+		"source.organizeImports.biome": "explicit"
+	},
+	"editor.guides.bracketPairs": true,
+	"editor.unicodeHighlight.nonBasicASCII": false,
+	"workbench.colorCustomizations": {
+		"activityBar.background": "#1e1e1e",
+		"sideBar.background": "#1e1e1e"
+	},
+	"typescript.tsdk": "node_modules/typescript/lib"
+}

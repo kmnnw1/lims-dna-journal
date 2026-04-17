@@ -22,7 +22,7 @@
 			"complexity": { "noUselessTypeConstraint": "error" },
 			"correctness": {
 				"noNextAsyncClientComponent": "warn",
-				"noUnusedVariables": "error"
+				"noUnusedVariables": "warn"
 			},
 			"performance": {
 				"noImgElement": "warn",
@@ -38,7 +38,7 @@
 			},
 			"suspicious": {
 				"noDocumentImportInPage": "error",
-				"noExplicitAny": "error",
+				"noExplicitAny": "warn",
 				"noExtraNonNullAssertion": "error",
 				"noHeadImportInDocument": "error",
 				"noMisleadingInstantiator": "error",

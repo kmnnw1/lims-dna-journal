@@ -1,1 +1,3 @@
-npm run bump 
+npm run lint
+npm run check
+npm run bump

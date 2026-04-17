@@ -1,0 +1,10 @@
+{
+	"recommendations": [
+		"biomejs.biome",
+		"bradlc.vscode-tailwindcss",
+		"prisma.prisma",
+		"lucide.lucide-react",
+		"ms-vscode.vscode-typescript-next",
+		"irongeek.vscode-drizzle-studio"
+	]
+}

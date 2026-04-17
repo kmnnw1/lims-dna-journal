@@ -1,10 +1,10 @@
 {
 	"name": "lab-journal",
-	"version": "0.2.2.0",
+	"version": "0.3.0.0",
 	"description": "Система управления лабораторной информацией (LIMS) для учёта генетического материала и протоколирования ПЦР-исследований.",
 	"private": true,
 	"scripts": {
-		"dev": "next dev -H 0.0.0.0 --turbo",
+		"dev": "concurrently \"next dev -H 0.0.0.0 --turbo\" \"node scripts/file-backup-daemon.mjs\" \"powershell scripts/thoughts-autosave.ps1\"",
 		"icons": "npx tsx scripts/gen-pwa-icons.ts",
 		"prebuild": "npx tsx scripts/gen-pwa-icons.ts",
 		"build": "cross-env NEXT_TURBOPACK=0 next build",
@@ -65,6 +65,7 @@
 		"@types/react": "^19.2.5",
 		"@types/react-dom": "^19.1.5",
 		"@types/uuid": "^10.0.0",
+		"concurrently": "^9.2.1",
 		"cross-env": "^10.1.0",
 		"drizzle-kit": "^0.31.10",
 		"husky": "^9.1.7",
