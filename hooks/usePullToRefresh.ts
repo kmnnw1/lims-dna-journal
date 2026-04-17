@@ -26,17 +26,18 @@ export function usePullToRefresh(
 	const threshold = opts?.threshold ?? 88;
 	const allowEditable = opts?.allowEditable ?? false;
 
-	// Не триггерим refresh если фокус внутри input/textarea
-	function isFocusInEditable(e: TouchEvent): boolean {
-		if (allowEditable) return false;
-		const el = e.target as HTMLElement | null;
-		if (!el) return false;
-		return el.closest("input, textarea, [contenteditable='true']") !== null;
-	}
-
 	useEffect(() => {
 		const elem = ref.current;
 		if (!elem || disabled) return;
+
+		// Не триггерим refresh если фокус внутри input/textarea
+		const isFocusInEditable = (e: TouchEvent): boolean => {
+			if (allowEditable) return false;
+			const el = e.target as HTMLElement | null;
+			if (!el) return false;
+			return el.closest("input, textarea, [contenteditable='true']") !== null;
+		};
+
 		let armed = false;
 		let startY = 0;
 		let startX = 0;
@@ -87,7 +88,7 @@ export function usePullToRefresh(
 			elem.removeEventListener('touchend', onEnd);
 			elem.removeEventListener('touchcancel', onEnd);
 		};
-	}, [onRefresh, disabled, threshold, isFocusInEditable]);
+	}, [onRefresh, disabled, threshold, allowEditable]);
 
 	return ref;
 }
