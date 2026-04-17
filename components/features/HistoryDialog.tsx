@@ -190,32 +190,31 @@ export function HistoryDialog({
 												{/* Changes list */}
 												{changes && Object.keys(changes).length > 0 ? (
 													<div className="grid gap-2">
-														{Object.entries(changes).map(
-															([key, value]: [string, any]) => (
-																<div
-																	key={key}
-																	className="flex flex-col gap-1 p-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-[var(--md-sys-color-outline-variant)]/10"
-																>
-																	<div className="flex items-center gap-2 text-[10px] uppercase font-black text-[var(--md-sys-color-primary)] opacity-80">
-																		<Tag className="w-3 h-3" />
-																		{key}
-																	</div>
-																	<div className="flex items-center gap-2 text-xs font-medium">
-																		<span className="flex-1 px-2 py-1 rounded bg-red-500/10 text-red-600 dark:text-red-400 truncate">
-																			{String(
-																				value.old || '—',
-																			)}
-																		</span>
-																		<ArrowRight className="w-3 h-3 text-[var(--md-sys-color-outline)] flex-shrink-0" />
-																		<span className="flex-1 px-2 py-1 rounded bg-green-500/10 text-green-600 dark:text-green-400 truncate">
-																			{String(
-																				value.new || '—',
-																			)}
-																		</span>
-																	</div>
+														{(
+															Object.entries(changes) as [
+																string,
+																{ old?: unknown; new?: unknown },
+															][]
+														).map(([key, value]) => (
+															<div
+																key={key}
+																className="flex flex-col gap-1 p-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-[var(--md-sys-color-outline-variant)]/10"
+															>
+																<div className="flex items-center gap-2 text-[10px] uppercase font-black text-[var(--md-sys-color-primary)] opacity-80">
+																	<Tag className="w-3 h-3" />
+																	{key}
 																</div>
-															),
-														)}
+																<div className="flex items-center gap-2 text-xs font-medium">
+																	<span className="flex-1 px-2 py-1 rounded bg-red-500/10 text-red-600 dark:text-red-400 truncate">
+																		{String(value.old || '—')}
+																	</span>
+																	<ArrowRight className="w-3 h-3 text-[var(--md-sys-color-outline)] flex-shrink-0" />
+																	<span className="flex-1 px-2 py-1 rounded bg-green-500/10 text-green-600 dark:text-green-400 truncate">
+																		{String(value.new || '—')}
+																	</span>
+																</div>
+															</div>
+														))}
 													</div>
 												) : log.details ? (
 													<p className="text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] bg-[var(--md-sys-color-surface-container-highest)]/50 p-3 rounded-xl">

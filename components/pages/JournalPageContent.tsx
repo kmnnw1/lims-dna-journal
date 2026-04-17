@@ -132,7 +132,7 @@ export function JournalPageContent() {
 			<div className="w-full">
 				<JournalHeader
 					userName={session?.user?.name || 'Пользователь'}
-					userRole={(session?.user as any)?.role || 'READER'}
+					userRole={(session?.user as { role?: string })?.role || 'READER'}
 					searchQuery={searchQuery}
 					setSearchQuery={setSearchQuery}
 					filterType={filterType}

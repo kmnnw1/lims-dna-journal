@@ -84,7 +84,11 @@ export function JournalHeader({
 								return (
 									<button
 										key={btn.value}
-										onClick={() => onFilterChange(btn.value as any)}
+										onClick={() =>
+											onFilterChange(
+												btn.value as 'all' | 'success' | 'error' | 'fav',
+											)
+										}
 										className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 ${
 											active
 												? 'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-primary)] shadow-sm'

@@ -252,7 +252,7 @@ export function AdminPageContent(props: AdminPageProps) {
 									<AdminUserRow
 										key={u.id}
 										user={u}
-										currentUserId={(session?.user as any)?.id}
+										currentUserId={(session?.user as { id?: string })?.id}
 										adminCount={adminCount}
 										onUpdate={handleUpdateUser}
 										onDelete={handleDeleteUser}
