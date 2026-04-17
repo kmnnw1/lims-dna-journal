@@ -1,0 +1,12 @@
+import { drizzle } from 'drizzle-orm/libsql';
+import { createClient } from '@libsql/client';
+
+/**
+ * Инициализация клиента Drizzle для работы с SQLite.
+ * В 2026 году используем SQL-драйверы с низким оверхедом.
+ */
+const client = createClient({
+	url: process.env.DATABASE_URL || 'file:prisma/dev.db',
+});
+
+export const db = drizzle(client);
