@@ -34,8 +34,8 @@ export function buildDrizzleQuery(params: {
 	
 	if (params.operator) conditions.push(eq(specimens.extrOperator, params.operator));
 
-	if (params.minConc !== null) conditions.push(gte(specimens.dnaConcentration, params.minConc));
-	if (params.maxConc !== null) conditions.push(lte(specimens.dnaConcentration, params.maxConc));
+	if (params.minConc !== null) conditions.push(gte(specimens.dnaConcentration as any, params.minConc));
+	if (params.maxConc !== null) conditions.push(lte(specimens.dnaConcentration as any, params.maxConc));
 
 	return and(...conditions);
 }
