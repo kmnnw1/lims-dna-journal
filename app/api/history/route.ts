@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 			return NextResponse.json({ error: 'resourceId обязателен' }, { status: 400 });
 		}
 
-		let whereClause: any = {
+		let whereClause: Record<string, unknown> = {
 			resourceId,
 			resourceType,
 			changes: { not: null },
@@ -45,13 +45,14 @@ export async function GET(req: Request) {
 		}
 
 		const history = await prisma.auditLog.findMany({
-			where: whereClause,
+			// biome-ignore lint/suspicious/noExplicitAny: complex OR logic with nested conditions
+			where: whereClause as any,
 			orderBy: { timestamp: 'desc' },
 			take: 100, // Увеличим лимит для объединеного вида
 		});
 
 		return NextResponse.json(
-			history.map((item: any) => ({
+			history.map((item) => ({
 				...item,
 				details: item.details ? JSON.parse(item.details) : null,
 				changes: item.changes ? JSON.parse(item.changes) : null,
@@ -83,13 +84,13 @@ export async function POST(req: Request) {
 			);
 		}
 
-		const changes = JSON.parse(logEntry.changes);
-		const rollbackData: Record<string, any> = {};
+		const changes = JSON.parse(logEntry.changes) as Record<string, { old?: unknown }>;
+		const rollbackData: Record<string, unknown> = {};
 
 		// Для отката мы берем 'old' значения из этой записи лога
 		// Это вернет ресурс в состояние ДО этой операции
-		Object.keys(changes).forEach((key) => {
-			rollbackData[key] = changes[key].old;
+		Object.entries(changes).forEach(([key, value]) => {
+			rollbackData[key] = value.old;
 		});
 
 		// Если это был DELETE (мягкое удаление), откат восстановит запись
