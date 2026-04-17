@@ -1,29 +1,29 @@
 {
-	"id": "/",
-	"name": "Журнал проб ДНК и ПЦР",
-	"short_name": "ДНК журнал",
-	"description": "Учет проб, выделения ДНК, ведение ПЦР и управление лабораторией. Приложение с PWA для регистрации, поиска и отслеживания биологических образцов.",
+	"id": "lab-journal-lims-2026",
+	"name": "DNA Lab Journal",
+	"short_name": "DNA Journal",
+	"description": "Professional Laboratory Information Management System (LIMS) for DNA Extraction and PCR Monitoring.",
 	"start_url": "/",
 	"scope": "/",
 	"display": "standalone",
-	"orientation": "portrait",
-	"background_color": "#fafafa",
-	"theme_color": "#0d9488",
-	"lang": "ru",
-	"categories": ["medical", "productivity", "science", "health", "business"],
+	"orientation": "any",
+	"background_color": "#fdfbfc",
+	"theme_color": "#6750a4",
+	"lang": "en-US",
+	"categories": ["medical", "productivity", "science"],
 	"dir": "ltr",
 	"prefer_related_applications": false,
 	"shortcuts": [
 		{
-			"name": "Создать пробу",
-			"description": "Быстро создать новую пробу",
-			"url": "/samples/new",
+			"name": "Journal",
+			"description": "Open DNA specimens journal",
+			"url": "/",
 			"icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
 		},
 		{
-			"name": "Быстрый поиск",
-			"description": "Открыть поиск проб",
-			"url": "/samples",
+			"name": "Audit",
+			"description": "Open system audit logs",
+			"url": "/admin/audit",
 			"icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
 		}
 	],
@@ -57,6 +57,15 @@
 			"sizes": "any",
 			"type": "image/svg+xml",
 			"purpose": "any"
+		}
+	],
+	"screenshots": [
+		{
+			"src": "/icon-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"form_factor": "wide",
+			"label": "DNA Journal Interface"
 		}
 	]
 }
