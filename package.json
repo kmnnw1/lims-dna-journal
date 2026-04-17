@@ -1,6 +1,6 @@
 {
 	"name": "lab-journal",
-	"version": "0.2.0.9",
+	"version": "0.2.0.10",
 	"description": "Система управления лабораторной информацией (LIMS) для учёта генетического материала и протоколирования ПЦР-исследований.",
 	"private": true,
 	"scripts": {
@@ -8,7 +8,7 @@
 		"icons": "npx tsx scripts/gen-pwa-icons.ts",
 		"prebuild": "npx tsx scripts/gen-pwa-icons.ts",
 		"build": "cross-env NEXT_TURBOPACK=0 next build",
-		"start": "next start",
+		"start": "node .next/standalone/server.js",
 		"lint": "biome check .",
 		"format": "biome format --write .",
 		"check": "npx tsc --noEmit",
