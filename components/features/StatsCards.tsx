@@ -17,7 +17,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ total, successful, other
 	return (
 		<div className="flex flex-wrap items-center gap-2">
 			{/* Всего проб */}
-			<div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] transition-all hover:bg-[var(--md-sys-color-secondary-container-highest)]">
+			<div className="flex items-center gap-2 px-4 py-2 rounded-full bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) transition-all hover:bg-(--md-sys-color-secondary-container-highest)">
 				<FlaskConical className="w-3.5 h-3.5 opacity-70" strokeWidth={2} />
 				<span className="text-[10px] font-bold uppercase tracking-wider opacity-60">
 					Всего
@@ -26,7 +26,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ total, successful, other
 			</div>
 
 			{/* Успешные ITS */}
-			<div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] transition-all group">
+			<div className="flex items-center gap-2 px-4 py-2 rounded-full bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) transition-all group">
 				<div className="relative w-6 h-6">
 					<svg className="w-6 h-6 -rotate-90" viewBox="0 0 40 40">
 						<circle
@@ -48,7 +48,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ total, successful, other
 							strokeLinecap="round"
 							strokeDasharray={circumference}
 							strokeDashoffset={strokeDashoffset}
-							className="transition-all duration-700 ease-[var(--md-sys-motion-easing-emphasized)]"
+							className="transition-all duration-700 ease-(--md-sys-motion-easing-emphasized)"
 						/>
 					</svg>
 					<span className="absolute inset-0 flex items-center justify-center text-[7px] font-bold">
@@ -64,7 +64,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ total, successful, other
 			</div>
 
 			{/* Остальные */}
-			<div className="flex items-center gap-2 px-4 py-2 rounded-full border border-[var(--md-sys-color-outline-variant)] text-[var(--md-sys-color-on-surface-variant)] transition-all hover:bg-[var(--md-sys-color-surface-container-high)]">
+			<div className="flex items-center gap-2 px-4 py-2 rounded-full border border-(--md-sys-color-outline-variant) text-(--md-sys-color-on-surface-variant) transition-all hover:bg-(--md-sys-color-surface-container-high)">
 				<Clock className="w-3.5 h-3.5 opacity-70" strokeWidth={2} />
 				<span className="text-[10px] font-bold uppercase tracking-wider opacity-60">
 					Прочее
