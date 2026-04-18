@@ -144,14 +144,14 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 	if (!open) return null;
 
 	return (
-		<div className="fixed inset-0 z-[200] flex flex-col bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] animate-in slide-in-from-bottom-full duration-300">
-			<div className="flex items-center justify-between p-4 bg-[var(--md-sys-color-surface-container)]">
+		<div className="fixed inset-0 z-200 flex flex-col bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface) animate-in slide-in-from-bottom-full duration-300">
+			<div className="flex items-center justify-between p-4 bg-(--md-sys-color-surface-container)">
 				<h2 className="text-xl font-medium flex items-center gap-2">
 					<Camera className="w-5 h-5 text-[#E1AD01]" /> Сканирование
 				</h2>
 				<button
 					onClick={onClose}
-					className="p-3 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] transition-colors"
+					className="p-3 rounded-full hover:bg-(--md-sys-color-surface-container-highest) transition-colors"
 				>
 					<X className="w-6 h-6" />
 				</button>
@@ -160,20 +160,20 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 			<div className="flex-1 flex flex-col p-6 max-w-md mx-auto w-full">
 				<div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
 					{hasDetector && !error ? (
-						<div className="w-full aspect-square max-w-[300px] bg-black rounded-[3rem] overflow-hidden relative shadow-2xl border-8 border-[var(--md-sys-color-surface-container-highest)]">
+						<div className="w-full aspect-square max-w-[300px] bg-black rounded-4xl overflow-hidden relative shadow-2xl border-8 border-(--md-sys-color-surface-container-highest)">
 							<video
 								ref={videoRef}
 								playsInline
 								className="w-full h-full object-cover grayscale-[0.3]"
 							/>
-							<div className="absolute inset-0 border-[40px] border-black/40 pointer-events-none"></div>
+							<div className="absolute inset-0 border-40 border-black/40 pointer-events-none"></div>
 
 							<div className="absolute top-1/2 left-0 w-full h-1 bg-[#E1AD01] shadow-[0_0_20px_#E1AD01] animate-pulse"></div>
 
 							<div className="absolute inset-10 border-2 border-[#E1AD01]/30 rounded-2xl pointer-events-none"></div>
 						</div>
 					) : (
-						<div className="text-[var(--md-sys-color-error)] bg-[var(--md-sys-color-error-container)] p-6 rounded-3xl text-center font-medium shadow-sm">
+						<div className="text-(--md-sys-color-error) bg-(--md-sys-color-error-container) p-6 rounded-3xl text-center font-medium shadow-sm">
 							{error}
 						</div>
 					)}
@@ -186,13 +186,13 @@ export function BarcodeScanDialog({ open, onClose, onCode }: Props) {
 							value={manual}
 							onChange={(e) => setManual(e.target.value)}
 							onKeyDown={onManualKeyDown}
-							className="w-full rounded-t-[1.25rem] rounded-b-[0.5rem] border-b-2 border-[var(--md-sys-color-outline-variant)] focus:border-[#E1AD01] bg-[var(--md-sys-color-surface-container-high)] px-6 pt-7 pb-3 text-lg outline-none transition-all"
+							className="w-full rounded-t-[1.25rem] rounded-b-lg border-b-2 border-(--md-sys-color-outline-variant) focus:border-[#E1AD01] bg-(--md-sys-color-surface-container-high) px-6 pt-7 pb-3 text-lg outline-none transition-all"
 							placeholder=" "
 							spellCheck={false}
 							autoFocus={!hasDetector || !!error}
 						/>
 						<label
-							className={`absolute left-6 transition-all duration-200 pointer-events-none text-[var(--md-sys-color-outline)]
+							className={`absolute left-6 transition-all duration-200 pointer-events-none text-(--md-sys-color-outline)
 							${manual ? 'top-2 text-xs' : 'top-5 text-lg'}
 							group-focus-within:text-[#E1AD01] group-focus-within:top-2 group-focus-within:text-xs
 						`}
