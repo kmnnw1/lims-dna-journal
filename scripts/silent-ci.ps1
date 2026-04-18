@@ -8,6 +8,7 @@ while ($true) {
     # Run the error digest generator
     # Using tsx to run the typescript script directly
     try {
+        npx tsx scripts/github-status.ts | Out-Null
         npx tsx scripts/error-digest.ts | Out-Null
         "OK" | Out-File -FilePath $healthFile -Force
     } catch {

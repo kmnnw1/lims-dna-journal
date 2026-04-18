@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = process.cwd();
@@ -30,6 +30,15 @@ async function generateDigest() {
 	content += runCheck('Biome Lint', 'npm run lint --silent');
 	content += runCheck('TypeScript Check', 'npm run check --silent');
 	content += runCheck('Unit Tests', 'npm test -- --run --silent');
+
+	// Inject GitHub Status if available
+	content += '\n---\n\n';
+	const githubStatusPath = join(targetDir, 'github_ci_status.md');
+	if (existsSync(githubStatusPath)) {
+		content += readFileSync(githubStatusPath, 'utf8');
+	} else {
+		content += '### 🛰️ GitHub Actions Status\nSyncing...\n';
+	}
 
 	writeFileSync(digestPath, content);
 	console.log(`🟢 Digest updated: ${digestPath}`);
