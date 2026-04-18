@@ -49,32 +49,32 @@ export function JournalHeader({
 }: JournalHeaderProps) {
 	const _roleColorClass =
 		userRole === 'ADMIN'
-			? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]'
+			? 'bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary)'
 			: userRole === 'EDITOR'
-				? 'bg-[var(--md-sys-color-tertiary)] text-[var(--md-sys-color-on-tertiary)]'
-				: 'bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-on-surface-variant)]';
+				? 'bg-(--md-sys-color-tertiary) text-(--md-sys-color-on-tertiary)'
+				: 'bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface-variant)';
 
 	return (
 		<header className="flex items-center gap-3 mb-6 mt-1.5 px-1 sm:px-0 w-full">
-			<div className="flex-shrink-0">
+			<div className="shrink-0">
 				<AnimatedFlask />
 			</div>
 
 			<div className="flex flex-1 items-center gap-2 min-w-0">
 				{/* Группа поиска и быстрых фильтров */}
 				<div className="flex-1 flex items-center gap-2 min-w-0">
-					<div className="relative flex-1 group flex items-center bg-[var(--md-sys-color-surface-container-high)] focus-within:bg-[var(--md-sys-color-surface)] border-2 border-transparent focus-within:border-[var(--md-sys-color-primary)] rounded-full transition-all md-elevation-1 focus-within:md-elevation-2 pr-2 max-w-[45rem]">
-						<Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[var(--md-sys-color-outline)] group-focus-within:text-[var(--md-sys-color-primary)] transition-colors pointer-events-none" />
+					<div className="relative flex-1 group flex items-center bg-(--md-sys-color-surface-container-high) focus-within:bg-(--md-sys-color-surface) border-2 border-transparent focus-within:border-(--md-sys-color-primary) rounded-full transition-all md-elevation-1 focus-within:md-elevation-2 pr-2 max-w-180">
+						<Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-(--md-sys-color-outline) group-focus-within:text-(--md-sys-color-primary) transition-colors pointer-events-none" />
 						<input
 							type="text"
 							placeholder="Поиск..."
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
-							className="flex-1 pl-10 sm:pl-12 pr-2 py-2 sm:py-3 bg-transparent outline-none text-sm sm:text-base placeholder:text-[var(--md-sys-color-outline)]"
+							className="flex-1 pl-10 sm:pl-12 pr-2 py-2 sm:py-3 bg-transparent outline-none text-sm sm:text-base placeholder:text-(--md-sys-color-outline)"
 						/>
 
 						{/* Встроенные статусы-фильтры */}
-						<div className="hidden sm:flex items-center p-1 bg-[var(--md-sys-color-surface-container-low)] rounded-full mr-2">
+						<div className="hidden sm:flex items-center p-1 bg-(--md-sys-color-surface-container-low) rounded-full mr-2">
 							{[
 								{ value: 'all', label: 'Все' },
 								{ value: 'success', label: 'Успешные' },
@@ -91,8 +91,8 @@ export function JournalHeader({
 										}
 										className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 ${
 											active
-												? 'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-primary)] shadow-sm'
-												: 'text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-on-surface)]'
+												? 'bg-(--md-sys-color-surface) text-(--md-sys-color-primary) shadow-sm'
+												: 'text-(--md-sys-color-outline) hover:text-(--md-sys-color-on-surface)'
 										}`}
 									>
 										{active && <Check className="w-3 h-3" />}
@@ -102,7 +102,7 @@ export function JournalHeader({
 							})}
 						</div>
 
-						<div className="pl-1 sm:pl-2 border-l border-[var(--md-sys-color-outline-variant)]">
+						<div className="pl-1 sm:pl-2 border-l border-(--md-sys-color-outline-variant)">
 							<QuickFilterBar
 								filterType={filterType}
 								onFilterChange={onFilterChange}
@@ -119,7 +119,7 @@ export function JournalHeader({
 				</div>
 
 				{/* Кнопки действий - Прижаты к правому краю */}
-				<div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-auto">
+				<div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
 					<button
 						onClick={(e) => {
 							const x = e.clientX;
@@ -130,7 +130,7 @@ export function JournalHeader({
 							setTheme(next);
 						}}
 						title={`Тема: ${theme}`}
-						className="p-2 sm:p-2.5 bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all flex items-center justify-center md-state-layer"
+						className="p-2 sm:p-2.5 bg-(--md-sys-color-surface-container-low) text-(--md-sys-color-on-surface) md-elevation-1 hover:md-elevation-2 rounded-full transition-all flex items-center justify-center md-state-layer"
 					>
 						{theme === 'light' ? (
 							<Moon className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -143,8 +143,8 @@ export function JournalHeader({
 						href="/admin"
 						className={`flex items-center justify-center gap-2 p-2 sm:px-4 sm:py-2.5 md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium md-state-layer ${
 							userRole === 'ADMIN'
-								? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:brightness-110'
-								: 'bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)]'
+								? 'bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) hover:brightness-110'
+								: 'bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container)'
 						}`}
 					>
 						<Settings className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -156,7 +156,7 @@ export function JournalHeader({
 					<button
 						onClick={onSignOut}
 						title="Выйти"
-						className="p-2 sm:p-2.5 bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)] md-elevation-1 hover:md-elevation-2 hover:bg-[var(--md-sys-color-surface-container-high)] rounded-full transition-all flex items-center justify-center md-state-layer"
+						className="p-2 sm:p-2.5 bg-(--md-sys-color-surface-container-low) text-(--md-sys-color-on-surface) md-elevation-1 hover:md-elevation-2 hover:bg-(--md-sys-color-surface-container-high) rounded-full transition-all flex items-center justify-center md-state-layer"
 					>
 						<LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
 					</button>
