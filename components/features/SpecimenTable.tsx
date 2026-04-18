@@ -35,9 +35,24 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 	onHistory,
 }) => {
 	// Хелпер для подсветки поиска (MD3 Tertiary Container Style)
-	const highlightText = (text: string | null | undefined, query: string) => {
-		if (!text || !query.trim()) return text;
-		const parts = String(text).split(new RegExp(`(${query})`, 'gi'));
+	const highlightText = (
+		text: string | number | null | undefined | { result: string | number },
+		query: string,
+	): React.ReactNode => {
+		if (!text || !query.trim()) {
+			if (typeof text === 'object' && text !== null && 'result' in text) {
+				return text.result;
+			}
+			return (text as React.ReactNode) ?? null;
+		}
+
+		// Handle Excel formula objects
+		const displayValue =
+			typeof text === 'object' && text !== null && 'result' in text
+				? String(text.result)
+				: String(text);
+
+		const parts = displayValue.split(new RegExp(`(${query})`, 'gi'));
 		return parts.map((part, i) =>
 			part.toLowerCase() === query.toLowerCase() ? (
 				<mark
@@ -95,7 +110,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 				<table className="w-full min-w-[1000px] text-left border-separate border-spacing-0 relative text-sm">
 					<thead className="sticky top-0 z-40 bg-(--md-sys-color-surface) backdrop-blur-xl shadow-sm">
 						<tr>
-							<th className="sticky left-0 z-50 bg-(--md-sys-color-surface) px-3 py-3 w-12 text-center border-b border-(--md-sys-color-outline-variant)/50 border-r border-(--md-sys-color-outline-variant)/10">
+							<th className="sticky left-0 z-50 bg-(--md-sys-color-surface) px-3 py-3 w-12 text-center border-b border-b-(--md-sys-color-outline-variant)/50 border-r border-r-(--md-sys-color-outline-variant)/10">
 								<div className="relative flex items-center justify-center">
 									<input
 										type="checkbox"
@@ -121,7 +136,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 								</div>
 							</th>
 							<th
-								className="sticky left-12 z-50 bg-(--md-sys-color-surface) px-3 py-3 w-24 text-(--md-sys-color-on-surface) font-bold tracking-widest uppercase cursor-pointer hover:bg-(--md-sys-color-surface-container-high) transition-colors select-none whitespace-nowrap border-b border-(--md-sys-color-outline-variant)/50 border-r border-(--md-sys-color-outline-variant)/30"
+								className="sticky left-12 z-50 bg-(--md-sys-color-surface) px-3 py-3 w-24 text-(--md-sys-color-on-surface) font-bold tracking-widest uppercase cursor-pointer hover:bg-(--md-sys-color-surface-container-high) transition-colors select-none whitespace-nowrap border-b border-b-(--md-sys-color-outline-variant)/50 border-r border-r-(--md-sys-color-outline-variant)/30"
 								onClick={() => onSort('id')}
 							>
 								ID {renderSortIcon('id')}
@@ -168,7 +183,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 									className={`group transition-colors duration-150 ${isSelected ? 'bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container)' : 'hover:bg-(--md-sys-color-surface-container-lowest) bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface)'}`}
 								>
 									<td
-										className={`sticky left-0 z-30 ${stickyBgClass} px-3 py-2 w-12 text-center border-b border-(--md-sys-color-outline-variant)/20 border-r border-(--md-sys-color-outline-variant)/10`}
+										className={`sticky left-0 z-30 ${stickyBgClass} px-3 py-2 w-12 text-center border-b border-b-(--md-sys-color-outline-variant)/20 border-r border-r-(--md-sys-color-outline-variant)/10`}
 									>
 										<div className="relative flex items-center justify-center">
 											<input
@@ -191,7 +206,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 										</div>
 									</td>
 									<td
-										className={`sticky left-12 z-30 ${stickyBgClass} px-3 py-2 w-24 border-b border-(--md-sys-color-outline-variant)/20 border-r border-(--md-sys-color-outline-variant)/30 font-mono text-sm text-(--md-sys-color-primary) font-medium tracking-tight whitespace-nowrap`}
+										className={`sticky left-12 z-30 ${stickyBgClass} px-3 py-2 w-24 border-b border-b-(--md-sys-color-outline-variant)/20 border-r border-r-(--md-sys-color-outline-variant)/30 font-mono text-sm text-(--md-sys-color-primary) font-medium tracking-tight whitespace-nowrap`}
 									>
 										{highlightText(specimen.id, searchQuery)}
 									</td>

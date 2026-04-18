@@ -38,14 +38,24 @@ export interface FABProps
 }
 
 const FAB = forwardRef<HTMLButtonElement, FABProps>(
-	({ className, variant, size, extended, ...props }, ref) => {
+	({ className, variant, size, extended, onClick, ...props }, ref) => {
 		const isExtended = extended || size === 'extended';
+
+		const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+			// MD3 Haptic Feedback (Peak Hype)
+			if ('vibrate' in navigator) {
+				navigator.vibrate(10); // Subtle tick
+			}
+			onClick?.(e);
+		};
+
 		return (
 			<button
 				className={cn(
 					fabVariants({ variant, size: isExtended ? 'extended' : size }),
 					className,
 				)}
+				onClick={handleClick}
 				ref={ref}
 				{...props}
 			/>
