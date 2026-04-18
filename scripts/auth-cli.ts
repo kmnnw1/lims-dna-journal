@@ -1,7 +1,7 @@
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaClient } from '@prisma/client';
 import { execSync } from 'child_process';
 import * as crypto from 'crypto';
-import { PrismaClient } from '../prisma/generated/client/client';
 
 const adapter = new PrismaBetterSqlite3({ url: 'file:./prisma/dev.db' });
 const prisma = new PrismaClient({ adapter });

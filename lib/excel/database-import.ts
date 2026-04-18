@@ -1,5 +1,5 @@
+import { Prisma } from '@prisma/client';
 import ExcelJS from 'exceljs';
-import { Prisma } from '../../prisma/generated/client/client';
 import { prisma } from '../database/prisma';
 import { mergeById } from './merge-utils';
 import { parseSheetToRows } from './sheet-parsers';
