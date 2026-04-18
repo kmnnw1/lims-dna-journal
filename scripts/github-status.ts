@@ -52,7 +52,19 @@ async function fetchStatus() {
 			throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
 		}
 
-		const data = (await response.json()) as any;
+		interface GitHubRun {
+			name: string;
+			status: string;
+			conclusion: string | null;
+			run_started_at: string;
+			html_url: string;
+		}
+
+		interface GitHubRunsResponse {
+			workflow_runs: GitHubRun[];
+		}
+
+		const data = (await response.json()) as GitHubRunsResponse;
 		const runs = data.workflow_runs || [];
 
 		let content = `## 🛰️ GitHub Actions Status\n\n`;
