@@ -1,0 +1,20 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Analyze & Copy Errors (QA)",
+			"type": "shell",
+			"command": "npm run qa:copy",
+			"problemMatcher": [],
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"detail": "Runs Biome and TSC, then copies any errors to clipboard."
+		}
+	]
+}
