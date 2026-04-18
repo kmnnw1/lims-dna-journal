@@ -23,7 +23,7 @@ const SHORTCUTS: (isReader: boolean) => Shortcut[] = (isReader) => [
 
 function formatKeys(keys: string | string[]) {
 	const kbdClass =
-		'inline-flex items-center justify-center min-w-[2rem] px-2 py-1 rounded-lg bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-on-surface)] font-mono text-sm font-bold shadow-sm';
+		'inline-flex items-center justify-center min-w-[2rem] px-2 py-1 rounded-lg bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface) font-mono text-sm font-bold shadow-sm';
 
 	if (Array.isArray(keys)) {
 		return keys
@@ -40,7 +40,7 @@ function formatKeys(keys: string | string[]) {
 								...prev,
 								<span
 									key={`or-${i}`}
-									className="mx-2 text-xs font-medium text-[var(--md-sys-color-outline)] uppercase tracking-wider"
+									className="mx-2 text-xs font-medium text-(--md-sys-color-outline) uppercase tracking-wider"
 								>
 									или
 								</span>,
@@ -87,17 +87,17 @@ export function ShortcutsModal({ open, onClose, isReader }: Props) {
 				aria-modal="true"
 				aria-label="Горячие клавиши"
 				tabIndex={0}
-				className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] bg-[var(--md-sys-color-surface-container-low)] shadow-2xl focus-visible:outline-none animate-in fade-in zoom-in-95 duration-200"
+				className="relative w-full max-w-md overflow-hidden rounded-4xl bg-(--md-sys-color-surface-container-low) shadow-2xl focus-visible:outline-none animate-in fade-in zoom-in-95 duration-200"
 			>
-				<div className="px-8 pt-8 pb-6 flex items-center justify-between bg-[var(--md-sys-color-surface-container)]">
-					<h2 className="text-2xl font-normal text-[var(--md-sys-color-on-surface)] flex items-center gap-3">
-						<Keyboard className="h-7 w-7 text-[var(--md-sys-color-primary)]" />
+				<div className="px-8 pt-8 pb-6 flex items-center justify-between bg-(--md-sys-color-surface-container)">
+					<h2 className="text-2xl font-normal text-(--md-sys-color-on-surface) flex items-center gap-3">
+						<Keyboard className="h-7 w-7 text-(--md-sys-color-primary)" />
 						Горячие клавиши
 					</h2>
 					<button
 						type="button"
 						onClick={onClose}
-						className="p-3 rounded-full hover:bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] transition-all"
+						className="p-3 rounded-full hover:bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-on-surface) transition-all"
 					>
 						<X className="h-6 w-6" />
 					</button>
@@ -107,14 +107,14 @@ export function ShortcutsModal({ open, onClose, isReader }: Props) {
 					{SHORTCUTS(isReader).map((row, idx) => (
 						<div
 							key={idx}
-							className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-4 rounded-[1.5rem] hover:bg-[var(--md-sys-color-surface-container)] transition-colors"
+							className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 p-4 rounded-3xl hover:bg-(--md-sys-color-surface-container) transition-colors"
 						>
 							<div className="flex flex-col gap-1">
-								<span className="text-base font-medium text-[var(--md-sys-color-on-surface)]">
+								<span className="text-base font-medium text-(--md-sys-color-on-surface)">
 									{row.description}
 								</span>
 								{row.hint && (
-									<span className="text-sm text-[var(--md-sys-color-outline)]">
+									<span className="text-sm text-(--md-sys-color-outline)">
 										{row.hint}
 									</span>
 								)}
@@ -124,7 +124,7 @@ export function ShortcutsModal({ open, onClose, isReader }: Props) {
 					))}
 				</div>
 
-				<div className="px-8 pb-8 text-center text-sm font-medium text-[var(--md-sys-color-outline)] opacity-70">
+				<div className="px-8 pb-8 text-center text-sm font-medium text-(--md-sys-color-outline) opacity-70">
 					Для доступа к клавишам клавиатура должна быть активна
 				</div>
 			</div>
