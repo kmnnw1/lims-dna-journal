@@ -329,7 +329,7 @@ export function AnimatedFlask() {
 					</g>
 
 					<g
-						className="text-[var(--md-sys-color-on-surface)] group-hover:text-[var(--md-sys-color-primary)] transition-colors duration-500"
+						className="text-(--md-sys-color-on-surface) group-hover:text-(--md-sys-color-primary) transition-colors duration-500"
 						fill="none"
 					>
 						<path
@@ -339,7 +339,7 @@ export function AnimatedFlask() {
 					</g>
 				</svg>
 			</div>
-			<div className="absolute inset-[-4px] bg-[var(--md-sys-color-primary-container)] opacity-0 group-hover:opacity-10 rounded-full transition-all duration-700 blur-xl scale-90 group-hover:scale-110 -z-20" />
+			<div className="absolute inset-[-4px] bg-(--md-sys-color-primary-container) opacity-0 group-hover:opacity-10 rounded-full transition-all duration-700 blur-xl scale-90 group-hover:scale-110 -z-20" />
 		</div>
 	);
 }
