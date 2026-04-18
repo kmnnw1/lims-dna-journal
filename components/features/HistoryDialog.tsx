@@ -87,7 +87,7 @@ export function HistoryDialog({
 
 	return (
 		<AnimatePresence>
-			<div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+			<div className="fixed inset-0 z-100 flex items-center justify-center p-4">
 				<motion.div
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
@@ -100,26 +100,26 @@ export function HistoryDialog({
 					initial={{ opacity: 0, scale: 0.9, y: 20 }}
 					animate={{ opacity: 1, scale: 1, y: 0 }}
 					exit={{ opacity: 0, scale: 0.9, y: 20 }}
-					className="relative w-full max-w-2xl max-h-[85vh] overflow-hidden bg-[var(--md-sys-color-surface-container-high)] rounded-[28px] shadow-2xl flex flex-col"
+					className="relative w-full max-w-2xl max-h-[85vh] overflow-hidden bg-(--md-sys-color-surface-container-high) rounded-4xl shadow-2xl flex flex-col"
 				>
 					{/* Header */}
-					<div className="flex items-center justify-between px-6 py-5 border-b border-[var(--md-sys-color-outline-variant)]/30">
+					<div className="flex items-center justify-between px-6 py-5 border-b border-(--md-sys-color-outline-variant)/30">
 						<div className="flex items-center gap-3">
-							<div className="p-2 rounded-xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]">
+							<div className="p-2 rounded-xl bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container)">
 								<History className="w-5 h-5" />
 							</div>
 							<div>
-								<h2 className="text-xl font-bold text-[var(--md-sys-color-on-surface)] leading-tight">
+								<h2 className="text-xl font-bold text-(--md-sys-color-on-surface) leading-tight">
 									История пробы
 								</h2>
-								<p className="text-sm font-medium text-[var(--md-sys-color-primary)]">
+								<p className="text-sm font-medium text-(--md-sys-color-primary)">
 									{resourceId}
 								</p>
 							</div>
 						</div>
 						<button
 							onClick={onClose}
-							className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-on-surface-variant)] transition-colors"
+							className="p-2 rounded-full hover:bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface-variant) transition-colors"
 						>
 							<X className="w-5 h-5" />
 						</button>
@@ -129,20 +129,20 @@ export function HistoryDialog({
 					<div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
 						{isLoading ? (
 							<div className="flex flex-col items-center justify-center py-12 gap-4">
-								<div className="w-10 h-10 border-4 border-[var(--md-sys-color-primary)] border-t-transparent rounded-full animate-spin" />
-								<p className="text-[var(--md-sys-color-on-surface-variant)] font-medium">
+								<div className="w-10 h-10 border-4 border-(--md-sys-color-primary) border-t-transparent rounded-full animate-spin" />
+								<p className="text-(--md-sys-color-on-surface-variant) font-medium">
 									Загрузка истории...
 								</p>
 							</div>
 						) : error ? (
 							<div className="flex flex-col items-center justify-center py-12 text-center">
-								<AlertCircle className="w-12 h-12 text-[var(--md-sys-color-error)] mb-3" />
-								<p className="text-lg font-bold text-[var(--md-sys-color-on-surface)]">
+								<AlertCircle className="w-12 h-12 text-(--md-sys-color-error) mb-3" />
+								<p className="text-lg font-bold text-(--md-sys-color-on-surface)">
 									{error}
 								</p>
 								<button
 									onClick={fetchHistory}
-									className="mt-4 px-6 py-2 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] rounded-full font-bold hover:shadow-lg transition-all"
+									className="mt-4 px-6 py-2 bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) rounded-full font-bold hover:shadow-lg transition-all"
 								>
 									Попробовать снова
 								</button>
@@ -155,23 +155,23 @@ export function HistoryDialog({
 								</p>
 							</div>
 						) : (
-							<div className="space-y-8 relative before:absolute before:inset-y-0 before:left-[11px] before:w-0.5 before:bg-[var(--md-sys-color-outline-variant)]/20">
+							<div className="space-y-8 relative before:absolute before:inset-y-0 before:left-[11px] before:w-0.5 before:bg-(--md-sys-color-outline-variant)/20">
 								{logs.map((log, idx) => {
 									const changes = parseChanges(log.changes);
 
 									return (
 										<div key={log.id} className="relative pl-9">
 											{/* Dot */}
-											<div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-[var(--md-sys-color-surface-container-highest)] border-2 border-[var(--md-sys-color-primary)] flex items-center justify-center z-10">
-												<div className="w-2 h-2 rounded-full bg-[var(--md-sys-color-primary)]" />
+											<div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-(--md-sys-color-surface-container-highest) border-2 border-(--md-sys-color-primary) flex items-center justify-center z-10">
+												<div className="w-2 h-2 rounded-full bg-(--md-sys-color-primary)" />
 											</div>
 
-											<div className="p-4 rounded-2xl bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)]/20 shadow-sm">
+											<div className="p-4 rounded-3xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/20 shadow-sm">
 												<div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-													<span className="px-3 py-1 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] text-[10px] font-black uppercase tracking-wider">
+													<span className="px-3 py-1 rounded-full bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) text-[10px] font-black uppercase tracking-wider">
 														{actionLabels[log.action] || log.action}
 													</span>
-													<div className="flex items-center gap-3 text-[11px] font-bold text-[var(--md-sys-color-on-surface-variant)]/70">
+													<div className="flex items-center gap-3 text-[11px] font-bold text-(--md-sys-color-on-surface-variant)/70">
 														<div className="flex items-center gap-1">
 															<User className="w-3 h-3" />
 															{log.userId === 'admin'
@@ -198,9 +198,9 @@ export function HistoryDialog({
 														).map(([key, value]) => (
 															<div
 																key={key}
-																className="flex flex-col gap-1 p-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-[var(--md-sys-color-outline-variant)]/10"
+																className="flex flex-col gap-1 p-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-(--md-sys-color-outline-variant)/10"
 															>
-																<div className="flex items-center gap-2 text-[10px] uppercase font-black text-[var(--md-sys-color-primary)] opacity-80">
+																<div className="flex items-center gap-2 text-[10px] uppercase font-black text-(--md-sys-color-primary) opacity-80">
 																	<Tag className="w-3 h-3" />
 																	{key}
 																</div>
@@ -208,7 +208,7 @@ export function HistoryDialog({
 																	<span className="flex-1 px-2 py-1 rounded bg-red-500/10 text-red-600 dark:text-red-400 truncate">
 																		{String(value.old || '—')}
 																	</span>
-																	<ArrowRight className="w-3 h-3 text-[var(--md-sys-color-outline)] flex-shrink-0" />
+																	<ArrowRight className="w-3 h-3 text-(--md-sys-color-outline) shrink-0" />
 																	<span className="flex-1 px-2 py-1 rounded bg-green-500/10 text-green-600 dark:text-green-400 truncate">
 																		{String(value.new || '—')}
 																	</span>
@@ -217,7 +217,7 @@ export function HistoryDialog({
 														))}
 													</div>
 												) : log.details ? (
-													<p className="text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] bg-[var(--md-sys-color-surface-container-highest)]/50 p-3 rounded-xl">
+													<p className="text-sm font-medium text-(--md-sys-color-on-surface-variant) bg-(--md-sys-color-surface-container-highest)/50 p-3 rounded-xl">
 														{typeof JSON.parse(log.details) === 'object'
 															? JSON.stringify(
 																	JSON.parse(log.details),
@@ -227,7 +227,7 @@ export function HistoryDialog({
 															: log.details}
 													</p>
 												) : (
-													<p className="text-xs italic text-[var(--md-sys-color-on-surface-variant)] opacity-50">
+													<p className="text-xs italic text-(--md-sys-color-on-surface-variant) opacity-50">
 														Детали изменения отсутствуют
 													</p>
 												)}
@@ -240,10 +240,10 @@ export function HistoryDialog({
 					</div>
 
 					{/* Footer */}
-					<div className="px-6 py-4 bg-[var(--md-sys-color-surface-container)] border-t border-[var(--md-sys-color-outline-variant)]/30 flex justify-end">
+					<div className="px-6 py-4 bg-(--md-sys-color-surface-container) border-t border-(--md-sys-color-outline-variant)/30 flex justify-end">
 						<button
 							onClick={onClose}
-							className="px-6 py-2.5 rounded-full font-bold text-sm bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-md hover:shadow-lg active:scale-[0.98] transition-all"
+							className="px-6 py-2.5 rounded-full font-bold text-sm bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) shadow-md hover:shadow-lg active:scale-[0.98] transition-all"
 						>
 							Закрыть
 						</button>
