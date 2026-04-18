@@ -108,18 +108,18 @@ export const AlphaFeedbackCell: React.FC<AlphaFeedbackCellProps> = ({ specimen, 
 	};
 
 	return (
-		<div className="flex flex-col gap-2 min-w-[280px] p-2 h-full bg-[var(--md-sys-color-surface-container-low)] rounded-2xl border border-[var(--md-sys-color-outline-variant)]">
+		<div className="flex flex-col gap-2 min-w-[280px] p-2 h-full bg-(--md-sys-color-surface-container-low) rounded-2xl border border-(--md-sys-color-outline-variant)">
 			<div className="relative group">
 				<textarea
 					value={notes}
 					onChange={(e) => setNotes(e.target.value)}
 					onPaste={handlePaste}
 					placeholder="Что неудобно? Скриншот: Ctrl+V или кнопка ниже"
-					className="w-full min-h-[80px] p-3 text-sm bg-[var(--md-sys-color-surface-container-high)] border border-[var(--md-sys-color-outline-variant)] rounded-xl focus:ring-2 focus:ring-[var(--md-sys-color-primary)] outline-none transition-all resize-none shadow-inner"
+					className="w-full min-h-[80px] p-3 text-sm bg-(--md-sys-color-surface-container-high) border border-(--md-sys-color-outline-variant) rounded-xl focus:ring-2 focus:ring-(--md-sys-color-primary) outline-none transition-all resize-none shadow-inner"
 				/>
 				<button
 					onClick={() => fileInputRef.current?.click()}
-					className="absolute bottom-2 right-2 p-2 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] rounded-full shadow-lg hover:scale-110 active:scale-95 transition-transform flex items-center justify-center md:hidden"
+					className="absolute bottom-2 right-2 p-2 bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) rounded-full shadow-lg hover:scale-110 active:scale-95 transition-transform flex items-center justify-center md:hidden"
 					title="Загрузить фото"
 				>
 					<Camera className="w-5 h-5" />
@@ -138,7 +138,7 @@ export const AlphaFeedbackCell: React.FC<AlphaFeedbackCellProps> = ({ specimen, 
 				{/* Кнопка загрузки для десктопа (иконка) */}
 				<button
 					onClick={() => fileInputRef.current?.click()}
-					className="hidden md:flex p-1.5 hover:bg-[var(--md-sys-color-surface-variant)] rounded-lg text-[var(--md-sys-color-primary)] transition-colors border border-dashed border-[var(--md-sys-color-outline-variant)]"
+					className="hidden md:flex p-1.5 hover:bg-(--md-sys-color-surface-variant) rounded-lg text-(--md-sys-color-primary) transition-colors border border-dashed border-(--md-sys-color-outline-variant)"
 					title="Добавить скриншот"
 				>
 					<ImageIcon className="w-5 h-5" />
@@ -147,7 +147,7 @@ export const AlphaFeedbackCell: React.FC<AlphaFeedbackCellProps> = ({ specimen, 
 				{photos.map((url, idx) => (
 					<div
 						key={idx}
-						className="relative group overflow-hidden rounded-xl border border-[var(--md-sys-color-outline-variant)] shadow-md transition-all hover:shadow-lg"
+						className="relative group overflow-hidden rounded-xl border border-(--md-sys-color-outline-variant) shadow-md transition-all hover:shadow-lg"
 					>
 						<Image
 							src={url}
@@ -160,19 +160,19 @@ export const AlphaFeedbackCell: React.FC<AlphaFeedbackCellProps> = ({ specimen, 
 						/>
 						<button
 							onClick={() => removePhoto(idx)}
-							className="absolute -top-1 -right-1 p-0.5 bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)] rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10"
+							className="absolute -top-1 -right-1 p-0.5 bg-(--md-sys-color-error) text-(--md-sys-color-on-error) rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10"
 						>
 							<X className="w-3 h-3" />
 						</button>
 					</div>
 				))}
 				{isUploading && (
-					<div className="w-12 h-12 flex items-center justify-center bg-[var(--md-sys-color-surface-container-highest)] rounded-xl animate-pulse border border-[var(--md-sys-color-primary)]">
-						<Loader2 className="w-5 h-5 animate-spin text-[var(--md-sys-color-primary)]" />
+					<div className="w-12 h-12 flex items-center justify-center bg-(--md-sys-color-surface-container-highest) rounded-xl animate-pulse border border-(--md-sys-color-primary)">
+						<Loader2 className="w-5 h-5 animate-spin text-(--md-sys-color-primary)" />
 					</div>
 				)}
 				{!isUploading && photos.length === 0 && (
-					<div className="flex items-center gap-1.5 text-[var(--md-sys-color-outline)] text-xs font-medium ml-1 opacity-60 italic">
+					<div className="flex items-center gap-1.5 text-(--md-sys-color-outline) text-xs font-medium ml-1 opacity-60 italic">
 						<span>Прикрепите фото</span>
 					</div>
 				)}
