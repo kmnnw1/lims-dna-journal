@@ -24,6 +24,8 @@
 	--color-md-sys-primary-container: #ccfbf1;
 	--color-md-sys-on-primary-container: #042f2e;
 
+	--color-md-sys-secondary: #4338ca;
+	--color-md-sys-on-secondary: #ffffff;
 	--color-md-sys-secondary-container: #e0e7ff;
 	--color-md-sys-on-secondary-container: #1e1b4b;
 
@@ -46,6 +48,7 @@
 	--color-md-sys-on-error-container: #7f1d1d;
 
 	--color-md-sys-tertiary: #7c3aed;
+	--color-md-sys-on-tertiary: #ffffff;
 	--color-md-sys-tertiary-container: #ede9fe;
 	--color-md-sys-on-tertiary-container: #4c1d95;
 
@@ -76,6 +79,9 @@
 	--md-sys-color-on-primary: var(--color-md-sys-on-primary);
 	--md-sys-color-primary-container: var(--color-md-sys-primary-container);
 	--md-sys-color-on-primary-container: var(--color-md-sys-on-primary-container);
+	--md-sys-color-on-primary-container: var(--color-md-sys-on-primary-container);
+	--md-sys-color-secondary: var(--color-md-sys-secondary);
+	--md-sys-color-on-secondary: var(--color-md-sys-on-secondary);
 	--md-sys-color-secondary-container: var(--color-md-sys-secondary-container);
 	--md-sys-color-on-secondary-container: var(--color-md-sys-on-secondary-container);
 	--md-sys-color-surface: var(--color-md-sys-surface);
@@ -91,6 +97,7 @@
 	--md-sys-color-error-container: var(--color-md-sys-error-container);
 	--md-sys-color-on-error-container: var(--color-md-sys-on-error-container);
 	--md-sys-color-tertiary: var(--color-md-sys-tertiary);
+	--md-sys-color-on-tertiary: var(--color-md-sys-on-tertiary);
 	--md-sys-color-tertiary-container: var(--color-md-sys-tertiary-container);
 	--md-sys-color-on-tertiary-container: var(--color-md-sys-on-tertiary-container);
 	--md-sys-shape-corner-lg: var(--radius-md-sys-corner-lg);
@@ -104,6 +111,8 @@
 	--color-md-sys-primary-container: #0f766e;
 	--color-md-sys-on-primary-container: #ccfbf1;
 
+	--color-md-sys-secondary: #c7d2fe;
+	--color-md-sys-on-secondary: #1e1b4b;
 	--color-md-sys-secondary-container: #312e81;
 	--color-md-sys-on-secondary-container: #e0e7ff;
 
@@ -123,6 +132,7 @@
 	--color-md-sys-on-error-container: #fee2e2;
 
 	--color-md-sys-tertiary: #c4b5fd;
+	--color-md-sys-on-tertiary: #2e1065;
 	--color-md-sys-tertiary-container: #5b21b6;
 	--color-md-sys-on-tertiary-container: #ede9fe;
 }
