@@ -12,13 +12,13 @@ export const PCRStatusBadge: React.FC<PCRStatusBadgeProps> = ({ status, marker, 
 	const getStatusStyle = (s: string | null | undefined) => {
 		switch (s) {
 			case '✓':
-				return 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-sm';
+				return 'bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) shadow-sm';
 			case '✕':
-				return 'bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)] shadow-sm';
+				return 'bg-(--md-sys-color-error) text-(--md-sys-color-on-error) shadow-sm';
 			case '?':
-				return 'bg-[var(--md-sys-color-tertiary)] text-[var(--md-sys-color-on-tertiary)] shadow-sm';
+				return 'bg-(--md-sys-color-tertiary) text-(--md-sys-color-on-tertiary) shadow-sm';
 			default:
-				return 'bg-transparent border border-[var(--md-sys-color-outline-variant)] text-[var(--md-sys-color-outline)] hover:bg-[var(--md-sys-color-surface-container-high)] border-dashed';
+				return 'bg-transparent border border-(--md-sys-color-outline-variant) text-(--md-sys-color-outline) hover:bg-(--md-sys-color-surface-container-high) border-dashed';
 		}
 	};
 
