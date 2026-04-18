@@ -381,9 +381,3 @@ input[type="number"] {
 		clip-path: circle(150% at var(--target-x, 50%) var(--target-y, 50%));
 	}
 }
-
-/* Ensure smooth background transition for elements that might have their own transitions */
-*:not(::view-transition-group(root)) {
-	/* Disable transitions during view transitions globally if needed, 
-     but actually view-transition handles snapshots, so we just need to be careful with backgrounds */
-}
