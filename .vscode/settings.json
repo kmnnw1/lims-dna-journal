@@ -10,5 +10,6 @@
 		"activityBar.background": "#1e1e1e",
 		"sideBar.background": "#1e1e1e"
 	},
-	"typescript.tsdk": "node_modules/typescript/lib"
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"css.lint.unknownAtRules": "ignore"
 }
