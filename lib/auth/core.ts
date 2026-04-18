@@ -94,7 +94,7 @@ export const authOptions: NextAuthOptions = {
 							role: user.role,
 							firstName: user.firstName,
 							lastName: user.lastName,
-						} as NextAuthUser & { role: string; firstName?: string; lastName?: string };
+						};
 					}
 				}
 
@@ -125,7 +125,7 @@ export const authOptions: NextAuthOptions = {
 							role: user.role,
 							firstName: user.firstName,
 							lastName: user.lastName,
-						} as NextAuthUser & { role: string; firstName?: string; lastName?: string };
+						};
 					}
 					return null;
 				}
@@ -148,28 +148,29 @@ export const authOptions: NextAuthOptions = {
 				return {
 					id: user.id,
 					name: user.username,
+					role: user.role,
 					firstName: user.firstName,
 					lastName: user.lastName,
-				} as NextAuthUser & { role: string; firstName?: string; lastName?: string };
+				};
 			},
 		}),
 	],
 	callbacks: {
 		async jwt({ token, user }) {
 			if (user) {
-				if (user.role) token.role = user.role;
+				token.role = user.role;
 				token.id = user.id;
-				token.firstName = (user as any).firstName;
-				token.lastName = (user as any).lastName;
+				token.firstName = user.firstName;
+				token.lastName = user.lastName;
 			}
 			return token;
 		},
 		async session({ session, token }) {
 			if (session.user) {
-				if (token.role) (session.user as { role?: string }).role = token.role as string;
-				(session.user as { id?: string }).id = token.id as string;
-				(session.user as any).firstName = token.firstName;
-				(session.user as any).lastName = token.lastName;
+				session.user.role = token.role;
+				session.user.id = token.id;
+				session.user.firstName = token.firstName;
+				session.user.lastName = token.lastName;
 			}
 			return session;
 		},

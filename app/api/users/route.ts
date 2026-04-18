@@ -8,7 +8,7 @@ import { prisma } from '@/lib/database/prisma';
 // Можно расширить аудит/логирование действий.
 async function requireAdmin() {
 	const session = await getServerSession(authOptions);
-	if (!session?.user || (session.user as { role?: string }).role !== 'ADMIN') {
+	if (!session?.user || session.user.role !== 'ADMIN') {
 		throw new Error('Недостаточно прав администратора');
 	}
 }
@@ -91,7 +91,14 @@ export async function PUT(req: Request) {
 			return NextResponse.json({ error: 'Не указан id пользователя' }, { status: 400 });
 		}
 
-		const data: { role?: string; password?: string } = {};
+		interface UserUpdateData {
+			role?: string;
+			password?: string;
+			firstName?: string | null;
+			lastName?: string | null;
+		}
+
+		const data: UserUpdateData = {};
 
 		if (role !== undefined) {
 			if (!ALLOWED_ROLES.has(role)) {
@@ -100,7 +107,7 @@ export async function PUT(req: Request) {
 
 			// Блокируем понижение собственной роли
 			const session = await getServerSession(authOptions);
-			const currentUser = session?.user as { id?: string } | undefined;
+			const currentUser = session?.user;
 			if (currentUser?.id === id && role !== 'ADMIN') {
 				return NextResponse.json(
 					{
@@ -113,8 +120,8 @@ export async function PUT(req: Request) {
 			data.role = role;
 		}
 
-		if (firstName !== undefined) (data as any).firstName = firstName;
-		if (lastName !== undefined) (data as any).lastName = lastName;
+		if (firstName !== undefined) data.firstName = firstName;
+		if (lastName !== undefined) data.lastName = lastName;
 
 		if (password !== undefined) {
 			data.password = await bcrypt.hash(password, 10);
@@ -153,7 +160,7 @@ export async function DELETE(req: Request) {
 
 		// Не позволяем удалять собственного пользователя
 		const session = await getServerSession(authOptions);
-		const currentUser = session?.user as { id?: string } | undefined;
+		const currentUser = session?.user;
 		if (currentUser?.id === id) {
 			return NextResponse.json({ error: 'Нельзя удалить себя' }, { status: 400 });
 		}

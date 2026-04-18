@@ -229,7 +229,7 @@ export function useAdminPage() {
 				body: JSON.stringify({ users: userList }),
 			});
 
-			const result = await parseApiResponse<{ users: any[] }>(res);
+			const result = await parseApiResponse<{ users: AdminUser[] }>(res);
 			if (!result.ok) {
 				showToast(result.message, 'error');
 				return;

@@ -7,23 +7,26 @@ import type { DefaultSession, DefaultUser } from 'next-auth';
 
 declare module 'next-auth' {
 	interface User extends DefaultUser {
-		role?: string | null;
+		role: string;
+		firstName?: string | null;
+		lastName?: string | null;
 	}
 
 	interface Session {
 		user: {
-			/** Роль пользователя (например: 'admin', 'user', ...), если применимо */
-			role?: string | null;
+			id: string;
+			role: string;
+			firstName?: string | null;
+			lastName?: string | null;
 		} & DefaultSession['user'];
 	}
 }
 
 declare module 'next-auth/jwt' {
 	interface JWT {
-		/**
-		 * Роль пользователя, если устанавливается через callbacks или signin
-		 * Может использоваться для client-side logic/авторизации
-		 */
-		role?: string | null;
+		id: string;
+		role: string;
+		firstName?: string | null;
+		lastName?: string | null;
 	}
 }

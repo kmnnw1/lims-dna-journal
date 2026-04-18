@@ -338,7 +338,7 @@ export function useJournalPage() {
 	// Auto-fill operator from session when modal opens
 	useEffect(() => {
 		if (isAddModalOpen && !newRecordData.extrOperator) {
-			const user = session?.user as any;
+			const user = session?.user;
 			if (user?.lastName) {
 				const formatted = formatOperatorName(user.firstName, user.lastName);
 				setNewRecordData((prev) => ({ ...prev, extrOperator: formatted }));
