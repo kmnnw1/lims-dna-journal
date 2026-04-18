@@ -1,16 +1,16 @@
 import { expect, type Page, test } from '@playwright/test';
 
-const APP_URL = 'http://localhost:3000';
+// APP_URL больше не нужен, используем baseURL из конфига
 
 // Универсальная функция входа
 async function loginAdmin(page: Page) {
-	await page.goto(`${APP_URL}/login`);
+	await page.goto('/login');
 
 	// Находим поле для токена
 	const tokenInput = page.locator('input[type="password"]').first();
 
-	// Используем тестовый токен (на сервере должен быть AUTH_TEST_TOKEN)
-	const testToken = process.env.TEST_TOKEN || 'test-token-123';
+	// Используем тестовый токен из окружения CI или дефолтный
+	const testToken = process.env.TEST_TOKEN || process.env.AUTH_TEST_TOKEN || 'test-token-123';
 	await tokenInput.fill(testToken);
 
 	// Нажимаем Enter для отправки формы

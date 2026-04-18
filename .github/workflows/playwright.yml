@@ -24,12 +24,25 @@ jobs:
             - name: Setup Database and Environment
               run: |
                   echo "NEXTAUTH_SECRET=test_super_secret_key_for_github_actions_32" >> .env
-                  echo "NEXTAUTH_URL=http://localhost:3000" >> .env
-                  echo "DATABASE_URL=file:./dev.db" >> .env
+                  echo "NEXTAUTH_URL=http://127.0.0.1:3000" >> .env
+                  echo "DATABASE_URL=file:./prisma/dev.db" >> .env
+                  echo "AUTH_TEST_TOKEN=test-token-123" >> .env
                   npx prisma db push
                   npx tsx scripts/fix-auth.ts
+            - name: Build application
+              run: |
+                  npm run build
+                  cp -r public .next/standalone/public || true
+                  mkdir -p .next/standalone/.next/static
+                  cp -r .next/static .next/standalone/.next/static || true
+
             - name: Run Playwright tests
               run: npx playwright test
+              env:
+                  TEST_TOKEN: test-token-123
+                  AUTH_TEST_TOKEN: test-token-123
+                  DATABASE_URL: file:./prisma/dev.db
+
             - uses: actions/upload-artifact@v4
               if: ${{ !cancelled() }}
               with:
