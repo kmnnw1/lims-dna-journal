@@ -57,21 +57,21 @@ export function MobileSpecimenCard({
 
 	// Динамические стили для MD3.
 	// Если карточка выбрана, она становится Primary Container.
-	let articleClass = 'transition-all duration-300 relative rounded-[2rem] p-5 shadow-sm ';
+	let articleClass = 'transition-all duration-300 relative rounded-4xl p-5 shadow-sm ';
 	if (selected) {
 		articleClass +=
-			'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]';
+			'bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container)';
 	} else {
 		articleClass +=
-			'bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)]';
+			'bg-(--md-sys-color-surface-container-low) text-(--md-sys-color-on-surface)';
 	}
 
 	// Единый стиль кнопок MD3 (Tonal Icon Button)
 	const btnClass = `touch-target transition rounded-full p-2.5 outline-none 
 		${
 			selected
-				? 'bg-[var(--md-sys-color-on-primary-container)]/10 hover:bg-[var(--md-sys-color-on-primary-container)]/20 text-[var(--md-sys-color-on-primary-container)]'
-				: 'bg-[var(--md-sys-color-surface-container-high)] hover:bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-on-surface)]'
+				? 'bg-(--md-sys-color-on-primary-container)/10 hover:bg-(--md-sys-color-on-primary-container)/20 text-(--md-sys-color-on-primary-container)'
+				: 'bg-(--md-sys-color-surface-container-high) hover:bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface)'
 		} active:scale-95`;
 
 	return (
@@ -82,13 +82,13 @@ export function MobileSpecimenCard({
 						<div className="relative flex items-center justify-center pt-1.5 shrink-0">
 							<input
 								type="checkbox"
-								className="peer size-6 cursor-pointer appearance-none rounded-full border-2 border-[var(--md-sys-color-outline)] checked:border-[var(--md-sys-color-primary)] checked:bg-[var(--md-sys-color-primary)] transition-all"
+								className="peer size-6 cursor-pointer appearance-none rounded-full border-2 border-(--md-sys-color-outline) checked:border-(--md-sys-color-primary) checked:bg-(--md-sys-color-primary) transition-all"
 								checked={selected}
 								onChange={onToggleSelect}
 								aria-label={selected ? 'Убрать выделение' : 'Выделить пробу'}
 							/>
 							<svg
-								className="pointer-events-none absolute h-4 w-4 text-[var(--md-sys-color-on-primary)] opacity-0 peer-checked:opacity-100 transition-opacity mt-1.5"
+								className="pointer-events-none absolute h-4 w-4 text-(--md-sys-color-on-primary) opacity-0 peer-checked:opacity-100 transition-opacity mt-1.5"
 								viewBox="0 0 24 24"
 								fill="none"
 								stroke="currentColor"
@@ -104,7 +104,7 @@ export function MobileSpecimenCard({
 					<div className="min-w-0 flex-1">
 						<div className="flex flex-wrap items-center gap-2 font-mono text-lg font-medium">
 							<Barcode
-								className={`h-5 w-5 shrink-0 ${selected ? 'opacity-80' : 'text-[var(--md-sys-color-outline)]'}`}
+								className={`h-5 w-5 shrink-0 ${selected ? 'opacity-80' : 'text-(--md-sys-color-outline)'}`}
 								aria-hidden
 							/>
 							<span className="break-all tracking-tight">
@@ -115,22 +115,22 @@ export function MobileSpecimenCard({
 									href={s.imageUrl}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="shrink-0 p-1 rounded-full bg-[var(--md-sys-color-primary)]/10"
+									className="shrink-0 p-1 rounded-full bg-(--md-sys-color-primary)/10"
 									title="Просмотреть гель"
 								>
-									<Camera className="h-4 w-4 text-[var(--md-sys-color-primary)]" />
+									<Camera className="h-4 w-4 text-(--md-sys-color-primary)" />
 									<span className="sr-only">Гель</span>
 								</a>
 							)}
 						</div>
 						<p
-							className={`mt-1 text-base leading-snug ${selected ? 'opacity-90' : 'text-[var(--md-sys-color-on-surface)]'}`}
+							className={`mt-1 text-base leading-snug ${selected ? 'opacity-90' : 'text-(--md-sys-color-on-surface)'}`}
 						>
 							{s.taxon || <span className="opacity-50">—</span>}
 						</p>
 						{s.locality && (
 							<p
-								className={`mt-1 truncate text-sm ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-outline)]'}`}
+								className={`mt-1 truncate text-sm ${selected ? 'opacity-70' : 'text-(--md-sys-color-outline)'}`}
 							>
 								{s.locality}
 							</p>
@@ -163,7 +163,7 @@ export function MobileSpecimenCard({
 						>
 							<Copy className="h-4 w-4" />
 							<span
-								className={`absolute right-0 top-0 -translate-y-full text-[10px] px-2 py-1 rounded-lg whitespace-nowrap bg-[var(--md-sys-color-on-surface)] text-[var(--md-sys-color-surface)] transition pointer-events-none ${copied ? 'opacity-100' : 'opacity-0'}`}
+								className={`absolute right-0 top-0 -translate-y-full text-[10px] px-2 py-1 rounded-lg whitespace-nowrap bg-(--md-sys-color-on-surface) text-(--md-sys-color-surface) transition pointer-events-none ${copied ? 'opacity-100' : 'opacity-0'}`}
 								aria-live="polite"
 							>
 								Скопировано
@@ -185,7 +185,7 @@ export function MobileSpecimenCard({
 						<button
 							type="button"
 							onClick={onPcr}
-							className={`${btnClass} ${(s.attempts?.length ?? 0) > 0 ? '!bg-[var(--md-sys-color-primary)] !text-[var(--md-sys-color-on-primary)]' : ''}`}
+							className={`${btnClass} ${(s.attempts?.length ?? 0) > 0 ? '!bg-(--md-sys-color-primary) !text-(--md-sys-color-on-primary)' : ''}`}
 							aria-label="PCR"
 							title="PCR"
 						>
@@ -197,8 +197,8 @@ export function MobileSpecimenCard({
 
 			{s.notes && (
 				<div
-					className={`mt-5 p-4 rounded-2xl text-sm line-clamp-3 whitespace-pre-wrap break-words
-					${selected ? 'bg-black/10' : 'bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)]'}
+					className={`mt-5 p-4 rounded-3xl text-sm line-clamp-3 whitespace-pre-wrap break-words
+					${selected ? 'bg-black/10' : 'bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-on-surface)'}
 				`}
 				>
 					{s.notes}
@@ -207,12 +207,12 @@ export function MobileSpecimenCard({
 
 			<div
 				className={`mt-5 pt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 border-t text-sm
-				${selected ? 'border-[var(--md-sys-color-on-primary-container)]/20' : 'border-[var(--md-sys-color-outline-variant)]'}
+				${selected ? 'border-(--md-sys-color-on-primary-container)/20' : 'border-(--md-sys-color-outline-variant)'}
 			`}
 			>
 				<div className="flex flex-col gap-1">
 					<p
-						className={`text-xs font-medium tracking-wide uppercase ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-primary)]'}`}
+						className={`text-xs font-medium tracking-wide uppercase ${selected ? 'opacity-70' : 'text-(--md-sys-color-primary)'}`}
 					>
 						Выделение
 					</p>
@@ -223,7 +223,7 @@ export function MobileSpecimenCard({
 						)}
 					</p>
 					<p
-						className={`text-xs ${selected ? 'opacity-80' : 'text-[var(--md-sys-color-outline)]'}`}
+						className={`text-xs ${selected ? 'opacity-80' : 'text-(--md-sys-color-outline)'}`}
 					>
 						{s.extrMethod || <span className="opacity-50">Нет данных</span>}
 					</p>
@@ -231,7 +231,7 @@ export function MobileSpecimenCard({
 
 				<div className="flex flex-col gap-2">
 					<p
-						className={`text-xs font-medium tracking-wide uppercase ${selected ? 'opacity-70' : 'text-[var(--md-sys-color-primary)]'}`}
+						className={`text-xs font-medium tracking-wide uppercase ${selected ? 'opacity-70' : 'text-(--md-sys-color-primary)'}`}
 					>
 						Маркеры
 					</p>
