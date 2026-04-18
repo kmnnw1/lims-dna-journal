@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PrismaClient } from './generated/client';
+import { PrismaClient } from '@prisma/client';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const prisma = new PrismaClient();
