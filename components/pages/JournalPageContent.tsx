@@ -2,6 +2,7 @@
 
 import { Camera, ChevronDown, Download, Plus, Printer } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { BarcodeScanDialog } from '@/components/features/BarcodeScanDialog';
 import { HistoryDialog } from '@/components/features/HistoryDialog';
 import { JournalHeader } from '@/components/features/JournalHeader';
@@ -117,8 +118,11 @@ export function JournalPageContent() {
 			setTheme(newTheme);
 			return;
 		}
+
 		doc.startViewTransition(() => {
-			setTheme(newTheme);
+			flushSync(() => {
+				setTheme(newTheme);
+			});
 		});
 	};
 
