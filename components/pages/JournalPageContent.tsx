@@ -112,11 +112,12 @@ export function JournalPageContent() {
 	}, [toastMessage, setToastMessage]);
 
 	const handleThemeToggle = (newTheme: 'light' | 'dark') => {
-		if (!document.startViewTransition) {
+		const doc = document as Document & { startViewTransition?: (callback: () => void) => void };
+		if (typeof doc.startViewTransition !== 'function') {
 			setTheme(newTheme);
 			return;
 		}
-		document.startViewTransition(() => {
+		doc.startViewTransition(() => {
 			setTheme(newTheme);
 		});
 	};
@@ -128,7 +129,7 @@ export function JournalPageContent() {
 	if (status === 'loading') return null;
 
 	return (
-		<main className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] p-3 md:p-6 pb-24 transition-colors duration-300">
+		<main className="min-h-screen bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface) p-3 md:p-6 pb-24 transition-colors duration-300">
 			<div className="w-full">
 				<JournalHeader
 					userName={session?.user?.name || 'Пользователь'}
@@ -149,15 +150,15 @@ export function JournalPageContent() {
 					suggestions={suggestions}
 				/>
 
-				<div className="flex flex-row items-center justify-between gap-3 mb-4 bg-[var(--md-sys-color-surface-container-low)]/50 p-2 rounded-[2rem] border border-[var(--md-sys-color-outline-variant)]/20">
+				<div className="flex flex-row items-center justify-between gap-3 mb-4 bg-(--md-sys-color-surface-container-low)/50 p-2 rounded-4xl border border-(--md-sys-color-outline-variant)/20">
 					<div className="flex-1 overflow-x-auto no-scrollbar flex items-center">
 						<StatsCards {...stats} />
 					</div>
 
-					<div className="flex items-center gap-2 flex-shrink-0 pr-2">
+					<div className="flex items-center gap-2 shrink-0 pr-2">
 						<button
 							onClick={() => setIsScanOpen(true)}
-							className="flex lg:hidden items-center gap-2 px-4 py-2 bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
+							className="flex lg:hidden items-center gap-2 px-4 py-2 bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
 						>
 							<Camera className="w-4 h-4 sm:w-5 sm:h-5" />
 							<span className="hidden sm:inline">Сканировать</span>
@@ -165,20 +166,20 @@ export function JournalPageContent() {
 						<div className="relative" ref={exportRef}>
 							<button
 								onClick={() => setIsExportOpen(!isExportOpen)}
-								className="flex items-center gap-2 px-4 py-2 bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
+								className="flex items-center gap-2 px-4 py-2 bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
 							>
 								<Download className="w-4 h-4 sm:w-5 sm:h-5" />
 								<span className="hidden lg:inline">Экспорт</span>
 								<ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
 							</button>
 							{isExportOpen && (
-								<div className="absolute top-full right-0 mt-2 min-w-[160px] py-2 bg-[var(--md-sys-color-surface-container-lowest)] rounded-2xl shadow-xl md-elevation-3 z-50 border border-[var(--md-sys-color-outline-variant)]/30">
+								<div className="absolute top-full right-0 mt-2 min-w-[160px] py-2 bg-(--md-sys-color-surface-container-lowest) rounded-2xl shadow-xl md-elevation-3 z-50 border border-(--md-sys-color-outline-variant)/30">
 									<button
 										onClick={() => {
 											setIsExportOpen(false);
 											handleExportCSV();
 										}}
-										className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors text-[var(--md-sys-color-on-surface)]"
+										className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-surface-container-high) transition-colors text-(--md-sys-color-on-surface)"
 									>
 										Сохранить CSV
 									</button>
@@ -187,7 +188,7 @@ export function JournalPageContent() {
 											setIsExportOpen(false);
 											handleExportXLSX();
 										}}
-										className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors text-[var(--md-sys-color-on-surface)]"
+										className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-surface-container-high) transition-colors text-(--md-sys-color-on-surface)"
 									>
 										Сохранить Excel (.xlsx)
 									</button>
@@ -218,7 +219,7 @@ export function JournalPageContent() {
 				/>
 
 				{selectedIds.size > 0 && (
-					<div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-[var(--md-sys-color-inverse-surface)] text-[var(--md-sys-color-inverse-on-surface)] rounded-[1.5rem] p-4 flex items-center justify-between shadow-2xl z-50">
+					<div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-(--md-sys-color-inverse-surface) text-(--md-sys-color-inverse-on-surface) rounded-3xl p-4 flex items-center justify-between shadow-2xl z-50">
 						<div className="flex items-center gap-4 pl-2">
 							<button
 								onClick={() => setSelectedIds(new Set())}
@@ -239,7 +240,7 @@ export function JournalPageContent() {
 									<line x1="6" y1="6" x2="18" y2="18"></line>
 								</svg>
 							</button>
-							<span className="flex items-center justify-center w-8 h-8 rounded-full bg-[var(--md-sys-color-inverse-primary)] text-[var(--md-sys-color-primary)] font-bold text-sm">
+							<span className="flex items-center justify-center w-8 h-8 rounded-full bg-(--md-sys-color-inverse-primary) text-(--md-sys-color-primary) font-bold text-sm">
 								{selectedIds.size}
 							</span>
 							<span className="font-medium">выбрано</span>
@@ -247,13 +248,13 @@ export function JournalPageContent() {
 						<div className="flex gap-2">
 							<button
 								onClick={handlePrintLabels}
-								className="px-5 py-2.5 text-sm font-medium text-[var(--md-sys-color-inverse-primary)] hover:bg-white/10 rounded-full transition-colors flex items-center gap-2"
+								className="px-5 py-2.5 text-sm font-medium text-(--md-sys-color-inverse-primary) hover:bg-white/10 rounded-full transition-colors flex items-center gap-2"
 							>
 								<Printer className="w-4 h-4" /> Печать
 							</button>
 							<button
 								onClick={() => setIsBatchModalOpen(true)}
-								className="px-5 py-2.5 text-sm font-medium text-[var(--md-sys-color-inverse-primary)] hover:bg-white/10 rounded-full transition-colors"
+								className="px-5 py-2.5 text-sm font-medium text-(--md-sys-color-inverse-primary) hover:bg-white/10 rounded-full transition-colors"
 							>
 								Массовый ПЦР
 							</button>
@@ -317,7 +318,7 @@ export function JournalPageContent() {
 			<FAB
 				extended
 				onClick={() => setIsAddModalOpen(true)}
-				className="fixed bottom-6 right-6 z-50 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] flex items-center gap-2 px-4 shadow-xl"
+				className="fixed bottom-6 right-6 z-50 bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) flex items-center gap-2 px-4 shadow-xl"
 				aria-label="Добавить пробу"
 			>
 				<Plus className="w-6 h-6" />
@@ -328,10 +329,10 @@ export function JournalPageContent() {
 			{toastMessage && (
 				<div
 					role="alert"
-					className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl z-[200] text-sm font-medium animate-in slide-in-from-bottom-4 fade-in duration-300 ${
+					className={`fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl z-200 text-sm font-medium animate-in slide-in-from-bottom-4 fade-in duration-300 ${
 						toastMessage.type === 'error'
 							? 'bg-red-600 text-white'
-							: 'bg-[var(--md-sys-color-inverse-surface)] text-[var(--md-sys-color-inverse-on-surface)]'
+							: 'bg-(--md-sys-color-inverse-surface) text-(--md-sys-color-inverse-on-surface)'
 					}`}
 					onClick={() => setToastMessage(null)}
 				>
