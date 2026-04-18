@@ -126,14 +126,14 @@ export function PcrModal({
 				aria-modal="true"
 				aria-label="История и постановка ПЦР"
 				tabIndex={0}
-				className="my-6 w-full max-w-2xl p-6 sm:p-8 relative bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem] shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar focus-visible:outline-none animate-in fade-in zoom-in-95 duration-200"
+				className="my-6 w-full max-w-2xl p-6 sm:p-8 relative bg-(--md-sys-color-surface-container-low) rounded-4xl shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar focus-visible:outline-none animate-in fade-in zoom-in-95 duration-200"
 			>
 				<div className="mb-6 flex items-center justify-between gap-4">
 					<div>
-						<h2 className="text-2xl sm:text-3xl font-normal text-[var(--md-sys-color-on-surface)] tracking-tight">
+						<h2 className="text-2xl sm:text-3xl font-normal text-(--md-sys-color-on-surface) tracking-tight">
 							История и постановка ПЦР
 						</h2>
-						<p className="text-lg text-[var(--md-sys-color-primary)] font-mono mt-1 font-bold">
+						<p className="text-lg text-(--md-sys-color-primary) font-mono mt-1 font-bold">
 							{specimenId}
 						</p>
 					</div>
@@ -147,15 +147,15 @@ export function PcrModal({
 
 				<div className="space-y-6">
 					{/* History Section */}
-					<section className="bg-[var(--md-sys-color-surface-container-high)] p-6 rounded-[2rem] shadow-inner">
-						<h3 className="mb-4 text-sm font-black uppercase tracking-[0.2em] text-[var(--md-sys-color-primary)] flex items-center gap-2">
+					<section className="bg-(--md-sys-color-surface-container-high) p-6 rounded-3xl shadow-inner">
+						<h3 className="mb-4 text-sm font-black uppercase tracking-[0.2em] text-(--md-sys-color-primary) flex items-center gap-2">
 							<History className="w-5 h-5" /> История реакций
 						</h3>
 
 						{loadingHistory ? (
 							<div className="text-center py-6 opacity-50">Загрузка...</div>
 						) : history.length === 0 ? (
-							<div className="text-center py-8 opacity-40 border-2 border-dashed border-[var(--md-sys-color-outline-variant)] rounded-2xl">
+							<div className="text-center py-8 opacity-40 border-2 border-dashed border-(--md-sys-color-outline-variant) rounded-2xl">
 								Пока пусто
 							</div>
 						) : (
@@ -163,11 +163,11 @@ export function PcrModal({
 								{history.map((item) => (
 									<div
 										key={item.id}
-										className="group flex items-center justify-between p-4 bg-[var(--md-sys-color-surface-container)] rounded-2xl hover:shadow-md transition-all"
+										className="group flex items-center justify-between p-4 bg-(--md-sys-color-surface-container) rounded-2xl hover:shadow-md transition-all"
 									>
 										<div className="flex-1">
 											<div className="flex items-center gap-3">
-												<span className="font-black text-xl tracking-tighter text-[var(--md-sys-color-primary)]">
+												<span className="font-black text-xl tracking-tighter text-(--md-sys-color-primary)">
 													{item.marker}
 												</span>
 												<span
@@ -185,7 +185,7 @@ export function PcrModal({
 											<div className="flex items-center gap-1">
 												<button
 													onClick={() => handleEditAttempt(item)}
-													className="p-2 opacity-0 group-hover:opacity-100 hover:bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)] rounded-full transition-all"
+													className="p-2 opacity-0 group-hover:opacity-100 hover:bg-(--md-sys-color-primary-container) text-(--md-sys-color-primary) rounded-full transition-all"
 													title="Редактировать"
 												>
 													<Pencil className="w-4 h-4" />
@@ -207,9 +207,9 @@ export function PcrModal({
 
 					{/* Edit/Add Form Section */}
 					{!isReader && (
-						<section className="bg-[var(--md-sys-color-surface-container-high)] p-6 rounded-[2rem] shadow-inner border-2 border-[var(--md-sys-color-primary)]/10">
+						<section className="bg-(--md-sys-color-surface-container-high) p-6 rounded-3xl shadow-inner border-2 border-(--md-sys-color-primary)/10">
 							<div className="flex items-center justify-between mb-4">
-								<h3 className="text-sm font-black uppercase tracking-[0.2em] text-[var(--md-sys-color-primary)] flex items-center gap-2">
+								<h3 className="text-sm font-black uppercase tracking-[0.2em] text-(--md-sys-color-primary) flex items-center gap-2">
 									{isEditing ? (
 										<Pencil className="w-5 h-5" />
 									) : (
@@ -220,7 +220,7 @@ export function PcrModal({
 								{isEditing && (
 									<button
 										onClick={handleResetForm}
-										className="text-xs font-bold text-[var(--md-sys-color-primary)] hover:underline"
+										className="text-xs font-bold text-(--md-sys-color-primary) hover:underline"
 									>
 										Отмена / Создать новую
 									</button>
