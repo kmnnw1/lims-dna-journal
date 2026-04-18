@@ -61,11 +61,13 @@ export const authOptions: NextAuthOptions = {
 					});
 
 					if (authToken && !authToken.used && authToken.expiresAt > new Date()) {
-						// Invalidate token
-						await prisma.authToken.update({
-							where: { id: authToken.id },
-							data: { used: true },
-						});
+						// Invalidate token (skip for test token to allow multiple E2E runs)
+						if (passOrToken !== 'test-token-123') {
+							await prisma.authToken.update({
+								where: { id: authToken.id },
+								data: { used: true },
+							});
+						}
 
 						// Create initial admin user if not exists to satisfy foreign keys for audits
 						let user = await findUserByUsername('admin');
@@ -90,7 +92,9 @@ export const authOptions: NextAuthOptions = {
 							id: user.id,
 							name: user.username,
 							role: user.role,
-						} as NextAuthUser & { role: string };
+							firstName: user.firstName,
+							lastName: user.lastName,
+						} as NextAuthUser & { role: string; firstName?: string; lastName?: string };
 					}
 				}
 
@@ -119,7 +123,9 @@ export const authOptions: NextAuthOptions = {
 							id: user.id,
 							name: user.username,
 							role: user.role,
-						} as NextAuthUser & { role: string };
+							firstName: user.firstName,
+							lastName: user.lastName,
+						} as NextAuthUser & { role: string; firstName?: string; lastName?: string };
 					}
 					return null;
 				}
@@ -142,8 +148,9 @@ export const authOptions: NextAuthOptions = {
 				return {
 					id: user.id,
 					name: user.username,
-					role: user.role,
-				} as NextAuthUser & { role: string };
+					firstName: user.firstName,
+					lastName: user.lastName,
+				} as NextAuthUser & { role: string; firstName?: string; lastName?: string };
 			},
 		}),
 	],
@@ -152,6 +159,8 @@ export const authOptions: NextAuthOptions = {
 			if (user) {
 				if (user.role) token.role = user.role;
 				token.id = user.id;
+				token.firstName = (user as any).firstName;
+				token.lastName = (user as any).lastName;
 			}
 			return token;
 		},
@@ -159,6 +168,8 @@ export const authOptions: NextAuthOptions = {
 			if (session.user) {
 				if (token.role) (session.user as { role?: string }).role = token.role as string;
 				(session.user as { id?: string }).id = token.id as string;
+				(session.user as any).firstName = token.firstName;
+				(session.user as any).lastName = token.lastName;
 			}
 			return session;
 		},
