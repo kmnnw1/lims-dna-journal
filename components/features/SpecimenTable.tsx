@@ -42,7 +42,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 			part.toLowerCase() === query.toLowerCase() ? (
 				<mark
 					key={i}
-					className="bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] rounded px-0.5 font-bold"
+					className="bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container) rounded px-0.5 font-bold"
 				>
 					{part}
 				</mark>
@@ -55,9 +55,9 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 	const renderSortIcon = (key: string) => {
 		if (sortConfig?.key !== key) return null;
 		return sortConfig.direction === 'asc' ? (
-			<ChevronUp className="w-4 h-4 inline ml-1 text-[var(--md-sys-color-primary)]" />
+			<ChevronUp className="w-4 h-4 inline ml-1 text-(--md-sys-color-primary)" />
 		) : (
-			<ChevronDown className="w-4 h-4 inline ml-1 text-[var(--md-sys-color-primary)]" />
+			<ChevronDown className="w-4 h-4 inline ml-1 text-(--md-sys-color-primary)" />
 		);
 	};
 
@@ -66,22 +66,22 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 
 	if (loading && specimens.length === 0) {
 		return (
-			<div className="bg-[var(--md-sys-color-surface-container-lowest)] rounded-[2.5rem] overflow-hidden shadow-sm p-4 space-y-4">
+			<div className="bg-(--md-sys-color-surface-container-lowest) rounded-4xl overflow-hidden shadow-sm p-4 space-y-4">
 				{[...Array(5)].map((_, i) => (
 					<div
 						key={i}
-						className="flex gap-4 p-4 items-center bg-[var(--md-sys-color-surface)] rounded-2xl animate-pulse"
+						className="flex gap-4 p-4 items-center bg-(--md-sys-color-surface) rounded-2xl animate-pulse"
 					>
-						<div className="h-5 w-5 rounded bg-[var(--md-sys-color-surface-container-highest)]" />
-						<div className="h-6 w-20 rounded-full bg-[var(--md-sys-color-surface-container-highest)]" />
+						<div className="h-5 w-5 rounded bg-(--md-sys-color-surface-container-highest)" />
+						<div className="h-6 w-20 rounded-full bg-(--md-sys-color-surface-container-highest)" />
 						<div className="flex-1 space-y-2">
-							<div className="h-5 w-1/3 rounded bg-[var(--md-sys-color-surface-container-highest)]" />
-							<div className="h-4 w-1/4 rounded bg-[var(--md-sys-color-surface-container-highest)]" />
+							<div className="h-5 w-1/3 rounded bg-(--md-sys-color-surface-container-highest)" />
+							<div className="h-4 w-1/4 rounded bg-(--md-sys-color-surface-container-highest)" />
 						</div>
 						<div className="flex gap-2">
-							<div className="h-8 w-12 rounded-xl bg-[var(--md-sys-color-surface-container-highest)]" />
-							<div className="h-8 w-12 rounded-xl bg-[var(--md-sys-color-surface-container-highest)]" />
-							<div className="h-8 w-12 rounded-xl bg-[var(--md-sys-color-surface-container-highest)]" />
+							<div className="h-8 w-12 rounded-xl bg-(--md-sys-color-surface-container-highest)" />
+							<div className="h-8 w-12 rounded-xl bg-(--md-sys-color-surface-container-highest)" />
+							<div className="h-8 w-12 rounded-xl bg-(--md-sys-color-surface-container-highest)" />
 						</div>
 					</div>
 				))}
@@ -90,12 +90,12 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 	}
 
 	return (
-		<div className="rounded-[2.5rem] overflow-hidden border border-[var(--md-sys-color-outline-variant)]/30 bg-[var(--md-sys-color-surface-container-lowest)] shadow-sm transition-all duration-300">
+		<div className="rounded-4xl overflow-hidden border border-(--md-sys-color-outline-variant)/30 bg-(--md-sys-color-surface-container-lowest) shadow-sm transition-all duration-300">
 			<div className="overflow-x-auto custom-scrollbar max-h-[75vh]">
 				<table className="w-full min-w-[1000px] text-left border-separate border-spacing-0 relative text-sm">
-					<thead className="sticky top-0 z-40 bg-[var(--md-sys-color-surface)] backdrop-blur-xl shadow-sm">
+					<thead className="sticky top-0 z-40 bg-(--md-sys-color-surface) backdrop-blur-xl shadow-sm">
 						<tr>
-							<th className="sticky left-0 z-50 bg-[var(--md-sys-color-surface)] px-3 py-3 w-12 text-center border-b border-[var(--md-sys-color-outline-variant)]/50 border-r border-[var(--md-sys-color-outline-variant)]/10">
+							<th className="sticky left-0 z-50 bg-(--md-sys-color-surface) px-3 py-3 w-12 text-center border-b border-(--md-sys-color-outline-variant)/50 border-r border-(--md-sys-color-outline-variant)/10">
 								<div className="relative flex items-center justify-center">
 									<input
 										type="checkbox"
@@ -104,7 +104,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 											specimens.length > 0 &&
 											selectedIds.size === specimens.length
 										}
-										className="peer size-5 cursor-pointer appearance-none rounded-md border-2 border-[var(--md-sys-color-outline)] checked:border-[var(--md-sys-color-primary)] checked:bg-[var(--md-sys-color-primary)] transition-all hover:scale-110"
+										className="peer size-5 cursor-pointer appearance-none rounded-md border-2 border-(--md-sys-color-outline) checked:border-(--md-sys-color-primary) checked:bg-(--md-sys-color-primary) transition-all hover:scale-110"
 										title="Выбрать все"
 									/>
 									<svg
@@ -121,64 +121,64 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 								</div>
 							</th>
 							<th
-								className="sticky left-12 z-50 bg-[var(--md-sys-color-surface)] px-3 py-3 w-24 text-[var(--md-sys-color-on-surface)] font-bold tracking-widest uppercase cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none whitespace-nowrap border-b border-[var(--md-sys-color-outline-variant)]/50 border-r border-[var(--md-sys-color-outline-variant)]/30"
+								className="sticky left-12 z-50 bg-(--md-sys-color-surface) px-3 py-3 w-24 text-(--md-sys-color-on-surface) font-bold tracking-widest uppercase cursor-pointer hover:bg-(--md-sys-color-surface-container-high) transition-colors select-none whitespace-nowrap border-b border-(--md-sys-color-outline-variant)/50 border-r border-(--md-sys-color-outline-variant)/30"
 								onClick={() => onSort('id')}
 							>
 								ID {renderSortIcon('id')}
 							</th>
 							<th
-								className="px-4 py-3 text-[var(--md-sys-color-on-surface)] font-bold tracking-widest uppercase cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none whitespace-nowrap border-b border-[var(--md-sys-color-outline-variant)]/50"
+								className="px-4 py-3 text-(--md-sys-color-on-surface) font-bold tracking-widest uppercase cursor-pointer hover:bg-(--md-sys-color-surface-container-high) transition-colors select-none whitespace-nowrap border-b border-(--md-sys-color-outline-variant)/50"
 								onClick={() => onSort('taxon')}
 							>
 								Таксон {renderSortIcon('taxon')}
 							</th>
 							{hasAnyNotes && (
 								<th
-									className="px-4 py-3 text-[var(--md-sys-color-on-surface)] font-bold tracking-widest uppercase cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none whitespace-nowrap border-b border-[var(--md-sys-color-outline-variant)]/50"
+									className="px-4 py-3 text-(--md-sys-color-on-surface) font-bold tracking-widest uppercase cursor-pointer hover:bg-(--md-sys-color-surface-container-high) transition-colors select-none whitespace-nowrap border-b border-(--md-sys-color-outline-variant)/50"
 									onClick={() => onSort('notes')}
 								>
 									Заметки {renderSortIcon('notes')}
 								</th>
 							)}
 							<th
-								className="px-4 py-3 text-[var(--md-sys-color-on-surface)] font-bold tracking-widest uppercase cursor-pointer hover:bg-[var(--md-sys-color-surface-container-high)] transition-colors select-none whitespace-nowrap border-b border-[var(--md-sys-color-outline-variant)]/50"
+								className="px-4 py-3 text-(--md-sys-color-on-surface) font-bold tracking-widest uppercase cursor-pointer hover:bg-(--md-sys-color-surface-container-high) transition-colors select-none whitespace-nowrap border-b border-(--md-sys-color-outline-variant)/50"
 								onClick={() => onSort('extrLab')}
 							>
 								Выделение {renderSortIcon('extrLab')}
 							</th>
-							<th className="px-4 py-3 text-[var(--md-sys-color-on-surface)] font-bold tracking-widest uppercase whitespace-nowrap border-b border-[var(--md-sys-color-outline-variant)]/50">
+							<th className="px-4 py-3 text-(--md-sys-color-on-surface) font-bold tracking-widest uppercase whitespace-nowrap border-b border-(--md-sys-color-outline-variant)/50">
 								Маркеры
 							</th>
-							<th className="px-4 py-3 w-24 text-[var(--md-sys-color-on-surface)] font-bold tracking-widest uppercase whitespace-nowrap text-right border-b border-[var(--md-sys-color-outline-variant)]/50">
+							<th className="px-4 py-3 w-24 text-(--md-sys-color-on-surface) font-bold tracking-widest uppercase whitespace-nowrap text-right border-b border-(--md-sys-color-outline-variant)/50">
 								{/* Действия скрыты как заголовок */}
 							</th>
 						</tr>
 					</thead>
-					<tbody className="divide-y divide-[var(--md-sys-color-outline-variant)]/20">
+					<tbody className="divide-y divide-(--md-sys-color-outline-variant)/20">
 						{specimens.map((specimen) => {
 							const isSelected = selectedIds.has(specimen.id);
 							// Динамический фон для липких колонок. Если строка выбрана - заливаем акцентом, иначе поверхностью
 							const stickyBgClass = isSelected
-								? 'bg-[var(--md-sys-color-primary-container)]'
-								: 'bg-[var(--md-sys-color-surface)] group-hover:bg-[var(--md-sys-color-surface-container-lowest)]';
+								? 'bg-(--md-sys-color-primary-container)'
+								: 'bg-(--md-sys-color-surface) group-hover:bg-(--md-sys-color-surface-container-lowest)';
 
 							return (
 								<tr
 									key={specimen.id}
-									className={`group transition-colors duration-150 ${isSelected ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]' : 'hover:bg-[var(--md-sys-color-surface-container-lowest)] bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]'}`}
+									className={`group transition-colors duration-150 ${isSelected ? 'bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container)' : 'hover:bg-(--md-sys-color-surface-container-lowest) bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface)'}`}
 								>
 									<td
-										className={`sticky left-0 z-30 ${stickyBgClass} px-3 py-2 w-12 text-center border-b border-[var(--md-sys-color-outline-variant)]/20 border-r border-[var(--md-sys-color-outline-variant)]/10`}
+										className={`sticky left-0 z-30 ${stickyBgClass} px-3 py-2 w-12 text-center border-b border-(--md-sys-color-outline-variant)/20 border-r border-(--md-sys-color-outline-variant)/10`}
 									>
 										<div className="relative flex items-center justify-center">
 											<input
 												type="checkbox"
 												checked={isSelected}
 												onChange={() => onSelect(specimen.id)}
-												className="peer size-5 cursor-pointer appearance-none rounded-md border-2 border-[var(--md-sys-color-outline)] checked:border-[var(--md-sys-color-primary)] checked:bg-[var(--md-sys-color-primary)] transition-all"
+												className="peer size-5 cursor-pointer appearance-none rounded-md border-2 border-(--md-sys-color-outline) checked:border-(--md-sys-color-primary) checked:bg-(--md-sys-color-primary) transition-all"
 											/>
 											<svg
-												className="pointer-events-none absolute h-3.5 w-3.5 text-[var(--md-sys-color-on-primary)] opacity-0 peer-checked:opacity-100 transition-opacity"
+												className="pointer-events-none absolute h-3.5 w-3.5 text-(--md-sys-color-on-primary) opacity-0 peer-checked:opacity-100 transition-opacity"
 												viewBox="0 0 24 24"
 												fill="none"
 												stroke="currentColor"
@@ -191,43 +191,43 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 										</div>
 									</td>
 									<td
-										className={`sticky left-12 z-30 ${stickyBgClass} px-3 py-2 w-24 border-b border-[var(--md-sys-color-outline-variant)]/20 border-r border-[var(--md-sys-color-outline-variant)]/30 font-mono text-sm text-[var(--md-sys-color-primary)] font-medium tracking-tight whitespace-nowrap`}
+										className={`sticky left-12 z-30 ${stickyBgClass} px-3 py-2 w-24 border-b border-(--md-sys-color-outline-variant)/20 border-r border-(--md-sys-color-outline-variant)/30 font-mono text-sm text-(--md-sys-color-primary) font-medium tracking-tight whitespace-nowrap`}
 									>
 										{highlightText(specimen.id, searchQuery)}
 									</td>
-									<td className="px-4 py-2 border-b border-[var(--md-sys-color-outline-variant)]/20">
+									<td className="px-4 py-2 border-b border-(--md-sys-color-outline-variant)/20">
 										<div className="flex flex-col gap-0.5 min-w-[180px]">
-											<span className="text-[var(--md-sys-color-on-surface)] font-medium text-base leading-snug">
+											<span className="text-(--md-sys-color-on-surface) font-medium text-base leading-snug">
 												{highlightText(specimen.taxon, searchQuery)}
 											</span>
 											{specimen.locality && (
-												<span className="text-[var(--md-sys-color-outline)] text-xs line-clamp-1">
+												<span className="text-(--md-sys-color-outline) text-xs line-clamp-1">
 													{specimen.locality}
 												</span>
 											)}
 										</div>
 									</td>
 									{hasAnyNotes && (
-										<td className="px-4 py-2 border-b border-[var(--md-sys-color-outline-variant)]/20">
-											<p className="text-[var(--md-sys-color-on-surface)] opacity-80 text-sm line-clamp-2 max-w-[200px]">
+										<td className="px-4 py-2 border-b border-(--md-sys-color-outline-variant)/20">
+											<p className="text-(--md-sys-color-on-surface) opacity-80 text-sm line-clamp-2 max-w-[200px]">
 												{specimen.notes || specimen.collectNotes || '—'}
 											</p>
 										</td>
 									)}
-									<td className="px-4 py-2 border-b border-[var(--md-sys-color-outline-variant)]/20">
+									<td className="px-4 py-2 border-b border-(--md-sys-color-outline-variant)/20">
 										<div className="flex flex-col gap-0">
 											<span
-												className="text-[var(--md-sys-color-on-surface)] text-sm font-medium truncate max-w-[120px] block"
+												className="text-(--md-sys-color-on-surface) text-sm font-medium truncate max-w-[120px] block"
 												title={specimen.extrLab || 'Не указана'}
 											>
 												{specimen.extrLab || '—'}
 											</span>
-											<span className="text-[var(--md-sys-color-outline)] text-[11px]">
+											<span className="text-(--md-sys-color-outline) text-[11px]">
 												{specimen.extrOperator || 'Не указан'}
 											</span>
 										</div>
 									</td>
-									<td className="px-4 py-2 border-b border-[var(--md-sys-color-outline-variant)]/20">
+									<td className="px-4 py-2 border-b border-(--md-sys-color-outline-variant)/20">
 										<div className="flex flex-wrap gap-1 w-[220px]">
 											<PCRStatusBadge
 												status={specimen.itsStatus}
@@ -261,26 +261,26 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 											/>
 										</div>
 									</td>
-									<td className="px-4 py-2 text-right border-b border-[var(--md-sys-color-outline-variant)]/20">
+									<td className="px-4 py-2 text-right border-b border-(--md-sys-color-outline-variant)/20">
 										{!hideActions && (
 											<div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
 												<button
 													onClick={() => onEdit(specimen)}
-													className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-primary)] transition-all active:scale-95"
+													className="p-2 rounded-full hover:bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-outline) hover:text-(--md-sys-color-primary) transition-all active:scale-95"
 													title="Изменить"
 												>
 													<Pencil className="w-4 h-4" />
 												</button>
 												<button
 													onClick={() => onPcr(specimen)}
-													className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-primary)] transition-all active:scale-95"
+													className="p-2 rounded-full hover:bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-outline) hover:text-(--md-sys-color-primary) transition-all active:scale-95"
 													title="ПЦР"
 												>
 													<FlaskConical className="w-4 h-4" />
 												</button>
 												<button
 													onClick={() => onHistory(specimen)}
-													className="p-2 rounded-full hover:bg-[var(--md-sys-color-surface-container-highest)] text-[var(--md-sys-color-outline)] hover:text-[var(--md-sys-color-primary)] transition-all active:scale-95"
+													className="p-2 rounded-full hover:bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-outline) hover:text-(--md-sys-color-primary) transition-all active:scale-95"
 													title="История изменений"
 												>
 													<History className="w-4 h-4" />
@@ -295,7 +295,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 				</table>
 			</div>
 			{specimens.length === 0 && !loading && (
-				<div className="p-16 text-center text-[var(--md-sys-color-outline)] text-lg">
+				<div className="p-16 text-center text-(--md-sys-color-outline) text-lg">
 					Пробы не найдены
 				</div>
 			)}
