@@ -147,16 +147,29 @@ export function AdminPageContent(props: AdminPageProps) {
 								Очистить
 							</button>
 							<div className="flex items-center gap-2 ml-0 sm:ml-auto">
-								<input
-									type="checkbox"
-									id="useAI"
-									checked={useAI}
-									onChange={(e) => setUseAI(e.target.checked)}
-									className="rounded border-(--md-sys-color-outline) appearance-none w-4 h-4 checked:bg-(--md-sys-color-primary) ring-1 ring-(--md-sys-color-outline)"
-								/>
+								<div className="relative flex items-center justify-center">
+									<input
+										type="checkbox"
+										id="useAI"
+										checked={useAI}
+										onChange={(e) => setUseAI(e.target.checked)}
+										className="peer size-5 cursor-pointer appearance-none rounded-md border-2 border-(--md-sys-color-outline) checked:border-(--md-sys-color-primary) checked:bg-(--md-sys-color-primary) transition-all hover:scale-110"
+									/>
+									<svg
+										className="pointer-events-none absolute h-3.5 w-3.5 text-(--md-sys-color-on-primary) opacity-0 peer-checked:opacity-100 transition-opacity"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="4"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<polyline points="20 6 9 17 4 12"></polyline>
+									</svg>
+								</div>
 								<label
 									htmlFor="useAI"
-									className="text-sm font-medium text-(--md-sys-color-on-surface) cursor-pointer"
+									className="text-sm font-medium text-(--md-sys-color-on-surface) cursor-pointer select-none"
 								>
 									ИИ-очистка
 								</label>
