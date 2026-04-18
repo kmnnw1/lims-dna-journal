@@ -112,7 +112,7 @@ export function useAdminPage() {
 		const res = await fetch('/api/users', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ username, password, role }),
+			body: JSON.stringify({ username, password, role, firstName, lastName }),
 		});
 
 		const parsed = await parseApiResponse(res);
@@ -205,6 +205,44 @@ export function useAdminPage() {
 		}
 	};
 
+	const handleBulkUsers = async (names: string) => {
+		if (!names.trim()) return;
+		setImportBusy(true);
+		try {
+			const userList = names
+				.split('\n')
+				.map((line) => {
+					const parts = line.trim().split(/\s+/);
+					if (parts.length < 2) return null;
+					return { firstName: parts[1], lastName: parts[0] };
+				})
+				.filter(Boolean);
+
+			if (userList.length === 0) {
+				showToast('Неверный формат. Используйте: Фамилия Имя', 'error');
+				return;
+			}
+
+			const res = await fetch('/api/users/bulk', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ users: userList }),
+			});
+
+			const result = await parseApiResponse<{ users: any[] }>(res);
+			if (!result.ok) {
+				showToast(result.message, 'error');
+				return;
+			}
+
+			showToast(`Создано пользователей: ${result.data.users.length}`, 'success');
+			fetchUsers();
+			return result.data.users;
+		} finally {
+			setImportBusy(false);
+		}
+	};
+
 	const adminCount = users.filter((u) => u.role === 'ADMIN').length;
 
 	return {
@@ -232,5 +270,6 @@ export function useAdminPage() {
 		handleDeleteUser,
 		handleClearSpecimens,
 		handleImportFromExcel,
+		handleBulkUsers,
 	};
 }

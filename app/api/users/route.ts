@@ -21,7 +21,7 @@ export async function GET() {
 	try {
 		await requireAdmin();
 		const users = await prisma.user.findMany({
-			select: { id: true, username: true, role: true },
+			select: { id: true, username: true, role: true, firstName: true, lastName: true },
 		});
 		return NextResponse.json(users);
 	} catch (e) {
@@ -35,7 +35,7 @@ export async function GET() {
 export async function POST(req: Request) {
 	try {
 		await requireAdmin();
-		const { username, password, role } = await req.json();
+		const { username, password, role, firstName, lastName } = await req.json();
 
 		if (
 			typeof username !== 'string' ||
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
 
 		const hashedPassword = await bcrypt.hash(password, 10);
 		await prisma.user.create({
-			data: { username, password: hashedPassword, role },
+			data: { username, password: hashedPassword, role, firstName, lastName },
 		});
 		return NextResponse.json({ success: true });
 	} catch (e) {
@@ -84,6 +84,8 @@ export async function PUT(req: Request) {
 			typeof body?.password === 'string' && body.password.trim().length > 0
 				? body.password
 				: undefined;
+		const firstName = typeof body?.firstName === 'string' ? body.firstName : undefined;
+		const lastName = typeof body?.lastName === 'string' ? body.lastName : undefined;
 
 		if (!id) {
 			return NextResponse.json({ error: 'Не указан id пользователя' }, { status: 400 });
@@ -111,6 +113,9 @@ export async function PUT(req: Request) {
 			data.role = role;
 		}
 
+		if (firstName !== undefined) (data as any).firstName = firstName;
+		if (lastName !== undefined) (data as any).lastName = lastName;
+
 		if (password !== undefined) {
 			data.password = await bcrypt.hash(password, 10);
 		}
@@ -122,7 +127,13 @@ export async function PUT(req: Request) {
 		const user = await prisma.user.update({ where: { id }, data });
 		return NextResponse.json({
 			success: true,
-			user: { id: user.id, username: user.username, role: user.role },
+			user: {
+				id: user.id,
+				username: user.username,
+				role: user.role,
+				firstName: user.firstName,
+				lastName: user.lastName,
+			},
 		});
 	} catch (e) {
 		const msg = e instanceof Error ? e.message : 'Ошибка';
