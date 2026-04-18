@@ -11,6 +11,8 @@ export const users = sqliteTable('User', {
 	username: text('username').unique().notNull(),
 	password: text('password').notNull(),
 	role: text('role').notNull().default('EDITOR'),
+	firstName: text('firstName'),
+	lastName: text('lastName'),
 	createdAt: integer('createdAt', { mode: 'timestamp' })
 		.notNull()
 		.default(sql`(strftime('%s', 'now') * 1000)`),
@@ -57,6 +59,7 @@ export const specimens = sqliteTable('Specimen', {
 	importNotes: text('importNotes'),
 	reviewNotes: text('reviewNotes'),
 	reviewPhotos: text('reviewPhotos'),
+	labTechnicianId: text('labTechnicianId'),
 	deletedAt: integer('deletedAt', { mode: 'timestamp' }),
 	createdAt: integer('createdAt', { mode: 'timestamp' })
 		.notNull()

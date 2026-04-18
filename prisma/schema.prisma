@@ -11,7 +11,10 @@ model User {
   username  String   @unique
   password  String
   role      String   @default("EDITOR")
+  firstName String?
+  lastName  String?
   createdAt DateTime @default(now())
+  specimens Specimen[] @relation("LabTechnician")
 }
 
 model Specimen {
@@ -57,6 +60,8 @@ model Specimen {
   reviewPhotos     String?      
   attempts         PcrAttempt[]
   deletedAt        DateTime?    
+  labTechnicianId  String?
+  labTechnician    User?        @relation("LabTechnician", fields: [labTechnicianId], references: [id])
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
