@@ -61,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 			*/}
 			<body
 				suppressHydrationWarning
-				className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] selection:bg-[var(--md-sys-color-primary)] selection:text-[var(--md-sys-color-on-primary)] transition-colors duration-300 font-sans antialiased"
+				className="min-h-screen bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface) selection:bg-(--md-sys-color-primary) selection:text-(--md-sys-color-on-primary) transition-colors duration-300 font-sans antialiased"
 			>
 				<Providers>
 					<PageTransition>{children}</PageTransition>
