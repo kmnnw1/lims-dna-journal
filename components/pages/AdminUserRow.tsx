@@ -54,12 +54,12 @@ export function AdminUserRow({
 	};
 
 	return (
-		<div className="flex flex-col gap-4 rounded-[1.5rem] bg-[var(--md-sys-color-surface-container-highest)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between transition-all">
+		<div className="flex flex-col gap-4 rounded-3xl bg-(--md-sys-color-surface-container-highest) px-5 py-4 sm:flex-row sm:items-center sm:justify-between transition-all">
 			<div className="min-w-0">
-				<p className="font-medium text-[var(--md-sys-color-on-surface)] text-lg tracking-tight">
+				<p className="font-medium text-(--md-sys-color-on-surface) text-lg tracking-tight">
 					{u.username}
 				</p>
-				<p className="text-sm font-mono text-[var(--md-sys-color-primary)]">{u.role}</p>
+				<p className="text-sm font-mono text-(--md-sys-color-primary)">{u.role}</p>
 			</div>
 			<div className="flex flex-wrap items-center gap-3">
 				{/* 
@@ -96,7 +96,7 @@ export function AdminUserRow({
 						<button
 							type="button"
 							onClick={handleUpdateClick}
-							className="inline-flex items-center justify-center p-3 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:brightness-110 transition-all disabled:opacity-50"
+							className="inline-flex items-center justify-center p-3 rounded-full bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) hover:brightness-110 transition-all disabled:opacity-50"
 							disabled={busy}
 							aria-label="Сохранить изменения"
 							title="Сохранить"
@@ -107,7 +107,7 @@ export function AdminUserRow({
 							<button
 								type="button"
 								onClick={handleDeleteClick}
-								className="p-3 rounded-full bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-on-error-container)] hover:brightness-95 transition-all disabled:opacity-50"
+								className="p-3 rounded-full bg-(--md-sys-color-error-container) text-(--md-sys-color-on-error-container) hover:brightness-95 transition-all disabled:opacity-50"
 								aria-label={`Удалить пользователя "${u.username}"`}
 								title="Удалить"
 								disabled={busy}
@@ -117,7 +117,7 @@ export function AdminUserRow({
 						)}
 					</>
 				) : (
-					<span className="text-sm font-medium px-4 py-2 bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-primary)] rounded-full shadow-sm">
+					<span className="text-sm font-medium px-4 py-2 bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-primary) rounded-full shadow-sm">
 						{u.id === currentUserId ? 'Это вы (Вы вошли)' : 'Главный администратор'}
 					</span>
 				)}
@@ -125,7 +125,7 @@ export function AdminUserRow({
 					u.id !== currentUserId &&
 					u.role === 'ADMIN' &&
 					adminCount <= 2 && (
-						<span className="text-[11px] font-medium px-3 py-1 bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-outline)] rounded-full">
+						<span className="text-[11px] font-medium px-3 py-1 bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-outline) rounded-full">
 							Защита (нужно {'>'}2 админов)
 						</span>
 					)}
