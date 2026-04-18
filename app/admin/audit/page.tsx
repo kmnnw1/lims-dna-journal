@@ -69,26 +69,26 @@ export default function AdminAuditPage() {
 	};
 
 	return (
-		<div className="min-h-screen bg-[var(--md-sys-color-surface-container-lowest)] p-4 md:p-8">
+		<div className="min-h-screen bg-(--md-sys-color-surface-container-lowest) p-4 md:p-8">
 			<div className="max-w-6xl mx-auto">
 				{/* Header */}
 				<div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
 					<div className="space-y-2">
 						<Link
 							href="/"
-							className="inline-flex items-center gap-2 text-sm font-bold text-[var(--md-sys-color-primary)] hover:opacity-80 transition-opacity mb-4"
+							className="inline-flex items-center gap-2 text-sm font-bold text-(--md-sys-color-primary) hover:opacity-80 transition-opacity mb-4"
 						>
 							<ChevronLeft className="w-4 h-4" /> На главную
 						</Link>
 						<div className="flex items-center gap-4">
-							<div className="p-4 rounded-3xl bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] shadow-lg">
+							<div className="p-4 rounded-3xl bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container) shadow-lg">
 								<Shield className="w-8 h-8" />
 							</div>
 							<div>
-								<h1 className="text-4xl font-black text-[var(--md-sys-color-on-surface)] tracking-tight">
+								<h1 className="text-4xl font-black text-(--md-sys-color-on-surface) tracking-tight">
 									Аудит Системы
 								</h1>
-								<p className="text-lg font-medium text-[var(--md-sys-color-on-surface-variant)] opacity-70">
+								<p className="text-lg font-medium text-(--md-sys-color-on-surface-variant) opacity-70">
 									История всех действий и изменений
 								</p>
 							</div>
@@ -98,7 +98,7 @@ export default function AdminAuditPage() {
 					<button
 						onClick={fetchLogs}
 						disabled={isLoading}
-						className="flex items-center gap-2 px-6 py-3 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] rounded-full font-bold shadow-xl hover:shadow-2xl active:scale-95 transition-all text-sm disabled:opacity-50"
+						className="flex items-center gap-2 px-6 py-3 bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) rounded-full font-bold shadow-xl hover:shadow-2xl active:scale-95 transition-all text-sm disabled:opacity-50"
 					>
 						<RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
 						Обновить данные
@@ -107,9 +107,9 @@ export default function AdminAuditPage() {
 
 				{/* Dashboard Stats (Optional Placeholder for richness) */}
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-					<div className="p-6 rounded-[2rem] bg-[var(--md-sys-color-surface-container-high)] border border-[var(--md-sys-color-outline-variant)]/30">
+					<div className="p-6 rounded-3xl bg-(--md-sys-color-surface-container-high) border border-(--md-sys-color-outline-variant)/30">
 						<p className="text-sm font-bold opacity-60 uppercase mb-2">Всего записей</p>
-						<p className="text-3xl font-black text-[var(--md-sys-color-primary)]">
+						<p className="text-3xl font-black text-(--md-sys-color-primary)">
 							{logs.length}
 						</p>
 					</div>
@@ -117,31 +117,31 @@ export default function AdminAuditPage() {
 				</div>
 
 				{/* Main Log Table */}
-				<div className="bg-[var(--md-sys-color-surface)] rounded-[2.5rem] shadow-2xl overflow-hidden border border-[var(--md-sys-color-outline-variant)]/20">
+				<div className="bg-(--md-sys-color-surface) rounded-4xl shadow-2xl overflow-hidden border border-(--md-sys-color-outline-variant)/20">
 					<div className="overflow-x-auto">
 						<table className="w-full text-left border-separate border-spacing-0">
 							<thead>
-								<tr className="bg-[var(--md-sys-color-surface-container)]">
-									<th className="px-6 py-5 text-sm font-black uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] opacity-70">
+								<tr className="bg-(--md-sys-color-surface-container)">
+									<th className="px-6 py-5 text-sm font-black uppercase tracking-widest text-(--md-sys-color-on-surface-variant) opacity-70">
 										Событие
 									</th>
-									<th className="px-6 py-5 text-sm font-black uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] opacity-70">
+									<th className="px-6 py-5 text-sm font-black uppercase tracking-widest text-(--md-sys-color-on-surface-variant) opacity-70">
 										Пользователь
 									</th>
-									<th className="px-6 py-5 text-sm font-black uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] opacity-70">
+									<th className="px-6 py-5 text-sm font-black uppercase tracking-widest text-(--md-sys-color-on-surface-variant) opacity-70">
 										Ресурс
 									</th>
-									<th className="px-6 py-5 text-sm font-black uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] opacity-70">
+									<th className="px-6 py-5 text-sm font-black uppercase tracking-widest text-(--md-sys-color-on-surface-variant) opacity-70">
 										Время
 									</th>
 								</tr>
 							</thead>
-							<tbody className="divide-y divide-[var(--md-sys-color-outline-variant)]/10">
+							<tbody className="divide-y divide-(--md-sys-color-outline-variant)/10">
 								{isLoading ? (
 									<tr>
 										<td colSpan={4} className="px-6 py-20 text-center">
 											<div className="flex flex-col items-center gap-4">
-												<div className="w-12 h-12 border-4 border-[var(--md-sys-color-primary)] border-t-transparent rounded-full animate-spin" />
+												<div className="w-12 h-12 border-4 border-(--md-sys-color-primary) border-t-transparent rounded-full animate-spin" />
 												<p className="text-xl font-bold opacity-60">
 													Анализ журналов...
 												</p>
@@ -161,19 +161,19 @@ export default function AdminAuditPage() {
 									logs.map((log) => (
 										<tr
 											key={log.id}
-											className="hover:bg-[var(--md-sys-color-surface-container-lowest)] transition-colors group"
+											className="hover:bg-(--md-sys-color-surface-container-lowest) transition-colors group"
 										>
 											<td className="px-6 py-5">
 												<div className="flex items-center gap-3">
-													<div className="p-2 rounded-xl bg-[var(--md-sys-color-surface-container-highest)]">
+													<div className="p-2 rounded-xl bg-(--md-sys-color-surface-container-highest)">
 														{getIcon(log.action)}
 													</div>
 													<div>
-														<p className="font-bold text-[var(--md-sys-color-on-surface)]">
+														<p className="font-bold text-(--md-sys-color-on-surface)">
 															{actionLabels[log.action] || log.action}
 														</p>
 														{log.details && (
-															<p className="text-xs text-[var(--md-sys-color-on-surface-variant)] opacity-60 line-clamp-1 max-w-xs">
+															<p className="text-xs text-(--md-sys-color-on-surface-variant) opacity-60 line-clamp-1 max-w-xs">
 																{log.details}
 															</p>
 														)}
@@ -186,7 +186,7 @@ export default function AdminAuditPage() {
 													<span
 														className={
 															log.userId === 'admin'
-																? 'text-[var(--md-sys-color-primary)] font-black'
+																? 'text-(--md-sys-color-primary) font-black'
 																: ''
 														}
 													>
