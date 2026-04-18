@@ -5,14 +5,14 @@ import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
 const cardVariants = cva(
-	'rounded-[var(--md-sys-shape-corner-lg)] text-[var(--md-sys-color-on-surface)] transition-all duration-[var(--md-sys-motion-duration-medium)] ease-[var(--md-sys-motion-easing-standard)]',
+	'rounded-(--md-sys-shape-corner-lg) text-(--md-sys-color-on-surface) transition-all duration-(--md-sys-motion-duration-medium) ease-(--md-sys-motion-easing-standard)',
 	{
 		variants: {
 			variant: {
-				elevated: 'bg-[var(--md-sys-color-surface-container-low)] md-elevation-1',
-				filled: 'bg-[var(--md-sys-color-surface-container-highest)] border-transparent',
+				elevated: 'bg-(--md-sys-color-surface-container-low) md-elevation-1',
+				filled: 'bg-(--md-sys-color-surface-container-highest) border-transparent',
 				outlined:
-					'bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline-variant)]',
+					'bg-(--md-sys-color-surface) border border-(--md-sys-color-outline-variant)',
 			},
 		},
 		defaultVariants: {
