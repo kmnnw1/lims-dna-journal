@@ -334,6 +334,7 @@ public/lottie/
 scripts/local-*.mjs
 scripts/debug.mjs
 scripts/meta-sync.ps1
+scripts/thoughts-autosave.ps1
 
 # ------------------------------------------------------------------------------
 # END OF GITIGNORE
