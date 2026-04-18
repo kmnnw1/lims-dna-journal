@@ -300,7 +300,7 @@ export function ERModelVisualizer() {
 			onPointerMove={handlePointerMove}
 			onPointerUp={handlePointerUp}
 			onPointerLeave={handlePointerUp}
-			className="w-full h-[500px] bg-[var(--md-sys-color-surface-container-low)] rounded-[2.5rem] relative overflow-hidden shadow-sm group select-none touch-none"
+			className="w-full h-[500px] bg-(--md-sys-color-surface-container-low) rounded-4xl relative overflow-hidden shadow-sm group select-none touch-none"
 		>
 			<div
 				className="absolute inset-0 opacity-5"
@@ -439,8 +439,8 @@ export function ERModelVisualizer() {
 						</div>
 
 						{expanded && (
-							<div className="mt-4 pt-3 border-t border-[var(--md-sys-color-outline)]/20 space-y-2 pointer-events-none">
-								<div className="text-xs font-medium opacity-80 uppercase tracking-widest text-[var(--md-sys-color-on-surface)]">
+							<div className="mt-4 pt-3 border-t border-(--md-sys-color-outline)/20 space-y-2 pointer-events-none">
+								<div className="text-xs font-medium opacity-80 uppercase tracking-widest text-(--md-sys-color-on-surface)">
 									{n.desc}
 								</div>
 								<div className="space-y-1 mt-2">
@@ -450,7 +450,7 @@ export function ERModelVisualizer() {
 											className="flex items-center justify-between text-xs font-mono"
 										>
 											<span
-												className={`px-1.5 py-0.5 rounded ${attr.key === 'PK' ? 'bg-[var(--md-sys-color-primary)] text-white' : attr.key === 'FK' ? 'bg-[var(--md-sys-color-tertiary)] text-white' : 'bg-black/5 dark:bg-white/5 opacity-70'}`}
+												className={`px-1.5 py-0.5 rounded ${attr.key === 'PK' ? 'bg-(--md-sys-color-primary) text-white' : attr.key === 'FK' ? 'bg-(--md-sys-color-tertiary) text-white' : 'bg-black/5 dark:bg-white/5 opacity-70'}`}
 											>
 												{attr.key}
 											</span>
@@ -464,7 +464,7 @@ export function ERModelVisualizer() {
 				);
 			})}
 
-			<div className="absolute top-6 left-8 flex flex-col gap-1 text-[var(--md-sys-color-on-surface)] opacity-40 pointer-events-none">
+			<div className="absolute top-6 left-8 flex flex-col gap-1 text-(--md-sys-color-on-surface) opacity-40 pointer-events-none">
 				<div className="flex items-center gap-2">
 					<Database className="w-5 h-5" />
 					<span className="text-sm font-medium uppercase tracking-widest">
