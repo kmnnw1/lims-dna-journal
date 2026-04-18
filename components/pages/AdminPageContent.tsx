@@ -43,6 +43,7 @@ export function AdminPageContent(props: AdminPageProps) {
 		handleDeleteUser,
 		handleClearSpecimens,
 		handleImportFromExcel,
+		handleBulkUsers,
 	} = props;
 
 	if (status === 'loading') {
@@ -159,6 +160,43 @@ export function AdminPageContent(props: AdminPageProps) {
 								>
 									ИИ-очистка
 								</label>
+							</div>
+						</div>
+					</div>
+
+					<div className="lg:col-span-3 rounded-[2rem] bg-[var(--md-sys-color-tertiary-container)] text-[var(--md-sys-color-on-tertiary-container)] p-6 shadow-sm overflow-hidden relative">
+						<div className="relative z-10">
+							<h2 className="mb-2 flex items-center gap-3 text-xl font-medium tracking-tight">
+								<UserPlus className="h-6 w-6" strokeWidth={1.5} />
+								Массовое создание пользователей
+							</h2>
+							<p className="mb-4 text-sm opacity-80 max-w-2xl">
+								Введите список имен и фамилий (один человек на строку). Программа
+								автоматически создаст учетные записи с логинами вида{' '}
+								<code className="bg-black/10 px-1 rounded">фамилия_и</code>.
+							</p>
+							<div className="flex flex-col sm:flex-row gap-4 items-start">
+								<textarea
+									id="bulk-users-input"
+									placeholder="Иванов Иван&#10;Петров Петр"
+									className="w-full sm:flex-1 h-32 bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] rounded-2xl p-4 text-sm font-mono border-none focus:ring-2 focus:ring-[var(--md-sys-color-tertiary)] outline-none resize-none transition-all"
+								></textarea>
+								<button
+									type="button"
+									disabled={importBusy}
+									onClick={() => {
+										const input = document.getElementById(
+											'bulk-users-input',
+										) as HTMLTextAreaElement;
+										handleBulkUsers(input.value).then((res) => {
+											if (res) input.value = '';
+										});
+									}}
+									className="w-full sm:w-auto flex-shrink-0 inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-tertiary)] px-8 py-4 text-sm font-medium text-[var(--md-sys-color-on-tertiary)] shadow-md transition-all hover:shadow-lg active:scale-95 disabled:opacity-50"
+								>
+									<Sparkles className="h-4 w-4" />
+									Создать всех
+								</button>
 							</div>
 						</div>
 					</div>

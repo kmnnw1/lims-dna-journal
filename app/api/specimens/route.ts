@@ -135,7 +135,12 @@ export async function POST(request: Request) {
 			);
 		}
 
-		const created = await prisma.specimen.create({ data });
+		const created = await prisma.specimen.create({
+			data: {
+				...data,
+				labTechnicianId: (session.user as ApiUser)?.id,
+			},
+		});
 		invalidateSpecimenCaches();
 
 		const currentUser = session.user as ApiUser | undefined;

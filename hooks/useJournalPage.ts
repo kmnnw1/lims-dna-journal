@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
+import { formatOperatorName } from '@/lib/utils';
 import type { Specimen } from '@/types';
 
 export function useJournalPage() {
@@ -333,6 +334,17 @@ export function useJournalPage() {
 	useEffect(() => {
 		if (status === 'unauthenticated') router.push('/login');
 	}, [status, router]);
+
+	// Auto-fill operator from session when modal opens
+	useEffect(() => {
+		if (isAddModalOpen && !newRecordData.extrOperator) {
+			const user = session?.user as any;
+			if (user?.lastName) {
+				const formatted = formatOperatorName(user.firstName, user.lastName);
+				setNewRecordData((prev) => ({ ...prev, extrOperator: formatted }));
+			}
+		}
+	}, [isAddModalOpen, session, newRecordData.extrOperator]);
 
 	return {
 		session,
