@@ -286,6 +286,18 @@
 			}
 		}
 	],
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		},
+		"linter": {
+			"enabled": true
+		},
+		"formatter": {
+			"enabled": true,
+			"indentStyle": "tab"
+		}
+	},
 	"assist": {
 		"enabled": true,
 		"actions": { "source": { "organizeImports": "on" } }

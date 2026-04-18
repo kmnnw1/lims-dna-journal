@@ -17,315 +17,302 @@
 	animation: gentle-shake 0.3s ease-in-out;
 }
 
-@layer base {
-	:root {
-		/* Premium MD3 Expressive Light Theme */
-		--md-sys-color-primary: #0f766e;
-		--md-sys-color-on-primary: #ffffff;
-		--md-sys-color-primary-container: #ccfbf1;
-		--md-sys-color-on-primary-container: #042f2e;
+@theme {
+	/* Premium MD3 Expressive Light Theme */
+	--color-md-sys-primary: #0f766e;
+	--color-md-sys-on-primary: #ffffff;
+	--color-md-sys-primary-container: #ccfbf1;
+	--color-md-sys-on-primary-container: #042f2e;
 
-		--md-sys-color-secondary-container: #e0e7ff;
-		--md-sys-color-on-secondary-container: #1e1b4b;
+	--color-md-sys-secondary-container: #e0e7ff;
+	--color-md-sys-on-secondary-container: #1e1b4b;
 
-		--md-sys-color-surface: #f8fafc;
-		--md-sys-color-on-surface: #0f172a;
-		--md-sys-color-surface-container-lowest: #ffffff;
-		--md-sys-color-surface-container-low: #f1f5f9;
-		--md-sys-color-surface-container: #e2e8f0;
-		--md-sys-color-surface-container-high: #cbd5e1;
-		--md-sys-color-surface-container-highest: #f1f5f9;
+	--color-md-sys-surface: #f8fafc;
+	--color-md-sys-on-surface: #0f172a;
+	--color-md-sys-surface-container-lowest: #ffffff;
+	--color-md-sys-surface-container-low: #f1f5f9;
+	--color-md-sys-surface-container: #e2e8f0;
+	--color-md-sys-surface-container-high: #cbd5e1;
+	--color-md-sys-surface-container-highest: #f1f5f9;
 
-		--md-sys-color-inverse-surface: #1e293b;
-		--md-sys-color-inverse-on-surface: #f1f5f9;
+	--color-md-sys-inverse-surface: #1e293b;
+	--color-md-sys-inverse-on-surface: #f1f5f9;
 
-		--md-sys-color-outline: #94a3b8;
-		--md-sys-color-outline-variant: #cbd5e1;
+	--color-md-sys-outline: #94a3b8;
+	--color-md-sys-outline-variant: #cbd5e1;
 
-		--md-sys-color-error: #dc2626;
-		--md-sys-color-error-container: #fee2e2;
-		--md-sys-color-on-error-container: #7f1d1d;
+	--color-md-sys-error: #dc2626;
+	--color-md-sys-error-container: #fee2e2;
+	--color-md-sys-on-error-container: #7f1d1d;
 
-		--md-sys-color-tertiary: #7c3aed;
-		--md-sys-color-tertiary-container: #ede9fe;
-		--md-sys-color-on-tertiary-container: #4c1d95;
+	--color-md-sys-tertiary: #7c3aed;
+	--color-md-sys-tertiary-container: #ede9fe;
+	--color-md-sys-on-tertiary-container: #4c1d95;
 
-		--md-sys-color-surface-tint: #0f766e;
+	--color-md-sys-surface-tint: #0f766e;
 
-		/* MD3 Motion Tokens */
-		--md-sys-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
-		--md-sys-motion-easing-emphasized: cubic-bezier(0.3, 0, 0, 1);
-		--md-sys-motion-duration-short: 200ms;
-		--md-sys-motion-duration-medium: 400ms;
-		--md-sys-motion-duration-long: 700ms;
+	/* MD3 Motion Tokens */
+	--easing-md-sys-standard: cubic-bezier(0.2, 0, 0, 1);
+	--easing-md-sys-emphasized: cubic-bezier(0.3, 0, 0, 1);
+	--duration-md-sys-short: 200ms;
+	--duration-md-sys-medium: 400ms;
+	--duration-md-sys-long: 700ms;
 
-		/* MD3 Shape Tokens */
-		--md-sys-shape-corner-none: 0px;
-		--md-sys-shape-corner-xs: 4px;
-		--md-sys-shape-corner-sm: 8px;
-		--md-sys-shape-corner-md: 12px;
-		--md-sys-shape-corner-lg: 16px;
-		--md-sys-shape-corner-xl: 28px;
-		--md-sys-shape-corner-full: 9999px;
+	/* MD3 Shape Tokens */
+	--radius-md-sys-corner-none: 0px;
+	--radius-md-sys-corner-xs: 4px;
+	--radius-md-sys-corner-sm: 8px;
+	--radius-md-sys-corner-md: 12px;
+	--radius-md-sys-corner-lg: 16px;
+	--radius-md-sys-corner-xl: 28px;
+	--radius-md-sys-corner-full: 9999px;
 
-		font-family: var(--font-outfit), system-ui, sans-serif;
-	}
+	--font-family-sans: var(--font-outfit), system-ui, sans-serif;
+}
 
-	.dark {
-		/* Premium MD3 Expressive Dark Theme */
-		--md-sys-color-primary: #2dd4bf;
-		--md-sys-color-on-primary: #042f2e;
-		--md-sys-color-primary-container: #0f766e;
-		--md-sys-color-on-primary-container: #ccfbf1;
+/* Legacy Root Support for Non-Tailwind Contexts */
+:root {
+	--md-sys-color-primary: var(--color-md-sys-primary);
+	--md-sys-color-on-primary: var(--color-md-sys-on-primary);
+	--md-sys-color-primary-container: var(--color-md-sys-primary-container);
+	--md-sys-color-on-primary-container: var(--color-md-sys-on-primary-container);
+	--md-sys-color-secondary-container: var(--color-md-sys-secondary-container);
+	--md-sys-color-on-secondary-container: var(--color-md-sys-on-secondary-container);
+	--md-sys-color-surface: var(--color-md-sys-surface);
+	--md-sys-color-on-surface: var(--color-md-sys-on-surface);
+	--md-sys-color-surface-container-lowest: var(--color-md-sys-surface-container-lowest);
+	--md-sys-color-surface-container-low: var(--color-md-sys-surface-container-low);
+	--md-sys-color-surface-container: var(--color-md-sys-surface-container);
+	--md-sys-color-surface-container-high: var(--color-md-sys-surface-container-high);
+	--md-sys-color-surface-container-highest: var(--color-md-sys-surface-container-highest);
+	--md-sys-color-outline: var(--color-md-sys-outline);
+	--md-sys-color-outline-variant: var(--color-md-sys-outline-variant);
+	--md-sys-color-error: var(--color-md-sys-error);
+	--md-sys-color-error-container: var(--color-md-sys-error-container);
+	--md-sys-color-on-error-container: var(--color-md-sys-on-error-container);
+	--md-sys-color-tertiary: var(--color-md-sys-tertiary);
+	--md-sys-color-tertiary-container: var(--color-md-sys-tertiary-container);
+	--md-sys-color-on-tertiary-container: var(--color-md-sys-on-tertiary-container);
+	--md-sys-shape-corner-lg: var(--radius-md-sys-corner-lg);
+	--md-sys-shape-corner-xl: var(--radius-md-sys-corner-xl);
+	--md-sys-shape-corner-md: var(--radius-md-sys-corner-md);
+}
 
-		--md-sys-color-secondary-container: #312e81;
-		--md-sys-color-on-secondary-container: #e0e7ff;
+.dark {
+	--color-md-sys-primary: #2dd4bf;
+	--color-md-sys-on-primary: #042f2e;
+	--color-md-sys-primary-container: #0f766e;
+	--color-md-sys-on-primary-container: #ccfbf1;
 
-		--md-sys-color-surface: #0b1120;
-		--md-sys-color-on-surface: #f1f5f9;
-		--md-sys-color-surface-container-lowest: #060d1a;
-		--md-sys-color-surface-container-low: #0f172a;
-		--md-sys-color-surface-container: #1e293b;
-		--md-sys-color-surface-container-high: #334155;
-		--md-sys-color-surface-container-highest: #1e293b;
+	--color-md-sys-secondary-container: #312e81;
+	--color-md-sys-on-secondary-container: #e0e7ff;
 
-		--md-sys-color-inverse-surface: #e2e8f0;
-		--md-sys-color-inverse-on-surface: #1e293b;
+	--color-md-sys-surface: #0b1120;
+	--color-md-sys-on-surface: #f1f5f9;
+	--color-md-sys-surface-container-lowest: #060d1a;
+	--color-md-sys-surface-container-low: #0f172a;
+	--color-md-sys-surface-container: #1e293b;
+	--color-md-sys-surface-container-high: #334155;
+	--color-md-sys-surface-container-highest: #1e293b;
 
-		--md-sys-color-outline: #64748b;
-		--md-sys-color-outline-variant: #334155;
+	--color-md-sys-outline: #64748b;
+	--color-md-sys-outline-variant: #334155;
 
-		--md-sys-color-error: #fca5a5;
-		--md-sys-color-error-container: #991b1b;
-		--md-sys-color-on-error-container: #fee2e2;
+	--color-md-sys-error: #fca5a5;
+	--color-md-sys-error-container: #991b1b;
+	--color-md-sys-on-error-container: #fee2e2;
 
-		--md-sys-color-tertiary: #c4b5fd;
-		--md-sys-color-tertiary-container: #5b21b6;
-		--md-sys-color-on-tertiary-container: #ede9fe;
+	--color-md-sys-tertiary: #c4b5fd;
+	--color-md-sys-tertiary-container: #5b21b6;
+	--color-md-sys-on-tertiary-container: #ede9fe;
+}
 
-		--md-sys-color-surface-tint: #2dd4bf;
-	}
+body {
+	background-color: var(--md-sys-color-surface);
+	color: var(--md-sys-color-on-surface);
+}
 
-	:root {
-		--monet-seed: #4f5b92;
-	}
+/* MD3 Scrollbar Customization - Minimal & Integrated */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+::-webkit-scrollbar-thumb {
+	background-color: var(--md-sys-color-outline-variant);
+	border: 2px solid transparent;
+	background-clip: padding-box;
+	border-radius: 10px;
+	transition: background-color 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+	background-color: var(--md-sys-color-outline);
+}
 
-	.monet {
-		/* Dynamic MD3 Monet Theme (Material You / Dynamic Colors) */
-		--md-sys-color-primary: var(--monet-seed);
-		--md-sys-color-on-primary: #ffffff;
-		--md-sys-color-primary-container: color-mix(in srgb, var(--monet-seed), white 80%);
-		--md-sys-color-on-primary-container: color-mix(in srgb, var(--monet-seed), black 60%);
+/* Hide Number Input Spinners */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+input[type="number"] {
+	appearance: textfield;
+	-moz-appearance: textfield;
+}
 
-		--md-sys-color-secondary-container: color-mix(in srgb, var(--monet-seed), white 85%);
-		--md-sys-color-on-secondary-container: color-mix(in srgb, var(--monet-seed), black 80%);
+/* Firefox Scrollbar */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: var(--md-sys-color-outline-variant) transparent;
+}
 
-		--md-sys-color-surface: color-mix(in srgb, var(--monet-seed), white 96%);
-		--md-sys-color-on-surface: color-mix(in srgb, var(--monet-seed), black 85%);
+/* MD3 Elevations — Точные значения с учетом фонового освещения */
+.md-elevation-1 {
+	box-shadow:
+		0px 1px 3px 1px rgba(0, 0, 0, 0.15),
+		0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+}
+.md-elevation-2 {
+	box-shadow:
+		0px 2px 6px 2px rgba(0, 0, 0, 0.15),
+		0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+}
+.md-elevation-3 {
+	box-shadow:
+		0px 4px 8px 3px rgba(0, 0, 0, 0.15),
+		0px 1px 3px 0px rgba(0, 0, 0, 0.3);
+}
+.md-elevation-4 {
+	box-shadow:
+		0px 6px 10px 4px rgba(0, 0, 0, 0.15),
+		0px 2px 3px 0px rgba(0, 0, 0, 0.3);
+}
+.md-elevation-5 {
+	box-shadow:
+		0px 8px 12px 6px rgba(0, 0, 0, 0.15),
+		0px 4px 4px 0px rgba(0, 0, 0, 0.3);
+}
 
-		--md-sys-color-surface-container-lowest: #ffffff;
-		--md-sys-color-surface-container-low: color-mix(in srgb, var(--monet-seed), white 92%);
-		--md-sys-color-surface-container: color-mix(in srgb, var(--monet-seed), white 88%);
-		--md-sys-color-surface-container-high: color-mix(in srgb, var(--monet-seed), white 84%);
-		--md-sys-color-surface-container-highest: color-mix(in srgb, var(--monet-seed), white 80%);
+/* MD3 State Layers - True Material implementation */
+.md-state-layer {
+	position: relative;
+	overflow: hidden;
+}
+.md-state-layer::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background-color: currentColor;
+	opacity: 0;
+	transition: opacity var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
+}
+.md-state-layer:hover::before {
+	opacity: 0.08;
+}
+.md-state-layer:focus-visible::before {
+	opacity: 0.12;
+}
+.md-state-layer:active::before {
+	opacity: 0.12;
+}
 
-		--md-sys-color-outline: color-mix(in srgb, var(--monet-seed), black 40%);
-		--md-sys-color-outline-variant: color-mix(in srgb, var(--monet-seed), white 70%);
+/* MD3 Typography */
+.md-typescale-display-large {
+	font-size: 57px;
+	line-height: 64px;
+	font-weight: 400;
+	letter-spacing: -0.25px;
+}
+.md-typescale-display-medium {
+	font-size: 45px;
+	line-height: 52px;
+	font-weight: 400;
+	letter-spacing: 0px;
+}
+.md-typescale-display-small {
+	font-size: 36px;
+	line-height: 44px;
+	font-weight: 400;
+	letter-spacing: 0px;
+}
 
-		--md-sys-color-error: #ba1a1a;
-		--md-sys-color-error-container: #ffdad6;
-		--md-sys-color-on-error-container: #410002;
+.md-typescale-headline-large {
+	font-size: 32px;
+	line-height: 40px;
+	font-weight: 400;
+	letter-spacing: 0px;
+}
+.md-typescale-headline-medium {
+	font-size: 28px;
+	line-height: 36px;
+	font-weight: 400;
+	letter-spacing: 0px;
+}
+.md-typescale-headline-small {
+	font-size: 24px;
+	line-height: 32px;
+	font-weight: 400;
+	letter-spacing: 0px;
+}
 
-		--md-sys-color-surface-tint: var(--monet-seed);
-	}
+.md-typescale-title-large {
+	font-size: 22px;
+	line-height: 28px;
+	font-weight: 400;
+	letter-spacing: 0px;
+}
+.md-typescale-title-medium {
+	font-size: 16px;
+	line-height: 24px;
+	font-weight: 500;
+	letter-spacing: 0.15px;
+}
+.md-typescale-title-small {
+	font-size: 14px;
+	line-height: 20px;
+	font-weight: 500;
+	letter-spacing: 0.1px;
+}
 
-	body {
-		background-color: var(--md-sys-color-surface);
-		color: var(--md-sys-color-on-surface);
-	}
+.md-typescale-body-large {
+	font-size: 16px;
+	line-height: 24px;
+	font-weight: 400;
+	letter-spacing: 0.5px;
+}
+.md-typescale-body-medium {
+	font-size: 14px;
+	line-height: 20px;
+	font-weight: 400;
+	letter-spacing: 0.25px;
+}
+.md-typescale-body-small {
+	font-size: 12px;
+	line-height: 16px;
+	font-weight: 400;
+	letter-spacing: 0.4px;
+}
 
-	/* MD3 Scrollbar Customization - Minimal & Integrated */
-	::-webkit-scrollbar {
-		width: 8px;
-		height: 8px;
-	}
-	::-webkit-scrollbar-track {
-		background: transparent;
-	}
-	::-webkit-scrollbar-thumb {
-		background-color: var(--md-sys-color-outline-variant);
-		border: 2px solid transparent;
-		background-clip: padding-box;
-		border-radius: 10px;
-		transition: background-color 0.2s ease;
-	}
-	::-webkit-scrollbar-thumb:hover {
-		background-color: var(--md-sys-color-outline);
-	}
-
-	/* Hide Number Input Spinners */
-	input::-webkit-outer-spin-button,
-	input::-webkit-inner-spin-button {
-		-webkit-appearance: none;
-		margin: 0;
-	}
-	input[type="number"] {
-		appearance: textfield;
-		-moz-appearance: textfield;
-	}
-
-	/* Firefox Scrollbar */
-	* {
-		scrollbar-width: thin;
-		scrollbar-color: var(--md-sys-color-outline-variant) transparent;
-	}
-
-	/* MD3 Elevations — Точные значения с учетом фонового освещения */
-	.md-elevation-1 {
-		box-shadow:
-			0px 1px 3px 1px rgba(0, 0, 0, 0.15),
-			0px 1px 2px 0px rgba(0, 0, 0, 0.3);
-	}
-	.md-elevation-2 {
-		box-shadow:
-			0px 2px 6px 2px rgba(0, 0, 0, 0.15),
-			0px 1px 2px 0px rgba(0, 0, 0, 0.3);
-	}
-	.md-elevation-3 {
-		box-shadow:
-			0px 4px 8px 3px rgba(0, 0, 0, 0.15),
-			0px 1px 3px 0px rgba(0, 0, 0, 0.3);
-	}
-	.md-elevation-4 {
-		box-shadow:
-			0px 6px 10px 4px rgba(0, 0, 0, 0.15),
-			0px 2px 3px 0px rgba(0, 0, 0, 0.3);
-	}
-	.md-elevation-5 {
-		box-shadow:
-			0px 8px 12px 6px rgba(0, 0, 0, 0.15),
-			0px 4px 4px 0px rgba(0, 0, 0, 0.3);
-	}
-
-	/* MD3 State Layers - True Material implementation */
-	.md-state-layer {
-		position: relative;
-		overflow: hidden;
-	}
-	.md-state-layer::before {
-		content: "";
-		position: absolute;
-		inset: 0;
-		pointer-events: none;
-		background-color: currentColor;
-		opacity: 0;
-		transition: opacity var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
-	}
-	.md-state-layer:hover::before {
-		opacity: 0.08;
-	}
-	.md-state-layer:focus-visible::before {
-		opacity: 0.12;
-	}
-	.md-state-layer:active::before {
-		opacity: 0.12;
-	}
-
-	/* MD3 Typography */
-	.md-typescale-display-large {
-		font-size: 57px;
-		line-height: 64px;
-		font-weight: 400;
-		letter-spacing: -0.25px;
-	}
-	.md-typescale-display-medium {
-		font-size: 45px;
-		line-height: 52px;
-		font-weight: 400;
-		letter-spacing: 0px;
-	}
-	.md-typescale-display-small {
-		font-size: 36px;
-		line-height: 44px;
-		font-weight: 400;
-		letter-spacing: 0px;
-	}
-
-	.md-typescale-headline-large {
-		font-size: 32px;
-		line-height: 40px;
-		font-weight: 400;
-		letter-spacing: 0px;
-	}
-	.md-typescale-headline-medium {
-		font-size: 28px;
-		line-height: 36px;
-		font-weight: 400;
-		letter-spacing: 0px;
-	}
-	.md-typescale-headline-small {
-		font-size: 24px;
-		line-height: 32px;
-		font-weight: 400;
-		letter-spacing: 0px;
-	}
-
-	.md-typescale-title-large {
-		font-size: 22px;
-		line-height: 28px;
-		font-weight: 400;
-		letter-spacing: 0px;
-	}
-	.md-typescale-title-medium {
-		font-size: 16px;
-		line-height: 24px;
-		font-weight: 500;
-		letter-spacing: 0.15px;
-	}
-	.md-typescale-title-small {
-		font-size: 14px;
-		line-height: 20px;
-		font-weight: 500;
-		letter-spacing: 0.1px;
-	}
-
-	.md-typescale-body-large {
-		font-size: 16px;
-		line-height: 24px;
-		font-weight: 400;
-		letter-spacing: 0.5px;
-	}
-	.md-typescale-body-medium {
-		font-size: 14px;
-		line-height: 20px;
-		font-weight: 400;
-		letter-spacing: 0.25px;
-	}
-	.md-typescale-body-small {
-		font-size: 12px;
-		line-height: 16px;
-		font-weight: 400;
-		letter-spacing: 0.4px;
-	}
-
-	.md-typescale-label-large {
-		font-size: 14px;
-		line-height: 20px;
-		font-weight: 500;
-		letter-spacing: 0.1px;
-	}
-	.md-typescale-label-medium {
-		font-size: 12px;
-		line-height: 16px;
-		font-weight: 500;
-		letter-spacing: 0.5px;
-	}
-	.md-typescale-label-small {
-		font-size: 11px;
-		line-height: 16px;
-		font-weight: 500;
-		letter-spacing: 0.5px;
-	}
+.md-typescale-label-large {
+	font-size: 14px;
+	line-height: 20px;
+	font-weight: 500;
+	letter-spacing: 0.1px;
+}
+.md-typescale-label-medium {
+	font-size: 12px;
+	line-height: 16px;
+	font-weight: 500;
+	letter-spacing: 0.5px;
+}
+.md-typescale-label-small {
+	font-size: 11px;
+	line-height: 16px;
+	font-weight: 500;
+	letter-spacing: 0.5px;
 }
 
 @keyframes bubble {
