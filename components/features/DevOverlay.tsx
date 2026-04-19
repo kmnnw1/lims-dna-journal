@@ -1,6 +1,6 @@
 'use client';
 
-import { X, ShieldAlert, Cpu, Smartphone, Zap, Check } from 'lucide-react';
+import { Check, Cpu, ShieldAlert, Smartphone, X, Zap } from 'lucide-react';
 import React from 'react';
 
 export interface DevSettings {
@@ -43,7 +43,7 @@ export const DevOverlay: React.FC<DevOverlayProps> = ({
 	};
 
 	return (
-		<div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+		<div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
 			{/* Backdrop */}
 			<div
 				className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
@@ -56,7 +56,9 @@ export const DevOverlay: React.FC<DevOverlayProps> = ({
 				<div className="flex items-center justify-between p-4 bg-(--md-sys-color-error-container)/20 border-b border-(--md-sys-color-outline-variant)/20">
 					<div className="flex items-center gap-2 text-(--md-sys-color-error)">
 						<ShieldAlert className="w-5 h-5" />
-						<h2 className="font-bold text-base tracking-tight uppercase">Инструменты</h2>
+						<h2 className="font-bold text-base tracking-tight uppercase">
+							Инструменты
+						</h2>
 					</div>
 					<button
 						onClick={onClose}
@@ -68,7 +70,8 @@ export const DevOverlay: React.FC<DevOverlayProps> = ({
 
 				<div className="p-6 space-y-6">
 					<p className="text-xs text-(--md-sys-color-outline) font-medium italic leading-relaxed">
-						Панель инструментов разработчика. Изменения применяются только для вашей сессии.
+						Панель инструментов разработчика. Изменения применяются только для вашей
+						сессии.
 					</p>
 
 					{/* Toggles (No sliders, clean MD3 style) */}
@@ -82,18 +85,24 @@ export const DevOverlay: React.FC<DevOverlayProps> = ({
 							}`}
 						>
 							<div className="flex items-center gap-3">
-								<Smartphone className={`w-5 h-5 ${settings.enableMobileCards ? 'text-(--md-sys-color-primary)' : 'opacity-60'}`} />
+								<Smartphone
+									className={`w-5 h-5 ${settings.enableMobileCards ? 'text-(--md-sys-color-primary)' : 'opacity-60'}`}
+								/>
 								<div className="text-left">
 									<h3 className="font-bold text-sm">Мобильные карточки</h3>
 									<p className="text-[10px] opacity-60">Экспериментальный вид</p>
 								</div>
 							</div>
-							<div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-								settings.enableMobileCards 
-									? 'bg-(--md-sys-color-primary) border-(--md-sys-color-primary)' 
-									: 'border-(--md-sys-color-outline-variant)'
-							}`}>
-								{settings.enableMobileCards && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+							<div
+								className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+									settings.enableMobileCards
+										? 'bg-(--md-sys-color-primary) border-(--md-sys-color-primary)'
+										: 'border-(--md-sys-color-outline-variant)'
+								}`}
+							>
+								{settings.enableMobileCards && (
+									<Check className="w-4 h-4 text-white" strokeWidth={3} />
+								)}
 							</div>
 						</button>
 
@@ -106,18 +115,26 @@ export const DevOverlay: React.FC<DevOverlayProps> = ({
 							}`}
 						>
 							<div className="flex items-center gap-3">
-								<Cpu className={`w-5 h-5 ${settings.forceDesktopView ? 'text-(--md-sys-color-tertiary)' : 'opacity-60'}`} />
+								<Cpu
+									className={`w-5 h-5 ${settings.forceDesktopView ? 'text-(--md-sys-color-tertiary)' : 'opacity-60'}`}
+								/>
 								<div className="text-left">
 									<h3 className="font-bold text-sm">Принудительно ПК</h3>
-									<p className="text-[10px] opacity-60">Игнорировать тип устройства</p>
+									<p className="text-[10px] opacity-60">
+										Игнорировать тип устройства
+									</p>
 								</div>
 							</div>
-							<div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-								settings.forceDesktopView 
-									? 'bg-(--md-sys-color-tertiary) border-(--md-sys-color-tertiary)' 
-									: 'border-(--md-sys-color-outline-variant)'
-							}`}>
-								{settings.forceDesktopView && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+							<div
+								className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+									settings.forceDesktopView
+										? 'bg-(--md-sys-color-tertiary) border-(--md-sys-color-tertiary)'
+										: 'border-(--md-sys-color-outline-variant)'
+								}`}
+							>
+								{settings.forceDesktopView && (
+									<Check className="w-4 h-4 text-white" strokeWidth={3} />
+								)}
 							</div>
 						</button>
 
@@ -130,18 +147,26 @@ export const DevOverlay: React.FC<DevOverlayProps> = ({
 							}`}
 						>
 							<div className="flex items-center gap-3">
-								<Zap className={`w-5 h-5 ${settings.forceMobileView ? 'text-(--md-sys-color-secondary)' : 'opacity-60'}`} />
+								<Zap
+									className={`w-5 h-5 ${settings.forceMobileView ? 'text-(--md-sys-color-secondary)' : 'opacity-60'}`}
+								/>
 								<div className="text-left">
 									<h3 className="font-bold text-sm">Принудительно Мобильный</h3>
-									<p className="text-[10px] opacity-60">Эмуляция телефона на ПК</p>
+									<p className="text-[10px] opacity-60">
+										Эмуляция телефона на ПК
+									</p>
 								</div>
 							</div>
-							<div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-								settings.forceMobileView 
-									? 'bg-(--md-sys-color-secondary) border-(--md-sys-color-secondary)' 
-									: 'border-(--md-sys-color-outline-variant)'
-							}`}>
-								{settings.forceMobileView && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+							<div
+								className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+									settings.forceMobileView
+										? 'bg-(--md-sys-color-secondary) border-(--md-sys-color-secondary)'
+										: 'border-(--md-sys-color-outline-variant)'
+								}`}
+							>
+								{settings.forceMobileView && (
+									<Check className="w-4 h-4 text-white" strokeWidth={3} />
+								)}
 							</div>
 						</button>
 					</div>
