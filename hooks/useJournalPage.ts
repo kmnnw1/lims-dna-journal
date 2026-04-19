@@ -48,6 +48,10 @@ export function useJournalPage() {
 	});
 
 	const [isMobileDevice, setIsMobileDevice] = useState(false);
+	const [devSettings, setDevSettings] = useState({
+		enableMobileCards: false,
+		forceDesktopView: false,
+	});
 	const [pcrForm, setPcrForm] = useState({
 		volume: '25',
 		marker: '',
@@ -100,6 +104,22 @@ export function useJournalPage() {
 
 		setIsMobileDevice(isHandheld || isTablet || isSpecialMobile);
 	}, []);
+
+	// Dev settings sync
+	useEffect(() => {
+		if (typeof window === 'undefined') return;
+		const saved = localStorage.getItem('devSettings');
+		if (saved) {
+			try {
+				setDevSettings(JSON.parse(saved));
+			} catch (_) {}
+		}
+	}, []);
+
+	useEffect(() => {
+		if (typeof window === 'undefined') return;
+		localStorage.setItem('devSettings', JSON.stringify(devSettings));
+	}, [devSettings]);
 
 	// Reset page on filter change
 	useEffect(() => {
@@ -397,6 +417,8 @@ export function useJournalPage() {
 		isScanOpen,
 		setIsScanOpen,
 		isMobileDevice,
+		devSettings,
+		setDevSettings,
 		newRecordData,
 		setNewRecordData,
 		pcrForm,
