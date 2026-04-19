@@ -27,15 +27,21 @@ function smartFilter(text: string): string {
 	// 2. Убираем повторяющийся шум Biome и TSC
 	const lines = cleanAnsi.split('\n');
 	const usefulLines = lines.filter((line) => {
-		const noise = [
-			'Checked 127 files',
+		// Оставляем всё, кроме чисто информационных строк прогресса Biome/TSC
+		const purelyInfo = [
+			'Checked 130 files',
 			'No fixes applied',
-			'Some errors were emitted',
 			'npx tsc --noEmit',
 			'biome check .',
 			'npm run lint',
 		];
-		return !noise.some((n) => line.includes(n)) && line.trim().length > 0;
+		const isInfo = purelyInfo.some((n) => line.trim() === n);
+		// Если в строке есть намек на ошибку или ворнинг - обязательно оставляем
+		const hasAlert =
+			line.toLowerCase().includes('error') ||
+			line.includes('!') ||
+			line.toLowerCase().includes('warning');
+		return !isInfo || hasAlert;
 	});
 
 	return usefulLines.join('\n');
