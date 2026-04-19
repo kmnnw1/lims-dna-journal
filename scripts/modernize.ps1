@@ -33,7 +33,7 @@ function Get-LatestNodeVersions {
         return @{ lts = $lts; current = $current }
     } catch {
         Write-Output "  ⚠️  Ошибка подключения. Использую статические данные (апрель 2026)."
-        return @{ lts = "24.1.0"; current = "26.0.0" }
+        return @{ lts = "24.0.0"; current = "24.0.0" }
     }
 }
 

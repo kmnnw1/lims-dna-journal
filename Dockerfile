@@ -1,5 +1,5 @@
 # Stage 1: Dependencies
-FROM node:26-bookworm-slim AS deps
+FROM node:24-bookworm-slim AS deps
 WORKDIR /app
 
 # Обновляем NPM до актуальной версии через Corepack
@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/root/.npm \
     HUSKY=0 npm ci
 
 # Stage 2: Builder
-FROM node:26-bookworm-slim AS builder
+FROM node:24-bookworm-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -35,7 +35,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Stage 3: Runner
-FROM node:26-bookworm-slim AS runner
+FROM node:24-bookworm-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
