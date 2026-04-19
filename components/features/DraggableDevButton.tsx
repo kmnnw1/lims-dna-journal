@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useAnimation } from 'framer-motion';
+import { motion, type PanInfo, useAnimation } from 'framer-motion';
 import { ShieldAlert } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -22,7 +22,7 @@ export const DraggableDevButton: React.FC<DraggableDevButtonProps> = ({ onClick 
 		controls.set({ x: 20, y: 20 });
 	}, [controls]);
 
-	const handleDragEnd = (_: any, info: any) => {
+	const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
 		setIsDragging(false);
 		const winWidth = window.innerWidth;
 		const winHeight = window.innerHeight;
@@ -30,19 +30,16 @@ export const DraggableDevButton: React.FC<DraggableDevButtonProps> = ({ onClick 
 		const btnHeight = buttonRef.current?.offsetHeight || 0;
 		const edgePadding = 20;
 
-		// Local coordinates from the drag info
-		const currentX = info.offset.x + 20; // 20 is initial x
-		const currentY = info.offset.y + 20; // 20 is initial y
-
 		// Snap logic based on absolute screen position
 		const snapX = info.point.x < winWidth / 2 ? edgePadding : winWidth - btnWidth - edgePadding;
-		const snapY = info.point.y < winHeight / 2 ? edgePadding : winHeight - btnHeight - edgePadding;
+		const snapY =
+			info.point.y < winHeight / 2 ? edgePadding : winHeight - btnHeight - edgePadding;
 
 		// Convert absolute snap point to relative x/y (since initial is 0,0 for transform but we set 20,20)
 		// It's safer to just animate to absolute if we use fixed, but motion x/y are transforms.
 		// Let's use left/top for position and x/y for dragging offset? No, that's what broke it.
 		// Correct way: use x and y ONLY.
-		
+
 		controls.start({
 			x: snapX,
 			y: snapY,
@@ -64,11 +61,11 @@ export const DraggableDevButton: React.FC<DraggableDevButtonProps> = ({ onClick 
 			onClick={() => {
 				if (!isDragging) onClick();
 			}}
-			className="fixed z-[10000] p-3.5 rounded-full bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface-variant) shadow-2xl border border-(--md-sys-color-outline-variant)/50 md-elevation-3 cursor-grab active:cursor-grabbing group overflow-hidden"
-			style={{ 
+			className="fixed z-10000 p-3.5 rounded-full bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface-variant) shadow-2xl border border-(--md-sys-color-outline-variant)/50 md-elevation-3 cursor-grab active:cursor-grabbing group overflow-hidden"
+			style={{
 				touchAction: 'none',
 				left: 0,
-				top: 0
+				top: 0,
 			}}
 		>
 			<div className="absolute inset-0 bg-(--md-sys-color-primary)/5 opacity-0 group-hover:opacity-100 transition-opacity" />
