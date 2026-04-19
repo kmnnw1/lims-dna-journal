@@ -9,7 +9,8 @@ WORKDIR /app
 RUN npm install -g npm@latest
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# Отключаем Husky при сборке, так как нет .git
+RUN HUSKY=0 npm ci
 
 # Stage 2: Builder
 FROM node:22-bookworm-slim AS builder
@@ -42,9 +43,9 @@ ENV HOSTNAME="0.0.0.0"
 # Устанавливаем OpenSSL для Prisma в рантайме
 RUN apt-get update && apt-get install -y openssl --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Создаем пользователя для безопасности
-RUN groupadd --system --gid 1001 nodejs
-RUN useradd --system --uid 1001 nextjs
+# Создаем пользователя для безопасности (используем стандартный системный UID 999)
+RUN groupadd --system --gid 999 nodejs
+RUN useradd --system --uid 999 --gid nodejs --no-create-home nextjs
 
 # Копируем публичные ассеты и статику
 COPY --from=builder /app/public ./public
