@@ -47,6 +47,7 @@ export function useJournalPage() {
 		extrDateRaw: '',
 	});
 
+	const [isMobileDevice, setIsMobileDevice] = useState(false);
 	const [pcrForm, setPcrForm] = useState({
 		volume: '25',
 		marker: '',
@@ -79,6 +80,26 @@ export function useJournalPage() {
 		if (theme !== 'light') document.documentElement.classList.add(theme);
 		localStorage.setItem('theme', theme);
 	}, [theme]);
+
+	// Физическое определение мобильного устройства (даже если включен "Режим ПК")
+	useEffect(() => {
+		if (typeof window === 'undefined') return;
+		const ua = navigator.userAgent;
+		const isHandheld = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+			ua,
+		);
+
+		// Для iPad и других планшетов, которые могут мимикрировать под десктоп
+		// Но у них много точек касания и нет десктопной платформы в некоторых проверках
+		const isTablet =
+			navigator.maxTouchPoints > 0 &&
+			!/Win32|Win64|MacIntel|Linux x86_64/i.test(navigator.platform);
+
+		// Дополнительная проверка на "Pingvin" или типа того (вероятно Puffin или Linux Mobile)
+		const isSpecialMobile = /Linux/i.test(ua) && navigator.maxTouchPoints > 0;
+
+		setIsMobileDevice(isHandheld || isTablet || isSpecialMobile);
+	}, []);
 
 	// Reset page on filter change
 	useEffect(() => {
@@ -375,6 +396,7 @@ export function useJournalPage() {
 		setIsBatchModalOpen,
 		isScanOpen,
 		setIsScanOpen,
+		isMobileDevice,
 		newRecordData,
 		setNewRecordData,
 		pcrForm,
