@@ -50,6 +50,7 @@ export function JournalPageContent() {
 		setIsBatchModalOpen,
 		isScanOpen,
 		setIsScanOpen,
+		isMobileDevice,
 		newRecordData,
 		setNewRecordData,
 		pcrForm,
@@ -165,44 +166,48 @@ export function JournalPageContent() {
 					</div>
 
 					<div className="flex items-center justify-between md:justify-end gap-2 shrink-0 md:pr-2">
-						<button
-							onClick={() => setIsScanOpen(true)}
-							className="flex lg:hidden items-center gap-2 px-4 py-2 bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
-						>
-							<Camera className="w-4 h-4 sm:w-5 sm:h-5" />
-							<span className="hidden sm:inline">Сканировать</span>
-						</button>
-						<div className="relative" ref={exportRef}>
-							<button
-								onClick={() => setIsExportOpen(!isExportOpen)}
-								className="flex items-center gap-2 px-4 py-2 bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
-							>
-								<Download className="w-4 h-4 sm:w-5 sm:h-5" />
-								<span className="hidden lg:inline">Экспорт</span>
-								<ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
-							</button>
-							{isExportOpen && (
-								<div className="absolute top-full right-0 mt-2 min-w-[160px] py-2 bg-(--md-sys-color-surface-container-lowest) rounded-2xl shadow-xl md-elevation-3 z-50 border border-(--md-sys-color-outline-variant)/30">
-									<button
-										onClick={() => {
-											setIsExportOpen(false);
-											handleExportCSV();
-										}}
-										className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-surface-container-high) transition-colors text-(--md-sys-color-on-surface)"
-									>
-										Сохранить CSV
-									</button>
-									<button
-										onClick={() => {
-											setIsExportOpen(false);
-											handleExportXLSX();
-										}}
-										className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-surface-container-high) transition-colors text-(--md-sys-color-on-surface)"
-									>
-										Сохранить Excel (.xlsx)
-									</button>
-								</div>
+						<div className="flex items-center gap-2">
+							{isMobileDevice && (
+								<button
+									onClick={() => setIsScanOpen(true)}
+									className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
+								>
+									<Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+									<span className="hidden sm:inline">Сканировать</span>
+								</button>
 							)}
+							<div className="relative" ref={exportRef}>
+								<button
+									onClick={() => setIsExportOpen(!isExportOpen)}
+									className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
+								>
+									<Download className="w-4 h-4 sm:w-5 sm:h-5" />
+									<span className="hidden lg:inline">Экспорт</span>
+									<ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+								</button>
+								{isExportOpen && (
+									<div className="absolute top-full right-0 mt-2 min-w-[160px] py-2 bg-(--md-sys-color-surface-container-lowest) rounded-2xl shadow-xl md-elevation-3 z-50 border border-(--md-sys-color-outline-variant)/30">
+										<button
+											onClick={() => {
+												setIsExportOpen(false);
+												handleExportCSV();
+											}}
+											className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-surface-container-high) transition-colors text-(--md-sys-color-on-surface)"
+										>
+											Сохранить CSV
+										</button>
+										<button
+											onClick={() => {
+												setIsExportOpen(false);
+												handleExportXLSX();
+											}}
+											className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-surface-container-high) transition-colors text-(--md-sys-color-on-surface)"
+										>
+											Сохранить Excel (.xlsx)
+										</button>
+									</div>
+								)}
+							</div>
 						</div>
 						<PaginationControls
 							page={page}
