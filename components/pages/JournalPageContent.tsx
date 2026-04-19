@@ -154,12 +154,12 @@ export function JournalPageContent() {
 					suggestions={suggestions}
 				/>
 
-				<div className="flex flex-row items-center justify-between gap-3 mb-4 bg-(--md-sys-color-surface-container-low)/50 p-2 rounded-4xl border border-(--md-sys-color-outline-variant)/20">
+				<div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4 bg-(--md-sys-color-surface-container-low)/50 p-2 sm:p-3 rounded-2xl sm:rounded-4xl border border-(--md-sys-color-outline-variant)/20">
 					<div className="flex-1 overflow-x-auto no-scrollbar flex items-center">
 						<StatsCards {...stats} />
 					</div>
 
-					<div className="flex items-center gap-2 shrink-0 pr-2">
+					<div className="flex items-center justify-between md:justify-end gap-2 shrink-0 md:pr-2">
 						<button
 							onClick={() => setIsScanOpen(true)}
 							className="flex lg:hidden items-center gap-2 px-4 py-2 bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
