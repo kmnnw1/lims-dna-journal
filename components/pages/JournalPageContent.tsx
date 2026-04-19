@@ -22,6 +22,8 @@ import { PcrModal } from '@/components/modals/PCRModal';
 import { FAB } from '@/components/ui/FAB';
 import { useJournalPage } from '@/hooks/useJournalPage';
 import type { Specimen } from '@/types';
+import { DevOverlay } from '@/components/features/DevOverlay';
+import { DraggableDevButton } from '@/components/features/DraggableDevButton';
 
 export function JournalPageContent() {
 	const {
@@ -75,14 +77,26 @@ export function JournalPageContent() {
 		suggestions,
 		toastMessage,
 		setToastMessage,
+		devSettings,
+		setDevSettings,
 	} = useJournalPage();
 
+	const [isDevOpen, setIsDevOpen] = useState(false);
 	const [isExportOpen, setIsExportOpen] = useState(false);
+	const [lastExportFormat, setLastExportFormat] = useState<'XLSX' | 'CSV' | 'SQL'>('XLSX');
 	const [historyTarget, setHistoryTarget] = useState<{
 		id: string;
 		type: 'SPECIMEN' | 'PCR_ATTEMPT';
 	} | null>(null);
 	const exportRef = useRef<HTMLDivElement>(null);
+
+	// Load last export format from localStorage
+	useEffect(() => {
+		const saved = localStorage.getItem('lastExportFormat');
+		if (saved === 'XLSX' || saved === 'CSV' || saved === 'SQL') {
+			setLastExportFormat(saved);
+		}
+	}, []);
 
 	// Close export dropdown on outside click
 	useEffect(() => {
@@ -94,6 +108,13 @@ export function JournalPageContent() {
 		document.addEventListener('mousedown', handleClick);
 		return () => document.removeEventListener('mousedown', handleClick);
 	}, []);
+
+	// Auto-dismiss toast after 4 seconds
+	useEffect(() => {
+		if (!toastMessage) return;
+		const timer = setTimeout(() => setToastMessage(null), 4000);
+		return () => clearTimeout(timer);
+	}, [toastMessage, setToastMessage]);
 
 	const handleSelect = (id: string) => {
 		setSelectedIds((current) => {
@@ -111,13 +132,6 @@ export function JournalPageContent() {
 		});
 	};
 
-	// Auto-dismiss toast after 4 seconds
-	useEffect(() => {
-		if (!toastMessage) return;
-		const timer = setTimeout(() => setToastMessage(null), 4000);
-		return () => clearTimeout(timer);
-	}, [toastMessage, setToastMessage]);
-
 	const handleThemeToggle = (newTheme: 'light' | 'dark') => {
 		const doc = document as Document & { startViewTransition?: (callback: () => void) => void };
 		if (typeof doc.startViewTransition !== 'function') {
@@ -134,6 +148,28 @@ export function JournalPageContent() {
 
 	const handleHistoryOpen = (specimen: Specimen) => {
 		setHistoryTarget({ id: specimen.id, type: 'SPECIMEN' });
+	};
+
+	const handleMainExportClick = () => {
+		if (lastExportFormat === 'XLSX') handleExportXLSX();
+		else if (lastExportFormat === 'CSV') handleExportCSV();
+		else if (lastExportFormat === 'SQL') handleExportDB();
+	};
+
+	const handleExportDB = () => {
+		window.open('/api/export/db', '_blank');
+	};
+
+	const saveFormat = (format: 'XLSX' | 'CSV' | 'SQL') => {
+		setLastExportFormat(format);
+		localStorage.setItem('lastExportFormat', format);
+		setIsExportOpen(false);
+	};
+
+	const getFormatLabel = (format: 'XLSX' | 'CSV' | 'SQL') => {
+		if (format === 'XLSX') return 'Excel';
+		if (format === 'CSV') return 'CSV';
+		return 'SQL';
 	};
 
 	if (status === 'loading') return null;
@@ -155,18 +191,17 @@ export function JournalPageContent() {
 					setMinConc={setMinConc}
 					maxConc={maxConc}
 					setMaxConc={setMaxConc}
-					selectedOperator={selectedOperator}
 					setSelectedOperator={setSelectedOperator}
 					suggestions={suggestions}
 				/>
 
 				<div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4 bg-(--md-sys-color-surface-container-low)/50 p-2 sm:p-3 rounded-2xl sm:rounded-4xl border border-(--md-sys-color-outline-variant)/20">
-					<div className="flex-1 overflow-x-auto no-scrollbar flex items-center">
+					<div className="flex-1 flex flex-wrap items-center justify-start gap-2 sm:gap-4">
 						<StatsCards {...stats} />
 					</div>
 
-					<div className="flex items-center justify-between md:justify-end gap-2 shrink-0 md:pr-2">
-						<div className="flex items-center gap-2">
+					<div className="flex flex-row items-end md:items-center justify-end gap-2 shrink-0 md:pr-2 w-full md:w-auto">
+						<div className="flex items-center gap-1.5 sm:gap-2">
 							{isMobileDevice && (
 								<button
 									onClick={() => setIsScanOpen(true)}
@@ -176,34 +211,59 @@ export function JournalPageContent() {
 									<span className="hidden sm:inline">Сканировать</span>
 								</button>
 							)}
-							<div className="relative" ref={exportRef}>
-								<button
-									onClick={() => setIsExportOpen(!isExportOpen)}
-									className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
-								>
-									<Download className="w-4 h-4 sm:w-5 sm:h-5" />
-									<span className="hidden lg:inline">Экспорт</span>
-									<ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
-								</button>
+							<div className="relative flex items-center" ref={exportRef}>
+								{/* Main Export Action (Split Button) */}
+								<div className="flex items-center bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-full shadow-sm hover:md-elevation-2 transition-all overflow-hidden group">
+									<button
+										onClick={handleMainExportClick}
+										className="flex items-center gap-2 pl-3 sm:pl-4 pr-1.5 py-2 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors font-medium text-xs sm:text-sm active:scale-95 whitespace-nowrap min-w-max"
+										title={`Экспорт в ${getFormatLabel(lastExportFormat)}`}
+									>
+										<Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+										<span>{getFormatLabel(lastExportFormat)}</span>
+									</button>
+									<div className="w-[1px] h-4 bg-(--md-sys-color-on-tertiary-container)/20" />
+									<button
+										onClick={() => setIsExportOpen(!isExportOpen)}
+										className="flex items-center justify-center px-1.5 sm:px-2 py-2 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors active:scale-90"
+										aria-label="Выбор формата экспорта"
+									>
+										<ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`} />
+									</button>
+								</div>
+
 								{isExportOpen && (
-									<div className="absolute top-full right-0 mt-2 min-w-[160px] py-2 bg-(--md-sys-color-surface-container-lowest) rounded-2xl shadow-xl md-elevation-3 z-50 border border-(--md-sys-color-outline-variant)/30">
+									<div className="absolute top-full right-0 mt-2 min-w-[240px] py-2 bg-(--md-sys-color-surface-container-lowest) rounded-2xl shadow-xl md-elevation-3 z-50 border border-(--md-sys-color-outline-variant)/30 overflow-hidden">
 										<button
 											onClick={() => {
-												setIsExportOpen(false);
-												handleExportCSV();
+												handleExportXLSX();
+												saveFormat('XLSX');
 											}}
-											className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-surface-container-high) transition-colors text-(--md-sys-color-on-surface)"
+											className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-tertiary-container)/10 transition-colors text-(--md-sys-color-on-surface) whitespace-nowrap"
 										>
-											Сохранить CSV
+											<div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+											Сохранить Excel (.xlsx)
 										</button>
 										<button
 											onClick={() => {
-												setIsExportOpen(false);
-												handleExportXLSX();
+												handleExportCSV();
+												saveFormat('CSV');
 											}}
-											className="w-full text-left px-5 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-surface-container-high) transition-colors text-(--md-sys-color-on-surface)"
+											className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-tertiary-container)/10 transition-colors text-(--md-sys-color-on-surface) whitespace-nowrap"
 										>
-											Сохранить Excel (.xlsx)
+											<div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+											Сохранить CSV
+										</button>
+										<div className="h-[1px] bg-(--md-sys-color-outline-variant)/20 my-1 mx-2" />
+										<button
+											onClick={() => {
+												handleExportDB();
+												saveFormat('SQL');
+											}}
+											className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-tertiary-container)/10 transition-colors text-(--md-sys-color-on-surface)"
+										>
+											<div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+											Скачать БД (.sqlite)
 										</button>
 									</div>
 								)}
@@ -216,62 +276,36 @@ export function JournalPageContent() {
 						/>
 					</div>
 				</div>
-
-				{/* Desktop Table */}
-				<div className="hidden md:block">
-					<SpecimenTable
-						specimens={specimens}
-						loading={loading}
-						selectedIds={selectedIds}
-						onSelect={handleSelect}
-						onSelectAll={handleSelectAll}
-						onEdit={setEditingSpecimen}
-						onPcr={setActivePcrSpecimen}
-						onStatusClick={handleStatusToggle}
-						searchQuery={searchQuery}
-						sortConfig={sortConfig}
-						onSort={handleSort}
-						onHistory={handleHistoryOpen}
-					/>
-				</div>
-
-				{/* Mobile Cards */}
-				<div className="block md:hidden space-y-4">
-					{loading && specimens.length === 0 ? (
-						[...Array(3)].map((_, i) => (
-							<div
-								key={i}
-								className="h-48 w-full rounded-3xl bg-(--md-sys-color-surface-container-high) animate-pulse"
-							/>
-						))
-					) : specimens.length === 0 ? (
-						<div className="p-12 text-center text-(--md-sys-color-outline) opacity-60">
-							Пробы не найдены
+				{/* Список проб */}
+				<div className="bg-(--md-sys-color-surface-container-lowest) rounded-3xl sm:rounded-4xl md-elevation-1 border border-(--md-sys-color-outline-variant)/10 overflow-hidden transition-all duration-500 min-h-[400px]">
+					{isMobileDevice && devSettings.enableMobileCards && !devSettings.forceDesktopView ? (
+						<div className="grid grid-cols-1 gap-3 p-3">
+							{specimens.map((s) => (
+								<MobileSpecimenCard
+									key={s.id}
+									specimen={s as unknown as MobileSpecimenShape}
+									onPcr={() => setActivePcrSpecimen(s)}
+									onEdit={() => setEditingSpecimen(s)}
+									onStatusToggle={(marker) => handleStatusToggle(s.id, marker)}
+									onShowHistory={() => handleHistoryOpen(s)}
+								/>
+							))}
 						</div>
 					) : (
-						specimens.map((specimen: Specimen) => (
-							<MobileSpecimenCard
-								key={specimen.id}
-								s={specimen as unknown as MobileSpecimenShape}
-								isReader={(session?.user as { role?: string })?.role === 'READER'}
-								selected={selectedIds.has(specimen.id)}
-								onToggleSelect={() => handleSelect(specimen.id)}
-								onEdit={() => setEditingSpecimen(specimen)}
-								onPcr={() => setActivePcrSpecimen(specimen)}
-								searchQuery={searchQuery}
-								renderStatus={(s, marker) => {
-									const statusKey =
-										`${marker.toLowerCase()}Status` as keyof typeof s;
-									return (
-										<PCRStatusBadge
-											status={s[statusKey] as string}
-											marker={marker}
-											onClick={() => handleStatusToggle(s.id, marker)}
-										/>
-									);
-								}}
-							/>
-						))
+						<SpecimenTable
+							specimens={specimens}
+							loading={loading}
+							onSort={handleSort}
+							sortConfig={sortConfig}
+							selectedIds={selectedIds}
+							onSelect={handleSelect}
+							onSelectAll={() => handleSelectAll(specimens.map((s) => s.id))}
+							onEdit={setEditingSpecimen}
+							onPcr={setActivePcrSpecimen}
+							onStatusClick={handleStatusToggle}
+							onHistory={handleHistoryOpen}
+							searchQuery={searchQuery}
+						/>
 					)}
 				</div>
 
@@ -371,6 +405,16 @@ export function JournalPageContent() {
 					}}
 				/>
 			</div>
+
+			<DevOverlay
+				isOpen={isDevOpen}
+				onClose={() => setIsDevOpen(false)}
+				settings={devSettings}
+				onUpdate={setDevSettings}
+				userName={session?.user?.name}
+			/>
+
+			<DraggableDevButton onClick={() => setIsDevOpen(true)} />
 
 			<FAB
 				extended
