@@ -12,9 +12,18 @@ jobs:
             NEXT_TELEMETRY_DISABLED: 1
             PRISMA_TELEMETRY_DISABLED: 1
             DO_NOT_TRACK: 1
+            # Временный «мостик» для перехода на Node 24 в ранерах GitHub.
+            # Можно будет удалить после 2026-09-16, когда Node 20 полностью исчезнет.
             FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         steps:
             - uses: actions/checkout@v4
+            - name: Cache npm dependencies
+              uses: actions/cache@v4
+              with:
+                path: ~/.npm
+                key: ${{ runner.os }}-node-playwright-${{ hashFiles('**/package-lock.json') }}
+                restore-keys: |
+                  ${{ runner.os }}-node-playwright-
             - uses: actions/setup-node@v4
               with:
                   node-version: 22
