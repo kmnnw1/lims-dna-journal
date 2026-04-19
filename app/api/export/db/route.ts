@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { handleError, requireRole } from '@/app/api/specimens/helpers';
 
@@ -16,7 +16,7 @@ export async function GET() {
 		if (!existsSync(dbPath)) {
 			return Response.json(
 				{ error: 'Файл базы данных не найден на сервере' },
-				{ status: 404 }
+				{ status: 404 },
 			);
 		}
 
