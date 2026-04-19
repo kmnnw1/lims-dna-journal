@@ -10,7 +10,7 @@ param(
 $ErrorActionPreference = "Stop"
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-function Show-Header {
+function Write-GuardianHeader {
     Write-Output "`n  ┌──────────────────────────────────────────────────────────┐"
     Write-Output "  │   🚀 MODERNIZATION GUARDIAN v2.1 - LAB-JOURNAL INFRA     │"
     Write-Output "  └──────────────────────────────────────────────────────────┘`n"
@@ -37,7 +37,7 @@ function Get-LatestNodeVersions {
     }
 }
 
-function Check-Dockerfile {
+function Test-DockerfileModernity {
     if (Test-Path "Dockerfile") {
         $content = Get-Content "Dockerfile"
         $hasBuildKit = $content -match "--mount=type=cache"
@@ -48,7 +48,7 @@ function Check-Dockerfile {
     return @{ buildKit = $false; node = "Unknown" }
 }
 
-function Apply-NodeFix {
+function Update-NodeEngine {
     param($NewVersion)
     Write-Output "  🛠️  Обновляю package.json до $NewVersion..."
     $content = Get-Content "package.json" -Raw
@@ -57,7 +57,7 @@ function Apply-NodeFix {
     Write-Output "  ✅ package.json пропатчен."
 }
 
-function Apply-DockerFix {
+function Update-DockerImage {
     param($NewVersion)
     Write-Output "  🛠️  Обновляю Dockerfile до Node $NewVersion..."
     $content = Get-Content "Dockerfile"
@@ -66,11 +66,11 @@ function Apply-DockerFix {
     Write-Output "  ✅ Dockerfile пропатчен."
 }
 
-Show-Header
+Write-GuardianHeader
 
 $localNode = Get-LocalNodeVersion
 $remoteNode = Get-LatestNodeVersions
-$dockerInfo = Check-Dockerfile
+$dockerInfo = Test-DockerfileModernity
 
 Write-Output "  ----------------------------------------------------------"
 Write-Output "  КОМПОНЕНТ           ТЕКУЩАЯ    АКТУАЛЬНАЯ   СТАТУС"
@@ -95,8 +95,8 @@ Write-Output "  ----------------------------------------------------------"
 
 if ($Fix) {
     Write-Output "`n  🚀 Запущен режим исправления..."
-    if ($status -ne "OK") { Apply-NodeFix -NewVersion $remoteNode.current }
-    if ($dockerStatus -ne "OK") { Apply-DockerFix -NewVersion $remoteNode.current.Split('.')[0] }
+    if ($status -ne "OK") { Update-NodeEngine -NewVersion $remoteNode.current }
+    if ($dockerStatus -ne "OK") { Update-DockerImage -NewVersion $remoteNode.current.Split('.')[0] }
     Write-Output "  ✨ Все исправления применены. Потребуется 'git commit'."
 } elseif ($status -ne "OK" -or $dockerStatus -ne "OK" -or $bkStatus -eq "DISABLED") {
     Write-Output "`n  💡 РЕКОМЕНДАЦИЯ: Запустите 'scripts/modernize.ps1 -Fix' для автоматического патча."
