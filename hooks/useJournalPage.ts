@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { formatOperatorName } from '@/lib/utils';
 import type { Specimen } from '@/types';
@@ -13,7 +13,14 @@ export function useJournalPage() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
 
-	const [theme, setTheme] = useState<'light' | 'dark'>('light');
+	const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+		if (typeof window === 'undefined') return 'light';
+		const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
+		if (saved) return saved;
+		return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+	});
+	const themeInitialized = useRef(false);
+
 	const [page, setPage] = useState(1);
 	const [searchQuery, setSearchQuery] = useState('');
 	const debouncedSearch = useDebounce(searchQuery, 400);
@@ -62,25 +69,18 @@ export function useJournalPage() {
 		result: 'Success' as 'Success' | 'Failed',
 	});
 
-	// Theme initialization & sync
+	// Theme initialization: применяем класс при первом маунте
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
-		const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
-		if (saved) {
-			setTheme(saved);
-			document.documentElement.classList.remove('dark');
-			if (saved !== 'light') document.documentElement.classList.add(saved);
-		} else {
-			const sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-			if (sysDark) {
-				setTheme('dark');
-				document.documentElement.classList.add('dark');
-			}
-		}
+		document.documentElement.classList.remove('dark');
+		if (theme !== 'light') document.documentElement.classList.add(theme);
+		themeInitialized.current = true;
 	}, []);
 
+	// Theme sync: синхронизируем DOM и localStorage только после инициализации
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
+		if (!themeInitialized.current) return;
 		document.documentElement.classList.remove('dark');
 		if (theme !== 'light') document.documentElement.classList.add(theme);
 		localStorage.setItem('theme', theme);
