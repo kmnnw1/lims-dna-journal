@@ -139,19 +139,19 @@ export function JournalHeader({
 						)}
 					</button>
 
-					<Link
-						href="/admin"
-						className={`flex items-center justify-center gap-2 p-1.5 sm:px-4 sm:py-2.5 md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium md-state-layer ${
-							userRole === 'ADMIN'
-								? 'bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) hover:brightness-110'
-								: 'bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container)'
-						}`}
-					>
-						<Settings className="w-4 h-4 sm:w-5 sm:h-5" />
-						<span className="hidden lg:inline text-sm">
-							{userRole === 'ADMIN' ? 'Настройки' : 'Профиль'}
-						</span>
-					</Link>
+						<Link
+							href="/admin"
+							className={`flex items-center justify-center gap-2 p-1.5 sm:px-4 sm:py-2.5 md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium md-state-layer ${
+								userRole === 'ADMIN'
+									? 'bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) hover:brightness-110'
+									: 'bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container)'
+							}`}
+						>
+							<Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+							<span className="hidden lg:inline text-sm">
+								{userRole === 'ADMIN' ? 'Настройки' : 'Профиль'}
+							</span>
+						</Link>
 
 					<button
 						onClick={onSignOut}
