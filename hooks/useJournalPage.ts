@@ -51,6 +51,7 @@ export function useJournalPage() {
 	const [devSettings, setDevSettings] = useState({
 		enableMobileCards: false,
 		forceDesktopView: false,
+		forceMobileView: false,
 	});
 	const [pcrForm, setPcrForm] = useState({
 		volume: '25',

@@ -278,7 +278,9 @@ export function JournalPageContent() {
 				</div>
 				{/* Список проб */}
 				<div className="bg-(--md-sys-color-surface-container-lowest) rounded-3xl sm:rounded-4xl md-elevation-1 border border-(--md-sys-color-outline-variant)/10 overflow-hidden transition-all duration-500 min-h-[400px]">
-					{isMobileDevice && devSettings.enableMobileCards && !devSettings.forceDesktopView ? (
+					{(isMobileDevice || devSettings.forceMobileView) &&
+					devSettings.enableMobileCards &&
+					!devSettings.forceDesktopView ? (
 						<div className="grid grid-cols-1 gap-3 p-3">
 							{specimens.map((s) => (
 								<MobileSpecimenCard

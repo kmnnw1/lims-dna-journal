@@ -6,6 +6,7 @@ import React from 'react';
 export interface DevSettings {
 	enableMobileCards: boolean;
 	forceDesktopView: boolean;
+	forceMobileView: boolean;
 }
 
 interface DevOverlayProps {
@@ -117,6 +118,30 @@ export const DevOverlay: React.FC<DevOverlayProps> = ({
 									: 'border-(--md-sys-color-outline-variant)'
 							}`}>
 								{settings.forceDesktopView && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+							</div>
+						</button>
+
+						<button
+							onClick={() => toggle('forceMobileView')}
+							className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+								settings.forceMobileView
+									? 'bg-(--md-sys-color-secondary-container) border-(--md-sys-color-secondary)/30 text-(--md-sys-color-on-secondary-container)'
+									: 'bg-(--md-sys-color-surface-container-low) border-transparent text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
+							}`}
+						>
+							<div className="flex items-center gap-3">
+								<Zap className={`w-5 h-5 ${settings.forceMobileView ? 'text-(--md-sys-color-secondary)' : 'opacity-60'}`} />
+								<div className="text-left">
+									<h3 className="font-bold text-sm">Принудительно Мобильный</h3>
+									<p className="text-[10px] opacity-60">Эмуляция телефона на ПК</p>
+								</div>
+							</div>
+							<div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+								settings.forceMobileView 
+									? 'bg-(--md-sys-color-secondary) border-(--md-sys-color-secondary)' 
+									: 'border-(--md-sys-color-outline-variant)'
+							}`}>
+								{settings.forceMobileView && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
 							</div>
 						</button>
 					</div>
