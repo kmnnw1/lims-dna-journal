@@ -31,6 +31,30 @@ if (token) {
 	headers['Authorization'] = `token ${token}`;
 }
 
+// Типы для GitHub API
+interface WorkflowRun {
+	id: number;
+	name: string;
+	status: string;
+	conclusion: string | null;
+	jobs_url: string;
+}
+
+interface RunsResponse {
+	workflow_runs: WorkflowRun[];
+}
+
+interface Job {
+	id: number;
+	name: string;
+	status: string;
+	conclusion: string | null;
+}
+
+interface JobsResponse {
+	jobs: Job[];
+}
+
 async function fetchLogs() {
 	console.log(`🔍 Searching for latest Playwright failures in ${REPO}...`);
 
@@ -41,11 +65,14 @@ async function fetchLogs() {
 			{ headers },
 		);
 		if (!runsResponse.ok) throw new Error(`API error: ${runsResponse.status}`);
-		const runsData = (await runsResponse.json()) as any;
+		const runsData = (await runsResponse.json()) as RunsResponse;
 
 		// 2. Find latest COMPLETED FAILED "Playwright Tests" run
 		const pwRun = runsData.workflow_runs.find(
-			(r: any) => r.name === 'Playwright Tests' && r.conclusion === 'failure' && r.status === 'completed'
+			(r: WorkflowRun) =>
+				r.name === 'Playwright Tests' &&
+				r.conclusion === 'failure' &&
+				r.status === 'completed',
 		);
 
 		if (!pwRun) {
@@ -58,7 +85,7 @@ async function fetchLogs() {
 		// 3. Get jobs for this run
 		const jobsResponse = await fetch(pwRun.jobs_url, { headers });
 		if (!jobsResponse.ok) throw new Error('Failed to fetch jobs');
-		const jobsData = (await jobsResponse.json()) as any;
+		const jobsData = (await jobsResponse.json()) as JobsResponse;
 
 		for (const job of jobsData.jobs) {
 			console.log(`📦 Job: ${job.name} (Status: ${job.conclusion})`);
@@ -72,17 +99,24 @@ async function fetchLogs() {
 
 				if (logsResponse.ok) {
 					const logs = await logsResponse.text();
-					const logPath = join(process.cwd(), '.internal_data', `playwright_${job.id}.log`);
+					const logPath = join(
+						process.cwd(),
+						'.internal_data',
+						`playwright_${job.id}.log`,
+					);
 					writeFileSync(logPath, logs);
 					console.log(`💾 Logs saved to ${logPath}`);
 
 					// Extract failures for quick summary
 					const lines = logs.split('\n');
-					const failures = lines.filter((l) =>
-						l.toLowerCase().includes('failed') ||
-						l.toLowerCase().includes('error') ||
-						l.toLowerCase().includes('failure')
-					).slice(-30);
+					const failures = lines
+						.filter(
+							(l) =>
+								l.toLowerCase().includes('failed') ||
+								l.toLowerCase().includes('error') ||
+								l.toLowerCase().includes('failure'),
+						)
+						.slice(-30);
 
 					console.log('\n--- LAST 30 FAILURE LINES ---');
 					console.log(failures.join('\n'));
