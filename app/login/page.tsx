@@ -89,6 +89,7 @@ function LoginContent() {
 
 				<form onSubmit={handleSubmit} className="space-y-5">
 					<MD3Field
+						id="username-input"
 						label="Имя пользователя (только для legacy)"
 						type="text"
 						value={username}
