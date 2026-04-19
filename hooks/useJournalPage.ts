@@ -72,8 +72,11 @@ export function useJournalPage() {
 	// Theme initialization: применяем класс при первом маунте
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
+		const initial =
+			(localStorage.getItem('theme') as 'light' | 'dark' | null) ??
+			(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 		document.documentElement.classList.remove('dark');
-		if (theme !== 'light') document.documentElement.classList.add(theme);
+		if (initial !== 'light') document.documentElement.classList.add(initial);
 		themeInitialized.current = true;
 	}, []);
 
