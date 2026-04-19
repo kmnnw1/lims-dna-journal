@@ -55,26 +55,26 @@ export function JournalHeader({
 				: 'bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface-variant)';
 
 	return (
-		<header className="flex items-center gap-3 mb-6 mt-1.5 px-1 sm:px-0 w-full">
-			<div className="shrink-0">
+		<header className="flex items-center gap-2 sm:gap-3 mb-6 mt-1.5 px-1 sm:px-0 w-full overflow-hidden">
+			<div className="shrink-0 scale-90 sm:scale-100">
 				<AnimatedFlask />
 			</div>
 
 			<div className="flex flex-1 items-center gap-2 min-w-0">
 				{/* Группа поиска и быстрых фильтров */}
-				<div className="flex-1 flex items-center gap-2 min-w-0">
-					<div className="relative flex-1 group flex items-center bg-(--md-sys-color-surface-container-high) focus-within:bg-(--md-sys-color-surface) border-2 border-transparent focus-within:border-(--md-sys-color-primary) rounded-full transition-all md-elevation-1 focus-within:md-elevation-2 pr-2 max-w-180">
-						<Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-(--md-sys-color-outline) group-focus-within:text-(--md-sys-color-primary) transition-colors pointer-events-none" />
+				<div className="flex-1 flex items-center min-w-0">
+					<div className="relative flex-1 group flex items-center bg-(--md-sys-color-surface-container-high) focus-within:bg-(--md-sys-color-surface) border-2 border-transparent focus-within:border-(--md-sys-color-primary) rounded-full transition-all md-elevation-1 focus-within:md-elevation-2 pr-2 w-full max-w-md">
+						<Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-(--md-sys-color-outline) group-focus-within:text-(--md-sys-color-primary) transition-colors pointer-events-none" />
 						<input
 							type="text"
 							placeholder="Поиск..."
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
-							className="flex-1 pl-10 sm:pl-12 pr-2 py-2 sm:py-3 bg-transparent outline-none text-sm sm:text-base placeholder:text-(--md-sys-color-outline)"
+							className="flex-1 pl-9 sm:pl-12 pr-2 py-2 sm:py-3 bg-transparent outline-none text-xs sm:text-base placeholder:text-(--md-sys-color-outline) min-w-0"
 						/>
 
 						{/* Встроенные статусы-фильтры */}
-						<div className="hidden sm:flex items-center p-1 bg-(--md-sys-color-surface-container-low) rounded-full mr-2">
+						<div className="hidden md:flex items-center p-1 bg-(--md-sys-color-surface-container-low) rounded-full mr-2 shrink-0">
 							{[
 								{ value: 'all', label: 'Все' },
 								{ value: 'success', label: 'Успешные' },
@@ -119,7 +119,7 @@ export function JournalHeader({
 				</div>
 
 				{/* Кнопки действий - Прижаты к правому краю */}
-				<div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+				<div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto">
 					<button
 						onClick={(e) => {
 							const x = e.clientX;
@@ -130,7 +130,7 @@ export function JournalHeader({
 							setTheme(next);
 						}}
 						title={`Тема: ${theme}`}
-						className="p-2 sm:p-2.5 bg-(--md-sys-color-surface-container-low) text-(--md-sys-color-on-surface) md-elevation-1 hover:md-elevation-2 rounded-full transition-all flex items-center justify-center md-state-layer"
+						className="p-1.5 sm:p-2.5 bg-(--md-sys-color-surface-container-low) text-(--md-sys-color-on-surface) md-elevation-1 hover:md-elevation-2 rounded-full transition-all flex items-center justify-center md-state-layer"
 					>
 						{theme === 'light' ? (
 							<Moon className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -141,7 +141,7 @@ export function JournalHeader({
 
 					<Link
 						href="/admin"
-						className={`flex items-center justify-center gap-2 p-2 sm:px-4 sm:py-2.5 md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium md-state-layer ${
+						className={`flex items-center justify-center gap-2 p-1.5 sm:px-4 sm:py-2.5 md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium md-state-layer ${
 							userRole === 'ADMIN'
 								? 'bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) hover:brightness-110'
 								: 'bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container)'
@@ -156,7 +156,7 @@ export function JournalHeader({
 					<button
 						onClick={onSignOut}
 						title="Выйти"
-						className="p-2 sm:p-2.5 bg-(--md-sys-color-surface-container-low) text-(--md-sys-color-on-surface) md-elevation-1 hover:md-elevation-2 hover:bg-(--md-sys-color-surface-container-high) rounded-full transition-all flex items-center justify-center md-state-layer"
+						className="p-1.5 sm:p-2.5 bg-(--md-sys-color-surface-container-low) text-(--md-sys-color-on-surface) md-elevation-1 hover:md-elevation-2 hover:bg-(--md-sys-color-surface-container-high) rounded-full transition-all flex items-center justify-center md-state-layer"
 					>
 						<LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
 					</button>

@@ -45,38 +45,39 @@ export function PaginationControls({
 
 	return (
 		<div
-			className={`flex items-center gap-1.5 sm:gap-3 rounded-full bg-(--md-sys-color-surface-container-high) px-3 py-1.5 shadow-sm w-max ${className}`}
+			className={`flex items-center gap-1 sm:gap-3 rounded-full bg-(--md-sys-color-surface-container-high) px-2 sm:px-3 py-1 sm:py-1.5 shadow-sm w-max ${className}`}
 		>
-			<div className="flex items-center gap-0.5 sm:gap-1">
+			<div className="flex items-center gap-0.5">
 				<button
 					onClick={() => onPageChange(1)}
 					disabled={page <= 1}
 					title="В начало"
-					className="p-1.5 rounded-full hover:bg-(--md-sys-color-surface-container-highest) disabled:opacity-30 transition-all"
+					className="p-1 sm:p-1.5 rounded-full hover:bg-(--md-sys-color-surface-container-highest) disabled:opacity-30 transition-all"
 				>
-					<ChevronsLeft className="w-4 h-4" />
+					<ChevronsLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
 				</button>
 				<button
 					onClick={() => onPageChange(Math.max(1, page - 1))}
 					disabled={page <= 1}
-					className="p-1.5 rounded-full hover:bg-(--md-sys-color-surface-container-highest) disabled:opacity-30 transition-all"
+					className="p-1 sm:p-1.5 rounded-full hover:bg-(--md-sys-color-surface-container-highest) disabled:opacity-30 transition-all"
 				>
-					<ChevronLeft className="w-4 h-4" />
+					<ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
 				</button>
 			</div>
 
-			<div className="flex items-center gap-2 px-1 sm:px-2 border-l border-r border-(--md-sys-color-outline-variant)/30">
+			<div className="flex items-center gap-1 sm:gap-2 px-1 sm:px-2 border-l border-r border-(--md-sys-color-outline-variant)/30">
 				<input
 					type="text"
 					value={inputValue}
 					onChange={handleInputChange}
 					onBlur={handleInputBlur}
 					onKeyDown={handleKeyDown}
-					className="w-10 sm:w-12 bg-(--md-sys-color-surface-container-highest) rounded-md py-0.5 text-center font-bold text-base outline-none text-(--md-sys-color-primary) focus:ring-2 focus:ring-(--md-sys-color-primary)/30 selection:bg-(--md-sys-color-primary) selection:text-(--md-sys-color-on-primary) transition-all"
+					className="w-8 sm:w-12 bg-(--md-sys-color-surface-container-highest) rounded-md py-0.5 text-center font-bold text-sm sm:text-base outline-none text-(--md-sys-color-primary) focus:ring-2 focus:ring-(--md-sys-color-primary)/30 selection:bg-(--md-sys-color-primary) selection:text-(--md-sys-color-on-primary) transition-all"
 					title="Введите номер страницы"
 				/>
-				<span className="text-[11px] sm:text-[13px] font-bold text-(--md-sys-color-on-surface-variant) uppercase tracking-tight">
-					из {totalPages}
+				<span className="text-[10px] sm:text-[13px] font-bold text-(--md-sys-color-on-surface-variant) uppercase tracking-tight whitespace-nowrap">
+					<span className="hidden xs:inline">из </span>
+					{totalPages}
 				</span>
 			</div>
 

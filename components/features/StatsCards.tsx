@@ -17,18 +17,20 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ total, successful, other
 	return (
 		<div className="flex flex-wrap items-center gap-2">
 			{/* Всего проб */}
-			<div className="flex items-center gap-2 px-4 py-2 rounded-full bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) transition-all hover:bg-(--md-sys-color-secondary-container-highest)">
-				<FlaskConical className="w-3.5 h-3.5 opacity-70" strokeWidth={2} />
-				<span className="text-[10px] font-bold uppercase tracking-wider opacity-60">
+			<div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) transition-all hover:bg-(--md-sys-color-secondary-container-highest) shrink-0">
+				<FlaskConical className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-70" strokeWidth={2} />
+				<span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">
 					Всего
 				</span>
-				<span className="text-base font-bold tabular-nums tracking-tight">{total}</span>
+				<span className="text-sm sm:text-base font-bold tabular-nums tracking-tight">
+					{total}
+				</span>
 			</div>
 
 			{/* Успешные ITS */}
-			<div className="flex items-center gap-2 px-4 py-2 rounded-full bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) transition-all group">
-				<div className="relative w-6 h-6">
-					<svg className="w-6 h-6 -rotate-90" viewBox="0 0 40 40">
+			<div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) transition-all group shrink-0">
+				<div className="relative w-5 h-5 sm:w-6 sm:h-6">
+					<svg className="w-5 h-5 sm:w-6 sm:h-6 -rotate-90" viewBox="0 0 40 40">
 						<circle
 							cx="20"
 							cy="20"
@@ -51,25 +53,27 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ total, successful, other
 							className="transition-all duration-700 ease-(--md-sys-motion-easing-emphasized)"
 						/>
 					</svg>
-					<span className="absolute inset-0 flex items-center justify-center text-[7px] font-bold">
+					<span className="absolute inset-0 flex items-center justify-center text-[6px] sm:text-[7px] font-bold">
 						{pct}%
 					</span>
 				</div>
-				<span className="text-[10px] font-bold uppercase tracking-wider opacity-60">
+				<span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">
 					ITS ✓
 				</span>
-				<span className="text-base font-bold tabular-nums tracking-tight">
+				<span className="text-sm sm:text-base font-bold tabular-nums tracking-tight">
 					{successful}
 				</span>
 			</div>
 
 			{/* Остальные */}
-			<div className="flex items-center gap-2 px-4 py-2 rounded-full border border-(--md-sys-color-outline-variant) text-(--md-sys-color-on-surface-variant) transition-all hover:bg-(--md-sys-color-surface-container-high)">
-				<Clock className="w-3.5 h-3.5 opacity-70" strokeWidth={2} />
-				<span className="text-[10px] font-bold uppercase tracking-wider opacity-60">
+			<div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-(--md-sys-color-outline-variant) text-(--md-sys-color-on-surface-variant) transition-all hover:bg-(--md-sys-color-surface-container-high) shrink-0">
+				<Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-70" strokeWidth={2} />
+				<span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60">
 					Прочее
 				</span>
-				<span className="text-base font-bold tabular-nums tracking-tight">{others}</span>
+				<span className="text-sm sm:text-base font-bold tabular-nums tracking-tight">
+					{others}
+				</span>
 			</div>
 		</div>
 	);
