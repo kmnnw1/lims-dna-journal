@@ -11,11 +11,17 @@ import { useEffect } from 'react';
  */
 export function PwaBootstrap() {
 	useEffect(() => {
+		const isDev = process.env.NODE_ENV !== 'production';
+		const isDebug =
+			typeof window !== 'undefined' &&
+			(localStorage.getItem('PWA_DEBUG') === 'true' ||
+				window.location.search.includes('pwa_debug=true'));
+
 		if (
 			typeof window === 'undefined' ||
 			typeof navigator === 'undefined' ||
 			!('serviceWorker' in navigator) ||
-			process.env.NODE_ENV !== 'production'
+			(isDev && !isDebug)
 		) {
 			return;
 		}
