@@ -17,6 +17,7 @@ jobs:
       NEXT_TELEMETRY_DISABLED: 1
       PRISMA_TELEMETRY_DISABLED: 1
       DO_NOT_TRACK: 1
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     if: "!contains(github.event.head_commit.message, 'chore: bump version')"
     steps:
       - uses: actions/checkout@v4
