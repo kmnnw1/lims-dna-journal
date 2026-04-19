@@ -1,3 +1,4 @@
+import type { AuditLog } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/database/prisma';
 import {
@@ -52,7 +53,7 @@ export async function GET(req: Request) {
 		});
 
 		return NextResponse.json(
-			history.map((item) => ({
+			history.map((item: AuditLog) => ({
 				...item,
 				details: item.details ? JSON.parse(item.details) : null,
 				changes: item.changes ? JSON.parse(item.changes) : null,
