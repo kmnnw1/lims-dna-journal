@@ -16,7 +16,11 @@ const pkgPath = join(root, 'package.json');
 
 function getDiffStat() {
 	try {
-		const stat = execSync('git diff --cached --shortstat', { encoding: 'utf8' }).trim();
+		// В CI (GitHub Actions) изменений в индексе нет, проверяем последний коммит
+		const isCI = process.env.GITHUB_ACTIONS === 'true';
+		const diffCmd = isCI ? 'git diff HEAD^..HEAD --shortstat' : 'git diff --cached --shortstat';
+
+		const stat = execSync(diffCmd, { encoding: 'utf8' }).trim();
 		if (!stat) return { files: 0, lines: 0 };
 
 		const files = parseInt(stat.match(/(\d+)\s+file/)?.[1] || '0', 10);
