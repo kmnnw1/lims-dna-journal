@@ -67,12 +67,9 @@ async function fetchLogs() {
 		if (!runsResponse.ok) throw new Error(`API error: ${runsResponse.status}`);
 		const runsData = (await runsResponse.json()) as RunsResponse;
 
-		// 2. Find latest COMPLETED FAILED "Playwright Tests" run
+		// 2. Find latest "Playwright Tests" run
 		const pwRun = runsData.workflow_runs.find(
-			(r: WorkflowRun) =>
-				r.name === 'Playwright Tests' &&
-				r.conclusion === 'failure' &&
-				r.status === 'completed',
+			(r: WorkflowRun) => r.name === 'Playwright Tests',
 		);
 
 		if (!pwRun) {
