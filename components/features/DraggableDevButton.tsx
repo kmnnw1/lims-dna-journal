@@ -59,10 +59,12 @@ export const DraggableDevButton: React.FC<DraggableDevButtonProps> = ({ onClick 
 			onDragStart={() => setIsDragging(true)}
 			onDragEnd={handleDragEnd}
 			animate={controls}
+			whileHover={{ scale: 1.08 }}
+			whileTap={{ scale: 0.94 }}
 			onClick={() => {
 				if (!isDragging) onClick();
 			}}
-			className="fixed z-[10000] p-3.5 rounded-full bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface-variant) shadow-2xl border border-(--md-sys-color-outline-variant)/50 md-elevation-3 hover:scale-110 active:scale-95 transition-all cursor-grab active:cursor-grabbing group overflow-hidden"
+			className="fixed z-[10000] p-3.5 rounded-full bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface-variant) shadow-2xl border border-(--md-sys-color-outline-variant)/50 md-elevation-3 cursor-grab active:cursor-grabbing group overflow-hidden"
 			style={{ 
 				touchAction: 'none',
 				left: 0,
