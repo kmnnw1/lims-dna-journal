@@ -290,6 +290,22 @@ export function JournalPageContent() {
 									onPcr={() => setActivePcrSpecimen(s)}
 									onEdit={() => setEditingSpecimen(s)}
 									onStatusToggle={(marker) => handleStatusToggle(s.id, marker)}
+									searchQuery={searchQuery}
+									renderStatus={(spec, marker) => (
+										<PCRStatusBadge
+											status={
+												marker === 'ITS'
+													? spec.itsStatus
+													: marker === 'SSU'
+														? spec.ssuStatus
+														: marker === 'LSU'
+															? spec.lsuStatus
+															: spec.mcm7Status
+											}
+											marker={marker}
+											onClick={() => handleStatusToggle(spec.id, marker)}
+										/>
+									)}
 									onShowHistory={() => handleHistoryOpen(s)}
 								/>
 							))}
