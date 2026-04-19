@@ -5,8 +5,8 @@ WORKDIR /app
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 # RUN apt-get update && apt-get install -y --no-install-recommends libc6-compat && rm -rf /var/lib/apt/lists/*
 
-# Обновляем NPM до актуальной версии
-RUN npm install -g npm@latest
+# Обновляем NPM до актуальной версии через Corepack (стабильный метод)
+RUN corepack enable npm && corepack prepare npm@latest --activate
 
 COPY package.json package-lock.json ./
 # Отключаем Husky при сборке, так как нет .git
@@ -24,8 +24,8 @@ ENV NODE_ENV=production
 # Устанавливаем OpenSSL для Prisma
 RUN apt-get update && apt-get install -y openssl --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Обновляем NPM в слое сборщика
-RUN npm install -g npm@latest
+# Обновляем NPM в слое сборщика через Corepack
+RUN corepack enable npm && corepack prepare npm@latest --activate
 
 # Сначала генерируем клиент Prisma, чтобы сборка Next.js видела типы
 RUN npx prisma generate
