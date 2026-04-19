@@ -6,7 +6,12 @@ import { flushSync } from 'react-dom';
 import { BarcodeScanDialog } from '@/components/features/BarcodeScanDialog';
 import { HistoryDialog } from '@/components/features/HistoryDialog';
 import { JournalHeader } from '@/components/features/JournalHeader';
+import {
+	MobileSpecimenCard,
+	type MobileSpecimenShape,
+} from '@/components/features/MobileSpecimenCard';
 import { PaginationControls } from '@/components/features/PaginationControls';
+import { PCRStatusBadge } from '@/components/features/PCRStatusBadge';
 import { QuickFilterBar } from '@/components/features/QuickFilterBar';
 import { SpecimenTable } from '@/components/features/SpecimenTable';
 import { StatsCards } from '@/components/features/StatsCards';
@@ -207,20 +212,63 @@ export function JournalPageContent() {
 					</div>
 				</div>
 
-				<SpecimenTable
-					specimens={specimens}
-					loading={loading}
-					selectedIds={selectedIds}
-					onSelect={handleSelect}
-					onSelectAll={handleSelectAll}
-					onEdit={setEditingSpecimen}
-					onPcr={setActivePcrSpecimen}
-					onStatusClick={handleStatusToggle}
-					searchQuery={searchQuery}
-					sortConfig={sortConfig}
-					onSort={handleSort}
-					onHistory={handleHistoryOpen}
-				/>
+				{/* Desktop Table */}
+				<div className="hidden md:block">
+					<SpecimenTable
+						specimens={specimens}
+						loading={loading}
+						selectedIds={selectedIds}
+						onSelect={handleSelect}
+						onSelectAll={handleSelectAll}
+						onEdit={setEditingSpecimen}
+						onPcr={setActivePcrSpecimen}
+						onStatusClick={handleStatusToggle}
+						searchQuery={searchQuery}
+						sortConfig={sortConfig}
+						onSort={handleSort}
+						onHistory={handleHistoryOpen}
+					/>
+				</div>
+
+				{/* Mobile Cards */}
+				<div className="block md:hidden space-y-4">
+					{loading && specimens.length === 0 ? (
+						[...Array(3)].map((_, i) => (
+							<div
+								key={i}
+								className="h-48 w-full rounded-3xl bg-(--md-sys-color-surface-container-high) animate-pulse"
+							/>
+						))
+					) : specimens.length === 0 ? (
+						<div className="p-12 text-center text-(--md-sys-color-outline) opacity-60">
+							Пробы не найдены
+						</div>
+					) : (
+						specimens.map((specimen: Specimen) => (
+							<MobileSpecimenCard
+								key={specimen.id}
+								s={specimen as unknown as MobileSpecimenShape}
+								isReader={(session?.user as { role?: string })?.role === 'READER'}
+								selected={selectedIds.has(specimen.id)}
+								onToggleSelect={() => handleSelect(specimen.id)}
+								onEdit={() => setEditingSpecimen(specimen)}
+								onPcr={() => setActivePcrSpecimen(specimen)}
+								searchQuery={searchQuery}
+								renderStatus={(s, marker) => {
+									const statusKey =
+										`${marker.toLowerCase()}Status` as keyof typeof s;
+									return (
+										<PCRStatusBadge
+											status={s[statusKey] as string}
+											marker={marker}
+											onClick={() => handleStatusToggle(s.id, marker)}
+										/>
+									);
+								}}
+							/>
+						))
+					)}
+				</div>
 
 				{selectedIds.size > 0 && (
 					<div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-(--md-sys-color-inverse-surface) text-(--md-sys-color-inverse-on-surface) rounded-3xl p-4 flex items-center justify-between shadow-2xl z-50">
