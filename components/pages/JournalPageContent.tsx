@@ -4,6 +4,8 @@ import { Camera, ChevronDown, Download, Plus, Printer } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { BarcodeScanDialog } from '@/components/features/BarcodeScanDialog';
+import { DevOverlay } from '@/components/features/DevOverlay';
+import { DraggableDevButton } from '@/components/features/DraggableDevButton';
 import { HistoryDialog } from '@/components/features/HistoryDialog';
 import { JournalHeader } from '@/components/features/JournalHeader';
 import {
@@ -22,8 +24,6 @@ import { PcrModal } from '@/components/modals/PCRModal';
 import { FAB } from '@/components/ui/FAB';
 import { useJournalPage } from '@/hooks/useJournalPage';
 import type { Specimen } from '@/types';
-import { DevOverlay } from '@/components/features/DevOverlay';
-import { DraggableDevButton } from '@/components/features/DraggableDevButton';
 
 export function JournalPageContent() {
 	const {
@@ -191,6 +191,7 @@ export function JournalPageContent() {
 					setMinConc={setMinConc}
 					maxConc={maxConc}
 					setMaxConc={setMaxConc}
+					selectedOperator={selectedOperator}
 					setSelectedOperator={setSelectedOperator}
 					suggestions={suggestions}
 				/>
@@ -222,13 +223,15 @@ export function JournalPageContent() {
 										<Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
 										<span>{getFormatLabel(lastExportFormat)}</span>
 									</button>
-									<div className="w-[1px] h-4 bg-(--md-sys-color-on-tertiary-container)/20" />
+									<div className="w-px h-4 bg-(--md-sys-color-on-tertiary-container)/20" />
 									<button
 										onClick={() => setIsExportOpen(!isExportOpen)}
 										className="flex items-center justify-center px-1.5 sm:px-2 py-2 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors active:scale-90"
 										aria-label="Выбор формата экспорта"
 									>
-										<ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`} />
+										<ChevronDown
+											className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`}
+										/>
 									</button>
 								</div>
 
@@ -254,7 +257,7 @@ export function JournalPageContent() {
 											<div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
 											Сохранить CSV
 										</button>
-										<div className="h-[1px] bg-(--md-sys-color-outline-variant)/20 my-1 mx-2" />
+										<div className="h-px bg-(--md-sys-color-outline-variant)/20 my-1 mx-2" />
 										<button
 											onClick={() => {
 												handleExportDB();
@@ -282,14 +285,15 @@ export function JournalPageContent() {
 					devSettings.enableMobileCards &&
 					!devSettings.forceDesktopView ? (
 						<div className="grid grid-cols-1 gap-3 p-3">
-							{specimens.map((s) => (
+							{specimens.map((s: Specimen) => (
 								<MobileSpecimenCard
 									key={s.id}
 									s={s as unknown as MobileSpecimenShape}
-									isReader={(session?.user as { role?: string })?.role === 'READER'}
+									isReader={
+										(session?.user as { role?: string })?.role === 'READER'
+									}
 									onPcr={() => setActivePcrSpecimen(s)}
 									onEdit={() => setEditingSpecimen(s)}
-									onStatusToggle={(marker) => handleStatusToggle(s.id, marker)}
 									searchQuery={searchQuery}
 									renderStatus={(spec, marker) => (
 										<PCRStatusBadge
@@ -306,7 +310,10 @@ export function JournalPageContent() {
 											onClick={() => handleStatusToggle(spec.id, marker)}
 										/>
 									)}
-									onShowHistory={() => handleHistoryOpen(s)}
+									selected={false}
+									onToggleSelect={function (): void {
+										throw new Error('Function not implemented.');
+									}}
 								/>
 							))}
 						</div>
@@ -318,7 +325,9 @@ export function JournalPageContent() {
 							sortConfig={sortConfig}
 							selectedIds={selectedIds}
 							onSelect={handleSelect}
-							onSelectAll={() => handleSelectAll(specimens.map((s) => s.id))}
+							onSelectAll={() =>
+								handleSelectAll(specimens.map((s: Specimen) => s.id))
+							}
 							onEdit={setEditingSpecimen}
 							onPcr={setActivePcrSpecimen}
 							onStatusClick={handleStatusToggle}
@@ -430,7 +439,7 @@ export function JournalPageContent() {
 				onClose={() => setIsDevOpen(false)}
 				settings={devSettings}
 				onUpdate={setDevSettings}
-				userName={session?.user?.name}
+				userName={session?.user?.name || undefined}
 			/>
 
 			<DraggableDevButton onClick={() => setIsDevOpen(true)} />
