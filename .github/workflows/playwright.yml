@@ -44,10 +44,13 @@ jobs:
                 echo "::endgroup::"
             - name: Setup Database and Environment
               run: |
-                  echo "NEXTAUTH_SECRET=test_super_secret_key_for_github_actions_32" >> .env
+                  CI_SECRET=$(openssl rand -base64 32)
+                  CI_TOKEN=$(openssl rand -hex 16)
+                  echo "NEXTAUTH_SECRET=${CI_SECRET}" >> .env
                   echo "NEXTAUTH_URL=http://127.0.0.1:3000" >> .env
                   echo "DATABASE_URL=file:./prisma/dev.db" >> .env
-                  echo "AUTH_TEST_TOKEN=test-token-123" >> .env
+                  echo "AUTH_TEST_TOKEN=${CI_TOKEN}" >> .env
+                  echo "CI_TOKEN=${CI_TOKEN}" >> "$GITHUB_ENV"
                   npx prisma db push
                   npx tsx scripts/fix-auth.ts
             - name: Build application
@@ -60,8 +63,8 @@ jobs:
             - name: Run Playwright tests
               run: npx playwright test
               env:
-                  TEST_TOKEN: test-token-123
-                  AUTH_TEST_TOKEN: test-token-123
+                  TEST_TOKEN: ${{ env.CI_TOKEN }}
+                  AUTH_TEST_TOKEN: ${{ env.CI_TOKEN }}
                   DATABASE_URL: file:./prisma/dev.db
 
             - uses: actions/upload-artifact@v6
