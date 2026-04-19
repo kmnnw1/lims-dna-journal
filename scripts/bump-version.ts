@@ -14,53 +14,69 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pkgPath = join(root, 'package.json');
 
-function getDiffStat() {
+function getDiffFiles(): string[] {
 	try {
-		// В CI (GitHub Actions) изменений в индексе нет, проверяем последний коммит
 		const isCI = process.env.GITHUB_ACTIONS === 'true';
-		const diffCmd = isCI ? 'git diff HEAD^..HEAD --shortstat' : 'git diff --cached --shortstat';
-
-		const stat = execSync(diffCmd, { encoding: 'utf8' }).trim();
-		if (!stat) return { files: 0, lines: 0 };
-
-		const files = parseInt(stat.match(/(\d+)\s+file/)?.[1] || '0', 10);
-		const insertions = parseInt(stat.match(/(\d+)\s+insertion/)?.[1] || '0', 10);
-		const deletions = parseInt(stat.match(/(\d+)\s+deletion/)?.[1] || '0', 10);
-
-		return { files, lines: insertions + deletions };
+		const diffBase = isCI ? 'HEAD^..HEAD' : '--cached';
+		const stdout = execSync(`git diff ${diffBase} --name-only`, { encoding: 'utf8' }).trim();
+		return stdout.split('\n').filter(Boolean);
 	} catch {
-		return { files: 0, lines: 0 };
+		return [];
 	}
 }
 
-const { files, lines } = getDiffStat();
-if (lines === 0 && files === 0) {
+const changedFiles = getDiffFiles();
+if (changedFiles.length === 0) {
 	console.log('[SYSTEM] Изменений в отслеживаемых файлах не обнаружено. Пропуск бампа.');
 	process.exit(0);
 }
+
+// Семантические паттерны
+const isDatabase = (f: string) =>
+	f.includes('prisma/schema.prisma') || f.includes('prisma/migrations');
+const isLogic = (f: string) => (f.endsWith('.ts') || f.endsWith('.tsx')) && !f.includes('tests/');
+const isMeta = (f: string) =>
+	f.endsWith('.css') ||
+	f.includes('.github/') ||
+	f.includes('.husky/') ||
+	f.includes('tests/') ||
+	f.endsWith('.md') ||
+	f.endsWith('.json');
+
+const hasDB = changedFiles.some(isDatabase);
+const hasLogic = changedFiles.some(isLogic);
+const hasMeta = changedFiles.some(isMeta);
 
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
 let [major, minor, patch, build] = pkg.version.split('.').map(Number);
 const initialVersion = pkg.version;
 
-// Определение типа инкремента (Heuristic 2026)
-if (lines > 1000 && files > 10) {
-	// Масштабная модернизация (Minor)
+// Определение типа инкремента (Semantic Heuristic 2026)
+if (hasDB) {
+	// Структурные изменения БД (Minor)
 	minor++;
 	patch = 0;
 	build = 0;
-	console.log(`[SYSTEM] Пакетная модернизация (${files} ф. / ${lines} стр.). Инкремент: Minor.`);
-} else if (files >= 3 || lines > 150) {
-	// Полноценная фича или фикс логики (Patch)
+	console.log(
+		`[SYSTEM] Изменение схемы базы данных (${changedFiles.length} ф.). Инкремент: Minor.`,
+	);
+} else if (hasLogic) {
+	// Изменения в прикладной логике или UI (Patch)
 	patch++;
 	build = 0;
 	console.log(
-		`[SYSTEM] Функциональное изменение (${files} ф. / ${lines} стр.). Инкремент: Patch.`,
+		`[SYSTEM] Изменение программной логики/UI (${changedFiles.length} ф.). Инкремент: Patch.`,
+	);
+} else if (hasMeta) {
+	// Мета-данные, стили, тесты или инфраструктура (Build)
+	build++;
+	console.log(
+		`[SYSTEM] Техническая правка/Тесты/Мета (${changedFiles.length} ф.). Инкремент: Build.`,
 	);
 } else {
-	// Точечные правки (Build)
+	// Неизвестный тип файлов - по умолчанию Build
 	build++;
-	console.log(`[SYSTEM] Техническая правка (${files} ф. / ${lines} стр.). Инкремент: Build.`);
+	console.log(`[SYSTEM] Прочие изменения (${changedFiles.length} ф.). Инкремент: Build.`);
 }
 
 pkg.version = [major, minor, patch, build].join('.');
