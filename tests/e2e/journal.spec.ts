@@ -9,6 +9,9 @@ async function loginAdmin(page: Page) {
 	// Находим поле для токена
 	const tokenInput = page.locator('input[type="password"]').first();
 
+	// Ждем появления поля (поможет при медленной загрузке/гидратации)
+	await expect(tokenInput).toBeVisible({ timeout: 15000 });
+
 	// Используем тестовый токен из окружения CI или дефолтный
 	const testToken = process.env.TEST_TOKEN || process.env.AUTH_TEST_TOKEN || 'test-token-123';
 	await tokenInput.fill(testToken);
