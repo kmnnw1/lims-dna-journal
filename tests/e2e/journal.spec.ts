@@ -4,25 +4,43 @@ import { expect, type Page, test } from '@playwright/test';
 
 // Универсальная функция входа
 async function loginAdmin(page: Page) {
+	// Переходим на страницу входа
 	await page.goto('/login');
 
-	// Находим поле для токена
-	const tokenInput = page.locator('input[type="password"]').first();
+	// Ждем, пока URL стабилизируется (для исключения промежуточных редиректов)
+	await page.waitForURL('**/login');
+
+	// Ждем окончания загрузки DOM
+	await page.waitForLoadState('domcontentloaded');
+
+	// Находим поле для токена через LABEL (самый надежный способ для Accessibility и MD3)
+	// Добавляем fallback на id, который мы только что внедрили
+	const tokenInput = page
+		.getByLabel(/токен|пароль/i)
+		.or(page.locator('#password-input'))
+		.first();
 
 	// Ждем появления поля (поможет при медленной загрузке/гидратации)
 	await expect(tokenInput).toBeVisible({ timeout: 15000 });
 
 	// Используем тестовый токен из окружения CI или дефолтный
 	const testToken = process.env.TEST_TOKEN || process.env.AUTH_TEST_TOKEN || 'test-token-123';
+
+	// Перед заполнением убеждаемся, что поле активно
+	await tokenInput.click();
 	await tokenInput.fill(testToken);
 
 	// Нажимаем Enter для отправки формы
 	await tokenInput.press('Enter');
 
+	// Ждем перехода на главную или появления индикатора авторизации
+	await page.waitForURL('/', { timeout: 15000 }).catch(() => {
+		console.log('Timeout waiting for redirect to /');
+	});
+
 	// ФИКС: Заголовка больше нет, поэтому ждем появления поля поиска
-	// Это надежный индикатор того, что главная страница загрузилась
 	await expect(page.getByPlaceholder(/Поиск/i).first()).toBeVisible({
-		timeout: 20000,
+		timeout: 15000,
 	});
 }
 
