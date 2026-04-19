@@ -10,7 +10,8 @@ async function loginAdmin(page: Page) {
 	// Ждем, пока URL стабилизируется (для исключения промежуточных редиректов)
 	await page.waitForURL('**/login');
 
-	// Ждем окончания загрузки DOM
+	// Ждем окончания загрузки и стабилизации
+	await page.waitForLoadState('networkidle');
 	await page.waitForLoadState('domcontentloaded');
 
 	// Находим поле для токена через LABEL (самый надежный способ для Accessibility и MD3)
