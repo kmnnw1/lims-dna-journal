@@ -97,6 +97,7 @@ function LoginContent() {
 					/>
 
 					<MD3Field
+						id="password-input"
 						label="Одноразовый токен или пароль"
 						type="password"
 						required
