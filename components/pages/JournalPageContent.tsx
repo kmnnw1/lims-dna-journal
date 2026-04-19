@@ -285,7 +285,8 @@ export function JournalPageContent() {
 							{specimens.map((s) => (
 								<MobileSpecimenCard
 									key={s.id}
-									specimen={s as unknown as MobileSpecimenShape}
+									s={s as unknown as MobileSpecimenShape}
+									isReader={(session?.user as { role?: string })?.role === 'READER'}
 									onPcr={() => setActivePcrSpecimen(s)}
 									onEdit={() => setEditingSpecimen(s)}
 									onStatusToggle={(marker) => handleStatusToggle(s.id, marker)}
