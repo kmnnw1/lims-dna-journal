@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef } from 'react';
+import { forwardRef, useId } from 'react';
 
 type MD3FieldProps = {
 	label: string;
@@ -16,6 +16,9 @@ export const MD3Field = forwardRef<
 	HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement,
 	MD3FieldProps
 >(({ label, value, isSelect, isArea, children, className = '', ...props }, ref) => {
+	const generatedId = useId();
+	const id = props.id || generatedId;
+
 	// Фон полей — как в ПЦР (surface-container-high)
 	const baseClass = `md-state-layer md-typescale-body-large w-full rounded-t-xl rounded-b-xs border-b border-(--md-sys-color-outline-variant) focus:border-b-2 focus:border-(--md-sys-color-primary) hover:bg-(--md-sys-color-surface-variant) bg-(--md-sys-color-surface-container-highest) px-4 pt-6 pb-2 outline-none transition-all duration-(--md-sys-motion-duration-medium) ease-(--md-sys-motion-easing-standard) text-(--md-sys-color-on-surface) appearance-none ${className}`;
 
@@ -26,20 +29,22 @@ export const MD3Field = forwardRef<
 	return (
 		<div className="relative group w-full">
 			{isSelect ? (
-				<select ref={selectRef} value={value} className={baseClass} {...props}>
+				<select id={id} ref={selectRef} value={value} className={baseClass} {...props}>
 					{children}
 				</select>
 			) : isArea ? (
 				<textarea
+					id={id}
 					ref={areaRef}
 					value={value}
 					className={`${baseClass} min-h-[100px] resize-y`}
 					{...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
 				/>
 			) : (
-				<input ref={inputRef} value={value} className={baseClass} {...props} />
+				<input id={id} ref={inputRef} value={value} className={baseClass} {...props} />
 			)}
 			<label
+				htmlFor={id}
 				className={`absolute left-4 transition-all pointer-events-none text-(--md-sys-color-outline) font-medium duration-(--md-sys-motion-duration-short) ease-(--md-sys-motion-easing-standard) ${
 					value ? 'top-2 text-[10px] tracking-wider' : 'top-4 text-base'
 				} group-focus-within:text-(--md-sys-color-primary) group-focus-within:top-2 group-focus-within:text-[10px] group-focus-within:tracking-wider`}
