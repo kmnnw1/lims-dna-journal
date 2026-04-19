@@ -61,11 +61,18 @@
 	],
 	"screenshots": [
 		{
+			"src": "/mobile-screenshot.png",
+			"sizes": "1024x1792",
+			"type": "image/png",
+			"form_factor": "narrow",
+			"label": "DNA Journal Mobile"
+		},
+		{
 			"src": "/icon-512.png",
 			"sizes": "512x512",
 			"type": "image/png",
 			"form_factor": "wide",
-			"label": "DNA Journal Interface"
+			"label": "DNA Journal Desktop"
 		}
 	]
 }
