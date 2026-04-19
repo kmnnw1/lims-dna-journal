@@ -37,9 +37,9 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 	// Хелпер для подсветки поиска (MD3 Tertiary Container Style)
 	const highlightText = (
 		text: string | number | null | undefined | { result: string | number },
-		query: string,
+		query: string | undefined,
 	): React.ReactNode => {
-		if (!text || !query.trim()) {
+		if (!text || !query || !query.trim()) {
 			if (typeof text === 'object' && text !== null && 'result' in text) {
 				return text.result;
 			}
