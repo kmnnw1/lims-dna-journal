@@ -17,6 +17,9 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
+# Устанавливаем OpenSSL для Prisma
+RUN apt-get update && apt-get install -y openssl --no-install-recommends && rm -rf /var/lib/apt/lists/*
+
 # Сначала генерируем клиент Prisma, чтобы сборка Next.js видела типы
 RUN npx prisma generate
 RUN npm run build
@@ -29,6 +32,9 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+
+# Устанавливаем OpenSSL для Prisma в рантайме
+RUN apt-get update && apt-get install -y openssl --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
 # Создаем пользователя для безопасности
 RUN groupadd --system --gid 1001 nodejs
