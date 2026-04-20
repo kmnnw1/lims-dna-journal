@@ -3,6 +3,11 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { logAuditAction } from '@/lib/database/audit-log';
 import { prisma } from '@/lib/database/prisma';
+import {
+	sanitizeString,
+	validateContentType,
+	validateSpecimenId,
+} from '@/lib/security/input-validator';
 
 type ApiUser = { id?: string; role?: string };
 
@@ -35,10 +40,13 @@ export async function GET(req: Request) {
 	try {
 		await requireRole('READER');
 		const { searchParams } = new URL(req.url);
-		const specimenId = searchParams.get('specimenId');
+		const specimenId = validateSpecimenId(searchParams.get('specimenId'));
 
 		if (!specimenId) {
-			return NextResponse.json({ error: 'Не указан specimenId' }, { status: 400 });
+			return NextResponse.json(
+				{ error: 'Не указан или невалидный specimenId' },
+				{ status: 400 },
+			);
 		}
 
 		const attempts = await prisma.pcrAttempt.findMany({
@@ -56,19 +64,26 @@ export async function POST(req: Request) {
 	try {
 		const session = await requireRole('EDITOR');
 		const user = session.user as ApiUser;
+
+		const contentType = req.headers.get('content-type');
+		if (!validateContentType(contentType)) {
+			return NextResponse.json(
+				{ error: 'Content-Type должен быть application/json' },
+				{ status: 415 },
+			);
+		}
+
 		const body = await req.json();
 
-		const {
-			specimenId,
-			marker,
-			result,
-			volume,
-			dnaMatrix,
-			forwardPrimer,
-			reversePrimer,
-			date,
-			id,
-		} = body;
+		const specimenId = validateSpecimenId(body.specimenId);
+		const marker = sanitizeString(body.marker, 50);
+		const result = sanitizeString(body.result, 50);
+		const volume = sanitizeString(body.volume, 50);
+		const dnaMatrix = sanitizeString(body.dnaMatrix, 100);
+		const forwardPrimer = sanitizeString(body.forwardPrimer, 100);
+		const reversePrimer = sanitizeString(body.reversePrimer, 100);
+		const date = body.date;
+		const id = validateSpecimenId(body.id);
 
 		if (!specimenId || !marker) {
 			return NextResponse.json({ error: 'specimenId и marker обязательны' }, { status: 400 });
@@ -81,11 +96,11 @@ export async function POST(req: Request) {
 			attempt = await prisma.pcrAttempt.update({
 				where: { id },
 				data: {
-					result,
-					volume: String(volume),
-					dnaMatrix: String(dnaMatrix),
-					forwardPrimer,
-					reversePrimer,
+					result: result || undefined,
+					volume: volume || undefined,
+					dnaMatrix: dnaMatrix || undefined,
+					forwardPrimer: forwardPrimer || undefined,
+					reversePrimer: reversePrimer || undefined,
 					date: date ? new Date(date) : new Date(),
 				},
 			});
@@ -109,11 +124,11 @@ export async function POST(req: Request) {
 				data: {
 					specimenId,
 					marker,
-					result,
-					volume: String(volume),
-					dnaMatrix: String(dnaMatrix),
-					forwardPrimer,
-					reversePrimer,
+					result: result || 'Pending',
+					volume: volume || undefined,
+					dnaMatrix: dnaMatrix || undefined,
+					forwardPrimer: forwardPrimer || undefined,
+					reversePrimer: reversePrimer || undefined,
 					date: date ? new Date(date) : new Date(),
 				},
 			});
@@ -169,7 +184,7 @@ export async function DELETE(req: Request) {
 		const session = await requireRole('EDITOR');
 		const user = session.user as ApiUser;
 		const { searchParams } = new URL(req.url);
-		const id = searchParams.get('id');
+		const id = validateSpecimenId(searchParams.get('id'));
 
 		if (!id) return NextResponse.json({ error: 'id обязателен' }, { status: 400 });
 
