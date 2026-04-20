@@ -69,11 +69,9 @@ jobs:
                   npx prisma db push
                   npx tsx scripts/fix-auth.ts
             - name: Build application
-              run: |
-                  npm run build
-                  cp -r public .next/standalone/public || true
-                  mkdir -p .next/standalone/.next/static
-                  cp -r .next/static .next/standalone/.next/static || true
+              run: npm run build
+              env:
+                DATABASE_URL: file:./prisma/dev.db
 
             - name: Run Playwright tests
               run: npx playwright test
@@ -81,6 +79,7 @@ jobs:
                   TEST_TOKEN: ${{ env.CI_TOKEN }}
                   AUTH_TEST_TOKEN: ${{ env.CI_TOKEN }}
                   DATABASE_URL: file:./prisma/dev.db
+                  DEBUG: pw:webserver
 
             - uses: actions/upload-artifact@v6
               if: ${{ !cancelled() }}

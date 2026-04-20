@@ -22,7 +22,16 @@ async function loginAdmin(page: Page) {
 		.first();
 
 	// Ждем появления поля (поможет при медленной загрузке/гидратации)
-	await expect(tokenInput).toBeVisible({ timeout: 15000 });
+	try {
+		await expect(tokenInput).toBeVisible({ timeout: 15000 });
+	} catch (e) {
+		console.error('--- DIAGNOSTICS: Login Field not visible ---');
+		console.error('URL:', page.url());
+		console.error('Title:', await page.title());
+		const body = await page.evaluate(() => document.body.innerText.slice(0, 500));
+		console.error('Body snippet (first 500 chars):', body);
+		throw e;
+	}
 
 	// Используем тестовый токен из окружения CI или дефолтный
 	const testToken = process.env.TEST_TOKEN || process.env.AUTH_TEST_TOKEN || 'test-token-123';
