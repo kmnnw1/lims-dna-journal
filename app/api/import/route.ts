@@ -14,6 +14,7 @@ import {
 	parseSheetToRows,
 } from '@/lib/excel';
 import { parseWithAI } from '@/lib/excel/ai-parser';
+import { validateContentType } from '@/lib/security/input-validator';
 
 async function requireAdmin() {
 	const session = await getServerSession(authOptions);
@@ -127,6 +128,15 @@ export async function GET(req: Request) {
 export async function POST(request: Request) {
 	try {
 		await requireAdmin();
+
+		const contentType = request.headers.get('content-type');
+		if (!validateContentType(contentType)) {
+			return NextResponse.json(
+				{ error: 'Content-Type должен быть application/json' },
+				{ status: 415 },
+			);
+		}
+
 		const body = await request.json().catch(() => ({}));
 		if (body.action !== 'clear') {
 			return NextResponse.json(
