@@ -50,9 +50,12 @@ export const authOptions: NextAuthOptions = {
 					placeholder: 'Вставьте токен или пароль',
 				},
 				token: { label: 'Токен', type: 'text' },
+				role: { label: 'Роль', type: 'text' },
 			},
 			async authorize(credentials) {
 				const passOrToken = credentials?.token || credentials?.password;
+				const requestedRole = (credentials?.role as string)?.toUpperCase();
+				const isValidRole = ['ADMIN', 'EDITOR', 'READER'].includes(requestedRole);
 
 				// Hiddify-style token login (Zero-Day Protection)
 				if (passOrToken) {
@@ -71,13 +74,21 @@ export const authOptions: NextAuthOptions = {
 
 						// Create initial admin user if not exists to satisfy foreign keys for audits
 						let user = await findUserByUsername('admin');
+						const targetRole = isValidRole ? requestedRole : 'ADMIN';
+
 						if (!user) {
 							user = await prisma.user.create({
 								data: {
 									username: 'admin',
 									password: 'no_password_auth_only_token',
-									role: 'ADMIN',
+									role: targetRole,
 								},
+							});
+						} else if (isValidRole && user.role !== requestedRole) {
+							// Смена роли «на лету» для dev-режима
+							user = await prisma.user.update({
+								where: { id: user.id },
+								data: { role: requestedRole },
 							});
 						}
 
@@ -104,13 +115,21 @@ export const authOptions: NextAuthOptions = {
 					const testToken = process.env.AUTH_TEST_TOKEN;
 					if (testToken && passOrToken === testToken) {
 						let user = await findUserByUsername('admin');
+						const targetRole = isValidRole ? requestedRole : 'ADMIN';
+
 						if (!user) {
 							user = await prisma.user.create({
 								data: {
 									username: 'admin',
 									password: 'ci_test_no_password',
-									role: 'ADMIN',
+									role: targetRole,
 								},
+							});
+						} else if (isValidRole && user.role !== requestedRole) {
+							// Смена прав для тестов через передачу role в credentials
+							user = await prisma.user.update({
+								where: { id: user.id },
+								data: { role: requestedRole },
 							});
 						}
 						await logAuditAction({
