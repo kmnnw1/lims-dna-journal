@@ -170,6 +170,8 @@ logs/
 *.log
 biome_output.txt
 *_output.txt
+project-structure.txt
+dev.log
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
