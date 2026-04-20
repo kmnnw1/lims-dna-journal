@@ -61,11 +61,10 @@ if (hasDB) {
 		`[SYSTEM] Изменение схемы базы данных (${changedFiles.length} ф.). Инкремент: Minor.`,
 	);
 } else if (hasLogic) {
-	// Изменения в прикладной логике или UI (Patch)
-	patch++;
-	build = 0;
+	// Изменения в прикладной логике или UI (теперь Build для плавности атомных коммитов)
+	build++;
 	console.log(
-		`[SYSTEM] Изменение программной логики/UI (${changedFiles.length} ф.). Инкремент: Patch.`,
+		`[SYSTEM] Изменение программной логики/UI (${changedFiles.length} ф.). Инкремент: Build.`,
 	);
 } else if (hasMeta) {
 	// Мета-данные, стили, тесты или инфраструктура (Build)
