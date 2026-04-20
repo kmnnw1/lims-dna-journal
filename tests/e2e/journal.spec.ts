@@ -204,7 +204,7 @@ test.describe('Журнал Проб - Основной функционал', (
 		}
 	});
 
-	test('Проверка новых функций (Экспорт, Сканер)', async ({ page }) => {
+	test('Проверка новых функций (Экспорт, Сканер)', async ({ page, isMobile }) => {
 		const exportDropdownBtn = page.getByLabel('Выбор формата экспорта').first();
 		await exportDropdownBtn.click({ force: true });
 
@@ -214,48 +214,51 @@ test.describe('Журнал Проб - Основной функционал', (
 				.filter({ hasText: /Сохранить CSV/i })
 				.first(),
 		).toBeVisible({ timeout: 10000 });
-		const scanBtn = page
-			.locator('button:visible')
-			.filter({ hasText: /Сканировать/i })
-			.first();
-		await expect(scanBtn).toBeVisible();
 
-		// Тестирование модалки сканера
-		await scanBtn.click({ force: true });
-		await expect(page.getByRole('heading', { name: /Сканирование/i })).toBeVisible({
-			timeout: 10000,
-		});
-
-		// Ручной ввод в сканер
-		await page.locator('input[type="text"]:visible').last().fill('AP1932');
-		await page
-			.locator('button:visible')
-			.filter({ hasText: /Найти пробу/i })
-			.first()
-			.click({ force: true });
-
-		// Ждем закрытия модалки или сообщения о том, что проба не найдена
-		await Promise.race([
-			expect(page.getByRole('heading', { name: /Сканирование/i })).toBeHidden({
-				timeout: 5000,
-			}),
-			expect(page.getByText(/не найден/i)).toBeVisible({ timeout: 5000 }),
-			expect(page.getByText(/ошибка/i)).toBeVisible({ timeout: 5000 }),
-		]).catch(() => {});
-
-		const scanHeading = page.getByRole('heading', { name: /Сканирование/i });
-		if (await scanHeading.isVisible()) {
-			const closeBtn = page
-				.locator('button')
-				.filter({ has: page.locator('svg.lucide-x') })
+		if (isMobile) {
+			const scanBtn = page
+				.locator('button:visible')
+				.filter({ hasText: /Сканировать/i })
 				.first();
-			if (await closeBtn.isVisible()) {
-				await closeBtn.click({ force: true });
-			} else {
-				await page.keyboard.press('Escape');
-			}
-		}
+			await expect(scanBtn).toBeVisible();
 
-		await expect(scanHeading).toBeHidden({ timeout: 5000 });
+			// Тестирование модалки сканера
+			await scanBtn.click({ force: true });
+			await expect(page.getByRole('heading', { name: /Сканирование/i })).toBeVisible({
+				timeout: 10000,
+			});
+
+			// Ручной ввод в сканер
+			await page.locator('input[type="text"]:visible').last().fill('AP1932');
+			await page
+				.locator('button:visible')
+				.filter({ hasText: /Найти пробу/i })
+				.first()
+				.click({ force: true });
+
+			// Ждем закрытия модалки или сообщения о том, что проба не найдена
+			await Promise.race([
+				expect(page.getByRole('heading', { name: /Сканирование/i })).toBeHidden({
+					timeout: 5000,
+				}),
+				expect(page.getByText(/не найден/i)).toBeVisible({ timeout: 5000 }),
+				expect(page.getByText(/ошибка/i)).toBeVisible({ timeout: 5000 }),
+			]).catch(() => {});
+
+			const scanHeading = page.getByRole('heading', { name: /Сканирование/i });
+			if (await scanHeading.isVisible()) {
+				const closeBtn = page
+					.locator('button')
+					.filter({ has: page.locator('svg.lucide-x') })
+					.first();
+				if (await closeBtn.isVisible()) {
+					await closeBtn.click({ force: true });
+				} else {
+					await page.keyboard.press('Escape');
+				}
+			}
+
+			await expect(scanHeading).toBeHidden({ timeout: 5000 });
+		}
 	});
 });
