@@ -1,5 +1,9 @@
+import { Zap } from 'lucide-react';
 import type { Metadata, Viewport } from 'next';
 import { Montserrat, Outfit } from 'next/font/google';
+import { useSession } from 'next-auth/react';
+import { DevOverlay } from '@/components/features/DevOverlay';
+import { DevSettingsProvider, useDevSettings } from '@/components/features/DevSettingsProvider';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { Providers } from '@/components/layout/Providers';
 import './globals.css';
@@ -64,9 +68,40 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				className="min-h-screen bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface) selection:bg-(--md-sys-color-primary) selection:text-(--md-sys-color-on-primary) transition-colors duration-300 font-sans antialiased"
 			>
 				<Providers>
-					<PageTransition>{children}</PageTransition>
+					<DevSettingsProvider>
+						<PageTransition>{children}</PageTransition>
+						<DevOverlay />
+						<DevToolsButton />
+					</DevSettingsProvider>
 				</Providers>
 			</body>
 		</html>
+	);
+}
+
+/**
+ * Плавающая кнопка вызова инструментов разработчика.
+ * Видна всегда, позволяет быстро открыть оверлей.
+ */
+function DevToolsButton() {
+	const { setOverlayOpen, isOverlayOpen } = useDevSettings();
+	const { data: session } = useSession();
+
+	const isAuthorized =
+		session?.user?.name?.toLowerCase().includes('pavel') ||
+		session?.user?.name?.toLowerCase().includes('asus') ||
+		process.env.NODE_ENV === 'development';
+
+	if (!isAuthorized || isOverlayOpen) return null;
+
+	return (
+		<button
+			onClick={() => setOverlayOpen(true)}
+			className="fixed bottom-6 right-6 z-[9998] w-14 h-14 bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-2xl flex items-center justify-center md-elevation-2 hover:md-elevation-3 active:scale-90 transition-all group overflow-hidden"
+			title="Инструменты разработчика"
+		>
+			<div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+			<Zap className="w-7 h-7" />
+		</button>
 	);
 }
