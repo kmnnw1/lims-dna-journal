@@ -2,19 +2,23 @@
 FROM node:24-bookworm-slim AS deps
 WORKDIR /app
 
-# Обновляем NPM до актуальной версии через Corepack
-RUN corepack enable npm && corepack prepare npm@latest --activate
+# Глобально отключаем Husky и уведомления NPM для чистоты логов
+ENV HUSKY=0
+ENV npm_config_update_notifier=false
+
+# Обновляем NPM до фиксированной стабильной версии через Corepack
+RUN corepack enable npm && corepack prepare npm@11.12.0 --activate
 
 # Установка зависимостей с использованием кэш-маунта BuildKit
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
     --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev --ignore-scripts
+    npm ci --omit=dev --ignore-scripts --no-update-notifier
 
 # Полноценная установка всех зависимостей (включая dev для сборки)
 COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm \
-    HUSKY=0 npm ci
+    npm ci --no-update-notifier
 
 # Stage 2: Builder
 FROM node:24-bookworm-slim AS builder
@@ -48,9 +52,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && apt-get install -y openssl --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Создаем пользователя для безопасности (используем стандартный системный UID 999)
-RUN groupadd --system --gid 999 nodejs
-RUN useradd --system --uid 999 --gid nodejs --no-create-home nextjs
+# Создаем пользователя для безопасности (используем ID 1001, стандарт для контейнеров)
+RUN groupadd --gid 1001 nodejs
+RUN useradd --uid 1001 --gid nodejs --no-create-home nextjs
 
 # Копируем публичные ассеты и статику
 COPY --from=builder /app/public ./public
