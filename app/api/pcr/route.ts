@@ -8,6 +8,9 @@ import {
 	validateSpecimenId,
 } from '@/lib/security/input-validator';
 
+// Разрешенные типы маркеров
+const ALLOWED_MARKERS = ['ITS', 'SSU', 'LSU', 'MCM7'];
+
 export async function GET(req: Request) {
 	try {
 		await requireRole('READER');
@@ -15,10 +18,7 @@ export async function GET(req: Request) {
 		const specimenId = validateSpecimenId(searchParams.get('specimenId'));
 
 		if (!specimenId) {
-			return NextResponse.json(
-				{ error: 'Не указан или невалидный specimenId' },
-				{ status: 400 },
-			);
+			throw { statusCode: 400, message: 'Не указан или невалидный specimenId' };
 		}
 
 		const attempts = await prisma.pcrAttempt.findMany({
@@ -28,7 +28,7 @@ export async function GET(req: Request) {
 
 		return NextResponse.json(attempts);
 	} catch (e) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }
 
@@ -39,16 +39,13 @@ export async function POST(req: Request) {
 
 		const contentType = req.headers.get('content-type');
 		if (!validateContentType(contentType)) {
-			return NextResponse.json(
-				{ error: 'Content-Type должен быть application/json' },
-				{ status: 415 },
-			);
+			throw { statusCode: 415, message: 'Content-Type должен быть application/json' };
 		}
 
 		const body = await req.json();
 
 		const specimenId = validateSpecimenId(body.specimenId);
-		const marker = sanitizeString(body.marker, 50);
+		const rawMarker = sanitizeString(body.marker, 20)?.toUpperCase() || '';
 		const result = sanitizeString(body.result, 50);
 		const volume = sanitizeString(body.volume, 50);
 		const dnaMatrix = sanitizeString(body.dnaMatrix, 100);
@@ -57,14 +54,23 @@ export async function POST(req: Request) {
 		const date = body.date;
 		const id = validateSpecimenId(body.id);
 
-		if (!specimenId || !marker) {
-			return NextResponse.json({ error: 'specimenId и marker обязательны' }, { status: 400 });
+		if (!specimenId) {
+			throw { statusCode: 400, message: 'specimenId обязателен и должен быть валидным' };
+		}
+
+		if (!rawMarker || !ALLOWED_MARKERS.includes(rawMarker)) {
+			throw {
+				statusCode: 400,
+				message: `Недопустимый маркер. Разрешены: ${ALLOWED_MARKERS.join(', ')}`,
+			};
 		}
 
 		let attempt;
 		if (id) {
 			// Редактирование существующей попытки
 			const oldAttempt = await prisma.pcrAttempt.findUnique({ where: { id } });
+			if (!oldAttempt) throw { statusCode: 404, message: 'Попытка ПЦР не найдена' };
+
 			attempt = await prisma.pcrAttempt.update({
 				where: { id },
 				data: {
@@ -82,20 +88,17 @@ export async function POST(req: Request) {
 				action: 'UPDATE_SPECIMEN',
 				resourceType: 'PCR_ATTEMPT',
 				resourceId: attempt.id,
-				details: { specimenId, marker: oldAttempt?.marker },
-				changes: oldAttempt
-					? {
-							result: { old: oldAttempt.result, new: result },
-							marker: { old: oldAttempt.marker, new: marker },
-						}
-					: undefined,
+				details: { specimenId, marker: oldAttempt.marker },
+				changes: {
+					result: { old: oldAttempt.result, new: result },
+				},
 			});
 		} else {
-			// Создание новой попытки (уникальности больше нет)
+			// Создание новой попытки
 			attempt = await prisma.pcrAttempt.create({
 				data: {
 					specimenId,
-					marker,
+					marker: rawMarker,
 					result: result || 'Pending',
 					volume: volume || undefined,
 					dnaMatrix: dnaMatrix || undefined,
@@ -110,20 +113,20 @@ export async function POST(req: Request) {
 				action: 'CREATE_PCR_ATTEMPT',
 				resourceType: 'PCR_ATTEMPT',
 				resourceId: attempt.id,
-				details: { specimenId, marker, result },
+				details: { specimenId, marker: rawMarker, result },
 			});
 		}
 
-		// Update Specimen Status (берем из последней актуальной попытки для этого маркера)
+		// Обновляем статус пробы на основе результата ПЦР
 		const latestAttempt = await prisma.pcrAttempt.findFirst({
-			where: { specimenId, marker, deletedAt: null },
+			where: { specimenId, marker: rawMarker, deletedAt: null },
 			orderBy: { date: 'desc' },
 		});
 
 		if (latestAttempt) {
 			const statusValue = latestAttempt.result === 'Success' ? '✓' : '✕';
 			let statusField = '';
-			switch (marker.toUpperCase()) {
+			switch (rawMarker) {
 				case 'ITS':
 					statusField = 'itsStatus';
 					break;
@@ -137,6 +140,7 @@ export async function POST(req: Request) {
 					statusField = 'mcm7Status';
 					break;
 			}
+
 			if (statusField) {
 				await prisma.specimen.update({
 					where: { id: specimenId },
@@ -147,7 +151,7 @@ export async function POST(req: Request) {
 
 		return NextResponse.json(attempt);
 	} catch (e) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }
 
@@ -158,9 +162,14 @@ export async function DELETE(req: Request) {
 		const { searchParams } = new URL(req.url);
 		const id = validateSpecimenId(searchParams.get('id'));
 
-		if (!id) return NextResponse.json({ error: 'id обязателен' }, { status: 400 });
+		if (!id) {
+			throw { statusCode: 400, message: 'id обязателен и должен быть валидным' };
+		}
 
-		const deleted = await prisma.pcrAttempt.update({
+		const attempt = await prisma.pcrAttempt.findUnique({ where: { id } });
+		if (!attempt) throw { statusCode: 404, message: 'Попытка ПЦР не найдена' };
+
+		await prisma.pcrAttempt.update({
 			where: { id },
 			data: { deletedAt: new Date() },
 		});
@@ -170,11 +179,11 @@ export async function DELETE(req: Request) {
 			action: 'DELETE_SPECIMEN',
 			resourceType: 'PCR_ATTEMPT',
 			resourceId: id,
-			details: { marker: deleted.marker, specimenId: deleted.specimenId },
+			details: { marker: attempt.marker, specimenId: attempt.specimenId },
 		});
 
 		return NextResponse.json({ success: true });
 	} catch (e) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }

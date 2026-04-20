@@ -5,7 +5,7 @@ import { prisma } from '@/lib/database/prisma';
 import { sanitizeString, validateContentType, validateRole } from '@/lib/security/input-validator';
 
 // GET: Получить список пользователей (id, username, role)
-export async function GET() {
+export async function GET(req: Request) {
 	try {
 		await requireRole('ADMIN');
 		const users = await prisma.user.findMany({
@@ -13,7 +13,7 @@ export async function GET() {
 		});
 		return NextResponse.json(users);
 	} catch (e) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }
 
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 		});
 		return NextResponse.json({ success: true });
 	} catch (e) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }
 
@@ -118,7 +118,7 @@ export async function PUT(req: Request) {
 			},
 		});
 	} catch (e) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }
 
@@ -160,6 +160,6 @@ export async function DELETE(req: Request) {
 		await prisma.user.delete({ where: { id } });
 		return NextResponse.json({ success: true });
 	} catch (e) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }

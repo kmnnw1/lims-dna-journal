@@ -11,6 +11,7 @@ type Props = {
 	onChange: (val: EditSpecimenForm) => void;
 	onSubmit: (e: React.FormEvent) => void;
 	specimens: Specimen[];
+	validationError?: string;
 };
 
 export function EditSpecimenModal({
@@ -19,6 +20,7 @@ export function EditSpecimenModal({
 	onChange,
 	onSubmit,
 	specimens = [],
+	validationError,
 }: Props) {
 	useEffect(() => {
 		if (!specimen) return;
@@ -287,6 +289,12 @@ export function EditSpecimenModal({
 							<option key={i} value={t as string} />
 						))}
 					</datalist>
+
+					{validationError && (
+						<div className="bg-(--md-sys-color-error-container) text-(--md-sys-color-on-error-container) p-4 rounded-2xl text-sm font-medium">
+							{validationError}
+						</div>
+					)}
 
 					{/* Кнопки */}
 					<div className="flex justify-end gap-3 pt-4">

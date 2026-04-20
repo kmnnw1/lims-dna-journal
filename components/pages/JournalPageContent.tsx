@@ -76,6 +76,8 @@ export function JournalPageContent() {
 		suggestions,
 		toastMessage,
 		setToastMessage,
+		validationError,
+		setValidationError,
 	} = useJournalPage();
 
 	const { settings: devSettings } = useDevSettings();
@@ -214,6 +216,8 @@ export function JournalPageContent() {
 								<div className="flex items-center bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-full shadow-sm hover:md-elevation-2 transition-all overflow-hidden group">
 									<button
 										onClick={handleMainExportClick}
+										aria-label="Экспорт"
+										data-testid="export-button"
 										className="flex items-center gap-2 pl-3 sm:pl-4 pr-1.5 py-2 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors font-medium text-xs sm:text-sm active:scale-95 whitespace-nowrap min-w-max"
 										title={`Экспорт в ${getFormatLabel(lastExportFormat)}`}
 									>
@@ -380,11 +384,15 @@ export function JournalPageContent() {
 
 				<AddSpecimenModal
 					open={isAddModalOpen}
-					onClose={() => setIsAddModalOpen(false)}
+					onClose={() => {
+						setIsAddModalOpen(false);
+						setValidationError(null);
+					}}
 					onSubmit={handleAddSubmit}
 					newRecord={newRecordData}
 					setNewRecord={setNewRecordData}
 					specimens={specimens}
+					validationError={validationError || undefined}
 				/>
 				<PcrModal
 					open={Boolean(activePcrSpecimen)}
@@ -397,10 +405,14 @@ export function JournalPageContent() {
 				/>
 				<EditSpecimenModal
 					specimen={editingSpecimen}
-					onClose={() => setEditingSpecimen(null)}
+					onClose={() => {
+						setEditingSpecimen(null);
+						setValidationError(null);
+					}}
 					onChange={(val) => val && setEditingSpecimen(val)}
 					onSubmit={handleEditSubmit}
 					specimens={specimens}
+					validationError={validationError || undefined}
 				/>
 				<BatchPcrModal
 					open={isBatchModalOpen}

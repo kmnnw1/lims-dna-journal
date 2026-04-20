@@ -28,8 +28,7 @@ export async function requireRole(required: 'EDITOR' | 'ADMIN' | 'READER' | 'ANY
  * Обрабатывает Prisma-ошибки (P2002), кастомные ошибки с statusCode,
  * и стандартные Error-объекты.
  */
-export function handleError(e: unknown) {
-	console.error('[API Error]:', e);
+export function handleError(e: unknown, req?: Request) {
 	const errorInfo = e as { code?: string; statusCode?: number; message?: string };
 	const isPrismaConflict = errorInfo?.code === 'P2002';
 	const status =
@@ -38,9 +37,19 @@ export function handleError(e: unknown) {
 			: isPrismaConflict
 				? 409
 				: 500;
+
+	// Логгируем в console.error только реальные системные сбои (500+)
+	// Операционные ответы безопасности (401, 403, 400) - это штатная работа, а не «Ошибка»
+	if (status >= 500) {
+		const url = req?.url || 'unknown url';
+		const method = req?.method || 'unknown method';
+		console.error(`[API Failure] [${method}] ${url}:`, e);
+	}
+
 	const message = isPrismaConflict
 		? 'Запись с таким ID уже существует'
 		: errorInfo?.message || (e instanceof Error ? e.message : 'Ошибка сервера');
+
 	return NextResponse.json({ error: message }, { status });
 }
 

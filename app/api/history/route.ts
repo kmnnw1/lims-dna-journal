@@ -59,7 +59,7 @@ export async function GET(req: Request) {
 			})),
 		);
 	} catch (e) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }
 
@@ -127,6 +127,6 @@ export async function POST(req: Request) {
 		invalidateSpecimenCaches();
 		return NextResponse.json({ success: true });
 	} catch (e) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }

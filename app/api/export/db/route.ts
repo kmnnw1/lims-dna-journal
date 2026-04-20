@@ -6,7 +6,7 @@ import { handleError, requireRole } from '@/lib/api/helpers';
  * API route to download the SQLite database file (.db)
  * Restricted to users with EDITOR or ADMIN role.
  */
-export async function GET() {
+export async function GET(req: Request) {
 	try {
 		// Ensure user is authorized
 		await requireRole('EDITOR');
@@ -29,6 +29,6 @@ export async function GET() {
 			},
 		});
 	} catch (e: unknown) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }

@@ -31,6 +31,6 @@ export async function GET(req: Request) {
 
 		return NextResponse.json(logs);
 	} catch (e: unknown) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }

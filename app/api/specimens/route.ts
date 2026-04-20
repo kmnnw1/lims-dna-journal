@@ -101,7 +101,7 @@ export async function GET(req: Request) {
 		setCache(cacheKey, response, 300000);
 		return NextResponse.json(response);
 	} catch (e: unknown) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }
 
@@ -128,11 +128,8 @@ export async function POST(request: Request) {
 		}
 
 		const taxon = sanitizeString(rawData?.taxon);
-		if (taxon && taxon.length > 0 && taxon.length < 3) {
-			return NextResponse.json(
-				{ error: 'Таксон должен содержать не менее 3 символов' },
-				{ status: 400 },
-			);
+		if (taxon && taxon.trim().length > 0 && taxon.trim().length < 3) {
+			throw { statusCode: 400, message: 'Таксон должен содержать не менее 3 символов' };
 		}
 
 		const exists = await prisma.specimen.findUnique({ where: { id } });
@@ -193,7 +190,7 @@ export async function POST(request: Request) {
 
 		return NextResponse.json(created);
 	} catch (e: unknown) {
-		return handleError(e);
+		return handleError(e, request);
 	}
 }
 
@@ -245,12 +242,9 @@ export async function PUT(req: Request) {
 		}
 
 		if (id && Object.keys(restData).length > 0) {
-			const taxon = restData?.taxon || '';
+			const taxon = sanitizeString(restData?.taxon || '');
 			if (taxon && taxon.trim().length > 0 && taxon.trim().length < 3) {
-				return NextResponse.json(
-					{ error: 'Таксон должен содержать не менее 3 символов' },
-					{ status: 400 },
-				);
+				throw { statusCode: 400, message: 'Таксон должен содержать не менее 3 символов' };
 			}
 
 			const oldSpecimen = await prisma.specimen.findUnique({ where: { id: String(id) } });
@@ -290,7 +284,7 @@ export async function PUT(req: Request) {
 
 		return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
 	} catch (e: unknown) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }
 
@@ -332,8 +326,8 @@ export async function DELETE(request: Request) {
 			invalidateSpecimenCaches();
 			return NextResponse.json({ success: true });
 		}
-		return NextResponse.json({ error: 'Не указаны id для удаления' }, { status: 400 });
+		throw { statusCode: 400, message: 'Не указаны id для удаления' };
 	} catch (e: unknown) {
-		return handleError(e);
+		return handleError(e, request);
 	}
 }

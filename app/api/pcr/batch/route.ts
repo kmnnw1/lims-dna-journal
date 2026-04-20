@@ -90,6 +90,6 @@ export async function POST(request: Request) {
 			count: createdAttempts.count,
 		});
 	} catch (e) {
-		return handleError(e);
+		return handleError(e, request);
 	}
 }

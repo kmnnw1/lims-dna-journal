@@ -8,25 +8,14 @@
 # 1. AUXILIARY & INTERNAL DATA
 # ------------------------------------------------------------------------------
 .internal_data/
-brain/
-SESSION_LOG.md
-THOUGHTS.md
-AGENTS*.md
-CLAUDE.md
-CHAT_HISTORY.md
-repomix-output.*
-project-structure.txt
-debug-output.txt
-scratch/
+local/
+AGENTS.md
 .gemini/
 .antigravity/
 .cortex/
 .aider*
 .cursor/
 .windsurf/
-BRAIN_HISTORY.md
-dialogs/
-BRAIN_LOG.md
 
 # ------------------------------------------------------------------------------
 # 2. NODE.JS & MODERN JAVASCRIPT ECOSYSTEM

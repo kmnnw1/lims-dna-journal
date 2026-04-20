@@ -43,6 +43,7 @@ export function useJournalPage() {
 	const [activePcrSpecimen, setActivePcrSpecimen] = useState<Specimen | null>(null);
 	const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
 	const [isScanOpen, setIsScanOpen] = useState(false);
+	const [validationError, setValidationError] = useState<string | null>(null);
 
 	const [newRecordData, setNewRecordData] = useState({
 		id: '',
@@ -269,12 +270,33 @@ export function useJournalPage() {
 
 	const handleAddSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setValidationError(null);
+
+		const { id, taxon } = newRecordData;
+		if (!id.trim()) {
+			setValidationError('ID пробы обязателен');
+			return;
+		}
+		if (taxon.trim() && taxon.trim().length < 3) {
+			setValidationError('Таксон должен содержать не менее 3 символов');
+			return;
+		}
+
 		addMutation.mutate(newRecordData);
 	};
 
 	const handleEditSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (editingSpecimen) editMutation.mutate(editingSpecimen);
+		setValidationError(null);
+
+		if (editingSpecimen) {
+			const { taxon } = editingSpecimen;
+			if (taxon && taxon.trim().length > 0 && taxon.trim().length < 3) {
+				setValidationError('Таксон должен содержать не менее 3 символов');
+				return;
+			}
+			editMutation.mutate(editingSpecimen);
+		}
 	};
 
 	const handlePcrSubmit = async () => {
@@ -447,5 +469,7 @@ export function useJournalPage() {
 		suggestions,
 		toastMessage,
 		setToastMessage,
+		validationError,
+		setValidationError,
 	};
 }

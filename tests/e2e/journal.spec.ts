@@ -205,10 +205,7 @@ test.describe('Журнал Проб - Основной функционал', (
 	});
 
 	test('Проверка новых функций (Экспорт, Сканер)', async ({ page }) => {
-		const exportBtn = page
-			.locator('button:visible')
-			.filter({ hasText: /Экспорт/i })
-			.first();
+		const exportBtn = page.getByLabel('Экспорт').first();
 		await exportBtn.click({ force: true });
 
 		await expect(

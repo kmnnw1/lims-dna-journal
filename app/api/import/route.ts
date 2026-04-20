@@ -28,10 +28,12 @@ export async function GET(req: Request) {
 			: path.join(/*turbopackIgnore: true*/ process.cwd(), rawPath);
 
 		if (!fs.existsSync(filePath)) {
-			return NextResponse.json(
-				{ error: `Файл импорта не найден: ${filePath}` },
-				{ status: 400 },
-			);
+			throw { statusCode: 404, message: `Файл импорта не найден: ${filePath}` };
+		}
+
+		// Базовая валидация расширения файла (MIME/Magic bytes были бы лучше, но для локального файла достаточно расширения)
+		if (!filePath.toLowerCase().endsWith('.xlsx')) {
+			throw { statusCode: 400, message: 'Допустимы только файлы .xlsx' };
 		}
 
 		const workbook = new ExcelJS.Workbook();
@@ -88,7 +90,7 @@ export async function GET(req: Request) {
 				sheets: sheetNames,
 				aiUsed,
 				previousCount: beforeCount,
-				newCount: beforeCount + inserted,
+				newCount: inserted,
 			},
 		});
 
@@ -101,34 +103,34 @@ export async function GET(req: Request) {
 			aiUsed,
 		});
 	} catch (e: unknown) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }
 
-/**
- * Очищает таблицу specimen по подтверждённому запросу.
- */
-export async function POST(request: Request) {
+export async function POST(req: Request) {
 	try {
 		await requireRole('ADMIN');
 
-		const contentType = request.headers.get('content-type');
+		const contentType = req.headers.get('content-type');
 		if (!validateContentType(contentType)) {
-			return NextResponse.json(
-				{ error: 'Content-Type должен быть application/json' },
-				{ status: 415 },
-			);
+			throw { statusCode: 415, message: 'Content-Type должен быть application/json' };
 		}
 
-		const body = await request.json().catch(() => ({}));
+		const body = await req.json().catch(() => ({}));
 		if (body.action !== 'clear') {
-			return NextResponse.json(
-				{ error: 'Укажите JSON: { "action": "clear" }' },
-				{ status: 400 },
-			);
+			throw { statusCode: 400, message: 'Укажите JSON: { "action": "clear" }' };
 		}
 		const beforeCount = await prisma.specimen.count();
 		const result = await prisma.specimen.deleteMany({});
+
+		await logAuditAction({
+			userId: 'admin-system',
+			action: 'UPDATE_SPECIMEN',
+			resourceType: 'SPECIMEN',
+			resourceId: 'ALL',
+			details: { action: 'CLEAR_DATABASE', deletedCount: result.count },
+		});
+
 		return NextResponse.json({
 			success: true,
 			deleted: result.count,
@@ -136,6 +138,6 @@ export async function POST(request: Request) {
 			message: `Удалено записей: ${result.count}`,
 		});
 	} catch (e: unknown) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }

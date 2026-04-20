@@ -5,7 +5,7 @@ import { handleError, requireRole } from '@/lib/api/helpers';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
 	try {
 		await requireRole('ADMIN');
 
@@ -26,6 +26,6 @@ export async function GET() {
 			},
 		});
 	} catch (e: unknown) {
-		return handleError(e);
+		return handleError(e, req);
 	}
 }
