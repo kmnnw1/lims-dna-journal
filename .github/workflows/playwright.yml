@@ -4,6 +4,11 @@ on:
         branches: [main, master]
     pull_request:
         branches: [main, master]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
 jobs:
     test:
         timeout-minutes: 60
@@ -12,30 +17,40 @@ jobs:
             NEXT_TELEMETRY_DISABLED: 1
             PRISMA_TELEMETRY_DISABLED: 1
             DO_NOT_TRACK: 1
+            HUSKY: 0
+            npm_config_update_notifier: false
         steps:
             - uses: actions/checkout@v6
             - name: Cache npm dependencies
               uses: actions/cache@v5
               with:
                 path: ~/.npm
-                key: ${{ runner.os }}-node-playwright-${{ hashFiles('**/package-lock.json') }}
+                key: ${{ runner.os }}-node-v2-${{ hashFiles('**/package-lock.json') }}
                 restore-keys: |
-                  ${{ runner.os }}-node-playwright-
+                  ${{ runner.os }}-node-v2-
             - uses: actions/setup-node@v6
               with:
                   node-version: 24
-            - run: corepack enable npm && corepack prepare npm@latest --activate
+            - run: corepack enable npm && corepack prepare npm@11.12.0 --activate
             - name: Install dependencies
               run: |
-                echo "::group::npm install"
-                npm install --force
+                echo "::group::npm ci"
+                npm ci --no-update-notifier
                 echo "::endgroup::"
-            - name: Clean broken apt repos before playwright install
-              run: sudo rm -f /etc/apt/sources.list.d/*.list || true
+            - name: Get Playwright version
+              id: playwright-version
+              run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> "$GITHUB_OUTPUT"
+            - name: Cache Playwright Browsers
+              uses: actions/cache@v5
+              id: playwright-cache
+              with:
+                path: ~/.cache/ms-playwright
+                key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
             - name: Install Playwright Browsers
+              if: steps.playwright-cache.outputs.cache-hit != 'true'
               run: |
                 echo "::group::playwright install"
-                npx playwright install --with-deps
+                npx playwright install --with-deps chromium
                 echo "::endgroup::"
             - name: Generate Prisma Client
               run: |
