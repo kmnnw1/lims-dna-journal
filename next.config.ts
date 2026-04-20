@@ -31,6 +31,13 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
 	output: 'standalone',
+	serverExternalPackages: ['exceljs'],
+	turbopack: {
+		resolveAlias: {
+			'@aws-sdk/client-s3': './lib/shims/empty.js',
+			'@aws-sdk/lib-storage': './lib/shims/empty.js',
+		},
+	},
 	experimental: {
 		optimizePackageImports: ['lucide-react'],
 	},
