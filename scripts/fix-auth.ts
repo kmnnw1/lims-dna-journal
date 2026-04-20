@@ -34,6 +34,24 @@ async function main() {
 		});
 		console.log('Тестовые пробы успешно добавлены!');
 	}
+
+	// === ПОДГОТОВКА ТОКЕНОВ ДЛЯ CI/CD ===
+	const testToken = process.env.AUTH_TEST_TOKEN || 'test-token-123';
+	console.log(`Подготовка тестового токена: ${testToken}`);
+
+	await prisma.authToken.upsert({
+		where: { token: testToken },
+		update: {
+			expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // +24 часа
+			used: false,
+		},
+		create: {
+			token: testToken,
+			expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+			used: false,
+		},
+	});
+	console.log('Тестовый токен готов к использованию!');
 }
 
 main()
