@@ -106,7 +106,20 @@ export function validatePagination(
  */
 export function validateContentType(contentType: string | null): boolean {
 	if (!contentType) return false;
-	return contentType.includes('application/json');
+	const type = contentType.split(';')[0].trim().toLowerCase();
+	return type === 'application/json';
+}
+
+/**
+ * Валидация роли пользователя
+ */
+export type UserRole = 'ADMIN' | 'EDITOR' | 'READER';
+const ALLOWED_ROLES: Set<string> = new Set(['ADMIN', 'EDITOR', 'READER']);
+
+export function validateRole(role: unknown): UserRole | null {
+	if (typeof role !== 'string') return null;
+	const upper = role.toUpperCase();
+	return ALLOWED_ROLES.has(upper) ? (upper as UserRole) : null;
 }
 
 /**
