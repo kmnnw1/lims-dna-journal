@@ -4,8 +4,7 @@ import { Camera, ChevronDown, Download, Plus, Printer } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { BarcodeScanDialog } from '@/components/features/BarcodeScanDialog';
-import { DevOverlay } from '@/components/features/DevOverlay';
-import { DraggableDevButton } from '@/components/features/DraggableDevButton';
+import { useDevSettings } from '@/components/features/DevSettingsProvider';
 import { HistoryDialog } from '@/components/features/HistoryDialog';
 import { JournalHeader } from '@/components/features/JournalHeader';
 import {
@@ -77,11 +76,9 @@ export function JournalPageContent() {
 		suggestions,
 		toastMessage,
 		setToastMessage,
-		devSettings,
-		setDevSettings,
 	} = useJournalPage();
 
-	const [isDevOpen, setIsDevOpen] = useState(false);
+	const { settings: devSettings } = useDevSettings();
 	const [isExportOpen, setIsExportOpen] = useState(false);
 	const [lastExportFormat, setLastExportFormat] = useState<'XLSX' | 'CSV' | 'SQL'>('XLSX');
 	const [historyTarget, setHistoryTarget] = useState<{
@@ -433,16 +430,6 @@ export function JournalPageContent() {
 					}}
 				/>
 			</div>
-
-			<DevOverlay
-				isOpen={isDevOpen}
-				onClose={() => setIsDevOpen(false)}
-				settings={devSettings}
-				onUpdate={setDevSettings}
-				userName={session?.user?.name || undefined}
-			/>
-
-			<DraggableDevButton onClick={() => setIsDevOpen(true)} />
 
 			<FAB
 				extended
