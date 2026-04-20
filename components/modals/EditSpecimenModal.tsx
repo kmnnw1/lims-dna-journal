@@ -81,7 +81,7 @@ export function EditSpecimenModal({
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="edit-modal-title"
-			className="fixed inset-0 z-[140] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+			className="fixed inset-0 z-140 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
 		>
 			<div className="my-6 w-full max-w-2xl p-6 sm:p-8 relative bg-(--md-sys-color-surface-container-low) rounded-4xl shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
 				<div className="mb-6 flex items-center justify-between gap-4">
@@ -138,7 +138,7 @@ export function EditSpecimenModal({
 								onChange={(e) =>
 									onChange({ ...specimen, collector: e.target.value })
 								}
-								className="!rounded-md"
+								className="rounded-md!"
 							/>
 							<div className="sm:col-span-2">
 								<MD3Field
@@ -150,7 +150,7 @@ export function EditSpecimenModal({
 									onChange={(e) =>
 										onChange({ ...specimen, notes: e.target.value })
 									}
-									className="!rounded-t-xs !rounded-b-2xl"
+									className="rounded-t-xs! rounded-b-2xl!"
 								/>
 							</div>
 						</div>
@@ -189,7 +189,7 @@ export function EditSpecimenModal({
 								onChange={(e) =>
 									onChange({ ...specimen, extrMethod: e.target.value })
 								}
-								className="!rounded-t-xs !rounded-b-2xl"
+								className="rounded-t-xs! rounded-b-2xl!"
 							/>
 							<MD3Field
 								key={`field-${specimen.id}-extrDateRaw`}
@@ -199,7 +199,7 @@ export function EditSpecimenModal({
 								onChange={(e) =>
 									onChange({ ...specimen, extrDateRaw: e.target.value })
 								}
-								className="!rounded-t-xs !rounded-b-2xl"
+								className="rounded-t-xs! rounded-b-2xl!"
 							/>
 						</div>
 					</section>
@@ -238,7 +238,7 @@ export function EditSpecimenModal({
 								onChange={(e) =>
 									onChange({ ...specimen, measOperator: e.target.value })
 								}
-								className="!rounded-t-[0.25rem] !rounded-b-[1rem]"
+								className="rounded-t-sm! rounded-b-2xl!"
 							/>
 							<MD3Field
 								key={`field-${specimen.id}-measDate`}
@@ -248,7 +248,7 @@ export function EditSpecimenModal({
 								onChange={(e) =>
 									onChange({ ...specimen, measDate: e.target.value })
 								}
-								className="!rounded-t-xs !rounded-b-2xl"
+								className="rounded-t-xs! rounded-b-2xl!"
 							/>
 						</div>
 					</section>
