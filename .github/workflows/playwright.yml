@@ -74,12 +74,10 @@ jobs:
                 DATABASE_URL: file:./prisma/dev.db
 
             - name: Run Playwright tests
-              run: npx playwright test
+              run: TEST_TOKEN=$CI_TOKEN AUTH_TEST_TOKEN=$CI_TOKEN npx playwright test
               env:
-                  TEST_TOKEN: ${{ env.CI_TOKEN }}
-                  AUTH_TEST_TOKEN: ${{ env.CI_TOKEN }}
-                  DATABASE_URL: file:./prisma/dev.db
-                  DEBUG: pw:webserver
+                DATABASE_URL: file:./prisma/dev.db
+                DEBUG: pw:webserver
 
             - uses: actions/upload-artifact@v6
               if: ${{ !cancelled() }}
