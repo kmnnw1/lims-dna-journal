@@ -1,24 +1,18 @@
 import fs from 'fs';
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
 import path from 'path';
-import { authOptions } from '@/lib/auth';
+import { handleError, requireRole } from '@/lib/api/helpers';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
 	try {
-		// Защита: только для админов
-		const session = await getServerSession(authOptions);
-		const user = session?.user as { role?: string } | undefined;
-		if (user?.role !== 'ADMIN') {
-			return NextResponse.json({ error: 'Доступ запрещен' }, { status: 403 });
-		}
+		await requireRole('ADMIN');
 
 		const dbPath = path.join(process.cwd(), 'prisma', 'dev.db');
 
 		if (!fs.existsSync(dbPath)) {
-			return NextResponse.json({ error: 'Файл базы данных не найден' }, { status: 404 });
+			throw { statusCode: 404, message: 'Файл базы данных не найден' };
 		}
 
 		const fileBuffer = fs.readFileSync(dbPath);
@@ -31,8 +25,7 @@ export async function GET() {
 				'Cache-Control': 'no-store',
 			},
 		});
-	} catch (error) {
-		console.error('Ошибка экспорта БД:', error);
-		return NextResponse.json({ error: 'Внутренняя ошибка сервера' }, { status: 500 });
+	} catch (e: unknown) {
+		return handleError(e);
 	}
 }

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { handleError, requireRole } from '@/app/api/specimens/helpers';
+import { handleError, requireRole } from '@/lib/api/helpers';
 
 /**
  * API route to download the SQLite database file (.db)
@@ -14,10 +14,7 @@ export async function GET() {
 		const dbPath = join(process.cwd(), 'prisma', 'dev.db');
 
 		if (!existsSync(dbPath)) {
-			return Response.json(
-				{ error: 'Файл базы данных не найден на сервере' },
-				{ status: 404 },
-			);
+			throw { statusCode: 404, message: 'Файл базы данных не найден на сервере' };
 		}
 
 		// Read file contents

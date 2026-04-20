@@ -1,22 +1,23 @@
 import type { AuditLog } from '@prisma/client';
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/database/prisma';
 import {
 	type ApiUser,
 	handleError,
 	invalidateSpecimenCaches,
 	requireRole,
-} from '../specimens/helpers';
+} from '@/lib/api/helpers';
+import { prisma } from '@/lib/database/prisma';
+import { sanitizeString, validateContentType } from '@/lib/security/input-validator';
 
 export async function GET(req: Request) {
 	try {
 		await requireRole('READER');
 		const { searchParams } = new URL(req.url);
-		const resourceId = searchParams.get('resourceId');
-		const resourceType = searchParams.get('resourceType') || 'SPECIMEN';
+		const resourceId = sanitizeString(searchParams.get('resourceId'), 50);
+		const resourceType = sanitizeString(searchParams.get('resourceType') || 'SPECIMEN', 50);
 
 		if (!resourceId) {
-			return NextResponse.json({ error: 'resourceId обязателен' }, { status: 400 });
+			throw { statusCode: 400, message: 'resourceId обязателен' };
 		}
 
 		let whereClause: Record<string, unknown> = {
@@ -34,8 +35,6 @@ export async function GET(req: Request) {
 						resourceType: 'PCR_ATTEMPT',
 						details: { contains: `"specimenId":"${resourceId}"` },
 					},
-					// Также включаем случаи создания и удаления, где изменений может и не быть в поле 'changes',
-					// но они критичны для понимания истории
 					{
 						resourceType: 'PCR_ATTEMPT',
 						details: { contains: `"specimenId":"${resourceId}"` },
@@ -49,7 +48,7 @@ export async function GET(req: Request) {
 			// biome-ignore lint/suspicious/noExplicitAny: complex OR logic with nested conditions
 			where: whereClause as any,
 			orderBy: { timestamp: 'desc' },
-			take: 100, // Увеличим лимит для объединеного вида
+			take: 100,
 		});
 
 		return NextResponse.json(
@@ -67,11 +66,17 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
 	try {
 		const session = await requireRole('EDITOR');
+
+		const contentType = req.headers.get('content-type');
+		if (!validateContentType(contentType)) {
+			throw { statusCode: 415, message: 'Content-Type должен быть application/json' };
+		}
+
 		const body = await req.json();
-		const { auditLogId } = body;
+		const auditLogId = sanitizeString(body.auditLogId, 50);
 
 		if (!auditLogId) {
-			return NextResponse.json({ error: 'auditLogId обязателен' }, { status: 400 });
+			throw { statusCode: 400, message: 'auditLogId обязателен' };
 		}
 
 		const logEntry = await prisma.auditLog.findUnique({
@@ -79,22 +84,19 @@ export async function POST(req: Request) {
 		});
 
 		if (!logEntry || !logEntry.changes || !logEntry.resourceId) {
-			return NextResponse.json(
-				{ error: 'Запись лога не найдена или не содержит данных для отката' },
-				{ status: 404 },
-			);
+			throw {
+				statusCode: 404,
+				message: 'Запись лога не найдена или не содержит данных для отката',
+			};
 		}
 
 		const changes = JSON.parse(logEntry.changes) as Record<string, { old?: unknown }>;
 		const rollbackData: Record<string, unknown> = {};
 
-		// Для отката мы берем 'old' значения из этой записи лога
-		// Это вернет ресурс в состояние ДО этой операции
 		Object.entries(changes).forEach(([key, value]) => {
 			rollbackData[key] = value.old;
 		});
 
-		// Если это был DELETE (мягкое удаление), откат восстановит запись
 		rollbackData.deletedAt = null;
 
 		if (logEntry.resourceType === 'SPECIMEN') {
@@ -109,7 +111,6 @@ export async function POST(req: Request) {
 			});
 		}
 
-		// Логируем сам факт отката
 		const currentUser = session.user as ApiUser | undefined;
 		await prisma.auditLog.create({
 			data: {
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
 				resourceType: logEntry.resourceType,
 				resourceId: logEntry.resourceId,
 				details: JSON.stringify({ originalLogId: auditLogId }),
-				changes: JSON.stringify(changes), // Сохраняем что именно мы откатили
+				changes: JSON.stringify(changes),
 				timestamp: new Date(),
 			},
 		});
