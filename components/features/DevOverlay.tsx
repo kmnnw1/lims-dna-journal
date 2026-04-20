@@ -13,8 +13,11 @@ export const DevOverlay: React.FC = () => {
 	const { settings, updateSettings, isOverlayOpen, setOverlayOpen } = useDevSettings();
 	const { data: session } = useSession();
 	const [isBypassing, setIsBypassing] = useState(false);
+	const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'EDITOR' | 'READER'>('ADMIN');
 
 	const userName = session?.user?.name;
+	const currentRole = (session?.user as { role?: string })?.role;
+	const isAuthenticated = !!session;
 
 	// Доступ ограничен для Павла и Asus
 	const isAuthorized =
@@ -35,6 +38,7 @@ export const DevOverlay: React.FC = () => {
 		try {
 			await signIn('credentials', {
 				token: 'test-token-123',
+				role: selectedRole,
 				redirect: true,
 				callbackUrl: '/',
 			});
@@ -45,6 +49,12 @@ export const DevOverlay: React.FC = () => {
 			setOverlayOpen(false);
 		}
 	};
+
+	const roles = [
+		{ id: 'ADMIN', label: 'Администратор', color: 'bg-(--md-sys-color-primary)' },
+		{ id: 'EDITOR', label: 'Редактор', color: 'bg-(--md-sys-color-secondary)' },
+		{ id: 'READER', label: 'Читатель', color: 'bg-(--md-sys-color-tertiary)' },
+	] as const;
 
 	return (
 		<div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -78,16 +88,48 @@ export const DevOverlay: React.FC = () => {
 						сессии.
 					</p>
 
-					{/* Bypass Login Section */}
+					{/* Role Selection */}
+					<div className="space-y-3">
+						<label className="text-[10px] font-bold uppercase tracking-wider text-(--md-sys-color-outline) opacity-70 ml-1">
+							Выберите полномочия
+						</label>
+						<div className="flex gap-2">
+							{roles.map((role) => (
+								<button
+									key={role.id}
+									onClick={() => setSelectedRole(role.id)}
+									className={`flex-1 py-3 px-2 rounded-xl text-[10px] font-bold transition-all border-2 ${
+										selectedRole === role.id
+											? `${role.color} text-white border-transparent shadow-md scale-105`
+											: 'bg-(--md-sys-color-surface-container-lowest) border-(--md-sys-color-outline-variant)/30 text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
+									}`}
+								>
+									{role.label}
+								</button>
+							))}
+						</div>
+					</div>
+
+					{/* Bypass Login Button */}
 					<button
 						onClick={handleBypassLogin}
 						disabled={isBypassing}
-						className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl bg-(--md-sys-color-error) text-(--md-sys-color-on-error) hover:brightness-110 active:scale-95 transition-all md-elevation-1 disabled:opacity-50"
+						className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl md-elevation-1 hover:md-elevation-2 active:scale-95 transition-all disabled:opacity-50 ${
+							isAuthenticated
+								? 'bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container)'
+								: 'bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary)'
+						}`}
 					>
 						<LogIn className={`w-5 h-5 ${isBypassing ? 'animate-pulse' : ''}`} />
 						<div className="text-left">
-							<h3 className="font-bold text-sm">Зайти без логина</h3>
-							<p className="text-[10px] opacity-80">Авторизация по тест-токену</p>
+							<h3 className="font-bold text-sm">
+								{isAuthenticated ? 'Сменить права' : 'Зайти без логина'}
+							</h3>
+							<p className="text-[10px] opacity-80">
+								{isAuthenticated
+									? `Текущая роль: ${currentRole}`
+									: 'Авторизация по тест-токену'}
+							</p>
 						</div>
 					</button>
 
