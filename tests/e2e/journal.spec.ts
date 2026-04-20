@@ -205,8 +205,8 @@ test.describe('Журнал Проб - Основной функционал', (
 	});
 
 	test('Проверка новых функций (Экспорт, Сканер)', async ({ page }) => {
-		const exportBtn = page.getByLabel('Экспорт').first();
-		await exportBtn.click({ force: true });
+		const exportDropdownBtn = page.getByLabel('Выбор формата экспорта').first();
+		await exportDropdownBtn.click({ force: true });
 
 		await expect(
 			page
