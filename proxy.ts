@@ -27,7 +27,7 @@ function getClientIp(req: Request): string {
 }
 
 export default withAuth(
-	function middleware(req) {
+	function proxy(req) {
 		const token = req.nextauth.token;
 		const isLoginPage = req.nextUrl.pathname === '/login';
 
@@ -70,6 +70,11 @@ export default withAuth(
 
 export const config = {
 	matcher: [
-		'/((?!api/auth|_next/static|_next/image|favicon\\.ico|sw\\.js|manifest\\.json|offline\\.html|icon-.*\\.png|apple-touch-icon\\.png).*)',
+		/*
+		 * Защищаем всё приложение за исключением:
+		 * - api/auth (авторизация)
+		 * - статика, иконки, манифесты
+		 */
+		'/((?!api/auth|_next/static|_next/image|favicon.ico|icon-.*\\.png|icon\\.svg|apple-touch-icon\\.png|manifest\\.json|offline\\.html).*)',
 	],
 };
