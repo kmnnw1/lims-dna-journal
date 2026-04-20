@@ -4,6 +4,13 @@ import { logAuditAction } from '@/lib/database/audit-log';
 import { prisma } from '@/lib/database/prisma';
 import { db } from '@/lib/db/drizzle';
 import { specimens as specimensTable } from '@/lib/db/schema';
+import {
+	sanitizeString,
+	validateContentType,
+	validatePagination,
+	validateSearchQuery,
+	validateSpecimenId,
+} from '@/lib/security/input-validator';
 import { buildDrizzleQuery, getDrizzleDistinctFields } from './drizzle-helpers';
 import {
 	type ApiUser,
@@ -20,32 +27,24 @@ export async function GET(req: Request) {
 		await requireRole('READER');
 
 		const { searchParams } = new URL(req.url);
-		const page = parseInt(searchParams.get('page') || '1');
-		const limit = parseInt(searchParams.get('limit') || '100');
-		const search = searchParams.get('search') || '';
-		const sortKey = (searchParams.get('sortBy') || 'id') as keyof typeof specimensTable;
-		const sortDir = searchParams.get('sortOrder') || 'asc';
-		const filterType = searchParams.get('filter') || 'all';
+		const { page, limit } = validatePagination(
+			searchParams.get('page'),
+			searchParams.get('limit'),
+		);
+		const search = validateSearchQuery(searchParams.get('search'));
+		const sortKey = sanitizeString(
+			searchParams.get('sortBy') || 'id',
+			50,
+		) as keyof typeof specimensTable;
+		const sortDir = sanitizeString(searchParams.get('sortOrder') || 'asc', 10);
+		const filterType = sanitizeString(searchParams.get('filter') || 'all', 30);
 		const minConc = searchParams.get('minConc')
 			? parseFloat(searchParams.get('minConc')!)
 			: null;
 		const maxConc = searchParams.get('maxConc')
 			? parseFloat(searchParams.get('maxConc')!)
 			: null;
-		const operator = searchParams.get('operator') || '';
-
-		if (page < 1) {
-			return NextResponse.json(
-				{ error: 'Номер страницы должен быть не менее 1' },
-				{ status: 400 },
-			);
-		}
-		if (limit < 1 || limit > 1000) {
-			return NextResponse.json(
-				{ error: 'Размер страницы должен быть от 1 до 1000' },
-				{ status: 400 },
-			);
-		}
+		const operator = sanitizeString(searchParams.get('operator') || '', 100);
 
 		const cacheKey = buildCacheKey({
 			page,
@@ -109,8 +108,17 @@ export async function GET(req: Request) {
 export async function POST(request: Request) {
 	try {
 		const session = await requireRole('EDITOR');
-		const data = await request.json();
-		const id = data?.id != null ? String(data.id).trim() : '';
+
+		const contentType = request.headers.get('content-type');
+		if (!validateContentType(contentType)) {
+			return NextResponse.json(
+				{ error: 'Content-Type должен быть application/json' },
+				{ status: 415 },
+			);
+		}
+
+		const rawData = await request.json();
+		const id = validateSpecimenId(rawData?.id);
 
 		if (!id) {
 			return NextResponse.json({ error: 'ID пробы обязателен' }, { status: 400 });
@@ -119,8 +127,8 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: 'ID не должен содержать пробелов' }, { status: 400 });
 		}
 
-		const taxon = data?.taxon || '';
-		if (taxon && taxon.trim().length > 0 && taxon.trim().length < 3) {
+		const taxon = sanitizeString(rawData?.taxon);
+		if (taxon && taxon.length > 0 && taxon.length < 3) {
 			return NextResponse.json(
 				{ error: 'Таксон должен содержать не менее 3 символов' },
 				{ status: 400 },
@@ -135,9 +143,40 @@ export async function POST(request: Request) {
 			);
 		}
 
+		// Санитизация всех строковых полей перед записью
+		const sanitizedData: Record<string, unknown> = { id };
+		const stringFields = [
+			'taxon',
+			'locality',
+			'collector',
+			'extrLab',
+			'extrOperator',
+			'extrMethod',
+			'extrDateRaw',
+			'dnaMeter',
+			'dnaProfile',
+			'measComm',
+			'herbarium',
+			'accessionNumber',
+			'collectionNumber',
+			'connections',
+			'labNo',
+			'notes',
+			'collectNotes',
+		] as const;
+		for (const field of stringFields) {
+			if (rawData[field] !== undefined) {
+				sanitizedData[field] = sanitizeString(rawData[field]) || null;
+			}
+		}
+		// Числовые поля (без санитизации строк)
+		if (rawData.dnaConcentration !== undefined) {
+			sanitizedData.dnaConcentration = rawData.dnaConcentration;
+		}
+
 		const created = await prisma.specimen.create({
 			data: {
-				...data,
+				...sanitizedData,
 				labTechnicianId: (session.user as ApiUser)?.id,
 			},
 		});
@@ -161,11 +200,24 @@ export async function POST(request: Request) {
 export async function PUT(req: Request) {
 	try {
 		const session = await requireRole('EDITOR');
+
+		const contentType = req.headers.get('content-type');
+		if (!validateContentType(contentType)) {
+			return NextResponse.json(
+				{ error: 'Content-Type должен быть application/json' },
+				{ status: 415 },
+			);
+		}
+
 		const body = await req.json();
 		const { id, singleId, updateData, singleStatus, ...restData } = body;
 
 		if (singleId && updateData) {
-			await prisma.specimen.update({ where: { id: String(singleId) }, data: updateData });
+			const safeSingleId = validateSpecimenId(singleId);
+			if (!safeSingleId) {
+				return NextResponse.json({ error: 'Невалидный ID пробы' }, { status: 400 });
+			}
+			await prisma.specimen.update({ where: { id: safeSingleId }, data: updateData });
 			invalidateSpecimenCaches();
 			return NextResponse.json({ success: true });
 		}
@@ -247,13 +299,22 @@ export async function DELETE(request: Request) {
 		const session = await requireRole('ADMIN');
 		const body = await request.json();
 		if (body.ids && Array.isArray(body.ids) && body.ids.length > 0) {
+			const validIds = body.ids
+				.map((rawId: unknown) => validateSpecimenId(rawId))
+				.filter((v: string | null): v is string => v !== null);
+			if (validIds.length === 0) {
+				return NextResponse.json(
+					{ error: 'Ни один ID не прошёл валидацию' },
+					{ status: 400 },
+				);
+			}
 			const specimensList = await prisma.specimen.findMany({
-				where: { id: { in: body.ids.map(String) } },
+				where: { id: { in: validIds } },
 				select: { id: true, taxon: true },
 			});
 
 			await prisma.specimen.updateMany({
-				where: { id: { in: body.ids.map(String) } },
+				where: { id: { in: validIds } },
 				data: { deletedAt: new Date() },
 			});
 
