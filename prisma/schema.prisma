@@ -51,6 +51,9 @@ model Specimen {
   mtSsuStatus      String?
   mtSsuGb          String?
   herbarium        String?
+  accessionNumber  String?
+  collectionNumber String?
+  connections      String?
   labNo            String?
   notes            String?
   importOrigin     String?
