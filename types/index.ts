@@ -57,6 +57,9 @@ export interface Specimen {
 	mtSsuStatus?: string;
 	mtSsuGb?: string;
 	herbarium?: string;
+	accessionNumber?: string;
+	collectionNumber?: string;
+	connections?: string;
 	labNo?: string;
 	notes?: string;
 	importOrigin?: string;
