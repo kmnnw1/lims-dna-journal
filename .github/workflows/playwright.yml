@@ -2,8 +2,18 @@ name: Playwright Tests
 on:
     push:
         branches: [main, master]
+        paths-ignore:
+            - '**.md'
+            - 'local/**'
+            - '.gemini/**'
+            - 'docs/**'
     pull_request:
         branches: [main, master]
+        paths-ignore:
+            - '**.md'
+            - 'local/**'
+            - '.gemini/**'
+            - 'docs/**'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
