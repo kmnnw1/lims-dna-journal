@@ -1,43 +1,47 @@
 # LIMS | DNA Lab Journal 🧬
 
-Система управления лабораторной информацией для автоматизации учета биологических проб, экстракции ДНК и мониторинга процессов ПЦР. 
+Система управления лабораторной информацией для учета биологических проб, экстракции ДНК и мониторинга процессов ПЦР.
 
-## 🚀 Технологическая Экосистема
+## Технический стек
 
-| Слой | Технология | Описание |
-| :--- | :--- | :--- |
-| **Framework** | Next.js 16.2 (Turbopack) | Реактивный App Router и серверные компоненты |
-| **Data Fetching** | **TanStack Query v5** | Ультимативное кеширование и синхронизация серверного состояния |
-| **ORM / DB** | Prisma 7 + **Drizzle ORM** | Prisma для схем, Drizzle для сверхбыстрых SQL-запросов |
-| **Aesthetics** | **Framer Motion** | Современные анимации и переходы |
-| **Lint/Format** | **Biome (Rust-based)** | Мгновенный линтинг и форматирование |
-| **Security** | **Husky + Tsc** | Гарантия Type Safety при каждом коммите |
-
-## 🛠 Инженерные Инструменты
-
-| Команда | Что делает? |
+| Характеристика | Технология |
 | :--- | :--- |
-| `npm run dev` | Запуск среды разработки с автоматическим обслуживанием метаданных. |
-| `npm run check` | Полная проверка проекта: **Biome Lint** + **TypeScript Type Check**. |
-| `npm run format` | Мгновенное форматирование всего кода. |
-| `npm run backup` | Создание снимка базы данных. |
-| `npm run auth` | CLI-инструмент для управления пользователями. |
+| **Framework** | Next.js 16.2 (Turbopack) |
+| **Data Fetching** | TanStack Query v5 |
+| **ORM / DB** | Prisma 7 + Drizzle ORM |
+| **E2E Testing** | Playwright |
+| **Animations** | Framer Motion |
+| **Linter / Formatter** | Biome |
+| **Runtime** | Node.js 22 LTS |
 
-## 💡 Особенности проекта
+## Основные команды
 
-- **Strict Mode**: Проект настроен на соблюдение строгих стандартов типизации и форматирования.
-- **Auto-Sync**: Локальные метаданные и бэкапы синхронизируются в фоновом режиме.
-- **IDE Ready**: Включена преднастроенная конфигурация для VS Code (Biome, Tailwind, Prisma).
+| Команда | Описание |
+| :--- | :--- |
+| `npm run dev` | Запуск в режиме разработки. |
+| `npm run check` | Запуск Biome и tsc --noEmit. |
+| `npm test:e2e` | Запуск E2E тестов в Playwright. |
+| `npm run format` | Форматирование кода через Biome. |
+| `npm run backup` | Создание дампа базы данных. |
 
-## 🧬 Инструкция для синхронизации
+## Спецификации и конфигурация
+
+- **Build**: Использование Turbopack с алиасами для разрешения внешних зависимостей.
+- **Data Flow**: Гибридное использование Prisma (миграции) и Drizzle (выполнение запросов).
+- **Architecture**: App Router, серверные и клиентские компоненты.
+- **Mobile Support**: Интеграция Barcode/QR сканера через браузерное API.
+
+## Синхронизация
 
 ```bash
 git fetch origin && git add -A && (git diff --staged --quiet || git stash push -m "pavel-sync") && git reset --hard origin/main && (git stash list --max-count=1 | grep -q "pavel-sync" && git stash pop || true)
 ```
 
-## 📦 Развертывание (Docker)
-- Изображение: `ghcr.io/kmnnw1/lims-dna-journal:alpha`
-- База данных (SQLite) монтируется как том в `/data`.
+## Развертывание
+
+- **Docker Image**: `ghcr.io/kmnnw1/lims-dna-journal:alpha`
+- **Database**: SQLite (монтирование в `/data/dev.db`).
+- **Environment**: Требует настройки переменных AUTH и DATABASE_URL.
 
 ---
-© 2026 DNA Lab | Professional Laboratory Information Management System
+© 2026 DNA Lab
