@@ -1,41 +1,36 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { handleError, requireRole } from '@/lib/api/helpers';
 import { getAuditLogs, getResourceAuditHistory } from '@/lib/database/audit-log';
-import { prisma } from '@/lib/database/prisma';
+import { sanitizeString, validatePagination } from '@/lib/security/input-validator';
 
 export async function GET(req: Request) {
 	try {
-		const session = await getServerSession(authOptions);
-		if (!session) {
-			return NextResponse.json({ error: 'Необходима авторизация' }, { status: 401 });
-		}
-
+		const session = await requireRole('READER');
 		const { searchParams } = new URL(req.url);
-		const resourceType = searchParams.get('resourceType');
-		const resourceId = searchParams.get('resourceId');
-		const limit = parseInt(searchParams.get('limit') || '100');
+
+		const resourceType = sanitizeString(searchParams.get('resourceType'), 50);
+		const resourceId = sanitizeString(searchParams.get('resourceId'), 50);
+		const { limit } = validatePagination(null, searchParams.get('limit'));
 
 		let logs;
 
 		if (resourceType && resourceId) {
-			// История конкретного ресурса (доступна EDITOR и выше)
+			// История конкретного ресурса (доступна READER и выше)
 			logs = await getResourceAuditHistory(resourceType, resourceId, limit);
 		} else {
 			// Глобальный лог (только ADMIN)
 			const user = session.user as { role?: string };
 			if (user.role !== 'ADMIN') {
-				return NextResponse.json(
-					{ error: 'Недостаточно прав для просмотра глобального лога' },
-					{ status: 403 },
-				);
+				throw {
+					statusCode: 403,
+					message: 'Недостаточно прав для просмотра глобального лога',
+				};
 			}
 			logs = await getAuditLogs({ limit });
 		}
 
 		return NextResponse.json(logs);
 	} catch (e: unknown) {
-		console.error('[Audit API Error]:', e);
-		return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 });
+		return handleError(e);
 	}
 }
