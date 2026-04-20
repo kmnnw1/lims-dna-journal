@@ -43,3 +43,11 @@ export function handleError(e: unknown) {
 		: errorInfo?.message || (e instanceof Error ? e.message : 'Ошибка сервера');
 	return NextResponse.json({ error: message }, { status });
 }
+
+/**
+ * Очистка всех кэшей списка образцов.
+ */
+import { clearCache } from '@/lib/utilities/cache';
+export function invalidateSpecimenCaches() {
+	clearCache('specimens:*');
+}

@@ -1,12 +1,12 @@
 import { prisma } from '@/lib/database/prisma';
 import { clearCache, getCached, setCache } from '@/lib/utilities/cache';
 
-export { type ApiUser, handleError, requireRole } from '@/lib/api/helpers';
-
-// Invalidate all specimen list caches whenever data changes
-export function invalidateSpecimenCaches() {
-	clearCache('specimens:*');
-}
+export {
+	type ApiUser,
+	handleError,
+	invalidateSpecimenCaches,
+	requireRole,
+} from '@/lib/api/helpers';
 
 // Создание cache key на основе параметров запроса
 export function buildCacheKey(params: Record<string, unknown>) {
