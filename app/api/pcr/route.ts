@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { type ApiUser, handleError, requireRole } from '@/lib/api/helpers';
 import { logAuditAction } from '@/lib/database/audit-log';
 import { prisma } from '@/lib/database/prisma';
 import {
@@ -8,33 +7,6 @@ import {
 	validateContentType,
 	validateSpecimenId,
 } from '@/lib/security/input-validator';
-
-type ApiUser = { id?: string; role?: string };
-
-// Helper for auth
-async function requireRole(required: 'EDITOR' | 'ADMIN' | 'READER' | 'ANY' = 'ANY') {
-	const session = await getServerSession(authOptions);
-	if (!session) throw { statusCode: 401, message: 'Требуется вход в систему' };
-	const user = session.user as ApiUser | undefined;
-	const role = user?.role;
-	if (!role) throw { statusCode: 403, message: 'Роль пользователя не определена' };
-	if (required === 'ADMIN' && role !== 'ADMIN')
-		throw { statusCode: 403, message: 'Доступ запрещён (требуется ADMIN)' };
-	if (required === 'EDITOR' && !['ADMIN', 'EDITOR'].includes(role))
-		throw { statusCode: 403, message: 'Доступ запрещён (требуется EDITOR)' };
-	if (required === 'READER' && !['ADMIN', 'EDITOR', 'READER'].includes(role))
-		throw { statusCode: 403, message: 'Доступ запрещён (требуется READER)' };
-	return session;
-}
-
-function handleError(e: unknown) {
-	console.error('[PCR API Error]:', e);
-	if (e && typeof e === 'object' && 'statusCode' in e) {
-		const error = e as { statusCode: number; message: string };
-		return NextResponse.json({ error: error.message }, { status: error.statusCode });
-	}
-	return NextResponse.json({ error: 'Внутренняя ошибка сервера' }, { status: 500 });
-}
 
 export async function GET(req: Request) {
 	try {
