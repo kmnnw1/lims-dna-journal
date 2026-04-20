@@ -1,9 +1,8 @@
 import ExcelJS from 'exceljs';
 import fs from 'fs';
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
 import path from 'path';
-import { authOptions } from '@/lib/auth';
+import { type ApiUser, handleError, requireRole } from '@/lib/api/helpers';
 import { logAuditAction } from '@/lib/database/audit-log';
 import { prisma } from '@/lib/database/prisma';
 import {
@@ -16,22 +15,9 @@ import {
 import { parseWithAI } from '@/lib/excel/ai-parser';
 import { validateContentType } from '@/lib/security/input-validator';
 
-async function requireAdmin() {
-	const session = await getServerSession(authOptions);
-	if (!session || (session.user as { role?: string }).role !== 'ADMIN') {
-		throw { code: 403, message: 'Доступ запрещён (требуются права ADMIN)' };
-	}
-}
-
-/**
- * Импортирует данные проб из XLSX-файла.
- * ?useAI=true — использует Gemini для умного парсинга.
- * Фоллбэк на regex-парсер если AI недоступен.
- */
 export async function GET(req: Request) {
 	try {
-		await requireAdmin();
-		const session = await getServerSession(authOptions);
+		const session = await requireRole('ADMIN');
 
 		const { searchParams } = new URL(req.url);
 		const useAI = searchParams.get('useAI') === 'true';
@@ -92,7 +78,7 @@ export async function GET(req: Request) {
 			inserted += result.count ?? chunk.length;
 		}
 
-		const currentUser = session?.user as { id?: string } | undefined;
+		const currentUser = session.user as ApiUser | undefined;
 		await logAuditAction({
 			userId: currentUser?.id || 'admin-system',
 			action: 'IMPORT_SPECIMENS',
@@ -115,10 +101,7 @@ export async function GET(req: Request) {
 			aiUsed,
 		});
 	} catch (e: unknown) {
-		const err = e as { code?: number; message?: string };
-		const status = err?.code === 403 ? 403 : 500;
-		const msg = err?.message || (e instanceof Error ? e.message : String(e));
-		return NextResponse.json({ error: msg }, { status });
+		return handleError(e);
 	}
 }
 
@@ -127,7 +110,7 @@ export async function GET(req: Request) {
  */
 export async function POST(request: Request) {
 	try {
-		await requireAdmin();
+		await requireRole('ADMIN');
 
 		const contentType = request.headers.get('content-type');
 		if (!validateContentType(contentType)) {
@@ -153,9 +136,6 @@ export async function POST(request: Request) {
 			message: `Удалено записей: ${result.count}`,
 		});
 	} catch (e: unknown) {
-		const err = e as { code?: number; message?: string };
-		const status = err?.code === 403 ? 403 : 500;
-		const msg = err?.message || (e instanceof Error ? e.message : String(e));
-		return NextResponse.json({ error: msg }, { status });
+		return handleError(e);
 	}
 }
