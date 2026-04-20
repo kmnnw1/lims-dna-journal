@@ -1,33 +1,21 @@
 'use client';
 
-import { Check, Cpu, ShieldAlert, Smartphone, X, Zap } from 'lucide-react';
-import React from 'react';
-
-export interface DevSettings {
-	enableMobileCards: boolean;
-	forceDesktopView: boolean;
-	forceMobileView: boolean;
-}
-
-interface DevOverlayProps {
-	isOpen: boolean;
-	onClose: () => void;
-	settings: DevSettings;
-	onUpdate: (settings: DevSettings) => void;
-	userName?: string;
-}
+import { Check, Cpu, LogIn, ShieldAlert, Smartphone, X, Zap } from 'lucide-react';
+import { signIn, useSession } from 'next-auth/react';
+import React, { useState } from 'react';
+import { useDevSettings } from './DevSettingsProvider';
 
 /**
  * Оверлей инструментов разработчика (переведено на русский)
  * Убраны iOS-слайдеры, заменены на чистые MD3-контролы.
  */
-export const DevOverlay: React.FC<DevOverlayProps> = ({
-	isOpen,
-	onClose,
-	settings,
-	onUpdate,
-	userName,
-}) => {
+export const DevOverlay: React.FC = () => {
+	const { settings, updateSettings, isOverlayOpen, setOverlayOpen } = useDevSettings();
+	const { data: session } = useSession();
+	const [isBypassing, setIsBypassing] = useState(false);
+
+	const userName = session?.user?.name;
+
 	// Доступ ограничен для Павла и Asus
 	const isAuthorized =
 		userName?.toLowerCase().includes('pavel') ||
@@ -36,18 +24,34 @@ export const DevOverlay: React.FC<DevOverlayProps> = ({
 		userName?.toLowerCase().includes('пользователь') ||
 		process.env.NODE_ENV === 'development';
 
-	if (!isOpen || !isAuthorized) return null;
+	if (!isOverlayOpen || !isAuthorized) return null;
 
-	const toggle = (key: keyof DevSettings) => {
-		onUpdate({ ...settings, [key]: !settings[key] });
+	const toggle = (key: keyof typeof settings) => {
+		updateSettings({ ...settings, [key]: !settings[key] });
+	};
+
+	const handleBypassLogin = async () => {
+		setIsBypassing(true);
+		try {
+			await signIn('credentials', {
+				token: 'test-token-123',
+				redirect: true,
+				callbackUrl: '/',
+			});
+		} catch (error) {
+			console.error('Ошибка байпаса логина:', error);
+		} finally {
+			setIsBypassing(false);
+			setOverlayOpen(false);
+		}
 	};
 
 	return (
-		<div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
+		<div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
 			{/* Backdrop */}
 			<div
 				className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
-				onClick={onClose}
+				onClick={() => setOverlayOpen(false)}
 			/>
 
 			{/* Modal Panel */}
@@ -61,20 +65,35 @@ export const DevOverlay: React.FC<DevOverlayProps> = ({
 						</h2>
 					</div>
 					<button
-						onClick={onClose}
+						onClick={() => setOverlayOpen(false)}
 						className="p-1 rounded-full hover:bg-(--md-sys-color-surface-container-highest) transition-colors"
 					>
 						<X className="w-5 h-5" />
 					</button>
 				</div>
 
-				<div className="p-6 space-y-6">
+				<div className="p-6 space-y-5">
 					<p className="text-xs text-(--md-sys-color-outline) font-medium italic leading-relaxed">
 						Панель инструментов разработчика. Изменения применяются только для вашей
 						сессии.
 					</p>
 
-					{/* Toggles (No sliders, clean MD3 style) */}
+					{/* Bypass Login Section */}
+					<button
+						onClick={handleBypassLogin}
+						disabled={isBypassing}
+						className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl bg-(--md-sys-color-error) text-(--md-sys-color-on-error) hover:brightness-110 active:scale-95 transition-all md-elevation-1 disabled:opacity-50"
+					>
+						<LogIn className={`w-5 h-5 ${isBypassing ? 'animate-pulse' : ''}`} />
+						<div className="text-left">
+							<h3 className="font-bold text-sm">Зайти без логина</h3>
+							<p className="text-[10px] opacity-80">Авторизация по тест-токену</p>
+						</div>
+					</button>
+
+					<div className="h-px bg-(--md-sys-color-outline-variant)/10 my-2" />
+
+					{/* Toggles */}
 					<div className="space-y-3">
 						<button
 							onClick={() => toggle('enableMobileCards')}
