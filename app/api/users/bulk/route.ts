@@ -1,16 +1,9 @@
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { type ApiUser, handleError, requireRole } from '@/lib/api/helpers';
 import { prisma } from '@/lib/database/prisma';
+import { sanitizeString, validateContentType } from '@/lib/security/input-validator';
 import { transliterate } from '@/lib/translit';
-
-async function requireAdmin() {
-	const session = await getServerSession(authOptions);
-	if (!session?.user || (session.user as { role?: string }).role !== 'ADMIN') {
-		throw new Error('Недостаточно прав администратора');
-	}
-}
 
 function generatePassword() {
 	// Simple random password
@@ -24,21 +17,25 @@ function generatePassword() {
 
 export async function POST(req: Request) {
 	try {
-		await requireAdmin();
-		const { users: userList } = await req.json();
+		await requireRole('ADMIN');
+
+		const contentType = req.headers.get('content-type');
+		if (!validateContentType(contentType)) {
+			throw { statusCode: 415, message: 'Content-Type должен быть application/json' };
+		}
+
+		const body = await req.json();
+		const userList = body.users;
 
 		if (!Array.isArray(userList)) {
-			return NextResponse.json(
-				{ error: 'Список пользователей должен быть массивом' },
-				{ status: 400 },
-			);
+			throw { statusCode: 400, message: 'Список пользователей должен быть массивом' };
 		}
 
 		const results = [];
 
 		for (const userData of userList) {
-			const firstName = String(userData.firstName || '').trim();
-			const lastName = String(userData.lastName || '').trim();
+			const firstName = sanitizeString(userData.firstName, 50);
+			const lastName = sanitizeString(userData.lastName, 50);
 
 			if (!firstName || !lastName) continue;
 
@@ -56,7 +53,7 @@ export async function POST(req: Request) {
 			const plainPassword = generatePassword();
 			const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-			const user = await prisma.user.create({
+			const newUser = await prisma.user.create({
 				data: {
 					username,
 					password: hashedPassword,
@@ -67,7 +64,7 @@ export async function POST(req: Request) {
 			});
 
 			results.push({
-				id: user.id,
+				id: newUser.id,
 				name: `${lastName} ${firstName}`,
 				username,
 				password: plainPassword,
@@ -76,7 +73,6 @@ export async function POST(req: Request) {
 
 		return NextResponse.json({ success: true, users: results });
 	} catch (e) {
-		const msg = e instanceof Error ? e.message : 'Ошибка';
-		return NextResponse.json({ error: msg }, { status: 400 });
+		return handleError(e);
 	}
 }

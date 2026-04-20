@@ -1,65 +1,47 @@
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { type ApiUser, handleError, requireRole } from '@/lib/api/helpers';
 import { prisma } from '@/lib/database/prisma';
-
-// Вспомогательная функция проверки роли администратора.
-// Можно расширить аудит/логирование действий.
-async function requireAdmin() {
-	const session = await getServerSession(authOptions);
-	if (!session?.user || session.user.role !== 'ADMIN') {
-		throw new Error('Недостаточно прав администратора');
-	}
-}
-
-// Вынесён набор допустимых ролей наверх для переиспользования
-const ALLOWED_ROLES = new Set(['EDITOR', 'ADMIN', 'READER']);
+import { sanitizeString, validateContentType, validateRole } from '@/lib/security/input-validator';
 
 // GET: Получить список пользователей (id, username, role)
 export async function GET() {
 	try {
-		await requireAdmin();
+		await requireRole('ADMIN');
 		const users = await prisma.user.findMany({
 			select: { id: true, username: true, role: true, firstName: true, lastName: true },
 		});
 		return NextResponse.json(users);
 	} catch (e) {
-		console.error('[API/Users] GET Error:', e);
-		const msg = e instanceof Error ? e.message : 'Ошибка доступа';
-		return NextResponse.json({ error: msg }, { status: 403 });
+		return handleError(e);
 	}
 }
 
 // POST: Создать нового пользователя
 export async function POST(req: Request) {
 	try {
-		await requireAdmin();
-		const { username, password, role, firstName, lastName } = await req.json();
+		await requireRole('ADMIN');
 
-		if (
-			typeof username !== 'string' ||
-			typeof password !== 'string' ||
-			!username.trim() ||
-			!password // (пусть пустые пароли отсекаются)
-		) {
-			return NextResponse.json(
-				{ error: 'Некорректные данные пользователя' },
-				{ status: 400 },
-			);
+		const contentType = req.headers.get('content-type');
+		if (!validateContentType(contentType)) {
+			throw { statusCode: 415, message: 'Content-Type должен быть application/json' };
 		}
 
-		if (!ALLOWED_ROLES.has(role)) {
-			return NextResponse.json({ error: 'Недопустимая роль' }, { status: 400 });
+		const body = await req.json();
+		const username = sanitizeString(body.username, 50);
+		const password = sanitizeString(body.password, 100);
+		const role = validateRole(body.role);
+		const firstName = sanitizeString(body.firstName, 50);
+		const lastName = sanitizeString(body.lastName, 50);
+
+		if (!username || !password || !role) {
+			throw { statusCode: 400, message: 'Некорректные данные пользователя' };
 		}
 
 		// Проверка уникальности username
 		const exists = await prisma.user.findUnique({ where: { username } });
 		if (exists) {
-			return NextResponse.json(
-				{ error: 'Пользователь с таким именем уже существует' },
-				{ status: 409 },
-			);
+			throw { statusCode: 409, message: 'Пользователь с таким именем уже существует' };
 		}
 
 		const hashedPassword = await bcrypt.hash(password, 10);
@@ -68,67 +50,60 @@ export async function POST(req: Request) {
 		});
 		return NextResponse.json({ success: true });
 	} catch (e) {
-		const msg = e instanceof Error ? e.message : 'Ошибка';
-		return NextResponse.json({ error: msg }, { status: 400 });
+		return handleError(e);
 	}
 }
 
 // PUT: Обновить пользователя (роль и/или пароль)
 export async function PUT(req: Request) {
 	try {
-		await requireAdmin();
-		const body = await req.json();
-		const id = typeof body?.id === 'string' ? body.id : undefined;
-		const role = typeof body?.role === 'string' ? body.role : undefined;
-		const password =
-			typeof body?.password === 'string' && body.password.trim().length > 0
-				? body.password
-				: undefined;
-		const firstName = typeof body?.firstName === 'string' ? body.firstName : undefined;
-		const lastName = typeof body?.lastName === 'string' ? body.lastName : undefined;
+		const session = await requireRole('ADMIN');
+		const currentUserId = (session.user as ApiUser).id;
 
-		if (!id) {
-			return NextResponse.json({ error: 'Не указан id пользователя' }, { status: 400 });
+		const contentType = req.headers.get('content-type');
+		if (!validateContentType(contentType)) {
+			throw { statusCode: 415, message: 'Content-Type должен быть application/json' };
 		}
 
-		interface UserUpdateData {
+		const body = await req.json();
+		const id = sanitizeString(body.id, 50);
+		const role = validateRole(body.role);
+		const password = sanitizeString(body.password, 100);
+		const firstName = sanitizeString(body.firstName, 50);
+		const lastName = sanitizeString(body.lastName, 50);
+
+		if (!id) {
+			throw { statusCode: 400, message: 'Не указан id пользователя' };
+		}
+
+		const data: {
 			role?: string;
 			password?: string;
 			firstName?: string | null;
 			lastName?: string | null;
-		}
+		} = {};
 
-		const data: UserUpdateData = {};
-
-		if (role !== undefined) {
-			if (!ALLOWED_ROLES.has(role)) {
-				return NextResponse.json({ error: 'Недопустимая роль' }, { status: 400 });
-			}
-
+		if (role) {
 			// Блокируем понижение собственной роли
-			const session = await getServerSession(authOptions);
-			const currentUser = session?.user;
-			if (currentUser?.id === id && role !== 'ADMIN') {
-				return NextResponse.json(
-					{
-						error: 'Нельзя понизить собственную роль, чтобы не потерять доступ к панели управления.',
-					},
-					{ status: 400 },
-				);
+			if (currentUserId === id && role !== 'ADMIN') {
+				throw {
+					statusCode: 400,
+					message:
+						'Нельзя понизить собственную роль, чтобы не потерять доступ к панели управления.',
+				};
 			}
-
 			data.role = role;
 		}
 
-		if (firstName !== undefined) data.firstName = firstName;
-		if (lastName !== undefined) data.lastName = lastName;
+		if (body.firstName !== undefined) data.firstName = firstName || null;
+		if (body.lastName !== undefined) data.lastName = lastName || null;
 
-		if (password !== undefined) {
+		if (password) {
 			data.password = await bcrypt.hash(password, 10);
 		}
 
 		if (Object.keys(data).length === 0) {
-			return NextResponse.json({ error: 'Нечего обновить' }, { status: 400 });
+			throw { statusCode: 400, message: 'Нечего обновить' };
 		}
 
 		const user = await prisma.user.update({ where: { id }, data });
@@ -143,52 +118,48 @@ export async function PUT(req: Request) {
 			},
 		});
 	} catch (e) {
-		const msg = e instanceof Error ? e.message : 'Ошибка';
-		return NextResponse.json({ error: msg }, { status: 400 });
+		return handleError(e);
 	}
 }
 
 // DELETE: Удалить пользователя по id (?id=...)
 export async function DELETE(req: Request) {
 	try {
-		await requireAdmin();
-		const url = new URL(req.url);
-		const id = url.searchParams.get('id');
+		const session = await requireRole('ADMIN');
+		const currentUserId = (session.user as ApiUser).id;
+
+		const { searchParams } = new URL(req.url);
+		const id = sanitizeString(searchParams.get('id'), 50);
+
 		if (!id) {
-			return NextResponse.json({ error: 'Не указан id пользователя' }, { status: 400 });
+			throw { statusCode: 400, message: 'Не указан id пользователя' };
 		}
 
 		// Не позволяем удалять собственного пользователя
-		const session = await getServerSession(authOptions);
-		const currentUser = session?.user;
-		if (currentUser?.id === id) {
-			return NextResponse.json({ error: 'Нельзя удалить себя' }, { status: 400 });
+		if (currentUserId === id) {
+			throw { statusCode: 400, message: 'Нельзя удалить себя' };
 		}
 
 		// Не позволяем удалять администраторов (защита от удаления коллег-админов)
-		const targetUser = await prisma.user.findUnique({ where: { id: String(id) } });
+		const targetUser = await prisma.user.findUnique({ where: { id } });
 		if (!targetUser) {
-			return NextResponse.json({ error: 'Пользователь не найден' }, { status: 404 });
+			throw { statusCode: 404, message: 'Пользователь не найден' };
 		}
 
 		if (targetUser.role === 'ADMIN') {
 			const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
-			// Если админов 2 или меньше, запрещаем удаление коллеги-админа.
-			// (Один может быть 'admin', другой - текущий, или оба - просто админы).
 			if (adminCount <= 2) {
-				return NextResponse.json(
-					{
-						error: 'Для безопасности в системе должно оставаться минимум 2 администратора. Сначала создайте третьего или смените роль этого пользователя.',
-					},
-					{ status: 400 },
-				);
+				throw {
+					statusCode: 400,
+					message:
+						'Для безопасности в системе должно оставаться минимум 2 администратора. Сначала создайте третьего или смените роль этого пользователя.',
+				};
 			}
 		}
 
-		await prisma.user.delete({ where: { id: String(id) } });
+		await prisma.user.delete({ where: { id } });
 		return NextResponse.json({ success: true });
 	} catch (e) {
-		const msg = e instanceof Error ? e.message : 'Ошибка';
-		return NextResponse.json({ error: msg }, { status: 400 });
+		return handleError(e);
 	}
 }
