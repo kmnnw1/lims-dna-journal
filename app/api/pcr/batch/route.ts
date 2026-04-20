@@ -1,42 +1,29 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { type ApiUser, handleError, requireRole } from '@/lib/api/helpers';
 import { logAuditAction } from '@/lib/database/audit-log';
 import { prisma } from '@/lib/database/prisma';
-
-type ApiUser = { id?: string; role?: string };
-
-// Вспомогательный хелпер для проверки авторизации и роли
-async function requireRole(required: 'EDITOR' | 'ADMIN' | 'READER' | 'ANY' = 'ANY') {
-	const session = await getServerSession(authOptions);
-	if (!session) throw { statusCode: 401, message: 'Требуется вход в систему' };
-	const user = session.user as ApiUser | undefined;
-	const role = user?.role;
-	if (!role) throw { statusCode: 403, message: 'Роль пользователя не определена' };
-	if (required === 'ADMIN' && role !== 'ADMIN')
-		throw { statusCode: 403, message: 'Доступ запрещён (требуется ADMIN)' };
-	if (required === 'EDITOR' && !['ADMIN', 'EDITOR'].includes(role))
-		throw { statusCode: 403, message: 'Доступ запрещён (требуется EDITOR)' };
-	if (required === 'READER' && !['ADMIN', 'EDITOR', 'READER'].includes(role))
-		throw { statusCode: 403, message: 'Доступ запрещён (требуется READER)' };
-	return session;
-}
-
-// Универсальный обработчик ошибок для API
-function handleError(e: unknown) {
-	console.error('[API Error]:', e); // Логируем реальную причину падения в терминал
-	if (e && typeof e === 'object' && 'statusCode' in e) {
-		const error = e as { statusCode: number; message: string };
-		return NextResponse.json({ error: error.message }, { status: error.statusCode });
-	}
-	return NextResponse.json({ error: 'Внутренняя ошибка сервера' }, { status: 500 });
-}
+import {
+	sanitizeString,
+	validateContentType,
+	validateSpecimenId,
+} from '@/lib/security/input-validator';
 
 export async function POST(request: Request) {
 	try {
-		const session = await requireRole('EDITOR'); // Требуется EDITOR или выше
+		const session = await requireRole('EDITOR');
 		const user = session.user as ApiUser;
-		const { ids, marker } = await request.json();
+
+		const contentType = request.headers.get('content-type');
+		if (!validateContentType(contentType)) {
+			return NextResponse.json(
+				{ error: 'Content-Type должен быть application/json' },
+				{ status: 415 },
+			);
+		}
+
+		const body = await request.json();
+		const { ids, marker: rawMarker } = body;
+		const marker = sanitizeString(rawMarker, 50);
 
 		if (!Array.isArray(ids) || ids.length === 0) {
 			return NextResponse.json(
@@ -45,18 +32,26 @@ export async function POST(request: Request) {
 			);
 		}
 
+		const validIds = ids
+			.map((id) => validateSpecimenId(id))
+			.filter((id): id is string => id !== null);
+
+		if (validIds.length === 0) {
+			return NextResponse.json({ error: 'Не найдено валидных ID образцов' }, { status: 400 });
+		}
+
 		if (!marker || typeof marker !== 'string') {
 			return NextResponse.json({ error: 'Необходимо указать маркер' }, { status: 400 });
 		}
 
 		// Проверяем, что все specimen существуют
 		const existingSpecimens = await prisma.specimen.findMany({
-			where: { id: { in: ids } },
+			where: { id: { in: validIds } },
 			select: { id: true },
 		});
 
 		const existingIds = existingSpecimens.map((s: { id: string }) => s.id);
-		const missingIds = ids.filter((id) => !existingIds.includes(id));
+		const missingIds = validIds.filter((id) => !existingIds.includes(id));
 
 		if (missingIds.length > 0) {
 			return NextResponse.json(
@@ -68,7 +63,7 @@ export async function POST(request: Request) {
 		}
 
 		// Создаём PcrAttempt для каждого specimen
-		const pcrAttempts = ids.map((specimenId) => ({
+		const pcrAttempts = validIds.map((specimenId) => ({
 			specimenId,
 			marker,
 			result: 'PENDING', // Или другой статус по умолчанию
