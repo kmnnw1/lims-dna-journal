@@ -36,6 +36,7 @@ export function ThemeToggle({ className = '', variant = 'floating' }: ThemeToggl
 			whileHover={{ scale: 1.1 }}
 			whileTap={{ scale: 0.9 }}
 			onClick={toggleTheme}
+			id="theme-toggle-button"
 			className={`fixed top-6 right-6 z-60 w-12 h-12 rounded-full bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-on-surface-variant) shadow-lg flex items-center justify-center border border-(--md-sys-color-outline-variant)/20 backdrop-blur-md md-state-layer ${className}`}
 			title="Сменить тему"
 		>
