@@ -4,6 +4,7 @@ import { Montserrat, Outfit } from 'next/font/google';
 import { DevOverlay } from '@/components/features/DevOverlay';
 import { DevSettingsProvider } from '@/components/features/DevSettingsProvider';
 import { DevToolsButton } from '@/components/features/DevToolsButton';
+import { OfflineIndicator } from '@/components/features/OfflineIndicator';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { Providers } from '@/components/layout/Providers';
 import './globals.css';
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 						<PageTransition>{children}</PageTransition>
 						<DevOverlay />
 						<DevToolsButton />
+						<OfflineIndicator />
 					</DevSettingsProvider>
 				</Providers>
 			</body>
