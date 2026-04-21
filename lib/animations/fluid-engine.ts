@@ -1,18 +1,29 @@
 export type FluidState =
 	| 'IDLE'
-	| 'BUBBLE_GROWING'
-	| 'FLASK_HOVERING'
-	| 'WAITING_SCENE' // Новое: зависание и просмотр осколков
+	| 'POURING'
+	| 'DRAGGING'
+	| 'FALLING'
+	| 'WAITING_SCENE'
+	| 'FLOATING_BACK'
 	| 'CHANGING_SHELF';
 
-const SCALE = 4; // 24 * 4 = 96px
+const SCALE = 4;
+
+class MathUtils {
+	static lerp(a: number, b: number, t: number) {
+		return a + (b - a) * t;
+	}
+	static clamp(val: number, min: number, max: number) {
+		return Math.max(min, Math.min(max, val));
+	}
+}
 
 class WaterSpring {
 	targetY: number;
 	y: number;
 	speed: number;
-	k = 0.05; // жесткость
-	damp = 0.95; // затухание
+	k = 0.05;
+	damp = 0.95;
 
 	constructor(y: number) {
 		this.targetY = y;
@@ -53,7 +64,7 @@ class Bubble {
 		this.neckProgress = 0;
 	}
 
-	update(dt: number, isHovering: boolean, fluidEngine: FluidEngine) {
+	update(dt: number, engine: FluidEngine) {
 		if (this.popped) return;
 
 		if (this.radius < this.targetRadius) {
@@ -61,44 +72,54 @@ class Bubble {
 		}
 
 		if (this.isMain) {
-			if (!isHovering) {
-				this.targetRadius += 0.15 * (dt / 16); // Растет быстрее
-				this.neckProgress = Math.min(1.5, this.neckProgress + 0.006 * (dt / 16));
+			// Main bubble floats inside the neck, unattached
+			if (engine.getState() === 'IDLE') {
+				this.targetRadius += 0.15 * (dt / 16);
+				// Unconfident hover effect applied globally in engine based on radius
 			}
-			this.x += (12 * SCALE - this.x) * 0.1;
-			this.y += (8 * SCALE - this.y) * 0.1;
+			// Follow flask, but with some inertia
+			const targetX = engine.flaskX;
+			const targetY = engine.flaskY - 3 * SCALE; // Top of flask neck
+			this.x += (targetX - this.x) * 0.2;
+			this.y += (targetY - this.y) * 0.2;
 		} else {
 			this.x += this.vx * (dt / 16);
 			this.y += this.vy * (dt / 16);
 			this.vx += (Math.random() - 0.5) * 0.1;
 			this.vx *= 0.98;
 
-			const unscaledX = this.x / SCALE;
-			const unscaledY = this.y / SCALE;
+			// Collision with flask walls (approximate)
+			const dx = this.x - engine.flaskX;
+			const dy = this.y - engine.flaskY;
 
-			// Если пузырек всплыл до поверхности, лопаем его и создаем рябь
-			const surfaceY = 10 * SCALE;
-			if (this.y - this.radius < surfaceY && !this.isMain) {
-				this.popped = true;
-				fluidEngine.splash(this.x, -this.radius * 0.5); // splash
-				return;
+			if (dy < -2 * SCALE) {
+				// Reached neck
+				if (engine.mainBubble && !engine.mainBubble.popped) {
+					// Levitate under main bubble
+					if (dy < -4 * SCALE) {
+						this.y = engine.flaskY - 4 * SCALE;
+						this.vy *= -0.5;
+					}
+				} else {
+					// Pop at surface
+					this.popped = true;
+					engine.splash(this.x, -this.radius * 0.5);
+					return;
+				}
 			}
 
-			if (unscaledY > 20.5) {
-				this.y = 20.5 * SCALE;
+			if (dy > 8 * SCALE) {
+				// Bottom
+				this.y = engine.flaskY + 8 * SCALE;
 				this.vy *= -0.5;
 			}
-			// Границы колбы
-			if (unscaledY >= 10 && unscaledY <= 21) {
-				const leftBound = 10 - (7 * (unscaledY - 10)) / 11;
-				if (unscaledX < leftBound + 0.5) {
-					this.x = (leftBound + 0.5) * SCALE;
-					this.vx = Math.abs(this.vx) * 0.8 + 0.2;
-				}
-				const rightBound = 14 + (7 * (unscaledY - 10)) / 11;
-				if (unscaledX > rightBound - 0.5) {
-					this.x = (rightBound - 0.5) * SCALE;
-					this.vx = -Math.abs(this.vx) * 0.8 - 0.2;
+
+			// Sides
+			if (dy > 0) {
+				const maxDist = 4 * SCALE + (dy / (8 * SCALE)) * 2 * SCALE;
+				if (Math.abs(dx) > maxDist - this.radius) {
+					this.x = engine.flaskX + Math.sign(dx) * (maxDist - this.radius);
+					this.vx *= -0.8;
 				}
 			}
 		}
@@ -108,67 +129,51 @@ class Bubble {
 		if (this.popped) return;
 
 		if (this.isMain) {
-			const rootY = 9.5 * SCALE;
-			const topY = rootY - this.neckProgress * this.radius * 2;
-			const rootR = Math.min(this.radius, 1.8 * SCALE);
-			const topR = this.radius * Math.max(0.2, this.neckProgress);
-
-			ctx.beginPath();
-			ctx.arc(this.x, topY, topR, 0, Math.PI * 2);
-
-			if (this.neckProgress > 0.1 && this.neckProgress < 1.3) {
-				const bridgeWidth = rootR * Math.max(0.1, 1 - this.neckProgress);
-				ctx.moveTo(this.x - bridgeWidth, rootY);
-				ctx.bezierCurveTo(
-					this.x - bridgeWidth,
-					(rootY + topY) / 2,
-					this.x - topR,
-					topY,
-					this.x - topR,
-					topY,
-				);
-				ctx.lineTo(this.x + topR, topY);
-				ctx.bezierCurveTo(
-					this.x + topR,
-					topY,
-					this.x + bridgeWidth,
-					(rootY + topY) / 2,
-					this.x + bridgeWidth,
-					rootY,
-				);
-			}
-
-			const grad = ctx.createRadialGradient(
-				this.x - topR * 0.3,
-				topY - topR * 0.3,
-				topR * 0.1,
-				this.x,
-				topY,
-				topR * 1.5,
-			);
-			grad.addColorStop(0, 'rgba(255, 255, 255, 0.7)');
-			grad.addColorStop(0.2, color);
-			grad.addColorStop(0.8, color);
-			grad.addColorStop(1, 'rgba(255, 255, 255, 0.5)');
-
-			ctx.fillStyle = grad;
-			ctx.fill();
-		} else {
+			// Transparent soap bubble style
 			ctx.beginPath();
 			ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+
+			// Inner glow / refraction
 			const grad = ctx.createRadialGradient(
 				this.x - this.radius * 0.3,
 				this.y - this.radius * 0.3,
-				0,
+				this.radius * 0.1,
 				this.x,
 				this.y,
 				this.radius,
 			);
-			grad.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
-			grad.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
+			grad.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+			grad.addColorStop(0.7, 'rgba(255, 255, 255, 0.1)');
+			grad.addColorStop(0.9, color);
+			grad.addColorStop(1, 'rgba(255, 255, 255, 0.4)');
 
 			ctx.fillStyle = grad;
 			ctx.fill();
+			ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+			ctx.lineWidth = 1.5;
+			ctx.stroke();
+
+			// Specular highlight
+			ctx.beginPath();
+			ctx.ellipse(
+				this.x - this.radius * 0.4,
+				this.y - this.radius * 0.4,
+				this.radius * 0.3,
+				this.radius * 0.15,
+				Math.PI / 4,
+				0,
+				Math.PI * 2,
+			);
+			ctx.fillStyle = 'rgba(255,255,255,0.8)';
+			ctx.fill();
+		} else {
+			ctx.beginPath();
+			ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+			ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+			ctx.fill();
+			ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+			ctx.lineWidth = 0.5;
+			ctx.stroke();
 		}
 	}
 }
@@ -180,32 +185,93 @@ class Droplet {
 	vy: number;
 	radius: number;
 	life: number;
+	isLens: boolean;
+	mass: number;
 
-	constructor(x: number, y: number, vx: number, vy: number, radius: number) {
+	constructor(x: number, y: number, vx: number, vy: number, radius: number, isLens = false) {
 		this.x = x;
 		this.y = y;
 		this.vx = vx;
 		this.vy = vy;
 		this.radius = radius;
 		this.life = 1.0;
+		this.isLens = isLens;
+		this.mass = radius * radius;
 	}
 
-	update(dt: number) {
-		this.vy += 0.3 * (dt / 16);
-		this.x += this.vx * (dt / 16);
-		this.y += this.vy * (dt / 16);
-		this.life -= 0.01 * (dt / 16);
-		this.radius *= 0.98;
+	update(dt: number, engine: FluidEngine) {
+		if (this.isLens) {
+			// Sticky physics
+			this.vy += 0.05 * (dt / 16); // slow gravity
+			this.vx *= 0.95;
+			this.vy *= 0.98; // friction against glass
+
+			// Wiping logic
+			if (engine.isPointerDown) {
+				const dx = this.x - engine.pointerX;
+				const dy = this.y - engine.pointerY;
+				const dist = Math.sqrt(dx * dx + dy * dy);
+				if (dist < 50) {
+					// Wipe radius
+					this.vx += (dx / dist) * 5;
+					this.vy += (dy / dist) * 5;
+					this.radius *= 0.95; // Gets squeegeed
+				}
+			}
+
+			// Dry out eventually
+			this.life -= 0.002 * (dt / 16);
+		} else {
+			this.vy += 0.4 * (dt / 16); // normal gravity
+			this.x += this.vx * (dt / 16);
+			this.y += this.vy * (dt / 16);
+
+			// Floor collision
+			if (this.y > engine.height) {
+				this.life = 0;
+				engine.addPoolFluid(this.x, this.mass);
+			}
+		}
+
+		if (this.isLens) {
+			this.x += this.vx * (dt / 16);
+			this.y += this.vy * (dt / 16);
+		}
 	}
 
 	draw(ctx: CanvasRenderingContext2D, color: string) {
 		if (this.life <= 0) return;
-		ctx.globalAlpha = Math.max(0, this.life);
-		ctx.fillStyle = color;
+
 		ctx.beginPath();
 		ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.globalAlpha = 1.0;
+
+		if (this.isLens) {
+			ctx.globalAlpha = Math.max(0, this.life);
+			// Render as refraction blob
+			const grad = ctx.createRadialGradient(
+				this.x - this.radius * 0.2,
+				this.y - this.radius * 0.2,
+				0,
+				this.x,
+				this.y,
+				this.radius,
+			);
+			grad.addColorStop(0, 'rgba(255,255,255,0.8)');
+			grad.addColorStop(0.5, 'rgba(200,200,200,0.2)');
+			grad.addColorStop(1, 'rgba(100,100,100,0.1)');
+			ctx.fillStyle = grad;
+			ctx.fill();
+
+			if (this.life < 0.2) {
+				// Dried water stain
+				ctx.strokeStyle = `rgba(255,255,255,${this.life})`;
+				ctx.stroke();
+			}
+			ctx.globalAlpha = 1.0;
+		} else {
+			ctx.fillStyle = color;
+			ctx.fill();
+		}
 	}
 }
 
@@ -223,16 +289,16 @@ class Shard {
 	constructor(x: number, y: number) {
 		this.x = x;
 		this.y = y;
-		const speed = Math.random() * 8 + 2;
-		const angle = Math.random() * Math.PI * 2;
+		const speed = Math.random() * 15 + 5;
+		const angle = Math.random() * Math.PI + Math.PI; // Upwards
 		this.vx = Math.cos(angle) * speed;
-		this.vy = Math.sin(angle) * speed - 4; // throw upwards
+		this.vy = Math.sin(angle) * speed;
 		this.angle = Math.random() * Math.PI * 2;
 		this.vAngle = (Math.random() - 0.5) * 0.5;
-		this.size = Math.random() * 5 + 3;
+		this.size = Math.random() * 8 + 4;
 		this.life = 1.0;
 
-		const numPoints = Math.floor(Math.random() * 3) + 3;
+		const numPoints = Math.floor(Math.random() * 4) + 3;
 		this.points = [];
 		for (let i = 0; i < numPoints; i++) {
 			const a = (i / numPoints) * Math.PI * 2;
@@ -241,12 +307,23 @@ class Shard {
 		}
 	}
 
-	update(dt: number) {
-		this.vy += 0.4 * (dt / 16); // гравитация для стекла
+	update(dt: number, engine: FluidEngine) {
+		this.vy += 0.5 * (dt / 16);
 		this.x += this.vx * (dt / 16);
 		this.y += this.vy * (dt / 16);
 		this.angle += this.vAngle * (dt / 16);
-		this.life -= 0.005 * (dt / 16);
+
+		// Floor bounce
+		if (this.y > engine.height - this.size) {
+			this.y = engine.height - this.size;
+			this.vy *= -0.4;
+			this.vx *= 0.8;
+			this.vAngle *= 0.8;
+		}
+
+		if (engine.getState() !== 'WAITING_SCENE') {
+			this.life -= 0.01 * (dt / 16);
+		}
 	}
 
 	draw(ctx: CanvasRenderingContext2D) {
@@ -266,7 +343,7 @@ class Shard {
 		ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
 		ctx.fill();
 		ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-		ctx.lineWidth = 0.5;
+		ctx.lineWidth = 1;
 		ctx.stroke();
 
 		ctx.restore();
@@ -274,53 +351,64 @@ class Shard {
 }
 
 export class FluidEngine {
-	private fluidCtx: CanvasRenderingContext2D;
-	private uiCtx: CanvasRenderingContext2D;
-	private width: number;
-	private height: number;
+	public fluidCtx: CanvasRenderingContext2D;
+	public uiCtx: CanvasRenderingContext2D;
+	public width: number = 800;
+	public height: number = 600;
 
+	private state: FluidState = 'IDLE';
+	public mainBubble: Bubble | null = null;
 	private bubbles: Bubble[] = [];
 	private droplets: Droplet[] = [];
 	private shards: Shard[] = [];
 	private springs: WaterSpring[] = [];
 
-	private state: FluidState = 'IDLE';
-	private mainBubble: Bubble | null = null;
+	// Pool at the bottom
+	private poolHeights: number[] = [];
 
-	// Camera and Scene
+	// Flask Rigid Body
+	public flaskX: number = 400;
+	public flaskY: number = 300;
+	public flaskVx: number = 0;
+	public flaskVy: number = 0;
+	public flaskRot: number = 0;
+	public flaskVRot: number = 0;
+
+	// Dragging
+	public isPointerDown: boolean = false;
+	public pointerX: number = 0;
+	public pointerY: number = 0;
+	private dragOffsetX: number = 0;
+	private dragOffsetY: number = 0;
+
+	// Camera & Timers
 	private timeSinceLastMainBubble = 0;
 	private stateTimer = 0;
-	private cameraX = 0;
-	private cameraY = 0;
-	private cameraScale = 1;
-	private time = 0;
-
 	private color: string = 'var(--md-sys-color-primary)';
 	private eventMultiplier = 1;
-	private shelfAnimProgress = 0;
 	private targetColor = '';
 
 	constructor(fluidCanvas: HTMLCanvasElement, uiCanvas: HTMLCanvasElement) {
 		this.fluidCtx = fluidCanvas.getContext('2d')!;
 		this.uiCtx = uiCanvas.getContext('2d')!;
-		this.width = fluidCanvas.width;
-		this.height = fluidCanvas.height;
-
 		this.initSprings();
-		this.initBubbles();
 	}
 
-	private initSprings() {
-		this.springs = [];
-		const springCount = 20;
-		for (let i = 0; i <= springCount; i++) {
-			this.springs.push(new WaterSpring(10 * SCALE)); // Y = 10*SCALE
-		}
+	getState() {
+		return this.state;
 	}
 
 	resize(width: number, height: number) {
 		this.width = width;
 		this.height = height;
+		if (this.state === 'IDLE' || this.state === 'POURING') {
+			this.flaskX = width / 2;
+			this.flaskY = height / 2;
+		}
+
+		// Reset pool
+		const poolResolution = Math.floor(width / 10);
+		this.poolHeights = new Array(poolResolution).fill(0);
 	}
 
 	setColor(color: string) {
@@ -331,91 +419,207 @@ export class FluidEngine {
 		this.eventMultiplier = multiplier;
 	}
 
-	private initBubbles() {
-		this.bubbles = [];
-		// Увеличено количество мелких пузырей
-		for (let i = 0; i < 25; i++) {
+	private initSprings() {
+		this.springs = [];
+		for (let i = 0; i <= 20; i++) {
+			this.springs.push(new WaterSpring(0));
+		}
+	}
+
+	private spawnBubbles(count: number) {
+		for (let i = 0; i < count; i++) {
 			this.bubbles.push(
 				new Bubble(
-					(6 + Math.random() * 12) * SCALE,
-					(12 + Math.random() * 8) * SCALE,
-					(1.5 + Math.random() * 3) * SCALE,
+					this.flaskX + (Math.random() - 0.5) * 8 * SCALE,
+					this.flaskY + 4 * SCALE + Math.random() * 4 * SCALE,
+					(1 + Math.random() * 2) * SCALE,
 				),
 			);
 		}
 	}
 
-	// Возмущение поверхности
 	public splash(x: number, force: number) {
-		const relativeX = (x - 10 * SCALE) / (14 * SCALE - 10 * SCALE);
+		// x is world coordinate. Need to map to spring index.
+		// Springs are spread across the flask width roughly from -4*SCALE to +4*SCALE relative to flaskX
+		const localX = x - this.flaskX;
+		const width = 8 * SCALE;
+		const relativeX = (localX + width / 2) / width;
 		const index = Math.floor(relativeX * (this.springs.length - 1));
 		if (index >= 0 && index < this.springs.length) {
 			this.springs[index].speed += force;
 		}
 	}
 
-	private createMainBubble() {
-		this.mainBubble = new Bubble(12 * SCALE, 14 * SCALE, 2 * SCALE, true);
-		this.bubbles.push(this.mainBubble);
-		this.state = 'BUBBLE_GROWING';
+	public addPoolFluid(x: number, mass: number) {
+		const index = Math.floor((x / this.width) * this.poolHeights.length);
+		if (index >= 0 && index < this.poolHeights.length) {
+			this.poolHeights[index] += mass * 0.1;
+		}
 	}
 
-	public handleInteraction(clientX: number, clientY: number, canvasRect: DOMRect) {
-		const x = clientX - canvasRect.left;
-		const y = clientY - canvasRect.top;
+	private shatterFlask() {
+		this.state = 'WAITING_SCENE';
+		this.stateTimer = 0;
 
-		// Преобразуем координаты клика к локальным координатам сцены с учетом камеры
-		const centerX = this.width / 2 - 12 * SCALE;
-		const centerY = this.height / 2 - 12 * SCALE;
+		// Spawn shards
+		for (let i = 0; i < 30; i++) {
+			this.shards.push(
+				new Shard(
+					this.flaskX + (Math.random() - 0.5) * 10 * SCALE,
+					this.flaskY + (Math.random() - 0.5) * 10 * SCALE,
+				),
+			);
+		}
 
-		const localX = (x - centerX - this.cameraX) / this.cameraScale;
-		const localY = (y - centerY - this.cameraY) / this.cameraScale;
+		// Liquid explodes
+		for (let i = 0; i < 100; i++) {
+			this.droplets.push(
+				new Droplet(
+					this.flaskX + (Math.random() - 0.5) * 10 * SCALE,
+					this.flaskY + (Math.random() - 0.5) * 10 * SCALE,
+					this.flaskVx * 0.5 + (Math.random() - 0.5) * 20,
+					this.flaskVy * 0.5 + (Math.random() - 0.5) * 20,
+					(Math.random() * 3 + 1) * SCALE,
+				),
+			);
+		}
 
-		// Проверка клика по главному пузырю
-		if (this.mainBubble && !this.mainBubble.popped) {
-			const topY = 9.5 * SCALE - this.mainBubble.neckProgress * this.mainBubble.radius * 2;
-			const dx = localX - this.mainBubble.x;
-			const dy = localY - topY;
-			if (Math.sqrt(dx * dx + dy * dy) <= this.mainBubble.radius * 2) {
-				this.popMainBubble();
-				return; // Приоритет главному
+		// Camera drops
+		if (Math.random() < 0.8 * this.eventMultiplier) {
+			for (let i = 0; i < 40; i++) {
+				this.droplets.push(
+					new Droplet(
+						Math.random() * this.width,
+						Math.random() * this.height,
+						0,
+						0,
+						Math.random() * 8 * SCALE,
+						true, // isLens
+					),
+				);
 			}
 		}
 
-		// Лопаем мелкие пузырьки (интерактивность)
-		for (const bubble of this.bubbles) {
-			if (!bubble.isMain && !bubble.popped) {
-				const dx = localX - bubble.x;
-				const dy = localY - bubble.y;
-				if (Math.sqrt(dx * dx + dy * dy) <= bubble.radius * 1.5) {
-					// Зона клика чуть больше
-					bubble.popped = true;
-					this.splash(bubble.x, bubble.radius * 2); // Вода всколыхнется
-					// Локальные капельки внутри воды
-					for (let i = 0; i < 5; i++) {
-						this.droplets.push(
-							new Droplet(
-								bubble.x,
-								bubble.y,
-								(Math.random() - 0.5) * 4,
-								(Math.random() - 0.5) * 4,
-								bubble.radius * 0.3 * Math.random(),
-							),
-						);
+		this.mainBubble = null;
+		this.bubbles = [];
+	}
+
+	private createMainBubble() {
+		this.mainBubble = new Bubble(this.flaskX, this.flaskY - 2 * SCALE, 2 * SCALE, true);
+		this.bubbles.push(this.mainBubble);
+	}
+
+	handlePointerDown(x: number, y: number) {
+		this.isPointerDown = true;
+		this.pointerX = x;
+		this.pointerY = y;
+
+		if (this.state === 'IDLE' || this.state === 'POURING') {
+			// Check if grabbed flask
+			const dx = x - this.flaskX;
+			const dy = y - this.flaskY;
+			if (Math.abs(dx) < 6 * SCALE && Math.abs(dy) < 12 * SCALE) {
+				this.state = 'DRAGGING';
+				this.dragOffsetX = dx;
+				this.dragOffsetY = dy;
+				this.flaskVx = 0;
+				this.flaskVy = 0;
+				this.flaskVRot = 0;
+				return;
+			}
+
+			// Check if popped main bubble
+			if (this.mainBubble && !this.mainBubble.popped) {
+				const bdx = x - this.mainBubble.x;
+				const bdy = y - this.mainBubble.y;
+				if (Math.sqrt(bdx * bdx + bdy * bdy) <= this.mainBubble.radius) {
+					this.popMainBubble();
+					return;
+				}
+			}
+
+			// Check small bubbles
+			for (const b of this.bubbles) {
+				if (!b.isMain && !b.popped) {
+					const bdx = x - b.x;
+					const bdy = y - b.y;
+					if (Math.sqrt(bdx * bdx + bdy * bdy) <= b.radius * 1.5) {
+						b.popped = true;
+						this.splash(b.x, b.radius * 3);
+						break;
 					}
-					// Спавн нового пузырька через секунду где-то внизу
-					setTimeout(() => {
-						if (this.state === 'IDLE' || this.state === 'BUBBLE_GROWING') {
-							this.bubbles.push(
-								new Bubble(
-									(6 + Math.random() * 12) * SCALE,
-									(20 + Math.random() * 2) * SCALE,
-									(1.5 + Math.random() * 3) * SCALE,
-								),
-							);
-						}
-					}, 1000);
-					break; // Один за клик
+				}
+			}
+		}
+	}
+
+	handlePointerMove(x: number, y: number) {
+		if (this.state === 'DRAGGING') {
+			const oldX = this.flaskX;
+			const oldY = this.flaskY;
+			this.flaskX = x - this.dragOffsetX;
+			this.flaskY = y - this.dragOffsetY;
+
+			// Calculate velocity for throw
+			this.flaskVx = (this.flaskX - oldX) * 0.5;
+			this.flaskVy = (this.flaskY - oldY) * 0.5;
+
+			// Add rotation based on horizontal movement
+			this.flaskRot = MathUtils.clamp(-this.flaskVx * 0.05, -Math.PI / 4, Math.PI / 4);
+
+			// Slosh water
+			this.splash(
+				this.flaskX + Math.sign(this.flaskVx) * 4 * SCALE,
+				Math.abs(this.flaskVx) * 0.2,
+			);
+
+			// If shaken too hard, pop main bubble
+			if (Math.abs(this.flaskVx) > 20 || Math.abs(this.flaskVy) > 20) {
+				if (this.mainBubble) this.popMainBubble();
+			}
+		}
+
+		// Pool interaction
+		if (this.isPointerDown && y > this.height - 50) {
+			const index = Math.floor((x / this.width) * this.poolHeights.length);
+			if (index >= 0 && index < this.poolHeights.length) {
+				// Push fluid aside
+				const push = 5;
+				if (this.poolHeights[index] > push) {
+					this.poolHeights[index] -= push;
+					if (index > 0) this.poolHeights[index - 1] += push / 2;
+					if (index < this.poolHeights.length - 1)
+						this.poolHeights[index + 1] += push / 2;
+				}
+			}
+		}
+
+		this.pointerX = x;
+		this.pointerY = y;
+	}
+
+	handlePointerUp(x: number, y: number) {
+		this.isPointerDown = false;
+		if (this.state === 'DRAGGING') {
+			// Check safe zone (center of screen, rough estimation)
+			const safeZoneW = 300;
+			const safeZoneH = 200;
+			const centerX = this.width / 2;
+			const centerY = this.height / 2;
+
+			const isSafe =
+				Math.abs(this.flaskX - centerX) < safeZoneW / 2 &&
+				Math.abs(this.flaskY - centerY) < safeZoneH / 2;
+
+			if (isSafe) {
+				this.state = 'IDLE';
+				// Smoothly return to center? Or stay where dropped if we want a shelf.
+				// Let's make it snap back to center slowly.
+			} else {
+				if (this.mainBubble && !this.mainBubble.popped) {
+					this.state = 'FLOATING_BACK';
+				} else {
+					this.state = 'FALLING';
 				}
 			}
 		}
@@ -423,107 +627,46 @@ export class FluidEngine {
 
 	private popMainBubble() {
 		if (!this.mainBubble) return;
-
 		this.mainBubble.popped = true;
-		const radius = this.mainBubble.radius;
-		const topY = 9.5 * SCALE - this.mainBubble.neckProgress * radius * 2;
 
-		// Локальные капли
 		for (let i = 0; i < 20; i++) {
 			const angle = Math.random() * Math.PI * 2;
-			const speed = Math.random() * 5 + 2;
+			const speed = Math.random() * 8 + 2;
 			this.droplets.push(
 				new Droplet(
 					this.mainBubble.x,
-					topY,
+					this.mainBubble.y,
 					Math.cos(angle) * speed,
-					Math.sin(angle) * speed - 2,
-					radius * 0.2 * Math.random(),
+					Math.sin(angle) * speed,
+					this.mainBubble.radius * 0.2,
 				),
 			);
 		}
 
-		// Если перекачали -> разрушение колбы
-		if (radius > 5 * SCALE) {
-			// Лимит больше
-			this.shatterFlask();
-			return;
-		}
-
-		this.mainBubble = null;
-		this.state = 'IDLE';
-	}
-
-	private shatterFlask() {
-		this.state = 'WAITING_SCENE';
-		this.stateTimer = 0;
-		this.mainBubble = null;
-
-		// 1. Создание осколков
-		const glassPoints = [
-			{ x: 10, y: 10 },
-			{ x: 14, y: 10 },
-			{ x: 21, y: 21 },
-			{ x: 3, y: 21 },
-		];
-		for (const pt of glassPoints) {
-			for (let i = 0; i < 8; i++) {
-				this.shards.push(new Shard(pt.x * SCALE, pt.y * SCALE));
+		// Lens droplets occasionally
+		if (Math.random() < 0.5) {
+			for (let i = 0; i < 5; i++) {
+				this.droplets.push(
+					new Droplet(
+						this.mainBubble.x + (Math.random() - 0.5) * 100,
+						this.mainBubble.y + (Math.random() - 0.5) * 100,
+						0,
+						0,
+						Math.random() * 15,
+						true,
+					),
+				);
 			}
 		}
 
-		// 2. Вся вода выливается
-		for (let i = 0; i < 150; i++) {
-			const rx = (6 + Math.random() * 12) * SCALE;
-			const ry = (12 + Math.random() * 8) * SCALE;
-			this.droplets.push(
-				new Droplet(
-					rx,
-					ry,
-					(Math.random() - 0.5) * 8,
-					Math.random() * 4, // падают вниз
-					(Math.random() * 2 + 1) * SCALE * 0.5,
-				),
-			);
-		}
-		// Убираем пузыри
-		this.bubbles = [];
-
-		// Глобальное событие (капли на экран)
-		if (Math.random() < 0.6 * this.eventMultiplier) {
-			window.dispatchEvent(
-				new CustomEvent('lensSplatter', {
-					detail: {
-						x: window.innerWidth / 2,
-						y: window.innerHeight / 2,
-						amount: 30,
-						color: this.color,
-					},
-				}),
-			);
-		}
-	}
-
-	private triggerShelfChange() {
-		this.state = 'CHANGING_SHELF';
-		this.shelfAnimProgress = 0;
-		const hue = Math.floor(Math.random() * 360);
-		this.targetColor = `hsl(${hue}, 80%, 50%)`;
-
-		window.dispatchEvent(new CustomEvent('flaskShattered', { detail: { hue } }));
+		this.mainBubble = null;
 	}
 
 	private updateSprings() {
-		// Обновляем пружины
-		for (let i = 0; i < this.springs.length; i++) {
-			this.springs[i].update();
-		}
-
-		// Распространение волн
+		for (let i = 0; i < this.springs.length; i++) this.springs[i].update();
 		const leftDeltas = new Array(this.springs.length).fill(0);
 		const rightDeltas = new Array(this.springs.length).fill(0);
-		const spread = 0.2; // скорость распространения
-
+		const spread = 0.2;
 		for (let i = 0; i < this.springs.length; i++) {
 			if (i > 0) {
 				leftDeltas[i] = spread * (this.springs[i].y - this.springs[i - 1].y);
@@ -534,7 +677,6 @@ export class FluidEngine {
 				this.springs[i + 1].speed += rightDeltas[i];
 			}
 		}
-
 		for (let i = 0; i < this.springs.length; i++) {
 			if (i > 0) this.springs[i - 1].y += leftDeltas[i];
 			if (i < this.springs.length - 1) this.springs[i + 1].y += rightDeltas[i];
@@ -542,165 +684,205 @@ export class FluidEngine {
 	}
 
 	update(dt: number) {
-		this.time += dt;
-
-		// Физика камеры (покачивание)
-		if (this.state !== 'CHANGING_SHELF') {
-			this.cameraX = Math.sin(this.time / 800) * 5;
-			this.cameraY = Math.cos(this.time / 600) * 8;
-			this.cameraScale = 1 + Math.sin(this.time / 1000) * 0.02;
-		}
-
-		if (this.state === 'WAITING_SCENE') {
-			this.stateTimer += dt;
-			// Камера трясется от взрыва
-			if (this.stateTimer < 500) {
-				this.cameraX += (Math.random() - 0.5) * 15;
-				this.cameraY += (Math.random() - 0.5) * 15;
-			}
-
-			// Наблюдаем за падением 2 секунды
-			if (this.stateTimer > 2000) {
-				this.triggerShelfChange();
-			}
-		}
-
-		if (this.state === 'CHANGING_SHELF') {
-			this.shelfAnimProgress += dt / 1500;
-
-			// Камера переезжает
-			// progress: 0 -> 1. Отводим камеру вправо (сцена уезжает влево)
-			const p = this.shelfAnimProgress;
-			const easeInOut = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
-
-			this.cameraX = -easeInOut * 1000;
-			this.cameraY = Math.sin(p * Math.PI) * 50; // легкий отлет по дуге
-
-			if (this.shelfAnimProgress >= 1) {
-				this.state = 'IDLE';
-				this.color = this.targetColor;
-				this.cameraX = 0;
-				this.cameraY = 0;
-				this.shards = [];
-				this.droplets = [];
-				this.initSprings();
-				this.initBubbles();
-			}
-		}
-
+		// --- State Logic ---
 		if (this.state === 'IDLE') {
 			this.timeSinceLastMainBubble += dt;
+
+			// Unconfident Hover Logic
+			const centerX = this.width / 2;
+			const centerY = this.height / 2;
+
+			this.flaskX += (centerX - this.flaskX) * 0.05;
+
+			let targetY = centerY;
+			if (this.mainBubble) {
+				// The bigger the bubble, the higher and more confident it hovers
+				const lift = Math.min(this.mainBubble.radius * 2, 40);
+				targetY = centerY - lift;
+
+				// Swaying is wilder when bubble is small, smoother when big
+				const swayAmt = 10 / (1 + this.mainBubble.radius);
+				this.flaskRot = Math.sin(Date.now() / 500) * swayAmt * 0.05;
+				this.flaskX += Math.cos(Date.now() / 700) * swayAmt * 2;
+			} else {
+				this.flaskRot += (0 - this.flaskRot) * 0.1;
+			}
+
+			this.flaskY += (targetY - this.flaskY) * 0.05;
+
 			if (
-				this.timeSinceLastMainBubble > 3000 &&
-				Math.random() < 0.02 * this.eventMultiplier
+				this.timeSinceLastMainBubble > 4000 &&
+				Math.random() < 0.05 * this.eventMultiplier &&
+				!this.mainBubble
 			) {
 				this.createMainBubble();
 				this.timeSinceLastMainBubble = 0;
 			}
-		}
 
-		if (this.state === 'BUBBLE_GROWING' && this.mainBubble) {
-			if (this.mainBubble.radius > 6 * SCALE) {
-				// Лимит увеличен
-				this.state = 'FLASK_HOVERING';
+			// Spawn small bubbles occasionally
+			if (Math.random() < 0.02) {
+				this.spawnBubbles(1);
+			}
+
+			// Over-inflation check
+			if (this.mainBubble && this.mainBubble.radius > 12 * SCALE) {
+				this.popMainBubble();
+				this.shatterFlask(); // Bubble got too big!
+			}
+		} else if (this.state === 'FALLING') {
+			this.flaskVy += 0.5 * (dt / 16); // Gravity
+			this.flaskY += this.flaskVy * (dt / 16);
+			this.flaskX += this.flaskVx * (dt / 16);
+			this.flaskRot += this.flaskVx * 0.01; // Spin while falling
+
+			// Check bottom hit
+			if (this.flaskY > this.height - 10 * SCALE) {
+				// Check pool height at drop location
+				const index = Math.floor((this.flaskX / this.width) * this.poolHeights.length);
+				const poolH = this.poolHeights[index] || 0;
+
+				if (poolH > 50) {
+					// Cushion! Sinks instead of breaking completely immediately
+					this.splash(this.flaskX, 50);
+					this.flaskVy *= -0.2; // Bounce
+					// Empty flask contents into pool slowly
+					this.addPoolFluid(this.flaskX, 100);
+					this.flaskY = this.height - poolH; // Float on pool
+				} else {
+					this.shatterFlask();
+				}
+			}
+		} else if (this.state === 'FLOATING_BACK') {
+			// Floats back to center slowly
+			const centerX = this.width / 2;
+			const centerY = this.height / 2;
+
+			const speed = this.mainBubble ? this.mainBubble.radius * 0.05 : 0.1;
+
+			this.flaskX += (centerX - this.flaskX) * speed * (dt / 16);
+			this.flaskY += (centerY - this.flaskY) * speed * (dt / 16);
+
+			// Sway
+			this.flaskRot = Math.sin(Date.now() / 400) * 0.1;
+
+			if (Math.abs(this.flaskX - centerX) < 5 && Math.abs(this.flaskY - centerY) < 5) {
+				this.state = 'IDLE';
+			}
+		} else if (this.state === 'WAITING_SCENE') {
+			this.stateTimer += dt;
+			if (this.stateTimer > 10000) {
+				// 10 seconds of shards
+				this.state = 'CHANGING_SHELF';
+				this.stateTimer = 0;
+				const hue = Math.floor(Math.random() * 360);
+				this.targetColor = `hsl(${hue}, 80%, 50%)`;
+			}
+		} else if (this.state === 'CHANGING_SHELF') {
+			this.stateTimer += dt;
+			if (this.stateTimer > 2000) {
+				this.state = 'POURING';
+				this.stateTimer = 0;
+				this.color = this.targetColor;
+				this.flaskX = this.width / 2;
+				this.flaskY = this.height / 2;
+				this.flaskRot = 0;
+				this.flaskVx = 0;
+				this.flaskVy = 0;
+				this.shards = [];
+				this.bubbles = [];
+				this.initSprings();
+				// Empty flask springs
+				for (const s of this.springs) s.y = 8 * SCALE;
+			}
+		} else if (this.state === 'POURING') {
+			this.stateTimer += dt;
+
+			// Simulate pouring: particles falling from top into flask
+			if (Math.random() < 0.5) {
+				this.droplets.push(
+					new Droplet(
+						this.flaskX + (Math.random() - 0.5) * 2 * SCALE,
+						0, // From top
+						(Math.random() - 0.5) * 2,
+						10, // Fast
+						2 * SCALE,
+					),
+				);
+			}
+
+			// Raise springs
+			for (let i = 0; i < this.springs.length; i++) {
+				if (this.springs[i].y > -1 * SCALE) {
+					this.springs[i].y -= 0.1 * (dt / 16);
+				}
+			}
+
+			if (this.stateTimer > 4000) {
+				// 4s pour
+				this.state = 'IDLE';
+				this.stateTimer = 0;
+				this.spawnBubbles(10);
 			}
 		}
 
+		// --- Physics Updates ---
 		this.updateSprings();
 
-		this.bubbles.forEach((b) => b.update(dt, this.state === 'FLASK_HOVERING', this));
+		this.bubbles.forEach((b) => b.update(dt, this));
 		this.bubbles = this.bubbles.filter((b) => !b.popped);
 
-		this.droplets.forEach((d) => d.update(dt));
+		this.droplets.forEach((d) => d.update(dt, this));
 		this.droplets = this.droplets.filter((d) => d.life > 0);
 
-		this.shards.forEach((s) => s.update(dt));
+		this.shards.forEach((s) => s.update(dt, this));
 		this.shards = this.shards.filter((s) => s.life > 0);
+
+		// Pool relaxation
+		for (let i = 0; i < this.poolHeights.length; i++) {
+			if (this.poolHeights[i] > 0) {
+				this.poolHeights[i] *= 0.999; // Slow evaporation
+
+				// Leveling
+				const spread = 0.1;
+				if (i > 0) {
+					const diff = this.poolHeights[i] - this.poolHeights[i - 1];
+					if (diff > 0) {
+						this.poolHeights[i] -= diff * spread;
+						this.poolHeights[i - 1] += diff * spread;
+					}
+				}
+				if (i < this.poolHeights.length - 1) {
+					const diff = this.poolHeights[i] - this.poolHeights[i + 1];
+					if (diff > 0) {
+						this.poolHeights[i] -= diff * spread;
+						this.poolHeights[i + 1] += diff * spread;
+					}
+				}
+			}
+		}
 	}
 
 	private createFlaskPath(ctx: CanvasRenderingContext2D, inner = false) {
 		const s = SCALE;
 		ctx.beginPath();
 		if (inner) {
-			ctx.moveTo(10.3 * s, 10 * s);
-			ctx.lineTo(13.7 * s, 10 * s);
-			ctx.lineTo(21 * s, 21 * s);
-			ctx.arc(20 * s, 21 * s, 1 * s, 0, Math.PI / 2);
-			ctx.lineTo(4 * s, 22 * s);
-			ctx.arc(4 * s, 21 * s, 1 * s, Math.PI / 2, Math.PI);
+			ctx.moveTo(-1.7 * s, -8 * s);
+			ctx.lineTo(1.7 * s, -8 * s);
+			ctx.lineTo(9 * s, 3 * s);
+			ctx.arc(8 * s, 3 * s, 1 * s, 0, Math.PI / 2);
+			ctx.lineTo(-8 * s, 4 * s);
+			ctx.arc(-8 * s, 3 * s, 1 * s, Math.PI / 2, Math.PI);
 			ctx.closePath();
 		} else {
-			ctx.moveTo(10 * s, 2 * s);
-			ctx.lineTo(14 * s, 2 * s);
-			ctx.lineTo(14 * s, 10 * s);
-			ctx.lineTo(21.5 * s, 21 * s);
-			ctx.arc(20.5 * s, 21 * s, 1 * s, 0, Math.PI / 2);
-			ctx.lineTo(3.5 * s, 22 * s);
-			ctx.arc(3.5 * s, 21 * s, 1 * s, Math.PI / 2, Math.PI);
-			ctx.lineTo(10 * s, 10 * s);
+			ctx.moveTo(-2 * s, -16 * s);
+			ctx.lineTo(2 * s, -16 * s);
+			ctx.lineTo(2 * s, -8 * s);
+			ctx.lineTo(9.5 * s, 3 * s);
+			ctx.arc(8.5 * s, 3 * s, 1 * s, 0, Math.PI / 2);
+			ctx.lineTo(-8.5 * s, 4 * s);
+			ctx.arc(-8.5 * s, 3 * s, 1 * s, Math.PI / 2, Math.PI);
+			ctx.lineTo(-2 * s, -8 * s);
 			ctx.closePath();
-		}
-	}
-
-	private drawConveyorBackground() {
-		// Конвейер и колбы на заднем плане (в CHANGING_SHELF)
-		const p = this.shelfAnimProgress;
-		const offset = p * 1000;
-
-		this.uiCtx.save();
-		// Отдаляем фон (глубина)
-		this.uiCtx.scale(0.6, 0.6);
-		this.uiCtx.globalAlpha = 0.4;
-
-		// Линия конвейера
-		this.uiCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-		this.uiCtx.lineWidth = 2;
-		this.uiCtx.beginPath();
-		this.uiCtx.moveTo(0, this.height * 1.5);
-		this.uiCtx.lineTo(this.width * 2, this.height * 1.5);
-		this.uiCtx.stroke();
-
-		// Рисуем проходящие на заднем плане колбы
-		for (let i = 0; i < 5; i++) {
-			const xPos = (i * 300 - offset) % 1500;
-			if (xPos < -200 || xPos > this.width * 2 + 200) continue;
-
-			this.uiCtx.save();
-			this.uiCtx.translate(xPos + 500, this.height * 1.5 - 24 * SCALE);
-
-			this.uiCtx.fillStyle = `hsl(${(i * 70) % 360}, 40%, 30%)`; // Темные и тусклые
-			this.createFlaskPath(this.uiCtx, true);
-			this.uiCtx.fill();
-
-			this.uiCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-			this.createFlaskPath(this.uiCtx, false);
-			this.uiCtx.stroke();
-
-			this.uiCtx.restore();
-		}
-		this.uiCtx.restore();
-
-		// Целевая колба выезжает в наш фокус
-		const movement = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p; // easeInOut
-		const targetX = this.width + 500 - movement * 1500;
-		if (p > 0.4) {
-			this.uiCtx.save();
-
-			// Масштабируем из фона на передний план
-			const scale = 0.5 + movement * 0.5;
-			this.uiCtx.translate(targetX, this.height / 2 - 12 * SCALE);
-			this.uiCtx.scale(scale, scale);
-
-			this.uiCtx.fillStyle = this.targetColor;
-			this.createFlaskPath(this.uiCtx, true);
-			this.uiCtx.fill();
-
-			this.uiCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-			this.uiCtx.lineWidth = 1;
-			this.createFlaskPath(this.uiCtx, false);
-			this.uiCtx.stroke();
-
-			this.uiCtx.restore();
 		}
 	}
 
@@ -708,84 +890,88 @@ export class FluidEngine {
 		this.fluidCtx.clearRect(0, 0, this.width, this.height);
 		this.uiCtx.clearRect(0, 0, this.width, this.height);
 
-		if (this.state === 'CHANGING_SHELF') {
-			this.drawConveyorBackground();
-			// Осколки и капли от предыдущей колбы продолжают падать, но они смещаются вместе с камерой
+		// Draw Pool
+		this.fluidCtx.fillStyle = this.color;
+		this.fluidCtx.beginPath();
+		this.fluidCtx.moveTo(0, this.height);
+		const step = this.width / (this.poolHeights.length - 1);
+		for (let i = 0; i < this.poolHeights.length; i++) {
+			this.fluidCtx.lineTo(i * step, this.height - this.poolHeights[i]);
 		}
+		this.fluidCtx.lineTo(this.width, this.height);
+		this.fluidCtx.closePath();
+		this.fluidCtx.fill();
 
-		const centerX = this.width / 2 - 12 * SCALE;
-		const centerY = this.height / 2 - 12 * SCALE;
-
-		this.fluidCtx.save();
-		this.uiCtx.save();
-
-		// Применяем камеру
-		this.fluidCtx.translate(centerX + this.cameraX, centerY + this.cameraY);
-		this.fluidCtx.scale(this.cameraScale, this.cameraScale);
-
-		this.uiCtx.translate(centerX + this.cameraX, centerY + this.cameraY);
-		this.uiCtx.scale(this.cameraScale, this.cameraScale);
-
-		// Если колба цела - рисуем жидкость и UI колбы
+		// Draw Flask System if not shattered
 		if (this.state !== 'WAITING_SCENE' && this.state !== 'CHANGING_SHELF') {
-			// FLUID LAYER (clipped)
+			this.fluidCtx.save();
+			this.uiCtx.save();
+
+			this.fluidCtx.translate(this.flaskX, this.flaskY);
+			this.fluidCtx.rotate(this.flaskRot);
+			this.uiCtx.translate(this.flaskX, this.flaskY);
+			this.uiCtx.rotate(this.flaskRot);
+
+			// FLUID LAYER
 			this.fluidCtx.save();
 			this.createFlaskPath(this.fluidCtx, true);
 			this.fluidCtx.clip();
 
-			// Рисуем поверхность воды с пружинами
+			// Draw surface springs.
+			// We translate them down since the original coordinates assumed top-left
 			this.fluidCtx.fillStyle = this.color;
 			this.fluidCtx.beginPath();
 
-			const startX = 10 * SCALE;
-			const endX = 14 * SCALE;
-			const step = (endX - startX) / (this.springs.length - 1);
+			const startX = -4 * SCALE;
+			const endX = 4 * SCALE;
+			const sStep = (endX - startX) / (this.springs.length - 1);
 
 			this.fluidCtx.moveTo(startX, this.springs[0].y);
 			for (let i = 1; i < this.springs.length; i++) {
-				this.fluidCtx.lineTo(startX + i * step, this.springs[i].y);
+				this.fluidCtx.lineTo(startX + i * sStep, this.springs[i].y);
 			}
-
-			// Замыкаем до дна
-			this.fluidCtx.lineTo(21 * SCALE, 21 * SCALE);
-			this.fluidCtx.lineTo(3 * SCALE, 21 * SCALE);
+			this.fluidCtx.lineTo(9 * SCALE, 9 * SCALE);
+			this.fluidCtx.lineTo(-9 * SCALE, 9 * SCALE);
 			this.fluidCtx.closePath();
 			this.fluidCtx.fill();
 
-			// Внутренние пузыри
-			this.bubbles.filter((b) => !b.isMain).forEach((b) => b.draw(this.fluidCtx, this.color));
+			// Restore translation for bubbles so they draw in world space
 			this.fluidCtx.restore();
 
-			// MAIN BUBBLE (вне маски)
-			if (this.mainBubble) {
-				this.mainBubble.draw(this.fluidCtx, this.color);
-			}
-
-			// МИНИМАЛИСТИЧНЫЙ UI КОЛБЫ (без Frutiger Aero)
-			this.uiCtx.strokeStyle = 'rgba(255,255,255,0.2)';
-			this.uiCtx.lineWidth = 1;
+			// UI LAYER (Glass)
+			this.uiCtx.strokeStyle = 'rgba(255,255,255,0.4)';
+			this.uiCtx.lineWidth = 1.5;
 			this.createFlaskPath(this.uiCtx, false);
 			this.uiCtx.stroke();
 
-			// Легкий матовый эффект (Glassmorphism)
-			this.uiCtx.fillStyle = 'rgba(255,255,255,0.03)';
+			// Glassmorphism body
+			this.uiCtx.fillStyle = 'rgba(255,255,255,0.05)';
 			this.uiCtx.fill();
 
-			// Едва заметные отблески слева
-			this.uiCtx.strokeStyle = 'rgba(255,255,255,0.4)';
-			this.uiCtx.lineWidth = 1;
+			// Reflections
+			this.uiCtx.strokeStyle = 'rgba(255,255,255,0.6)';
+			this.uiCtx.lineWidth = 2;
 			this.uiCtx.beginPath();
-			this.uiCtx.moveTo(11.5 * SCALE, 3 * SCALE);
-			this.uiCtx.lineTo(11.5 * SCALE, 9.5 * SCALE);
-			this.uiCtx.lineTo(6 * SCALE, 19 * SCALE);
+			this.uiCtx.moveTo(-1.5 * SCALE, -15 * SCALE);
+			this.uiCtx.lineTo(-1.5 * SCALE, -8 * SCALE);
+			this.uiCtx.lineTo(-7 * SCALE, 1 * SCALE);
 			this.uiCtx.stroke();
+
+			this.uiCtx.restore();
+			this.fluidCtx.restore();
 		}
 
-		// РИСУЕМ КАПЛИ И ОСКОЛКИ ВЕЗДЕ
+		// Draw Bubbles (World space)
+		this.bubbles.forEach((b) => b.draw(this.fluidCtx, this.color));
+
+		// Draw Particles & Drops
 		this.droplets.forEach((d) => d.draw(this.fluidCtx, this.color));
 		this.shards.forEach((s) => s.draw(this.uiCtx));
 
-		this.fluidCtx.restore();
-		this.uiCtx.restore();
+		// Draw pour stream in POURING state
+		if (this.state === 'POURING') {
+			this.uiCtx.fillStyle = this.color;
+			this.uiCtx.fillRect(this.flaskX - 2 * SCALE, 0, 4 * SCALE, this.flaskY - 8 * SCALE);
+		}
 	}
 }

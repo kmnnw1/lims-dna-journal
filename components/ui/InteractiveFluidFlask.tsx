@@ -20,8 +20,7 @@ export function InteractiveFluidFlask() {
 		const engine = new FluidEngine(fluidCanvasRef.current, uiCanvasRef.current);
 		engineRef.current = engine;
 
-		// Resolve the exact RGB color using a temporary DOM element
-		// because CSS custom properties can be nested or complex.
+		// Resolve the exact RGB color
 		const tempEl = document.createElement('div');
 		tempEl.style.color = 'var(--md-sys-color-primary, #6750a4)';
 		document.body.appendChild(tempEl);
@@ -45,46 +44,50 @@ export function InteractiveFluidFlask() {
 
 		requestRef.current = requestAnimationFrame(animate);
 
-		// Handle interactions
-		const handlePointerDown = (e: PointerEvent) => {
-			if (engineRef.current && uiCanvasRef.current) {
-				const rect = uiCanvasRef.current.getBoundingClientRect();
-				engineRef.current.handleInteraction(e.clientX, e.clientY, rect);
+		// Handle resizing
+		const handleResize = () => {
+			if (fluidCanvasRef.current && uiCanvasRef.current) {
+				const w = window.innerWidth;
+				const h = window.innerHeight;
+				fluidCanvasRef.current.width = w;
+				fluidCanvasRef.current.height = h;
+				uiCanvasRef.current.width = w;
+				uiCanvasRef.current.height = h;
+				engine.resize(w, h);
 			}
 		};
 
-		const uiCanvas = uiCanvasRef.current;
-		uiCanvas.addEventListener('pointerdown', handlePointerDown);
+		window.addEventListener('resize', handleResize);
+		handleResize(); // Initial size
+
+		// Global pointer events for dragging and swiping
+		const handlePointerDown = (e: PointerEvent) => {
+			engine.handlePointerDown(e.clientX, e.clientY);
+		};
+		const handlePointerMove = (e: PointerEvent) => {
+			engine.handlePointerMove(e.clientX, e.clientY);
+		};
+		const handlePointerUp = (e: PointerEvent) => {
+			engine.handlePointerUp(e.clientX, e.clientY);
+		};
+
+		window.addEventListener('pointerdown', handlePointerDown);
+		window.addEventListener('pointermove', handlePointerMove);
+		window.addEventListener('pointerup', handlePointerUp);
 
 		return () => {
 			cancelAnimationFrame(requestRef.current);
-			uiCanvas.removeEventListener('pointerdown', handlePointerDown);
+			window.removeEventListener('resize', handleResize);
+			window.removeEventListener('pointerdown', handlePointerDown);
+			window.removeEventListener('pointermove', handlePointerMove);
+			window.removeEventListener('pointerup', handlePointerUp);
 		};
 	}, [settings.flaskEventMultiplier]);
 
 	return (
-		<div
-			ref={containerRef}
-			className="relative w-full h-full flex items-center justify-center pointer-events-none"
-		>
-			{/* 
-				We make the canvases much larger than the 96x96 container 
-				so that the liquid can burst out of it (breaking the 4th wall).
-			*/}
-			<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] pointer-events-auto cursor-pointer group">
-				<canvas
-					ref={fluidCanvasRef}
-					width={300}
-					height={300}
-					className="absolute inset-0 pointer-events-none"
-				/>
-				<canvas
-					ref={uiCanvasRef}
-					width={300}
-					height={300}
-					className="absolute inset-0 z-10 transition-transform group-hover:scale-[1.02]"
-				/>
-			</div>
+		<div ref={containerRef} className="fixed inset-0 w-full h-full pointer-events-none z-[-1]">
+			<canvas ref={fluidCanvasRef} className="absolute inset-0 pointer-events-none" />
+			<canvas ref={uiCanvasRef} className="absolute inset-0 z-10 pointer-events-none" />
 		</div>
 	);
 }
