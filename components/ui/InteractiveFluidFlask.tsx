@@ -62,12 +62,24 @@ export function InteractiveFluidFlask() {
 
 		// Global pointer events for dragging and swiping
 		const handlePointerDown = (e: PointerEvent) => {
+			if (typeof engine.handlePointerDown !== 'function') {
+				console.error('engine.handlePointerDown is missing!', engine);
+				return;
+			}
 			engine.handlePointerDown(e.clientX, e.clientY);
 		};
 		const handlePointerMove = (e: PointerEvent) => {
+			if (typeof engine.handlePointerMove !== 'function') {
+				console.error('engine.handlePointerMove is missing!', engine);
+				return;
+			}
 			engine.handlePointerMove(e.clientX, e.clientY);
 		};
 		const handlePointerUp = (e: PointerEvent) => {
+			if (typeof engine.handlePointerUp !== 'function') {
+				console.error('engine.handlePointerUp is missing!', engine);
+				return;
+			}
 			engine.handlePointerUp(e.clientX, e.clientY);
 		};
 
