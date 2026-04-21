@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useDevSettings } from '@/components/features/DevSettingsProvider';
 import { FluidEngine } from '@/lib/animations/fluid-engine';
 
 export function InteractiveFluidFlask() {
+	const { settings } = useDevSettings();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const fluidCanvasRef = useRef<HTMLCanvasElement>(null);
 	const uiCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -27,6 +29,7 @@ export function InteractiveFluidFlask() {
 		document.body.removeChild(tempEl);
 
 		engine.setColor(primaryColor);
+		engine.setEventMultiplier(settings.flaskEventMultiplier);
 
 		// Setup animation loop
 		const animate = (time: number) => {
@@ -57,7 +60,7 @@ export function InteractiveFluidFlask() {
 			cancelAnimationFrame(requestRef.current);
 			uiCanvas.removeEventListener('pointerdown', handlePointerDown);
 		};
-	}, []);
+	}, [settings.flaskEventMultiplier]);
 
 	return (
 		<div
