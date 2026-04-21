@@ -15,17 +15,13 @@ export const DevOverlay: React.FC = () => {
 	const [isBypassing, setIsBypassing] = useState(false);
 	const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'EDITOR' | 'READER'>('ADMIN');
 
-	const userName = session?.user?.name;
 	const currentRole = (session?.user as { role?: string })?.role;
 	const isAuthenticated = !!session;
 
 	// Доступ ограничен для Павла и Asus
 	const isAuthorized =
-		userName?.toLowerCase().includes('pavel') ||
-		userName?.toLowerCase().includes('asus') ||
-		userName?.toLowerCase().includes('user') ||
-		userName?.toLowerCase().includes('пользователь') ||
-		process.env.NODE_ENV === 'development';
+		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
+		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus';
 
 	if (!isOverlayOpen || !isAuthorized) return null;
 
