@@ -56,7 +56,16 @@ export const DevSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 		const saved = localStorage.getItem(STORAGE_KEY);
 		if (saved) {
 			try {
-				setSettings(JSON.parse(saved));
+				const parsed = JSON.parse(saved);
+				setSettings((prev) => ({
+					...prev,
+					...parsed,
+					// Гарантируем наличие вложенных объектов, если их нет в старом конфиге
+					visibility: {
+						...prev.visibility,
+						...(parsed.visibility || {}),
+					},
+				}));
 			} catch (e) {
 				console.error('Ошибка парсинга настроек разработчика:', e);
 			}

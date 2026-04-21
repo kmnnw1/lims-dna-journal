@@ -176,7 +176,7 @@ export function JournalPageContent() {
 	return (
 		<main className="min-h-screen bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface) p-3 md:p-6 pb-24 transition-colors duration-300">
 			<div className="w-full">
-				{devSettings.visibility.header && (
+				{devSettings.visibility?.header && (
 					<JournalHeader
 						userName={session?.user?.name || 'Пользователь'}
 						userRole={(session?.user as { role?: string })?.role || 'READER'}
@@ -197,15 +197,15 @@ export function JournalPageContent() {
 					/>
 				)}
 
-				{(devSettings.visibility.stats || devSettings.visibility.filters) && (
+				{(devSettings.visibility?.stats || devSettings.visibility?.filters) && (
 					<div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4 bg-(--md-sys-color-surface-container-low)/50 p-2 sm:p-3 rounded-2xl sm:rounded-4xl border border-(--md-sys-color-outline-variant)/20">
-						{devSettings.visibility.stats && (
+						{devSettings.visibility?.stats && (
 							<div className="flex-1 flex flex-wrap items-center justify-start gap-2 sm:gap-4">
 								<StatsCards {...stats} />
 							</div>
 						)}
 
-						{devSettings.visibility.filters && (
+						{devSettings.visibility?.filters && (
 							<div className="flex flex-row items-end md:items-center justify-end gap-2 shrink-0 md:pr-2 w-full md:w-auto">
 								<div className="flex items-center gap-1.5 sm:gap-2">
 									{isMobileDevice && (
@@ -288,7 +288,7 @@ export function JournalPageContent() {
 						)}
 					</div>
 				)}
-				{devSettings.visibility.table && (
+				{devSettings.visibility?.table && (
 					<div className="bg-(--md-sys-color-surface-container-lowest) rounded-3xl sm:rounded-4xl md-elevation-1 border border-(--md-sys-color-outline-variant)/10 overflow-hidden transition-all duration-500 min-h-[400px]">
 						{(isMobileDevice || devSettings.forceMobileView) &&
 						devSettings.enableMobileCards &&
@@ -452,7 +452,7 @@ export function JournalPageContent() {
 				/>
 			</div>
 
-			{devSettings.visibility.fab && (
+			{devSettings.visibility?.fab && (
 				<FAB
 					extended
 					onClick={() => setIsAddModalOpen(true)}
