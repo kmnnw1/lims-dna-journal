@@ -4,7 +4,7 @@ import * as schema from './schema';
 
 /**
  * Инициализация клиента Drizzle для работы с SQLite.
- * В 2026 году используем SQL-драйверы с низким оверхедом.
+ * Используем SQL-драйверы с низким оверхедом.
  */
 const client = createClient({
 	url: process.env.DATABASE_URL || 'file:prisma/dev.db',

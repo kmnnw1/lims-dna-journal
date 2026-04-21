@@ -146,7 +146,7 @@ export function GlobalLensDrops() {
 	return (
 		<canvas
 			ref={canvasRef}
-			className="fixed inset-0 pointer-events-none z-[9999]"
+			className="fixed inset-0 pointer-events-none z-9999"
 			// Using backdrop-filter to blur what is strictly behind the drawn droplets
 			// Note: applying backdrop-filter to the whole canvas blurs everything.
 			// To blur ONLY behind drops without an SVG filter, we rely on the droplet rendering

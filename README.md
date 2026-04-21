@@ -44,4 +44,4 @@ git fetch origin && git add -A && (git diff --staged --quiet || git stash push -
 - **Environment**: Требует настройки переменных AUTH и DATABASE_URL.
 
 ---
-© 2026 DNA Lab
+© 2007 DNA Lab
