@@ -194,6 +194,7 @@ export function JournalPageContent() {
 						selectedOperator={selectedOperator}
 						setSelectedOperator={setSelectedOperator}
 						suggestions={suggestions}
+						onAddClick={() => setIsAddModalOpen(true)}
 					/>
 				)}
 

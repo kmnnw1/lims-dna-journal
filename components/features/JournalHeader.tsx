@@ -3,6 +3,7 @@
 import { Check, LogOut, Moon, Plus, Search, Settings, Sparkles, Sun } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useDevSettings } from './DevSettingsProvider';
 import { QuickFilterBar } from './QuickFilterBar';
 
 const AnimatedFlask = dynamic(
@@ -27,6 +28,7 @@ interface JournalHeaderProps {
 	selectedOperator: string;
 	setSelectedOperator: (val: string) => void;
 	suggestions: { labs: string[]; operators: string[]; methods: string[] };
+	onAddClick?: () => void;
 }
 
 export function JournalHeader({
@@ -46,7 +48,9 @@ export function JournalHeader({
 	selectedOperator,
 	setSelectedOperator,
 	suggestions,
+	onAddClick,
 }: JournalHeaderProps) {
+	const { settings } = useDevSettings();
 	const _roleColorClass =
 		userRole === 'ADMIN'
 			? 'bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary)'
@@ -121,14 +125,7 @@ export function JournalHeader({
 				{/* Кнопки действий - Прижаты к правому краю */}
 				<div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto">
 					<button
-						onClick={(e) => {
-							const x = e.clientX;
-							const y = e.clientY;
-							document.documentElement.style.setProperty('--target-x', `${x}px`);
-							document.documentElement.style.setProperty('--target-y', `${y}px`);
-							const next = theme === 'light' ? 'dark' : 'light';
-							setTheme(next);
-						}}
+						onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
 						title={`Тема: ${theme}`}
 						className="p-1.5 sm:p-2.5 bg-(--md-sys-color-surface-container-low) text-(--md-sys-color-on-surface) md-elevation-1 hover:md-elevation-2 rounded-full transition-all flex items-center justify-center md-state-layer"
 					>
@@ -137,6 +134,24 @@ export function JournalHeader({
 						) : (
 							<Sun className="w-4 h-4 sm:w-5 sm:h-5" />
 						)}
+					</button>
+
+					{settings.useAI && (
+						<div
+							className="p-1.5 sm:p-2.5 bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container) rounded-full flex items-center justify-center animate-pulse"
+							title="ИИ Помощник активен"
+						>
+							<Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+						</div>
+					)}
+
+					<button
+						onClick={onAddClick}
+						className="hidden sm:flex items-center justify-center gap-2 px-4 py-2.5 bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium md-state-layer"
+						title="Добавить новую пробу"
+					>
+						<Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+						<span className="hidden xl:inline text-sm">Добавить</span>
 					</button>
 
 					<Link
