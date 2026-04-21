@@ -15,16 +15,32 @@ export function DevToolsButton() {
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const [isDragging, setIsDragging] = useState(false);
 	const [isPositioned, setIsPositioned] = useState(false);
+	const [mounted, setMounted] = useState(false);
+
+	useEffect(() => {
+		setMounted(true);
+	}, []);
 
 	const x = useMotionValue(0);
 	const y = useMotionValue(0);
 
-	const isAuthorized = useMemo(
-		() =>
+	const isAuthorized = useMemo(() => {
+		if (typeof window === 'undefined') return false;
+
+		// Проверка секретного параметра в URL (для активации на телефоне)
+		const urlParams = new URLSearchParams(window.location.search);
+		if (urlParams.get('dev_access') === 'lab2026') {
+			localStorage.setItem('lab_journal_dev_authorized', 'true');
+			return true;
+		}
+
+		const isDevDevice = localStorage.getItem('lab_journal_dev_authorized') === 'true';
+		const isDevUser =
 			process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
-			process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus',
-		[],
-	);
+			process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus';
+
+		return isDevDevice || isDevUser;
+	}, []);
 
 	// Поиск логотипа Next.js в Shadow DOM для определения его позиции
 	const getNextLogoCorner = useCallback(() => {
@@ -114,7 +130,7 @@ export function DevToolsButton() {
 		[x, y, getNextLogoCorner],
 	);
 
-	if (!isAuthorized || isOverlayOpen || !isPositioned) return null;
+	if (!mounted || !isAuthorized || isOverlayOpen || !isPositioned) return null;
 
 	return (
 		<motion.button
@@ -127,11 +143,12 @@ export function DevToolsButton() {
 			style={{ x, y, touchAction: 'none', left: 0, top: 0 }}
 			whileHover={{ scale: 1.08 }}
 			whileTap={{ scale: 0.94 }}
+			type="button"
 			onClick={() => {
 				if (!isDragging) setOverlayOpen(true);
 			}}
-			className="fixed z-10000 p-3.5 rounded-full bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface-variant) shadow-2xl border border-(--md-sys-color-outline-variant)/50 md-elevation-3 cursor-grab active:cursor-grabbing group overflow-hidden"
-			title="Инструменты разработчика"
+			className="w-14 h-14 rounded-2xl bg-(--md-sys-color-error-container) text-(--md-sys-color-on-error-container) shadow-2xl flex items-center justify-center border border-(--md-sys-color-error)/20 cursor-grab active:cursor-grabbing active:scale-90 transition-transform z-200"
+			aria-label="Инструменты разработчика"
 		>
 			<div className="absolute inset-0 bg-(--md-sys-color-primary)/5 opacity-0 group-hover:opacity-100 transition-opacity" />
 			<ShieldAlert className="w-5 h-5 text-(--md-sys-color-error) group-hover:rotate-12 transition-transform relative z-10" />
