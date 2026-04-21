@@ -509,7 +509,7 @@ export class FluidEngine {
 		this.bubbles.push(this.mainBubble);
 	}
 
-	handlePointerDown(x: number, y: number) {
+	public handlePointerDown(x: number, y: number) {
 		this.isPointerDown = true;
 		this.pointerX = x;
 		this.pointerY = y;
@@ -553,7 +553,7 @@ export class FluidEngine {
 		}
 	}
 
-	handlePointerMove(x: number, y: number) {
+	public handlePointerMove(x: number, y: number) {
 		if (this.state === 'DRAGGING') {
 			const oldX = this.flaskX;
 			const oldY = this.flaskY;
@@ -598,7 +598,7 @@ export class FluidEngine {
 		this.pointerY = y;
 	}
 
-	handlePointerUp(x: number, y: number) {
+	public handlePointerUp(x: number, y: number) {
 		this.isPointerDown = false;
 		if (this.state === 'DRAGGING') {
 			// Check safe zone (center of screen, rough estimation)
