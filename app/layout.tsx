@@ -7,6 +7,7 @@ import { DevToolsButton } from '@/components/features/DevToolsButton';
 import { OfflineIndicator } from '@/components/features/OfflineIndicator';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { Providers } from '@/components/layout/Providers';
+import { ThemeProvider } from '@/components/layout/ThemeProvider';
 import './globals.css';
 
 const outfit = Outfit({
@@ -69,12 +70,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				className="min-h-screen bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface) selection:bg-(--md-sys-color-primary) selection:text-(--md-sys-color-on-primary) transition-colors duration-300 font-sans antialiased"
 			>
 				<Providers>
-					<DevSettingsProvider>
-						<PageTransition>{children}</PageTransition>
-						<DevOverlay />
-						<DevToolsButton />
-						<OfflineIndicator />
-					</DevSettingsProvider>
+					<ThemeProvider>
+						<DevSettingsProvider>
+							<PageTransition>{children}</PageTransition>
+							<DevOverlay />
+							<DevToolsButton />
+							<OfflineIndicator />
+						</DevSettingsProvider>
+					</ThemeProvider>
 				</Providers>
 			</body>
 		</html>
