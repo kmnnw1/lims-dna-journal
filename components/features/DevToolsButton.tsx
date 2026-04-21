@@ -2,12 +2,12 @@
 
 import { motion, type PanInfo, useAnimation } from 'framer-motion';
 import { ShieldAlert } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDevSettings } from './DevSettingsProvider';
 
 /**
  * Плавающая кнопка вызова инструментов разработчика.
- * Реализовано перетаскивание с магнитной привязкой к углам экрана.
+ * С умной привязкой, исключающей перекрытие индикатора Next.js.
  */
 export function DevToolsButton() {
 	const { setOverlayOpen, isOverlayOpen } = useDevSettings();
@@ -19,20 +19,41 @@ export function DevToolsButton() {
 		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
 		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus';
 
-	// Установка начальной позиции (смещение от логотипа Next.js в правом нижнем углу)
+	// Поиск логотипа Next.js в Shadow DOM для определения его позиции
+	const getNextLogoCorner = useCallback(() => {
+		if (typeof document === 'undefined') return null;
+		const portal = document.querySelector('nextjs-portal');
+		const indicator = portal?.shadowRoot?.querySelector('#devtools-indicator');
+		if (!indicator) return null;
+
+		const rect = indicator.getBoundingClientRect();
+		const winWidth = window.innerWidth;
+		const winHeight = window.innerHeight;
+
+		return {
+			isLeft: rect.left + rect.width / 2 < winWidth / 2,
+			isTop: rect.top + rect.height / 2 < winHeight / 2,
+		};
+	}, []);
+
+	// Начальная позиция
 	useEffect(() => {
 		if (isAuthorized) {
 			const winWidth = window.innerWidth;
 			const winHeight = window.innerHeight;
 			const edgePadding = 20;
 			const btnSize = 54;
-			const avoidanceOffset = 70; // Отступ от логотипа Next.js
+			const logoCorner = getNextLogoCorner();
+
+			// Если логотип в правом нижнем углу (по умолчанию), смещаемся выше
+			const initialAvoidance = logoCorner && !logoCorner.isLeft && !logoCorner.isTop ? 75 : 0;
+
 			controls.set({
 				x: winWidth - btnSize - edgePadding,
-				y: winHeight - btnSize - edgePadding - avoidanceOffset,
+				y: winHeight - btnSize - edgePadding - initialAvoidance,
 			});
 		}
-	}, [isAuthorized, controls]);
+	}, [isAuthorized, controls, getNextLogoCorner]);
 
 	if (!isAuthorized || isOverlayOpen) return null;
 
@@ -43,29 +64,30 @@ export function DevToolsButton() {
 		const btnWidth = buttonRef.current?.offsetWidth || 54;
 		const btnHeight = buttonRef.current?.offsetHeight || 54;
 		const edgePadding = 20;
-		const avoidanceOffset = 75; // Смещение, чтобы не перекрывать логотип Next.js
+		const avoidanceOffset = 75;
 
-		// Определение ближайшего квадранта
 		const isLeft = info.point.x < winWidth / 2;
 		const isTop = info.point.y < winHeight / 2;
+		const logoCorner = getNextLogoCorner();
 
 		let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
 		let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
 
-		// Логика избегания правого нижнего угла (логотипа Next.js)
-		// Если пользователь тянет в правый нижний угол, кнопка встанет либо левее, либо выше логотипа.
-		if (!isLeft && !isTop) {
-			const distToBottom = winHeight - info.point.y;
-			const distToRight = winWidth - info.point.x;
+		// Если мы тянем в тот же угол, где сейчас находится логотип Next.js
+		if (logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop) {
+			const distToYEdge = isTop ? info.point.y : winHeight - info.point.y;
+			const distToXEdge = isLeft ? info.point.x : winWidth - info.point.x;
 
-			if (distToBottom < distToRight) {
-				// Ближе к нижней границе -> смещаем влево
-				snapX = winWidth - btnWidth - edgePadding - avoidanceOffset;
-				snapY = winHeight - btnHeight - edgePadding;
+			if (distToYEdge < distToXEdge) {
+				// Сдвигаемся по горизонтали (дальше от края X)
+				snapX = isLeft
+					? edgePadding + avoidanceOffset
+					: winWidth - btnWidth - edgePadding - avoidanceOffset;
 			} else {
-				// Ближе к правой границе -> смещаем вверх
-				snapX = winWidth - btnWidth - edgePadding;
-				snapY = winHeight - btnHeight - edgePadding - avoidanceOffset;
+				// Сдвигаемся по вертикали (дальше от края Y)
+				snapY = isTop
+					? edgePadding + avoidanceOffset
+					: winHeight - btnHeight - edgePadding - avoidanceOffset;
 			}
 		}
 
