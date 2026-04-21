@@ -13,14 +13,6 @@ export function useJournalPage() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
 
-	const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-		if (typeof window === 'undefined') return 'light';
-		const saved = localStorage.getItem('theme') as 'light' | 'dark' | null;
-		if (saved) return saved;
-		return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-	});
-	const themeInitialized = useRef(false);
-
 	const [page, setPage] = useState(1);
 	const [searchQuery, setSearchQuery] = useState('');
 	const debouncedSearch = useDebounce(searchQuery, 400);
@@ -69,26 +61,6 @@ export function useJournalPage() {
 		dnaMatrix: '',
 		result: 'Success' as 'Success' | 'Failed',
 	});
-
-	// Theme initialization: применяем класс при первом маунте
-	useEffect(() => {
-		if (typeof window === 'undefined') return;
-		const initial =
-			(localStorage.getItem('theme') as 'light' | 'dark' | null) ??
-			(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-		document.documentElement.classList.remove('dark');
-		if (initial !== 'light') document.documentElement.classList.add(initial);
-		themeInitialized.current = true;
-	}, []);
-
-	// Theme sync: синхронизируем DOM и localStorage только после инициализации
-	useEffect(() => {
-		if (typeof window === 'undefined') return;
-		if (!themeInitialized.current) return;
-		document.documentElement.classList.remove('dark');
-		if (theme !== 'light') document.documentElement.classList.add(theme);
-		localStorage.setItem('theme', theme);
-	}, [theme]);
 
 	// Физическое определение мобильного устройства (даже если включен "Режим ПК")
 	useEffect(() => {
@@ -419,8 +391,6 @@ export function useJournalPage() {
 		specimens,
 		loading:
 			loading || addMutation.isPending || editMutation.isPending || pcrMutation.isPending,
-		theme,
-		setTheme,
 		page,
 		totalPages,
 		totalGlobal,

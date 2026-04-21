@@ -21,6 +21,7 @@ import BatchPcrModal from '@/components/modals/BatchPCRModal';
 import { EditSpecimenModal } from '@/components/modals/EditSpecimenModal';
 import { PcrModal } from '@/components/modals/PCRModal';
 import { FAB } from '@/components/ui/FAB';
+import { useTheme } from '@/components/layout/ThemeProvider';
 import { useJournalPage } from '@/hooks/useJournalPage';
 import type { Specimen } from '@/types';
 
@@ -30,7 +31,6 @@ export function JournalPageContent() {
 		status,
 		specimens,
 		loading,
-		theme,
 		page,
 		totalPages,
 		searchQuery,
@@ -41,7 +41,6 @@ export function JournalPageContent() {
 		selectedIds,
 		setSelectedIds,
 		isAddModalOpen,
-		setTheme,
 		setIsAddModalOpen,
 		editingSpecimen,
 		setEditingSpecimen,
@@ -80,6 +79,7 @@ export function JournalPageContent() {
 		setValidationError,
 	} = useJournalPage();
 
+	const { theme, setTheme } = useTheme();
 	const { settings: devSettings } = useDevSettings();
 	const [isExportOpen, setIsExportOpen] = useState(false);
 	const [lastExportFormat, setLastExportFormat] = useState<'XLSX' | 'CSV' | 'SQL'>('XLSX');
@@ -131,19 +131,6 @@ export function JournalPageContent() {
 		});
 	};
 
-	const handleThemeToggle = (newTheme: 'light' | 'dark') => {
-		const doc = document as Document & { startViewTransition?: (callback: () => void) => void };
-		if (typeof doc.startViewTransition !== 'function') {
-			setTheme(newTheme);
-			return;
-		}
-
-		doc.startViewTransition(() => {
-			flushSync(() => {
-				setTheme(newTheme);
-			});
-		});
-	};
 
 	const handleHistoryOpen = (specimen: Specimen) => {
 		setHistoryTarget({ id: specimen.id, type: 'SPECIMEN' });
@@ -185,8 +172,6 @@ export function JournalPageContent() {
 						filterType={filterType}
 						onFilterChange={setFilterType}
 						onSignOut={handleSignOut}
-						theme={theme}
-						setTheme={handleThemeToggle}
 						minConc={minConc}
 						setMinConc={setMinConc}
 						maxConc={maxConc}
