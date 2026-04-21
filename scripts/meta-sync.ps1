@@ -16,8 +16,8 @@ while ($true) {
         # Check if the file was modified in the last interval
         if ($lastUpdate -gt (Get-Date).AddSeconds(-$intervalSeconds)) {
             $ts = Get-Date -Format "yyyyMMdd_HHmm"
-            $backupPath = Join-Path $backupDir "notes_$ts.md.bak"
-            Copy-Item $filePath $backupPath -Force
+            $backupPath = Join-Path (Join-Path (Get-Location).Path $backupDir) "notes_$ts.md.bak"
+            [System.IO.File]::Copy((Join-Path (Get-Location).Path $filePath), $backupPath, $true)
             # Keep only last 10 backups
             $backups = Get-ChildItem $backupDir | Sort-Object LastWriteTime -Descending
             if ($backups.Count -gt 10) {

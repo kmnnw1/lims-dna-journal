@@ -10,9 +10,9 @@ while ($true) {
     try {
         npx tsx scripts/github-status.ts | Out-Null
         npx tsx scripts/error-digest.ts | Out-Null
-        "OK" | Out-File -FilePath $healthFile -Force
+        [System.IO.File]::WriteAllText((Join-Path (Get-Location).Path $healthFile), "OK")
     } catch {
-        "ERROR" | Out-File -FilePath $healthFile -Force
+        [System.IO.File]::WriteAllText((Join-Path (Get-Location).Path $healthFile), "ERROR")
     }
     
     Start-Sleep -Seconds $intervalSeconds
