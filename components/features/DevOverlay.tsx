@@ -332,6 +332,35 @@ export const DevOverlay: React.FC = () => {
 							/>
 						</div>
 
+						{/* Flask Event Multiplier Slider */}
+						<div className="p-4 bg-(--md-sys-color-surface-container-low) rounded-2xl space-y-3">
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-3">
+									<Sparkles className="w-5 h-5 opacity-60" />
+									<h3 className="font-bold text-sm text-(--md-sys-color-on-surface-variant)">
+										События колбы
+									</h3>
+								</div>
+								<span className="text-xs font-mono bg-(--md-sys-color-primary-container) px-2 py-0.5 rounded-full text-(--md-sys-color-primary)">
+									{settings.flaskEventMultiplier}x
+								</span>
+							</div>
+							<input
+								type="range"
+								min="1"
+								max="100"
+								step="1"
+								value={settings.flaskEventMultiplier}
+								onChange={(e) =>
+									updateSettings({
+										...settings,
+										flaskEventMultiplier: parseInt(e.target.value, 10),
+									})
+								}
+								className="w-full h-1.5 bg-(--md-sys-color-outline-variant) rounded-lg appearance-none cursor-pointer accent-(--md-sys-color-primary)"
+							/>
+						</div>
+
 						{/* Element Visibility Section */}
 						<div className="space-y-3 pt-2">
 							<div className="flex items-center gap-2 px-1">

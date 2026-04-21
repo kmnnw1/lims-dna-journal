@@ -13,6 +13,7 @@ export interface DevSettings {
 	useAI: boolean; // Использование Gemini при импорте
 	hideNextIndicator: boolean; // Скрытие логотипа Next.js
 	animationSpeed: number; // Множитель скорости анимаций (0.1 - 2.0)
+	flaskEventMultiplier: number; // Множитель вероятностей редких событий колбы (1 - 100)
 	visibility: {
 		header: boolean;
 		stats: boolean;
@@ -41,6 +42,7 @@ export const DevSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 		useAI: false,
 		hideNextIndicator: false,
 		animationSpeed: 1,
+		flaskEventMultiplier: 1,
 		visibility: {
 			header: true,
 			stats: true,
