@@ -2,6 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useDevSettings } from '@/components/features/DevSettingsProvider';
 import { parseApiResponse } from '@/lib/api/api-client';
 import { transliterate } from '@/lib/translit';
 
@@ -23,7 +24,8 @@ export function useAdminPage() {
 		null,
 	);
 	const [importBusy, setImportBusy] = useState(false);
-	const [useAI, setUseAI] = useState(false);
+	const { settings: devSettings } = useDevSettings();
+	const useAI = devSettings.useAI;
 	const [loadingUsers, setLoadingUsers] = useState(false);
 	const toastTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -264,7 +266,7 @@ export function useAdminPage() {
 		setUsername,
 		setPassword,
 		setRole,
-		setUseAI,
+		setUseAI: () => {}, // No-op since it's global now
 		handleCreateUser,
 		handleUpdateUser,
 		handleDeleteUser,

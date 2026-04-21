@@ -1,5 +1,6 @@
 'use client';
 
+import { MotionConfig } from 'framer-motion';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 /**
@@ -9,6 +10,9 @@ export interface DevSettings {
 	enableMobileCards: boolean;
 	forceDesktopView: boolean;
 	forceMobileView: boolean;
+	useAI: boolean; // Использование Gemini при импорте
+	hideNextIndicator: boolean; // Скрытие логотипа Next.js
+	animationSpeed: number; // Множитель скорости анимаций (0.1 - 2.0)
 }
 
 interface DevSettingsContextType {
@@ -27,6 +31,9 @@ export const DevSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 		enableMobileCards: false,
 		forceDesktopView: false,
 		forceMobileView: false,
+		useAI: false,
+		hideNextIndicator: false,
+		animationSpeed: 1,
 	});
 	const [isOverlayOpen, setOverlayOpen] = useState(false);
 
@@ -56,7 +63,9 @@ export const DevSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 				setOverlayOpen,
 			}}
 		>
-			{children}
+			<MotionConfig transition={{ duration: 0.4 / settings.animationSpeed }}>
+				{children}
+			</MotionConfig>
 		</DevSettingsContext.Provider>
 	);
 };

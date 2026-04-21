@@ -11,7 +11,7 @@ import { useDevSettings } from './DevSettingsProvider';
  * Использование MotionValue гарантирует отсутствие «прыжков» (телепортации) при наведении.
  */
 export function DevToolsButton() {
-	const { setOverlayOpen, isOverlayOpen } = useDevSettings();
+	const { setOverlayOpen, isOverlayOpen, settings } = useDevSettings();
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const [isDragging, setIsDragging] = useState(false);
 	const [isPositioned, setIsPositioned] = useState(false);
@@ -59,6 +59,15 @@ export function DevToolsButton() {
 			setIsPositioned(true);
 		}
 	}, [isAuthorized, isPositioned, x, y]);
+
+	// Скрытие индикатора Next.js
+	useEffect(() => {
+		if (typeof document === 'undefined') return;
+		const portal = document.querySelector('nextjs-portal');
+		if (portal) {
+			(portal as HTMLElement).style.display = settings.hideNextIndicator ? 'none' : 'block';
+		}
+	}, [settings.hideNextIndicator]);
 
 	const handleDragEnd = useCallback(
 		(_: unknown, info: PanInfo) => {

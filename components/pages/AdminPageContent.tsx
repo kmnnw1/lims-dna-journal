@@ -37,7 +37,6 @@ export function AdminPageContent(props: AdminPageProps) {
 		setUsername,
 		setPassword,
 		setRole,
-		setUseAI,
 		handleCreateUser,
 		handleUpdateUser,
 		handleDeleteUser,
@@ -146,34 +145,12 @@ export function AdminPageContent(props: AdminPageProps) {
 								<Trash2 className="h-4 w-4" />
 								Очистить
 							</button>
-							<div className="flex items-center gap-2 ml-0 sm:ml-auto">
-								<div className="relative flex items-center justify-center">
-									<input
-										type="checkbox"
-										id="useAI"
-										checked={useAI}
-										onChange={(e) => setUseAI(e.target.checked)}
-										className="peer size-5 cursor-pointer appearance-none rounded-md border-2 border-(--md-sys-color-outline) checked:border-(--md-sys-color-primary) checked:bg-(--md-sys-color-primary) transition-all hover:scale-110"
-									/>
-									<svg
-										className="pointer-events-none absolute h-3.5 w-3.5 text-(--md-sys-color-on-primary) opacity-0 peer-checked:opacity-100 transition-opacity"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										strokeWidth="4"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-									>
-										<polyline points="20 6 9 17 4 12"></polyline>
-									</svg>
+							{useAI && (
+								<div className="flex items-center gap-2 ml-0 sm:ml-auto px-4 py-2 rounded-full bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container) text-xs font-bold animate-pulse">
+									<Sparkles className="h-3.5 w-3.5" />
+									ИИ АКТИВЕН
 								</div>
-								<label
-									htmlFor="useAI"
-									className="text-sm font-medium text-(--md-sys-color-on-surface) cursor-pointer select-none"
-								>
-									ИИ-очистка
-								</label>
-							</div>
+							)}
 						</div>
 					</div>
 

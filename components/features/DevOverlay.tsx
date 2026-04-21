@@ -1,6 +1,17 @@
 'use client';
 
-import { Check, Cpu, LogIn, ShieldAlert, Smartphone, X, Zap } from 'lucide-react';
+import {
+	Activity,
+	Check,
+	Cpu,
+	Gauge,
+	LogIn,
+	ShieldAlert,
+	Smartphone,
+	Sparkles,
+	X,
+	Zap,
+} from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
 import React, { useState } from 'react';
 import { useDevSettings } from './DevSettingsProvider';
@@ -226,6 +237,101 @@ export const DevOverlay: React.FC = () => {
 								)}
 							</div>
 						</button>
+
+						<div className="h-px bg-(--md-sys-color-outline-variant)/10 my-1" />
+
+						{/* Gemini AI Toggle */}
+						<button
+							onClick={() => toggle('useAI')}
+							className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+								settings.useAI
+									? 'bg-(--md-sys-color-primary-container) border-(--md-sys-color-primary)/30 text-(--md-sys-color-on-primary-container)'
+									: 'bg-(--md-sys-color-surface-container-low) border-transparent text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
+							}`}
+						>
+							<div className="flex items-center gap-3">
+								<Sparkles
+									className={`w-5 h-5 ${settings.useAI ? 'text-(--md-sys-color-primary)' : 'opacity-60'}`}
+								/>
+								<div className="text-left">
+									<h3 className="font-bold text-sm">Gemini AI (Очистка)</h3>
+									<p className="text-[10px] opacity-60">
+										Использовать при импорте
+									</p>
+								</div>
+							</div>
+							<div
+								className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+									settings.useAI
+										? 'bg-(--md-sys-color-primary) border-(--md-sys-color-primary)'
+										: 'border-(--md-sys-color-outline-variant)'
+								}`}
+							>
+								{settings.useAI && (
+									<Check className="w-4 h-4 text-white" strokeWidth={3} />
+								)}
+							</div>
+						</button>
+
+						{/* Next.js Indicator Toggle */}
+						<button
+							onClick={() => toggle('hideNextIndicator')}
+							className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+								settings.hideNextIndicator
+									? 'bg-(--md-sys-color-error-container) border-(--md-sys-color-error)/30 text-(--md-sys-color-on-error-container)'
+									: 'bg-(--md-sys-color-surface-container-low) border-transparent text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
+							}`}
+						>
+							<div className="flex items-center gap-3">
+								<Activity
+									className={`w-5 h-5 ${settings.hideNextIndicator ? 'text-(--md-sys-color-error)' : 'opacity-60'}`}
+								/>
+								<div className="text-left">
+									<h3 className="font-bold text-sm">Скрыть индикатор Next.js</h3>
+									<p className="text-[10px] opacity-60">Только в dev-режиме</p>
+								</div>
+							</div>
+							<div
+								className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+									settings.hideNextIndicator
+										? 'bg-(--md-sys-color-error) border-(--md-sys-color-error)'
+										: 'border-(--md-sys-color-outline-variant)'
+								}`}
+							>
+								{settings.hideNextIndicator && (
+									<Check className="w-4 h-4 text-white" strokeWidth={3} />
+								)}
+							</div>
+						</button>
+
+						{/* Animation Speed Slider */}
+						<div className="p-4 bg-(--md-sys-color-surface-container-low) rounded-2xl space-y-3">
+							<div className="flex items-center justify-between">
+								<div className="flex items-center gap-3">
+									<Gauge className="w-5 h-5 opacity-60" />
+									<h3 className="font-bold text-sm text-(--md-sys-color-on-surface-variant)">
+										Скорость анимаций
+									</h3>
+								</div>
+								<span className="text-xs font-mono bg-(--md-sys-color-primary-container) px-2 py-0.5 rounded-full text-(--md-sys-color-primary)">
+									{settings.animationSpeed.toFixed(1)}x
+								</span>
+							</div>
+							<input
+								type="range"
+								min="0.1"
+								max="2"
+								step="0.1"
+								value={settings.animationSpeed}
+								onChange={(e) =>
+									updateSettings({
+										...settings,
+										animationSpeed: Number.parseFloat(e.target.value),
+									})
+								}
+								className="w-full h-1.5 bg-(--md-sys-color-outline-variant) rounded-lg appearance-none cursor-pointer accent-(--md-sys-color-primary)"
+							/>
+						</div>
 					</div>
 
 					<div className="pt-4 border-t border-(--md-sys-color-outline-variant)/10 flex justify-center">
