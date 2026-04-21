@@ -38,8 +38,9 @@ export function DevToolsButton() {
 		const isDevUser =
 			process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
 			process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus';
+		const isDevMode = process.env.NODE_ENV === 'development';
 
-		return isDevDevice || isDevUser;
+		return isDevDevice || isDevUser || isDevMode;
 	}, []);
 
 	// Поиск логотипа Next.js в Shadow DOM для определения его позиции
@@ -147,7 +148,7 @@ export function DevToolsButton() {
 			onClick={() => {
 				if (!isDragging) setOverlayOpen(true);
 			}}
-			className="w-14 h-14 rounded-2xl bg-(--md-sys-color-error-container) text-(--md-sys-color-on-error-container) shadow-2xl flex items-center justify-center border border-(--md-sys-color-error)/20 cursor-grab active:cursor-grabbing active:scale-90 transition-transform z-200"
+			className="w-14 h-14 rounded-2xl bg-(--md-sys-color-error-container) text-(--md-sys-color-on-error-container) shadow-2xl flex items-center justify-center border border-(--md-sys-color-error)/20 cursor-grab active:cursor-grabbing active:scale-90 transition-transform z-[9999]"
 			aria-label="Инструменты разработчика"
 		>
 			<div className="absolute inset-0 bg-(--md-sys-color-primary)/5 opacity-0 group-hover:opacity-100 transition-opacity" />
