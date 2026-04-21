@@ -17,6 +17,8 @@ export function DevToolsButton() {
 	const [isPositioned, setIsPositioned] = useState(false);
 	const [mounted, setMounted] = useState(false);
 	const [isAuthorized, setIsAuthorized] = useState(false);
+	const x = useMotionValue(0);
+	const y = useMotionValue(0);
 
 	useEffect(() => {
 		setMounted(true);
@@ -26,13 +28,19 @@ export function DevToolsButton() {
 			process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus';
 		const devMode = process.env.NODE_ENV === 'development';
 
-		if (devDevice || devUser || devMode) {
+		if (devMode || devDevice || devUser) {
 			setIsAuthorized(true);
 		}
-	}, []);
 
-	const x = useMotionValue(0);
-	const y = useMotionValue(0);
+		// Инициализируем x и y из localStorage сразу при монтировании (клиентская часть)
+		const savedX = localStorage.getItem('lab_journal_dev_btn_x');
+		const savedY = localStorage.getItem('lab_journal_dev_btn_y');
+		if (savedX !== null && savedY !== null) {
+			x.set(Number.parseFloat(savedX));
+			y.set(Number.parseFloat(savedY));
+			setIsPositioned(true);
+		}
+	}, [x, y]);
 
 	// Поиск логотипа Next.js в Shadow DOM для определения его позиции
 	const getNextLogoCorner = useCallback(() => {
@@ -51,21 +59,27 @@ export function DevToolsButton() {
 		};
 	}, []);
 
-	// Установка стабильной начальной позиции
+	// Установка стабильной начальной позиции, если нет сохраненной
 	useEffect(() => {
-		if (isAuthorized && !isPositioned) {
-			const winWidth = document.documentElement.clientWidth;
-			const winHeight = document.documentElement.clientHeight;
+		if (!isAuthorized || isPositioned) return;
+
+		const loadPosition = () => {
+			const winWidth = window.innerWidth;
+			const winHeight = window.innerHeight;
 			const edgePadding = 24;
 			const btnSize = 54;
-
-			// Всегда избегаем правого нижнего угла при старте, так как там находится FAB «Новая проба»
 			const initialAvoidance = 80;
 
-			x.set(winWidth - btnSize - edgePadding);
-			y.set(winHeight - btnSize - edgePadding - initialAvoidance);
+			const startX = winWidth - btnSize - edgePadding;
+			const startY = winHeight - btnSize - edgePadding - initialAvoidance;
+
+			x.set(startX);
+			y.set(startY);
 			setIsPositioned(true);
-		}
+		};
+
+		const timer = setTimeout(loadPosition, 50);
+		return () => clearTimeout(timer);
 	}, [isAuthorized, isPositioned, x, y]);
 
 	// Скрытие индикатора Next.js
@@ -118,11 +132,14 @@ export function DevToolsButton() {
 
 			animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
 			animate(y, snapY, { type: 'spring', stiffness: 400, damping: 30 });
+
+			localStorage.setItem('lab_journal_dev_btn_x', snapX.toString());
+			localStorage.setItem('lab_journal_dev_btn_y', snapY.toString());
 		},
 		[x, y, getNextLogoCorner],
 	);
 
-	if (!mounted || !isAuthorized || isOverlayOpen) return null;
+	if (!mounted || !isAuthorized) return null;
 
 	return (
 		<motion.button
@@ -134,19 +151,26 @@ export function DevToolsButton() {
 			onDragEnd={handleDragEnd}
 			initial={{ opacity: 0, scale: 0.5 }}
 			animate={{
-				opacity: isPositioned ? 1 : 0,
-				scale: isPositioned ? 1 : 0.5,
-				x: x.get(),
-				y: y.get(),
+				opacity: isPositioned && !isOverlayOpen ? 1 : 0,
+				scale: isPositioned && !isOverlayOpen ? 1 : 0.5,
 			}}
-			style={{ x, y, touchAction: 'none', left: 0, top: 0 }}
+			style={{
+				x,
+				y,
+				touchAction: 'none',
+				position: 'fixed',
+				left: 0,
+				top: 0,
+				zIndex: 9999,
+				pointerEvents: isOverlayOpen ? 'none' : 'auto',
+			}}
 			whileHover={{ scale: 1.08 }}
 			whileTap={{ scale: 0.94 }}
 			type="button"
 			onClick={() => {
 				if (!isDragging) setOverlayOpen(true);
 			}}
-			className="w-14 h-14 rounded-2xl bg-(--md-sys-color-error-container) text-(--md-sys-color-on-error-container) shadow-2xl flex items-center justify-center border border-(--md-sys-color-error)/20 cursor-grab active:cursor-grabbing active:scale-90 transition-transform z-[9999]"
+			className="w-14 h-14 rounded-2xl bg-(--md-sys-color-error-container) text-(--md-sys-color-on-error-container) shadow-2xl flex items-center justify-center border border-(--md-sys-color-error)/20 cursor-grab z-9999"
 			aria-label="Инструменты разработчика"
 		>
 			<div className="absolute inset-0 bg-(--md-sys-color-primary)/5 opacity-0 group-hover:opacity-100 transition-opacity" />

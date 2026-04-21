@@ -35,7 +35,8 @@ export const DevOverlay: React.FC = () => {
 	// Доступ ограничен для Павла и Asus
 	const isAuthorized =
 		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
-		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus';
+		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus' ||
+		process.env.NODE_ENV === 'development';
 
 	if (!isOverlayOpen || !isAuthorized) return null;
 
