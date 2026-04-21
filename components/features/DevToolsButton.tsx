@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, type PanInfo, useAnimation } from 'framer-motion';
+import { animate, motion, type PanInfo, useMotionValue } from 'framer-motion';
 import { ShieldAlert } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDevSettings } from './DevSettingsProvider';
@@ -8,13 +8,16 @@ import { useDevSettings } from './DevSettingsProvider';
 /**
  * Плавающая кнопка вызова инструментов разработчика.
  * С умной привязкой, исключающей перекрытие индикатора Next.js и FAB.
+ * Использование MotionValue гарантирует отсутствие «прыжков» (телепортации) при наведении.
  */
 export function DevToolsButton() {
 	const { setOverlayOpen, isOverlayOpen } = useDevSettings();
-	const controls = useAnimation();
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const [isDragging, setIsDragging] = useState(false);
-	const isInitialized = useRef(false);
+	const [isPositioned, setIsPositioned] = useState(false);
+
+	const x = useMotionValue(0);
+	const y = useMotionValue(0);
 
 	const isAuthorized =
 		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
@@ -39,7 +42,7 @@ export function DevToolsButton() {
 
 	// Установка стабильной начальной позиции
 	useEffect(() => {
-		if (isAuthorized && !isInitialized.current) {
+		if (isAuthorized && !isPositioned) {
 			const winWidth = document.documentElement.clientWidth;
 			const winHeight = document.documentElement.clientHeight;
 			const edgePadding = 24;
@@ -50,15 +53,13 @@ export function DevToolsButton() {
 			const initialAvoidance = 80;
 			const isBRBusy = !logoCorner || (!logoCorner.isLeft && !logoCorner.isTop);
 
-			controls.set({
-				x: winWidth - btnSize - edgePadding,
-				y: winHeight - btnSize - edgePadding - (isBRBusy ? initialAvoidance : 0),
-			});
-			isInitialized.current = true;
+			x.set(winWidth - btnSize - edgePadding);
+			y.set(winHeight - btnSize - edgePadding - (isBRBusy ? initialAvoidance : 0));
+			setIsPositioned(true);
 		}
-	}, [isAuthorized, controls, getNextLogoCorner]);
+	}, [isAuthorized, x, y, getNextLogoCorner, isPositioned]);
 
-	if (!isAuthorized || isOverlayOpen) return null;
+	if (!isAuthorized || isOverlayOpen || !isPositioned) return null;
 
 	const handleDragEnd = (_: unknown, info: PanInfo) => {
 		setIsDragging(false);
@@ -81,7 +82,7 @@ export function DevToolsButton() {
 			logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop;
 
 		if (isFABInCorner || isLogoInCorner) {
-			const avoidanceX = isFABInCorner ? 180 : 80; // FAB шире, логотип уже
+			const avoidanceX = isFABInCorner ? 180 : 80;
 			const avoidanceY = 80;
 
 			const distToYEdge = isTop ? info.point.y : winHeight - info.point.y;
@@ -98,11 +99,8 @@ export function DevToolsButton() {
 			}
 		}
 
-		controls.start({
-			x: snapX,
-			y: snapY,
-			transition: { type: 'spring', stiffness: 400, damping: 30 },
-		});
+		animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
+		animate(y, snapY, { type: 'spring', stiffness: 400, damping: 30 });
 	};
 
 	return (
@@ -113,18 +111,13 @@ export function DevToolsButton() {
 			dragElastic={0.1}
 			onDragStart={() => setIsDragging(true)}
 			onDragEnd={handleDragEnd}
-			animate={controls}
+			style={{ x, y, touchAction: 'none', left: 0, top: 0 }}
 			whileHover={{ scale: 1.08 }}
 			whileTap={{ scale: 0.94 }}
 			onClick={() => {
 				if (!isDragging) setOverlayOpen(true);
 			}}
 			className="fixed z-10000 p-3.5 rounded-full bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface-variant) shadow-2xl border border-(--md-sys-color-outline-variant)/50 md-elevation-3 cursor-grab active:cursor-grabbing group overflow-hidden"
-			style={{
-				touchAction: 'none',
-				left: 0,
-				top: 0,
-			}}
 			title="Инструменты разработчика"
 		>
 			<div className="absolute inset-0 bg-(--md-sys-color-primary)/5 opacity-0 group-hover:opacity-100 transition-opacity" />
