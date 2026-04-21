@@ -176,167 +176,176 @@ export function JournalPageContent() {
 	return (
 		<main className="min-h-screen bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface) p-3 md:p-6 pb-24 transition-colors duration-300">
 			<div className="w-full">
-				<JournalHeader
-					userName={session?.user?.name || 'Пользователь'}
-					userRole={(session?.user as { role?: string })?.role || 'READER'}
-					searchQuery={searchQuery}
-					setSearchQuery={setSearchQuery}
-					filterType={filterType}
-					onFilterChange={setFilterType}
-					onSignOut={handleSignOut}
-					theme={theme}
-					setTheme={handleThemeToggle}
-					minConc={minConc}
-					setMinConc={setMinConc}
-					maxConc={maxConc}
-					setMaxConc={setMaxConc}
-					selectedOperator={selectedOperator}
-					setSelectedOperator={setSelectedOperator}
-					suggestions={suggestions}
-				/>
+				{devSettings.visibility.header && (
+					<JournalHeader
+						userName={session?.user?.name || 'Пользователь'}
+						userRole={(session?.user as { role?: string })?.role || 'READER'}
+						searchQuery={searchQuery}
+						setSearchQuery={setSearchQuery}
+						filterType={filterType}
+						onFilterChange={setFilterType}
+						onSignOut={handleSignOut}
+						theme={theme}
+						setTheme={handleThemeToggle}
+						minConc={minConc}
+						setMinConc={setMinConc}
+						maxConc={maxConc}
+						setMaxConc={setMaxConc}
+						selectedOperator={selectedOperator}
+						setSelectedOperator={setSelectedOperator}
+						suggestions={suggestions}
+					/>
+				)}
 
-				<div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4 bg-(--md-sys-color-surface-container-low)/50 p-2 sm:p-3 rounded-2xl sm:rounded-4xl border border-(--md-sys-color-outline-variant)/20">
-					<div className="flex-1 flex flex-wrap items-center justify-start gap-2 sm:gap-4">
-						<StatsCards {...stats} />
-					</div>
-
-					<div className="flex flex-row items-end md:items-center justify-end gap-2 shrink-0 md:pr-2 w-full md:w-auto">
-						<div className="flex items-center gap-1.5 sm:gap-2">
-							{isMobileDevice && (
-								<button
-									onClick={() => setIsScanOpen(true)}
-									className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
-								>
-									<Camera className="w-4 h-4 sm:w-5 sm:h-5" />
-									<span className="hidden sm:inline">Сканировать</span>
-								</button>
-							)}
-							<div className="relative flex items-center" ref={exportRef}>
-								{/* Main Export Action (Split Button) */}
-								<div className="flex items-center bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-full shadow-sm hover:md-elevation-2 transition-all overflow-hidden group">
-									<button
-										onClick={handleMainExportClick}
-										aria-label="Экспорт"
-										data-testid="export-button"
-										className="flex items-center gap-2 pl-3 sm:pl-4 pr-1.5 py-2 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors font-medium text-xs sm:text-sm active:scale-95 whitespace-nowrap min-w-max"
-										title={`Экспорт в ${getFormatLabel(lastExportFormat)}`}
-									>
-										<Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-										<span>{getFormatLabel(lastExportFormat)}</span>
-									</button>
-									<div className="w-px h-4 bg-(--md-sys-color-on-tertiary-container)/20" />
-									<button
-										onClick={() => setIsExportOpen(!isExportOpen)}
-										className="flex items-center justify-center px-1.5 sm:px-2 py-2 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors active:scale-90"
-										aria-label="Выбор формата экспорта"
-									>
-										<ChevronDown
-											className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`}
-										/>
-									</button>
-								</div>
-
-								{isExportOpen && (
-									<div className="absolute top-full right-0 mt-2 min-w-[240px] py-2 bg-(--md-sys-color-surface-container-lowest) rounded-2xl shadow-xl md-elevation-3 z-50 border border-(--md-sys-color-outline-variant)/30 overflow-hidden">
-										<button
-											onClick={() => {
-												handleExportXLSX();
-												saveFormat('XLSX');
-											}}
-											className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-tertiary-container)/10 transition-colors text-(--md-sys-color-on-surface) whitespace-nowrap"
-										>
-											<div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-											Сохранить Excel (.xlsx)
-										</button>
-										<button
-											onClick={() => {
-												handleExportCSV();
-												saveFormat('CSV');
-											}}
-											className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-tertiary-container)/10 transition-colors text-(--md-sys-color-on-surface) whitespace-nowrap"
-										>
-											<div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-											Сохранить CSV
-										</button>
-										<div className="h-px bg-(--md-sys-color-outline-variant)/20 my-1 mx-2" />
-										<button
-											onClick={() => {
-												handleExportDB();
-												saveFormat('SQL');
-											}}
-											className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-tertiary-container)/10 transition-colors text-(--md-sys-color-on-surface)"
-										>
-											<div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-											Скачать БД (.sqlite)
-										</button>
-									</div>
-								)}
+				{(devSettings.visibility.stats || devSettings.visibility.filters) && (
+					<div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4 bg-(--md-sys-color-surface-container-low)/50 p-2 sm:p-3 rounded-2xl sm:rounded-4xl border border-(--md-sys-color-outline-variant)/20">
+						{devSettings.visibility.stats && (
+							<div className="flex-1 flex flex-wrap items-center justify-start gap-2 sm:gap-4">
+								<StatsCards {...stats} />
 							</div>
-						</div>
-						<PaginationControls
-							page={page}
-							totalPages={totalPages}
-							onPageChange={setPage}
-						/>
-					</div>
-				</div>
-				{/* Список проб */}
-				<div className="bg-(--md-sys-color-surface-container-lowest) rounded-3xl sm:rounded-4xl md-elevation-1 border border-(--md-sys-color-outline-variant)/10 overflow-hidden transition-all duration-500 min-h-[400px]">
-					{(isMobileDevice || devSettings.forceMobileView) &&
-					devSettings.enableMobileCards &&
-					!devSettings.forceDesktopView ? (
-						<div className="grid grid-cols-1 gap-3 p-3">
-							{specimens.map((s: Specimen) => (
-								<MobileSpecimenCard
-									key={s.id}
-									s={s as unknown as MobileSpecimenShape}
-									isReader={
-										(session?.user as { role?: string })?.role === 'READER'
-									}
-									onPcr={() => setActivePcrSpecimen(s)}
-									onEdit={() => setEditingSpecimen(s)}
-									searchQuery={searchQuery}
-									renderStatus={(spec, marker) => (
-										<PCRStatusBadge
-											status={
-												marker === 'ITS'
-													? spec.itsStatus
-													: marker === 'SSU'
-														? spec.ssuStatus
-														: marker === 'LSU'
-															? spec.lsuStatus
-															: spec.mcm7Status
-											}
-											marker={marker}
-											onClick={() => handleStatusToggle(spec.id, marker)}
-										/>
+						)}
+
+						{devSettings.visibility.filters && (
+							<div className="flex flex-row items-end md:items-center justify-end gap-2 shrink-0 md:pr-2 w-full md:w-auto">
+								<div className="flex items-center gap-1.5 sm:gap-2">
+									{isMobileDevice && (
+										<button
+											onClick={() => setIsScanOpen(true)}
+											className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
+										>
+											<Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+											<span className="hidden sm:inline">Сканировать</span>
+										</button>
 									)}
-									selected={false}
-									onToggleSelect={function (): void {
-										throw new Error('Function not implemented.');
-									}}
+									<div className="relative flex items-center" ref={exportRef}>
+										{/* Main Export Action (Split Button) */}
+										<div className="flex items-center bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-full shadow-sm hover:md-elevation-2 transition-all overflow-hidden group">
+											<button
+												onClick={handleMainExportClick}
+												aria-label="Экспорт"
+												data-testid="export-button"
+												className="flex items-center gap-2 pl-3 sm:pl-4 pr-1.5 py-2 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors font-medium text-xs sm:text-sm active:scale-95 whitespace-nowrap min-w-max"
+												title={`Экспорт в ${getFormatLabel(lastExportFormat)}`}
+											>
+												<Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+												<span>{getFormatLabel(lastExportFormat)}</span>
+											</button>
+											<div className="w-px h-4 bg-(--md-sys-color-on-tertiary-container)/20" />
+											<button
+												onClick={() => setIsExportOpen(!isExportOpen)}
+												className="flex items-center justify-center px-1.5 sm:px-2 py-2 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors active:scale-90"
+												aria-label="Выбор формата экспорта"
+											>
+												<ChevronDown
+													className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`}
+												/>
+											</button>
+										</div>
+
+										{isExportOpen && (
+											<div className="absolute top-full right-0 mt-2 min-w-[240px] py-2 bg-(--md-sys-color-surface-container-lowest) rounded-2xl shadow-xl md-elevation-3 z-50 border border-(--md-sys-color-outline-variant)/30 overflow-hidden">
+												<button
+													onClick={() => {
+														handleExportXLSX();
+														saveFormat('XLSX');
+													}}
+													className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-tertiary-container)/10 transition-colors text-(--md-sys-color-on-surface) whitespace-nowrap"
+												>
+													<div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+													Сохранить Excel (.xlsx)
+												</button>
+												<button
+													onClick={() => {
+														handleExportCSV();
+														saveFormat('CSV');
+													}}
+													className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-tertiary-container)/10 transition-colors text-(--md-sys-color-on-surface) whitespace-nowrap"
+												>
+													<div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+													Сохранить CSV
+												</button>
+												<div className="h-px bg-(--md-sys-color-outline-variant)/20 my-1 mx-2" />
+												<button
+													onClick={() => {
+														handleExportDB();
+														saveFormat('SQL');
+													}}
+													className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-tertiary-container)/10 transition-colors text-(--md-sys-color-on-surface)"
+												>
+													<div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+													Скачать БД (.sqlite)
+												</button>
+											</div>
+										)}
+									</div>
+								</div>
+								<PaginationControls
+									page={page}
+									totalPages={totalPages}
+									onPageChange={setPage}
 								/>
-							))}
-						</div>
-					) : (
-						<SpecimenTable
-							specimens={specimens}
-							loading={loading}
-							onSort={handleSort}
-							sortConfig={sortConfig}
-							selectedIds={selectedIds}
-							onSelect={handleSelect}
-							onSelectAll={() =>
-								handleSelectAll(specimens.map((s: Specimen) => s.id))
-							}
-							onEdit={setEditingSpecimen}
-							onPcr={setActivePcrSpecimen}
-							onStatusClick={handleStatusToggle}
-							onHistory={handleHistoryOpen}
-							searchQuery={searchQuery}
-						/>
-					)}
-				</div>
+							</div>
+						)}
+					</div>
+				)}
+				{devSettings.visibility.table && (
+					<div className="bg-(--md-sys-color-surface-container-lowest) rounded-3xl sm:rounded-4xl md-elevation-1 border border-(--md-sys-color-outline-variant)/10 overflow-hidden transition-all duration-500 min-h-[400px]">
+						{(isMobileDevice || devSettings.forceMobileView) &&
+						devSettings.enableMobileCards &&
+						!devSettings.forceDesktopView ? (
+							<div className="grid grid-cols-1 gap-3 p-3">
+								{specimens.map((s: Specimen) => (
+									<MobileSpecimenCard
+										key={s.id}
+										s={s as unknown as MobileSpecimenShape}
+										isReader={
+											(session?.user as { role?: string })?.role === 'READER'
+										}
+										onPcr={() => setActivePcrSpecimen(s)}
+										onEdit={() => setEditingSpecimen(s)}
+										searchQuery={searchQuery}
+										renderStatus={(spec, marker) => (
+											<PCRStatusBadge
+												status={
+													marker === 'ITS'
+														? spec.itsStatus
+														: marker === 'SSU'
+															? spec.ssuStatus
+															: marker === 'LSU'
+																? spec.lsuStatus
+																: spec.mcm7Status
+												}
+												marker={marker}
+												onClick={() => handleStatusToggle(spec.id, marker)}
+											/>
+										)}
+										selected={false}
+										onToggleSelect={function (): void {
+											throw new Error('Function not implemented.');
+										}}
+									/>
+								))}
+							</div>
+						) : (
+							<SpecimenTable
+								specimens={specimens}
+								loading={loading}
+								onSort={handleSort}
+								sortConfig={sortConfig}
+								selectedIds={selectedIds}
+								onSelect={handleSelect}
+								onSelectAll={() =>
+									handleSelectAll(specimens.map((s: Specimen) => s.id))
+								}
+								onEdit={setEditingSpecimen}
+								onPcr={setActivePcrSpecimen}
+								onStatusClick={handleStatusToggle}
+								onHistory={handleHistoryOpen}
+								searchQuery={searchQuery}
+							/>
+						)}
+					</div>
+				)}
 
 				{selectedIds.size > 0 && (
 					<div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-(--md-sys-color-inverse-surface) text-(--md-sys-color-inverse-on-surface) rounded-3xl p-4 flex items-center justify-between shadow-2xl z-50">
@@ -443,15 +452,17 @@ export function JournalPageContent() {
 				/>
 			</div>
 
-			<FAB
-				extended
-				onClick={() => setIsAddModalOpen(true)}
-				className="fixed bottom-6 right-6 z-50 bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) flex items-center gap-2 px-4 shadow-xl"
-				aria-label="Добавить пробу"
-			>
-				<Plus className="w-6 h-6" />
-				<span className="font-medium mr-1">Новая проба</span>
-			</FAB>
+			{devSettings.visibility.fab && (
+				<FAB
+					extended
+					onClick={() => setIsAddModalOpen(true)}
+					className="fixed bottom-6 right-6 z-50 bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) flex items-center gap-2 px-4 shadow-xl"
+					aria-label="Добавить пробу"
+				>
+					<Plus className="w-6 h-6" />
+					<span className="font-medium mr-1">Новая проба</span>
+				</FAB>
+			)}
 
 			{/* Toast/Snackbar */}
 			{toastMessage && (

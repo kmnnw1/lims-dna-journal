@@ -13,6 +13,13 @@ export interface DevSettings {
 	useAI: boolean; // Использование Gemini при импорте
 	hideNextIndicator: boolean; // Скрытие логотипа Next.js
 	animationSpeed: number; // Множитель скорости анимаций (0.1 - 2.0)
+	visibility: {
+		header: boolean;
+		stats: boolean;
+		filters: boolean;
+		table: boolean;
+		fab: boolean;
+	};
 }
 
 interface DevSettingsContextType {
@@ -34,6 +41,13 @@ export const DevSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 		useAI: false,
 		hideNextIndicator: false,
 		animationSpeed: 1,
+		visibility: {
+			header: true,
+			stats: true,
+			filters: true,
+			table: true,
+			fab: true,
+		},
 	});
 	const [isOverlayOpen, setOverlayOpen] = useState(false);
 
