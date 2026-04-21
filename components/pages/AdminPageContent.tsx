@@ -188,12 +188,12 @@ export function AdminPageContent(props: AdminPageProps) {
 								автоматически создаст учетные записи с логинами вида{' '}
 								<code className="bg-black/10 px-1 rounded">фамилия_и</code>.
 							</p>
-							<div className="flex flex-col sm:flex-row gap-4 items-start">
+							<div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-start">
 								<textarea
 									id="bulk-users-input"
-									placeholder="Иванов Иван&#10;Петров Петр"
-									className="w-full sm:flex-1 h-32 bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-on-surface) rounded-2xl p-4 text-sm font-mono border-none focus:ring-2 focus:ring-(--md-sys-color-tertiary) outline-none resize-none transition-all"
-								></textarea>
+									placeholder={'Иванов Иван\nПетров Петр'}
+									className="w-full sm:flex-1 h-32 bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface) rounded-2xl p-4 text-sm font-mono border-none focus:ring-2 focus:ring-(--md-sys-color-tertiary) outline-none resize-none transition-all"
+								/>
 								<button
 									type="button"
 									disabled={importBusy}
@@ -205,9 +205,9 @@ export function AdminPageContent(props: AdminPageProps) {
 											if (res) input.value = '';
 										});
 									}}
-									className="w-full sm:w-auto shrink-0 inline-flex items-center gap-2 rounded-full bg-(--md-sys-color-tertiary) px-8 py-4 text-sm font-medium text-(--md-sys-color-on-tertiary) shadow-md transition-all hover:shadow-lg active:scale-95 disabled:opacity-50"
+									className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 rounded-full bg-(--md-sys-color-tertiary) px-8 py-5 text-base font-semibold text-(--md-sys-color-on-tertiary) shadow-md transition-all hover:shadow-lg active:scale-95 disabled:opacity-50 min-w-[140px]"
 								>
-									<Sparkles className="h-4 w-4" />
+									<Sparkles className="h-5 w-5" />
 									Создать всех
 								</button>
 							</div>
