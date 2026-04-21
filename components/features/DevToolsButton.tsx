@@ -16,32 +16,23 @@ export function DevToolsButton() {
 	const [isDragging, setIsDragging] = useState(false);
 	const [isPositioned, setIsPositioned] = useState(false);
 	const [mounted, setMounted] = useState(false);
+	const [isAuthorized, setIsAuthorized] = useState(false);
 
 	useEffect(() => {
 		setMounted(true);
+		const devDevice = localStorage.getItem('lab_journal_dev_authorized') === 'true';
+		const devUser =
+			process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
+			process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus';
+		const devMode = process.env.NODE_ENV === 'development';
+
+		if (devDevice || devUser || devMode) {
+			setIsAuthorized(true);
+		}
 	}, []);
 
 	const x = useMotionValue(0);
 	const y = useMotionValue(0);
-
-	const isAuthorized = useMemo(() => {
-		if (typeof window === 'undefined') return false;
-
-		// Проверка секретного параметра в URL (для активации на телефоне)
-		const urlParams = new URLSearchParams(window.location.search);
-		if (urlParams.get('dev_access') === 'lab2026') {
-			localStorage.setItem('lab_journal_dev_authorized', 'true');
-			return true;
-		}
-
-		const isDevDevice = localStorage.getItem('lab_journal_dev_authorized') === 'true';
-		const isDevUser =
-			process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
-			process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus';
-		const isDevMode = process.env.NODE_ENV === 'development';
-
-		return isDevDevice || isDevUser || isDevMode;
-	}, []);
 
 	// Поиск логотипа Next.js в Shadow DOM для определения его позиции
 	const getNextLogoCorner = useCallback(() => {
@@ -131,7 +122,7 @@ export function DevToolsButton() {
 		[x, y, getNextLogoCorner],
 	);
 
-	if (!mounted || !isAuthorized || isOverlayOpen || !isPositioned) return null;
+	if (!mounted || !isAuthorized || isOverlayOpen) return null;
 
 	return (
 		<motion.button
@@ -141,6 +132,13 @@ export function DevToolsButton() {
 			dragElastic={0.1}
 			onDragStart={() => setIsDragging(true)}
 			onDragEnd={handleDragEnd}
+			initial={{ opacity: 0, scale: 0.5 }}
+			animate={{
+				opacity: isPositioned ? 1 : 0,
+				scale: isPositioned ? 1 : 0.5,
+				x: x.get(),
+				y: y.get(),
+			}}
 			style={{ x, y, touchAction: 'none', left: 0, top: 0 }}
 			whileHover={{ scale: 1.08 }}
 			whileTap={{ scale: 0.94 }}
