@@ -67,22 +67,6 @@ export function InteractiveFluidFlask() {
 			ref={containerRef}
 			className="relative w-full h-full flex items-center justify-center pointer-events-none"
 		>
-			{/* SVG Filter Definition for the Gooey Effect */}
-			<svg width="0" height="0" className="absolute pointer-events-none">
-				<defs>
-					<filter id="gooey-filter">
-						<feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
-						<feColorMatrix
-							in="blur"
-							mode="matrix"
-							values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"
-							result="gooey"
-						/>
-						<feBlend in="SourceGraphic" in2="gooey" />
-					</filter>
-				</defs>
-			</svg>
-
 			{/* 
 				We make the canvases much larger than the 96x96 container 
 				so that the liquid can burst out of it (breaking the 4th wall).
@@ -93,7 +77,6 @@ export function InteractiveFluidFlask() {
 					width={300}
 					height={300}
 					className="absolute inset-0 pointer-events-none"
-					style={{ filter: 'url(#gooey-filter)' }}
 				/>
 				<canvas
 					ref={uiCanvasRef}

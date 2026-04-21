@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { getGlobalThemeHue, setGlobalThemeHue } from '@/app/actions/theme';
 
 type Theme = 'light' | 'dark';
 
@@ -50,17 +51,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 	// Listen for the global flaskShattered event to change the theme dynamically
 	useEffect(() => {
-		const handleShatter = (e: Event) => {
-			const customEvent = e as CustomEvent<{ hue: number }>;
-			const { hue } = customEvent.detail;
-
-			// Override primary colors using the new hue
+		const applyHue = (hue: number) => {
 			const root = document.documentElement;
 			root.style.setProperty('--color-md-sys-primary', `hsl(${hue}, 80%, 40%)`);
 			root.style.setProperty('--color-md-sys-primary-container', `hsl(${hue}, 70%, 90%)`);
 			root.style.setProperty('--color-md-sys-on-primary-container', `hsl(${hue}, 90%, 15%)`);
 
-			// If we are in dark mode, adjust lightness for dark theme
 			if (theme === 'dark') {
 				root.style.setProperty('--color-md-sys-primary', `hsl(${hue}, 70%, 60%)`);
 				root.style.setProperty('--color-md-sys-primary-container', `hsl(${hue}, 80%, 30%)`);
@@ -69,6 +65,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 					`hsl(${hue}, 80%, 90%)`,
 				);
 			}
+		};
+
+		// Fetch initial global hue from DB
+		getGlobalThemeHue().then((hue) => {
+			if (hue !== null) {
+				applyHue(hue);
+			}
+		});
+
+		const handleShatter = (e: Event) => {
+			const customEvent = e as CustomEvent<{ hue: number }>;
+			const { hue } = customEvent.detail;
+			applyHue(hue);
+			// Save to DB so it applies to everyone permanently
+			setGlobalThemeHue(hue);
 		};
 
 		window.addEventListener('flaskShattered', handleShatter);

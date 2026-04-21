@@ -107,3 +107,11 @@ export const auditLogs = sqliteTable('AuditLog', {
 		.notNull()
 		.default(sql`(strftime('%s', 'now') * 1000)`),
 });
+
+export const systemSettings = sqliteTable('SystemSetting', {
+	key: text('key').primaryKey(),
+	value: text('value').notNull(),
+	updatedAt: integer('updatedAt', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(strftime('%s', 'now') * 1000)`),
+});
