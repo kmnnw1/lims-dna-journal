@@ -1,78 +1,26 @@
 {
-	"id": "lab-journal-lims-2026",
-	"name": "DNA Lab Journal",
-	"short_name": "DNA Journal",
-	"description": "Professional Laboratory Information Management System (LIMS) for DNA Extraction and PCR Monitoring.",
+	"name": "Laboratory Journal LIMS",
+	"short_name": "Lab Journal",
+	"description": "System for tracking genetic material and PCR research logs.",
 	"start_url": "/",
-	"scope": "/",
 	"display": "standalone",
-	"orientation": "any",
-	"background_color": "#fdfbfc",
-	"theme_color": "#6750a4",
-	"lang": "en-US",
-	"categories": ["medical", "productivity", "science"],
-	"dir": "ltr",
-	"prefer_related_applications": false,
-	"shortcuts": [
-		{
-			"name": "Journal",
-			"description": "Open DNA specimens journal",
-			"url": "/",
-			"icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
-		},
-		{
-			"name": "Audit",
-			"description": "Open system audit logs",
-			"url": "/admin/audit",
-			"icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
-		}
-	],
+	"background_color": "#0a0a0a",
+	"theme_color": "#6366f1",
 	"icons": [
 		{
 			"src": "/icon-192.png",
 			"sizes": "192x192",
 			"type": "image/png",
-			"purpose": "any"
+			"purpose": "any maskable"
 		},
 		{
 			"src": "/icon-512.png",
 			"sizes": "512x512",
 			"type": "image/png",
-			"purpose": "any"
-		},
-		{
-			"src": "/icon-512.png",
-			"sizes": "512x512",
-			"type": "image/png",
-			"purpose": "maskable"
-		},
-		{
-			"src": "/apple-touch-icon.png",
-			"sizes": "180x180",
-			"type": "image/png",
-			"purpose": "any"
-		},
-		{
-			"src": "/icon.svg",
-			"sizes": "any",
-			"type": "image/svg+xml",
-			"purpose": "any"
+			"purpose": "any maskable"
 		}
 	],
-	"screenshots": [
-		{
-			"src": "/mobile-screenshot.png",
-			"sizes": "1024x1792",
-			"type": "image/png",
-			"form_factor": "narrow",
-			"label": "DNA Journal Mobile"
-		},
-		{
-			"src": "/icon-512.png",
-			"sizes": "512x512",
-			"type": "image/png",
-			"form_factor": "wide",
-			"label": "DNA Journal Desktop"
-		}
-	]
+	"orientation": "portrait-primary",
+	"categories": ["productivity", "education"],
+	"screenshots": []
 }
