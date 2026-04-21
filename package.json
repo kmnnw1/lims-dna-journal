@@ -1,6 +1,6 @@
 {
 	"name": "lab-journal",
-	"version": "0.6.46.41",
+	"version": "0.6.46.63",
 	"description": "Система управления лабораторной информацией (LIMS) для учёта генетического материала и протоколирования ПЦР-исследований.",
 	"private": true,
 	"scripts": {
@@ -30,12 +30,14 @@
 		"check:watch": "npx tsc --noEmit --watch"
 	},
 	"dependencies": {
+		"@ducanh2912/next-pwa": "^10.2.9",
 		"@google/generative-ai": "^0.24.1",
 		"@libsql/client": "^0.17.2",
 		"@prisma/adapter-better-sqlite3": "^7.7.0",
 		"@prisma/client": "^7.7.0",
 		"@tailwindcss/postcss": "^4.0.0",
 		"@tanstack/react-query": "^5.99.0",
+		"@tanstack/react-query-persist-client": "^5.99.2",
 		"bcryptjs": "^3.0.3",
 		"better-sqlite3": "^12.9.0",
 		"class-variance-authority": "^0.7.1",
@@ -43,6 +45,7 @@
 		"drizzle-orm": "^0.45.2",
 		"exceljs": "^4.4.0",
 		"framer-motion": "^12.38.0",
+		"idb-keyval": "^6.2.2",
 		"lightningcss": "^1.32.0",
 		"lucide-react": "^1.8.0",
 		"next": "16.2.4",

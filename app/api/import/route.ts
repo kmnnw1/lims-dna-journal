@@ -69,16 +69,35 @@ export async function GET(req: Request) {
 		const uniqueData = mergeById(dataToInsert);
 
 		const beforeCount = await prisma.specimen.count();
-		await prisma.specimen.deleteMany({});
 
-		// Импортируем пачками
-		const chunkSize = 500;
+		// Используем транзакцию для атомарного импорта через upsert
 		let inserted = 0;
-		for (let i = 0; i < uniqueData.length; i += chunkSize) {
-			const chunk = uniqueData.slice(i, i + chunkSize);
-			const result = await prisma.specimen.createMany({ data: chunk });
-			inserted += result.count ?? chunk.length;
-		}
+		let updated = 0;
+
+		await prisma.$transaction(async (tx) => {
+			for (const row of uniqueData) {
+				const { id, ...data } = row;
+				const existing = await tx.specimen.findUnique({ where: { id } });
+
+				await tx.specimen.upsert({
+					where: { id },
+					update: {
+						...data,
+						updatedAt: new Date(),
+					},
+					create: {
+						id,
+						...data,
+					},
+				});
+
+				if (existing) {
+					updated++;
+				} else {
+					inserted++;
+				}
+			}
+		});
 
 		const currentUser = session.user as ApiUser | undefined;
 		await logAuditAction({
@@ -96,9 +115,11 @@ export async function GET(req: Request) {
 
 		return NextResponse.json({
 			success: true,
-			message: `Импортировано ${inserted} проб (листов: ${sheetNames.length}).`,
+			message: `Импорт завершен. Новых: ${inserted}, обновлено: ${updated} (листов: ${sheetNames.length}).`,
 			sheets: sheetNames,
-			totalRows: inserted,
+			totalRows: inserted + updated,
+			inserted,
+			updated,
 			previousCount: beforeCount,
 			aiUsed,
 		});
