@@ -55,7 +55,7 @@ export function JournalHeader({
 				: 'bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface-variant)';
 
 	return (
-		<header className="flex items-center gap-2 sm:gap-3 mb-6 mt-1.5 px-1 sm:px-0 w-full overflow-hidden">
+		<header className="relative z-60 flex items-center gap-2 sm:gap-3 mb-6 mt-1.5 px-1 sm:px-0 w-full">
 			<div className="shrink-0 scale-90 sm:scale-100">
 				<AnimatedFlask />
 			</div>
