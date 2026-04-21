@@ -16,12 +16,12 @@ import { PCRStatusBadge } from '@/components/features/PCRStatusBadge';
 import { QuickFilterBar } from '@/components/features/QuickFilterBar';
 import { SpecimenTable } from '@/components/features/SpecimenTable';
 import { StatsCards } from '@/components/features/StatsCards';
+import { useTheme } from '@/components/layout/ThemeProvider';
 import { AddSpecimenModal } from '@/components/modals/AddSpecimenModal';
 import BatchPcrModal from '@/components/modals/BatchPCRModal';
 import { EditSpecimenModal } from '@/components/modals/EditSpecimenModal';
 import { PcrModal } from '@/components/modals/PCRModal';
 import { FAB } from '@/components/ui/FAB';
-import { useTheme } from '@/components/layout/ThemeProvider';
 import { useJournalPage } from '@/hooks/useJournalPage';
 import type { Specimen } from '@/types';
 
@@ -79,7 +79,6 @@ export function JournalPageContent() {
 		setValidationError,
 	} = useJournalPage();
 
-	const { theme, setTheme } = useTheme();
 	const { settings: devSettings } = useDevSettings();
 	const [isExportOpen, setIsExportOpen] = useState(false);
 	const [lastExportFormat, setLastExportFormat] = useState<'XLSX' | 'CSV' | 'SQL'>('XLSX');
@@ -130,7 +129,6 @@ export function JournalPageContent() {
 			return allSelected ? new Set() : new Set(ids);
 		});
 	};
-
 
 	const handleHistoryOpen = (specimen: Specimen) => {
 		setHistoryTarget({ id: specimen.id, type: 'SPECIMEN' });
