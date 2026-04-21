@@ -7,13 +7,14 @@ import { useDevSettings } from './DevSettingsProvider';
 
 /**
  * Плавающая кнопка вызова инструментов разработчика.
- * С умной привязкой, исключающей перекрытие индикатора Next.js.
+ * С умной привязкой, исключающей перекрытие индикатора Next.js и FAB.
  */
 export function DevToolsButton() {
 	const { setOverlayOpen, isOverlayOpen } = useDevSettings();
 	const controls = useAnimation();
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const [isDragging, setIsDragging] = useState(false);
+	const isInitialized = useRef(false);
 
 	const isAuthorized =
 		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
@@ -36,22 +37,24 @@ export function DevToolsButton() {
 		};
 	}, []);
 
-	// Начальная позиция
+	// Установка стабильной начальной позиции
 	useEffect(() => {
-		if (isAuthorized) {
-			const winWidth = window.innerWidth;
-			const winHeight = window.innerHeight;
-			const edgePadding = 20;
+		if (isAuthorized && !isInitialized.current) {
+			const winWidth = document.documentElement.clientWidth;
+			const winHeight = document.documentElement.clientHeight;
+			const edgePadding = 24;
 			const btnSize = 54;
 			const logoCorner = getNextLogoCorner();
 
-			// Если логотип в правом нижнем углу (по умолчанию), смещаемся выше
-			const initialAvoidance = logoCorner && !logoCorner.isLeft && !logoCorner.isTop ? 75 : 0;
+			// По умолчанию избегаем правого нижнего угла (там FAB и часто логотип)
+			const initialAvoidance = 80;
+			const isBRBusy = !logoCorner || (!logoCorner.isLeft && !logoCorner.isTop);
 
 			controls.set({
 				x: winWidth - btnSize - edgePadding,
-				y: winHeight - btnSize - edgePadding - initialAvoidance,
+				y: winHeight - btnSize - edgePadding - (isBRBusy ? initialAvoidance : 0),
 			});
+			isInitialized.current = true;
 		}
 	}, [isAuthorized, controls, getNextLogoCorner]);
 
@@ -59,12 +62,11 @@ export function DevToolsButton() {
 
 	const handleDragEnd = (_: unknown, info: PanInfo) => {
 		setIsDragging(false);
-		const winWidth = window.innerWidth;
-		const winHeight = window.innerHeight;
+		const winWidth = document.documentElement.clientWidth;
+		const winHeight = document.documentElement.clientHeight;
 		const btnWidth = buttonRef.current?.offsetWidth || 54;
 		const btnHeight = buttonRef.current?.offsetHeight || 54;
-		const edgePadding = 20;
-		const avoidanceOffset = 75;
+		const edgePadding = 24;
 
 		const isLeft = info.point.x < winWidth / 2;
 		const isTop = info.point.y < winHeight / 2;
@@ -73,21 +75,26 @@ export function DevToolsButton() {
 		let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
 		let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
 
-		// Если мы тянем в тот же угол, где сейчас находится логотип Next.js
-		if (logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop) {
+		// Флаг: занят ли текущий угол логотипом или FAB (в случае Bottom-Right)
+		const isFABInCorner = !isLeft && !isTop;
+		const isLogoInCorner =
+			logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop;
+
+		if (isFABInCorner || isLogoInCorner) {
+			const avoidanceX = isFABInCorner ? 180 : 80; // FAB шире, логотип уже
+			const avoidanceY = 80;
+
 			const distToYEdge = isTop ? info.point.y : winHeight - info.point.y;
 			const distToXEdge = isLeft ? info.point.x : winWidth - info.point.x;
 
 			if (distToYEdge < distToXEdge) {
-				// Сдвигаемся по горизонтали (дальше от края X)
 				snapX = isLeft
-					? edgePadding + avoidanceOffset
-					: winWidth - btnWidth - edgePadding - avoidanceOffset;
+					? edgePadding + avoidanceX
+					: winWidth - btnWidth - edgePadding - avoidanceX;
 			} else {
-				// Сдвигаемся по вертикали (дальше от края Y)
 				snapY = isTop
-					? edgePadding + avoidanceOffset
-					: winHeight - btnHeight - edgePadding - avoidanceOffset;
+					? edgePadding + avoidanceY
+					: winHeight - btnHeight - edgePadding - avoidanceY;
 			}
 		}
 
