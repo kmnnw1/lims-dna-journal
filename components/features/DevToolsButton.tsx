@@ -2,7 +2,7 @@
 
 import { animate, motion, type PanInfo, useMotionValue } from 'framer-motion';
 import { ShieldAlert } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDevSettings } from './DevSettingsProvider';
 
 /**
@@ -19,9 +19,12 @@ export function DevToolsButton() {
 	const x = useMotionValue(0);
 	const y = useMotionValue(0);
 
-	const isAuthorized =
-		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
-		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus';
+	const isAuthorized = useMemo(
+		() =>
+			process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
+			process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus',
+		[],
+	);
 
 	// Поиск логотипа Next.js в Shadow DOM для определения его позиции
 	const getNextLogoCorner = useCallback(() => {
@@ -55,51 +58,54 @@ export function DevToolsButton() {
 			y.set(winHeight - btnSize - edgePadding - initialAvoidance);
 			setIsPositioned(true);
 		}
-	}, [isAuthorized, x, y, isPositioned]);
+	}, [isAuthorized, isPositioned, x, y]);
+
+	const handleDragEnd = useCallback(
+		(_: unknown, info: PanInfo) => {
+			setIsDragging(false);
+			const winWidth = document.documentElement.clientWidth;
+			const winHeight = document.documentElement.clientHeight;
+			const btnWidth = buttonRef.current?.offsetWidth || 54;
+			const btnHeight = buttonRef.current?.offsetHeight || 54;
+			const edgePadding = 24;
+
+			const isLeft = info.point.x < winWidth / 2;
+			const isTop = info.point.y < winHeight / 2;
+			const logoCorner = getNextLogoCorner();
+
+			let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
+			let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
+
+			// Флаг: занят ли текущий угол логотипом или FAB (в случае Bottom-Right)
+			const isFABInCorner = !isLeft && !isTop;
+			const isLogoInCorner =
+				logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop;
+
+			if (isFABInCorner || isLogoInCorner) {
+				const avoidanceX = isFABInCorner ? 180 : 80;
+				const avoidanceY = 80;
+
+				const distToYEdge = isTop ? info.point.y : winHeight - info.point.y;
+				const distToXEdge = isLeft ? info.point.x : winWidth - info.point.x;
+
+				if (distToYEdge < distToXEdge) {
+					snapX = isLeft
+						? edgePadding + avoidanceX
+						: winWidth - btnWidth - edgePadding - avoidanceX;
+				} else {
+					snapY = isTop
+						? edgePadding + avoidanceY
+						: winHeight - btnHeight - edgePadding - avoidanceY;
+				}
+			}
+
+			animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
+			animate(y, snapY, { type: 'spring', stiffness: 400, damping: 30 });
+		},
+		[x, y, getNextLogoCorner],
+	);
 
 	if (!isAuthorized || isOverlayOpen || !isPositioned) return null;
-
-	const handleDragEnd = (_: unknown, info: PanInfo) => {
-		setIsDragging(false);
-		const winWidth = document.documentElement.clientWidth;
-		const winHeight = document.documentElement.clientHeight;
-		const btnWidth = buttonRef.current?.offsetWidth || 54;
-		const btnHeight = buttonRef.current?.offsetHeight || 54;
-		const edgePadding = 24;
-
-		const isLeft = info.point.x < winWidth / 2;
-		const isTop = info.point.y < winHeight / 2;
-		const logoCorner = getNextLogoCorner();
-
-		let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
-		let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
-
-		// Флаг: занят ли текущий угол логотипом или FAB (в случае Bottom-Right)
-		const isFABInCorner = !isLeft && !isTop;
-		const isLogoInCorner =
-			logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop;
-
-		if (isFABInCorner || isLogoInCorner) {
-			const avoidanceX = isFABInCorner ? 180 : 80;
-			const avoidanceY = 80;
-
-			const distToYEdge = isTop ? info.point.y : winHeight - info.point.y;
-			const distToXEdge = isLeft ? info.point.x : winWidth - info.point.x;
-
-			if (distToYEdge < distToXEdge) {
-				snapX = isLeft
-					? edgePadding + avoidanceX
-					: winWidth - btnWidth - edgePadding - avoidanceX;
-			} else {
-				snapY = isTop
-					? edgePadding + avoidanceY
-					: winHeight - btnHeight - edgePadding - avoidanceY;
-			}
-		}
-
-		animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
-		animate(y, snapY, { type: 'spring', stiffness: 400, damping: 30 });
-	};
 
 	return (
 		<motion.button
