@@ -41,6 +41,9 @@ const nextConfig: NextConfig = {
 	experimental: {
 		optimizePackageImports: ['lucide-react'],
 	},
+	env: {
+		NEXT_PUBLIC_OS_USER: process.env.USERNAME || process.env.USER || 'unknown',
+	},
 	async headers() {
 		return [
 			{
