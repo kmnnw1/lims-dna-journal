@@ -61,6 +61,21 @@ export function DevToolsButton() {
 		};
 	}, []);
 
+	const getThemeToggleCorner = useCallback(() => {
+		if (typeof document === 'undefined') return null;
+		const toggle = document.getElementById('theme-toggle-button');
+		if (!toggle) return null;
+
+		const rect = toggle.getBoundingClientRect();
+		const winWidth = window.innerWidth;
+		const winHeight = window.innerHeight;
+
+		return {
+			isLeft: rect.left + rect.width / 2 < winWidth / 2,
+			isTop: rect.top + rect.height / 2 < winHeight / 2,
+		};
+	}, []);
+
 	// Установка стабильной начальной позиции, если нет сохраненной
 	useEffect(() => {
 		if (!isAuthorized || isPositioned) return;
@@ -105,18 +120,21 @@ export function DevToolsButton() {
 			const isLeft = info.point.x < winWidth / 2;
 			const isTop = info.point.y < winHeight / 2;
 			const logoCorner = getNextLogoCorner();
+			const themeCorner = getThemeToggleCorner();
 
 			let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
 			let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
 
 			const isJournalPage = pathname === '/';
 
-			// Флаг: занят ли текущий угол логотипом или FAB (в случае Bottom-Right)
+			// Флаг: занят ли текущий угол логотипом, FAB или кнопкой темы
 			const isFABInCorner = isJournalPage && !isLeft && !isTop;
 			const isLogoInCorner =
 				logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop;
+			const isThemeInCorner =
+				themeCorner && isLeft === themeCorner.isLeft && isTop === themeCorner.isTop;
 
-			if (isFABInCorner || isLogoInCorner) {
+			if (isFABInCorner || isLogoInCorner || isThemeInCorner) {
 				const avoidanceX = isFABInCorner ? 180 : 80;
 				const avoidanceY = 80;
 
@@ -140,7 +158,7 @@ export function DevToolsButton() {
 			localStorage.setItem('lab_journal_dev_btn_x', snapX.toString());
 			localStorage.setItem('lab_journal_dev_btn_y', snapY.toString());
 		},
-		[x, y, getNextLogoCorner, pathname],
+		[x, y, getNextLogoCorner, getThemeToggleCorner, pathname],
 	);
 
 	if (!mounted || !isAuthorized) return null;
