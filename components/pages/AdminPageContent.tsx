@@ -11,6 +11,7 @@ import {
 	UserPlus,
 } from 'lucide-react';
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/features/ThemeToggle';
 import { AdminUserRow } from '@/components/pages/AdminUserRow';
 import { MD3Field } from '@/components/ui/MD3Field';
 import { useAdminPage } from '@/hooks/useAdminPage';
@@ -299,6 +300,8 @@ export function AdminPageContent(props: AdminPageProps) {
 					</div>
 				</div>
 			</div>
+
+			<ThemeToggle />
 		</div>
 	);
 }

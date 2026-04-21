@@ -3,6 +3,7 @@
 import { Check, LogOut, Moon, Plus, Search, Settings, Sparkles, Sun } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useTheme } from '@/components/layout/ThemeProvider';
 import { useDevSettings } from './DevSettingsProvider';
 import { QuickFilterBar } from './QuickFilterBar';
 
@@ -19,8 +20,6 @@ interface JournalHeaderProps {
 	filterType: 'all' | 'success' | 'error' | 'fav';
 	onFilterChange: (val: 'all' | 'success' | 'error' | 'fav') => void;
 	onSignOut: () => void;
-	theme: 'light' | 'dark';
-	setTheme: (val: 'light' | 'dark') => void;
 	minConc: number | null;
 	setMinConc: (val: number | null) => void;
 	maxConc: number | null;
@@ -39,8 +38,6 @@ export function JournalHeader({
 	filterType,
 	onFilterChange,
 	onSignOut,
-	theme,
-	setTheme,
 	minConc,
 	setMinConc,
 	maxConc,
@@ -50,6 +47,7 @@ export function JournalHeader({
 	suggestions,
 	onAddClick,
 }: JournalHeaderProps) {
+	const { theme, toggleTheme } = useTheme();
 	const { settings } = useDevSettings();
 	const _roleColorClass =
 		userRole === 'ADMIN'
@@ -125,7 +123,7 @@ export function JournalHeader({
 				{/* Кнопки действий - Прижаты к правому краю */}
 				<div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto">
 					<button
-						onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+						onClick={toggleTheme}
 						title={`Тема: ${theme}`}
 						className="p-1.5 sm:p-2.5 bg-(--md-sys-color-surface-container-low) text-(--md-sys-color-on-surface) md-elevation-1 hover:md-elevation-2 rounded-full transition-all flex items-center justify-center md-state-layer"
 					>

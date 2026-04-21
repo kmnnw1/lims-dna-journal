@@ -5,11 +5,12 @@ import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { ThemeToggle } from '@/components/features/ThemeToggle';
 import { MD3Field } from '@/components/ui/MD3Field';
 
 // Динамический импорт для предотвращения Hydration Error (Math.random)
-const AnimatedFlask = dynamic(
-	() => import('@/components/ui/AnimatedFlask').then((mod) => mod.AnimatedFlask),
+const InteractiveFluidFlask = dynamic(
+	() => import('@/components/ui/InteractiveFluidFlask').then((mod) => mod.InteractiveFluidFlask),
 	{ ssr: false },
 );
 
@@ -76,8 +77,8 @@ function LoginContent() {
 			{/* MD3 Dialog Surface */}
 			<div className="w-full max-w-[444px] bg-(--md-sys-color-surface-container-low) rounded-4xl shadow-2xl p-8 sm:p-12 relative z-10 animate-in fade-in zoom-in-95 duration-500">
 				<div className="flex flex-col items-center text-center mb-10">
-					<div className="w-24 h-24 bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container) rounded-3xl flex items-center justify-center mb-8 shadow-sm">
-						<AnimatedFlask />
+					<div className="w-24 h-24 bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container) rounded-3xl flex items-center justify-center mb-8 shadow-sm relative">
+						<InteractiveFluidFlask />
 					</div>
 					<h1 className="text-4xl font-normal tracking-tight text-(--md-sys-color-on-surface) mb-3">
 						Вход в систему
@@ -130,6 +131,8 @@ function LoginContent() {
 					</button>
 				</form>
 			</div>
+
+			<ThemeToggle />
 		</div>
 	);
 }
