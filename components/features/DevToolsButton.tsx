@@ -2,6 +2,7 @@
 
 import { animate, motion, type PanInfo, useMotionValue } from 'framer-motion';
 import { ShieldAlert } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDevSettings } from './DevSettingsProvider';
 
@@ -12,6 +13,7 @@ import { useDevSettings } from './DevSettingsProvider';
  */
 export function DevToolsButton() {
 	const { setOverlayOpen, isOverlayOpen, settings } = useDevSettings();
+	const pathname = usePathname();
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const [isDragging, setIsDragging] = useState(false);
 	const [isPositioned, setIsPositioned] = useState(false);
@@ -107,8 +109,10 @@ export function DevToolsButton() {
 			let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
 			let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
 
+			const isJournalPage = pathname === '/';
+
 			// Флаг: занят ли текущий угол логотипом или FAB (в случае Bottom-Right)
-			const isFABInCorner = !isLeft && !isTop;
+			const isFABInCorner = isJournalPage && !isLeft && !isTop;
 			const isLogoInCorner =
 				logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop;
 
@@ -136,7 +140,7 @@ export function DevToolsButton() {
 			localStorage.setItem('lab_journal_dev_btn_x', snapX.toString());
 			localStorage.setItem('lab_journal_dev_btn_y', snapY.toString());
 		},
-		[x, y, getNextLogoCorner],
+		[x, y, getNextLogoCorner, pathname],
 	);
 
 	if (!mounted || !isAuthorized) return null;

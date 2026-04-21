@@ -56,7 +56,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 		const next = theme === 'light' ? 'dark' : 'light';
 
 		// View Transition API support (optional but premium feel)
-		const doc = document as Document & { startViewTransition?: (callback: () => void) => void };
+		const doc = document as unknown as { startViewTransition?: (callback: () => void) => void };
 		if (e && doc.startViewTransition) {
 			const x = e.clientX;
 			const y = e.clientY;
