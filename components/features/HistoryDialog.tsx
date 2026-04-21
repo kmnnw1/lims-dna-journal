@@ -79,8 +79,57 @@ export function HistoryDialog({
 	const actionLabels: Record<string, string> = {
 		CREATE_SPECIMEN: 'Создание пробы',
 		UPDATE_SPECIMEN: 'Изменение данных',
-		DELETE_SPECIMEN: 'Удаление (архивация)',
-		PCR_ATTEMPT: 'Постановка ПЦР',
+		DELETE_SPECIMEN: 'Удаление',
+		PCR_ATTEMPT: 'ПЦР-анализ',
+		IMPORT_SPECIMENS: 'Массовый импорт',
+		CREATE_PCR_ATTEMPT: 'Новый ПЦР',
+	};
+
+	const formatDetails = (action: string, detailsStr: string | null) => {
+		if (!detailsStr) return null;
+		try {
+			const d = JSON.parse(detailsStr);
+			if (typeof d !== 'object' || d === null) return detailsStr;
+
+			if (action === 'IMPORT_SPECIMENS') {
+				const sheets = Array.isArray(d.sheets) ? d.sheets.join(', ') : '—';
+				return `Загружено ${d.count || d.newCount || 0} проб из листов: ${sheets}.${d.aiUsed ? ' Использована ИИ-очистка (Gemini).' : ''}`;
+			}
+
+			if (d.action === 'CLEAR_DATABASE') {
+				return `Полная очистка базы данных. Удалено записей: ${d.deletedCount || 0}`;
+			}
+
+			if (action === 'CREATE_PCR_ATTEMPT' || action === 'PCR_ATTEMPT') {
+				return `Маркер: ${d.marker || '?'}. Результат: ${d.result || 'в обработке'}.`;
+			}
+
+			// Обобщенный фоллбэк для объектов
+			return Object.entries(d)
+				.map(([k, v]) => `${k}: ${v}`)
+				.join('; ');
+		} catch {
+			return detailsStr;
+		}
+	};
+
+	const formatKey = (key: string) => {
+		const keys: Record<string, string> = {
+			taxon: 'Таксон',
+			id: 'ID / Номер',
+			location: 'Место сбора',
+			collector: 'Сборщик',
+			date: 'Дата',
+			description: 'Описание',
+			status: 'Статус',
+			itsStatus: 'ITS',
+			ssuStatus: 'SSU',
+			lsuStatus: 'LSU',
+			mcm7Status: 'MCM7',
+			notes: 'Заметки',
+			result: 'Результат ПЦР',
+		};
+		return keys[key] || key;
 	};
 
 	if (!open) return null;
@@ -202,7 +251,7 @@ export function HistoryDialog({
 															>
 																<div className="flex items-center gap-2 text-[10px] uppercase font-black text-(--md-sys-color-primary) opacity-80">
 																	<Tag className="w-3 h-3" />
-																	{key}
+																	{formatKey(key)}
 																</div>
 																<div className="flex items-center gap-2 text-xs font-medium">
 																	<span className="flex-1 px-2 py-1 rounded bg-red-500/10 text-red-600 dark:text-red-400 truncate">
@@ -217,14 +266,8 @@ export function HistoryDialog({
 														))}
 													</div>
 												) : log.details ? (
-													<p className="text-sm font-medium text-(--md-sys-color-on-surface-variant) bg-(--md-sys-color-surface-container-highest)/50 p-3 rounded-xl">
-														{typeof JSON.parse(log.details) === 'object'
-															? JSON.stringify(
-																	JSON.parse(log.details),
-																	null,
-																	2,
-																)
-															: log.details}
+													<p className="text-sm font-medium text-(--md-sys-color-on-surface-variant) bg-(--md-sys-color-surface-container-highest)/50 p-3 rounded-xl leading-relaxed">
+														{formatDetails(log.action, log.details)}
 													</p>
 												) : (
 													<p className="text-xs italic text-(--md-sys-color-on-surface-variant) opacity-50">
