@@ -19,16 +19,17 @@ export function DevToolsButton() {
 		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
 		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus';
 
-	// Установка начальной позиции в правый нижний угол
+	// Установка начальной позиции (смещение от логотипа Next.js в правом нижнем углу)
 	useEffect(() => {
 		if (isAuthorized) {
 			const winWidth = window.innerWidth;
 			const winHeight = window.innerHeight;
 			const edgePadding = 20;
 			const btnSize = 54;
+			const avoidanceOffset = 70; // Отступ от логотипа Next.js
 			controls.set({
 				x: winWidth - btnSize - edgePadding,
-				y: winHeight - btnSize - edgePadding,
+				y: winHeight - btnSize - edgePadding - avoidanceOffset,
 			});
 		}
 	}, [isAuthorized, controls]);
@@ -42,11 +43,31 @@ export function DevToolsButton() {
 		const btnWidth = buttonRef.current?.offsetWidth || 54;
 		const btnHeight = buttonRef.current?.offsetHeight || 54;
 		const edgePadding = 20;
+		const avoidanceOffset = 75; // Смещение, чтобы не перекрывать логотип Next.js
 
-		// Логика примагничивания к ближайшему углу
-		const snapX = info.point.x < winWidth / 2 ? edgePadding : winWidth - btnWidth - edgePadding;
-		const snapY =
-			info.point.y < winHeight / 2 ? edgePadding : winHeight - btnHeight - edgePadding;
+		// Определение ближайшего квадранта
+		const isLeft = info.point.x < winWidth / 2;
+		const isTop = info.point.y < winHeight / 2;
+
+		let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
+		let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
+
+		// Логика избегания правого нижнего угла (логотипа Next.js)
+		// Если пользователь тянет в правый нижний угол, кнопка встанет либо левее, либо выше логотипа.
+		if (!isLeft && !isTop) {
+			const distToBottom = winHeight - info.point.y;
+			const distToRight = winWidth - info.point.x;
+
+			if (distToBottom < distToRight) {
+				// Ближе к нижней границе -> смещаем влево
+				snapX = winWidth - btnWidth - edgePadding - avoidanceOffset;
+				snapY = winHeight - btnHeight - edgePadding;
+			} else {
+				// Ближе к правой границе -> смещаем вверх
+				snapX = winWidth - btnWidth - edgePadding;
+				snapY = winHeight - btnHeight - edgePadding - avoidanceOffset;
+			}
+		}
 
 		controls.start({
 			x: snapX,
