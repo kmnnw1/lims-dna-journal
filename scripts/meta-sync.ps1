@@ -7,7 +7,7 @@ if (-not (Test-Path $backupDir)) {
     New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
 }
 
-Write-Host "🔄 Internal Metadata Sync started." -ForegroundColor Cyan
+Write-Host "Internal metadata sync started." -ForegroundColor Cyan
 
 while ($true) {
     if (Test-Path $filePath) {

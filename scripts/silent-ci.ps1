@@ -2,7 +2,7 @@
 $intervalSeconds = 120 # 2 minutes
 $healthFile = ".internal_data/health.status"
 
-Write-Host "🕵️ Silent Background Monitoring started (Shadow Architect mode)." -ForegroundColor Gray
+Write-Host "Background monitoring started (silent mode)." -ForegroundColor Gray
 
 while ($true) {
     # Run the error digest generator
