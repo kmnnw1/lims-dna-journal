@@ -47,17 +47,15 @@ export function DevToolsButton() {
 			const winHeight = document.documentElement.clientHeight;
 			const edgePadding = 24;
 			const btnSize = 54;
-			const logoCorner = getNextLogoCorner();
 
-			// По умолчанию избегаем правого нижнего угла (там FAB и часто логотип)
+			// Всегда избегаем правого нижнего угла при старте, так как там находится FAB «Новая проба»
 			const initialAvoidance = 80;
-			const isBRBusy = !logoCorner || (!logoCorner.isLeft && !logoCorner.isTop);
 
 			x.set(winWidth - btnSize - edgePadding);
-			y.set(winHeight - btnSize - edgePadding - (isBRBusy ? initialAvoidance : 0));
+			y.set(winHeight - btnSize - edgePadding - initialAvoidance);
 			setIsPositioned(true);
 		}
-	}, [isAuthorized, x, y, getNextLogoCorner, isPositioned]);
+	}, [isAuthorized, x, y, isPositioned]);
 
 	if (!isAuthorized || isOverlayOpen || !isPositioned) return null;
 
