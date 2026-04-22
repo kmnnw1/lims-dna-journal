@@ -178,7 +178,7 @@ export function PcrModal({
 											</div>
 											<p className="text-xs opacity-60 mt-1">
 												{item.forwardPrimer} / {item.reversePrimer} •{' '}
-												{new Date(item.date).toLocaleDateString()}
+												{new Date(item.date).toLocaleString()}
 											</p>
 										</div>
 										{!isReader && (
