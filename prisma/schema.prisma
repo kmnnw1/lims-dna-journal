@@ -15,6 +15,7 @@ model User {
   lastName  String?
   createdAt DateTime @default(now())
   specimens Specimen[] @relation("LabTechnician")
+  auditLogs AuditLog[] @relation("UserAuditLogs")
 }
 
 model Specimen {
@@ -99,6 +100,7 @@ model PcrAttempt {
 model AuditLog {
   id            String    @id @default(uuid())
   userId        String
+  user          User      @relation("UserAuditLogs", fields: [userId], references: [id])
   action        String    // CREATE_SPECIMEN, UPDATE_SPECIMEN, etc.
   resourceType  String    // SPECIMEN, PCR_ATTEMPT, etc.
   resourceId    String?   // ID of the affected resource
