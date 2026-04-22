@@ -31,7 +31,9 @@ export function DevToolsButton() {
 		const devMode = process.env.NODE_ENV === 'development';
 
 		if (devMode || devDevice || devUser) {
-			setIsAuthorized(true);
+			if (!window.location.search.includes('hideDev=true')) {
+				setIsAuthorized(true);
+			}
 		}
 
 		// Инициализируем x и y из localStorage сразу при монтировании (клиентская часть)
