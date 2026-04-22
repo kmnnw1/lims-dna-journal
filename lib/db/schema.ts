@@ -95,7 +95,9 @@ export const pcrAttempts = sqliteTable('PcrAttempt', {
 
 export const auditLogs = sqliteTable('AuditLog', {
 	id: text('id').primaryKey(),
-	userId: text('userId').notNull(),
+	userId: text('userId')
+		.notNull()
+		.references(() => users.id),
 	action: text('action').notNull(),
 	resourceType: text('resourceType').notNull(),
 	resourceId: text('resourceId'),
@@ -104,6 +106,16 @@ export const auditLogs = sqliteTable('AuditLog', {
 	ipAddress: text('ipAddress'),
 	userAgent: text('userAgent'),
 	timestamp: integer('timestamp', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(strftime('%s', 'now') * 1000)`),
+});
+
+export const authTokens = sqliteTable('AuthToken', {
+	id: text('id').primaryKey(),
+	token: text('token').unique().notNull(),
+	used: integer('used', { mode: 'boolean' }).notNull().default(false),
+	expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
+	createdAt: integer('createdAt', { mode: 'timestamp' })
 		.notNull()
 		.default(sql`(strftime('%s', 'now') * 1000)`),
 });
