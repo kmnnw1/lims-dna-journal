@@ -9,7 +9,7 @@ interface Props {
 	onClose: () => void;
 }
 
-export default function BatchPcrModal({ open, selectedSpecimenIds, onClose }: Props) {
+export default function BatchPCRModal({ open, selectedSpecimenIds, onClose }: Props) {
 	const [loading, setLoading] = useState(false);
 	const [marker, setMarker] = useState('ITS');
 
@@ -42,7 +42,7 @@ export default function BatchPcrModal({ open, selectedSpecimenIds, onClose }: Pr
 		<div
 			role="dialog"
 			aria-modal="true"
-			className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in"
+			className="fixed inset-0 z-150 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in"
 		>
 			<div className="bg-(--md-sys-color-surface-container-high) w-full max-w-lg rounded-4xl p-8 md-elevation-3">
 				<div className="flex justify-between items-center mb-8">
