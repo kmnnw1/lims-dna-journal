@@ -5,7 +5,7 @@
 /**
  * Описывает одну попытку постановки ПЦР
  */
-export interface PcrAttempt {
+export interface PCRAttempt {
 	id: string;
 	date: string; // Дата попытки (ISO)
 	volume: string; // Объём (например, "20 мкл")
@@ -67,7 +67,7 @@ export interface Specimen {
 	importNotes?: string;
 	reviewNotes?: string;
 	reviewPhotos?: string;
-	attempts?: PcrAttempt[]; // Массив попыток ПЦР
+	attempts?: PCRAttempt[]; // Массив попыток ПЦР
 }
 
 // ========================================
@@ -101,7 +101,7 @@ export const EMPTY_NEW_RECORD: Readonly<NewRecordForm> = {
 
 export type EditSpecimenForm = Partial<Omit<Specimen, 'attempts'>> &
 	Pick<Specimen, 'id'> & {
-		attempts?: PcrAttempt[];
+		attempts?: PCRAttempt[];
 	};
 
 // ========================================
@@ -132,7 +132,7 @@ export const EMPTY_MASS_UPDATE: Readonly<MassUpdateForm> = {
 /**
  * Значения новой ПЦР-формы
  */
-export interface PcrForm {
+export interface PCRForm {
 	volume: string;
 	result: 'Fail' | 'Success'; // Строгая типизация
 	marker: string;
@@ -142,7 +142,7 @@ export interface PcrForm {
 }
 
 /** Пустое состояние */
-export const EMPTY_PCR_FORM: Readonly<PcrForm> = {
+export const EMPTY_PCR_FORM: Readonly<PCRForm> = {
 	volume: '',
 	result: 'Fail',
 	marker: '',

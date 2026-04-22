@@ -69,7 +69,7 @@ export async function POST(request: Request) {
 			result: 'PENDING', // Или другой статус по умолчанию
 		}));
 
-		const createdAttempts = await prisma.pcrAttempt.createMany({
+		const createdAttempts = await prisma.pCRAttempt.createMany({
 			data: pcrAttempts,
 		});
 

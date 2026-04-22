@@ -21,7 +21,7 @@ export async function GET(req: Request) {
 			throw { statusCode: 400, message: 'Не указан или невалидный specimenId' };
 		}
 
-		const attempts = await prisma.pcrAttempt.findMany({
+		const attempts = await prisma.pCRAttempt.findMany({
 			where: { specimenId, deletedAt: null },
 			orderBy: { date: 'desc' },
 		});
@@ -68,10 +68,10 @@ export async function POST(req: Request) {
 		let attempt;
 		if (id) {
 			// Редактирование существующей попытки
-			const oldAttempt = await prisma.pcrAttempt.findUnique({ where: { id } });
+			const oldAttempt = await prisma.pCRAttempt.findUnique({ where: { id } });
 			if (!oldAttempt) throw { statusCode: 404, message: 'Попытка ПЦР не найдена' };
 
-			attempt = await prisma.pcrAttempt.update({
+			attempt = await prisma.pCRAttempt.update({
 				where: { id },
 				data: {
 					result: result || undefined,
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
 			});
 		} else {
 			// Создание новой попытки
-			attempt = await prisma.pcrAttempt.create({
+			attempt = await prisma.pCRAttempt.create({
 				data: {
 					specimenId,
 					marker: rawMarker,
@@ -118,7 +118,7 @@ export async function POST(req: Request) {
 		}
 
 		// Обновляем статус пробы на основе результата ПЦР
-		const latestAttempt = await prisma.pcrAttempt.findFirst({
+		const latestAttempt = await prisma.pCRAttempt.findFirst({
 			where: { specimenId, marker: rawMarker, deletedAt: null },
 			orderBy: { date: 'desc' },
 		});
@@ -166,10 +166,10 @@ export async function DELETE(req: Request) {
 			throw { statusCode: 400, message: 'id обязателен и должен быть валидным' };
 		}
 
-		const attempt = await prisma.pcrAttempt.findUnique({ where: { id } });
+		const attempt = await prisma.pCRAttempt.findUnique({ where: { id } });
 		if (!attempt) throw { statusCode: 404, message: 'Попытка ПЦР не найдена' };
 
-		await prisma.pcrAttempt.update({
+		await prisma.pCRAttempt.update({
 			where: { id },
 			data: { deletedAt: new Date() },
 		});

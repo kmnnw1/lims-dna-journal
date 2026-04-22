@@ -18,9 +18,9 @@ import { SpecimenTable } from '@/components/features/SpecimenTable';
 import { StatsCards } from '@/components/features/StatsCards';
 import { useTheme } from '@/components/layout/ThemeProvider';
 import { AddSpecimenModal } from '@/components/modals/AddSpecimenModal';
-import BatchPcrModal from '@/components/modals/BatchPCRModal';
+import BatchPCRModal from '@/components/modals/BatchPCRModal';
 import { EditSpecimenModal } from '@/components/modals/EditSpecimenModal';
-import { PcrModal } from '@/components/modals/PCRModal';
+import { PCRModal } from '@/components/modals/PCRModal';
 import { FAB } from '@/components/ui/FAB';
 import { useJournalPage } from '@/hooks/useJournalPage';
 import type { Specimen } from '@/types';
@@ -44,8 +44,8 @@ export function JournalPageContent() {
 		setIsAddModalOpen,
 		editingSpecimen,
 		setEditingSpecimen,
-		activePcrSpecimen,
-		setActivePcrSpecimen,
+		activePCRSpecimen,
+		setActivePCRSpecimen,
 		isBatchModalOpen,
 		setIsBatchModalOpen,
 		isScanOpen,
@@ -54,12 +54,12 @@ export function JournalPageContent() {
 		newRecordData,
 		setNewRecordData,
 		pcrForm,
-		setPcrForm,
+		setPCRForm,
 		stats,
 		handleSort,
 		handleAddSubmit,
 		handleEditSubmit,
-		handlePcrSubmit,
+		handlePCRSubmit,
 		handleStatusToggle,
 		handlePrintLabels,
 		handleExportCSV,
@@ -285,7 +285,7 @@ export function JournalPageContent() {
 										isReader={
 											(session?.user as { role?: string })?.role === 'READER'
 										}
-										onPcr={() => setActivePcrSpecimen(s)}
+										onPcr={() => setActivePCRSpecimen(s)}
 										onEdit={() => setEditingSpecimen(s)}
 										searchQuery={searchQuery}
 										renderStatus={(spec, marker) => (
@@ -322,7 +322,7 @@ export function JournalPageContent() {
 									handleSelectAll(specimens.map((s: Specimen) => s.id))
 								}
 								onEdit={setEditingSpecimen}
-								onPcr={setActivePcrSpecimen}
+								onPcr={setActivePCRSpecimen}
 								onStatusClick={handleStatusToggle}
 								onHistory={handleHistoryOpen}
 								searchQuery={searchQuery}
@@ -387,14 +387,14 @@ export function JournalPageContent() {
 					specimens={specimens}
 					validationError={validationError || undefined}
 				/>
-				<PcrModal
-					open={Boolean(activePcrSpecimen)}
-					specimenId={activePcrSpecimen?.id || ''}
-					activeSpecimen={activePcrSpecimen}
-					onClose={() => setActivePcrSpecimen(null)}
+				<PCRModal
+					open={Boolean(activePCRSpecimen)}
+					specimenId={activePCRSpecimen?.id || ''}
+					activeSpecimen={activePCRSpecimen}
+					onClose={() => setActivePCRSpecimen(null)}
 					pcrForm={pcrForm}
-					setPcrForm={setPcrForm}
-					onSubmit={handlePcrSubmit}
+					setPCRForm={setPCRForm}
+					onSubmit={handlePCRSubmit}
 				/>
 				<EditSpecimenModal
 					specimen={editingSpecimen}
@@ -407,7 +407,7 @@ export function JournalPageContent() {
 					specimens={specimens}
 					validationError={validationError || undefined}
 				/>
-				<BatchPcrModal
+				<BatchPCRModal
 					open={isBatchModalOpen}
 					selectedSpecimenIds={[...selectedIds]}
 					onClose={() => setIsBatchModalOpen(false)}

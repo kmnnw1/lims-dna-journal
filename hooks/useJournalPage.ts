@@ -32,7 +32,7 @@ export function useJournalPage() {
 
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [editingSpecimen, setEditingSpecimen] = useState<Specimen | null>(null);
-	const [activePcrSpecimen, setActivePcrSpecimen] = useState<Specimen | null>(null);
+	const [activePCRSpecimen, setActivePCRSpecimen] = useState<Specimen | null>(null);
 	const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
 	const [isScanOpen, setIsScanOpen] = useState(false);
 	const [validationError, setValidationError] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export function useJournalPage() {
 		forceDesktopView: false,
 		forceMobileView: false,
 	});
-	const [pcrForm, setPcrForm] = useState({
+	const [pcrForm, setPCRForm] = useState({
 		volume: '25',
 		marker: '',
 		forwardPrimer: '',
@@ -213,7 +213,7 @@ export function useJournalPage() {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['specimens'] });
-			setActivePcrSpecimen(null);
+			setActivePCRSpecimen(null);
 		},
 		onError: (error: Error) => {
 			setToastMessage({ text: error.message, type: 'error' });
@@ -271,10 +271,10 @@ export function useJournalPage() {
 		}
 	};
 
-	const handlePcrSubmit = async () => {
-		if (activePcrSpecimen) {
+	const handlePCRSubmit = async () => {
+		if (activePCRSpecimen) {
 			pcrMutation.mutate({
-				specimenId: activePcrSpecimen.id,
+				specimenId: activePCRSpecimen.id,
 				...pcrForm,
 				date: new Date().toISOString(),
 			});
@@ -406,8 +406,8 @@ export function useJournalPage() {
 		setIsAddModalOpen,
 		editingSpecimen,
 		setEditingSpecimen,
-		activePcrSpecimen,
-		setActivePcrSpecimen,
+		activePCRSpecimen,
+		setActivePCRSpecimen,
 		isBatchModalOpen,
 		setIsBatchModalOpen,
 		isScanOpen,
@@ -418,12 +418,12 @@ export function useJournalPage() {
 		newRecordData,
 		setNewRecordData,
 		pcrForm,
-		setPcrForm,
+		setPCRForm,
 		stats,
 		handleSort,
 		handleAddSubmit,
 		handleEditSubmit,
-		handlePcrSubmit,
+		handlePCRSubmit,
 		handleStatusToggle,
 		handleExportCSV,
 		handleExportXLSX,

@@ -77,7 +77,7 @@ export async function processExcelToDatabase(buffer: Buffer) {
 
 				for (const marker of markers) {
 					if (marker.status || marker.gb) {
-						await tx.pcrAttempt.create({
+						await tx.pCRAttempt.create({
 							data: {
 								specimenId: specimen.id,
 								marker: marker.type,

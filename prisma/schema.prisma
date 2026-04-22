@@ -62,7 +62,7 @@ model Specimen {
   importNotes      String?      
   reviewNotes      String?
   reviewPhotos     String?      
-  attempts         PcrAttempt[]
+  attempts         PCRAttempt[]
   deletedAt        DateTime?    
   labTechnicianId  String?
   labTechnician    User?        @relation("LabTechnician", fields: [labTechnicianId], references: [id])
@@ -72,7 +72,7 @@ model Specimen {
   @@index([deletedAt])
 }
 
-model PcrAttempt {
+model PCRAttempt {
   id               String            @id @default(uuid())
   specimenId       String
   date             DateTime          @default(now())

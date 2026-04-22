@@ -4,7 +4,7 @@ import { FlaskConical, History, Pencil, Plus, Save, Trash2, X } from 'lucide-rea
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { MD3Field } from '@/components/ui/MD3Field';
-import type { PcrAttempt, Specimen } from '@/types';
+import type { PCRAttempt, Specimen } from '@/types';
 
 interface Props {
 	open: boolean;
@@ -20,7 +20,7 @@ interface Props {
 		result: 'Success' | 'Failed';
 		id?: string; // ID для редактирования существующей попытки
 	};
-	setPcrForm: React.Dispatch<
+	setPCRForm: React.Dispatch<
 		React.SetStateAction<{
 			volume: string;
 			marker: string;
@@ -35,16 +35,16 @@ interface Props {
 	isReader?: boolean;
 }
 
-export function PcrModal({
+export function PCRModal({
 	open,
 	specimenId,
 	onClose,
 	pcrForm,
-	setPcrForm,
+	setPCRForm,
 	onSubmit,
 	isReader,
 }: Props) {
-	const [history, setHistory] = useState<PcrAttempt[]>([]);
+	const [history, setHistory] = useState<PCRAttempt[]>([]);
 	const [loadingHistory, setLoadingHistory] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
 	const dialogRef = useRef<HTMLDivElement>(null);
@@ -78,8 +78,8 @@ export function PcrModal({
 		return () => window.removeEventListener('keydown', onKeyDown);
 	}, [open, onClose]);
 
-	const handleEditAttempt = (attempt: PcrAttempt) => {
-		setPcrForm({
+	const handleEditAttempt = (attempt: PCRAttempt) => {
+		setPCRForm({
 			id: attempt.id,
 			marker: attempt.marker || '',
 			forwardPrimer: attempt.forwardPrimer || '',
@@ -92,7 +92,7 @@ export function PcrModal({
 	};
 
 	const handleResetForm = () => {
-		setPcrForm({
+		setPCRForm({
 			marker: '',
 			forwardPrimer: '',
 			reversePrimer: '',
@@ -119,7 +119,7 @@ export function PcrModal({
 	if (!open) return null;
 
 	return (
-		<div className="fixed inset-0 z-[125] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm print:hidden">
+		<div className="fixed inset-0 z-125 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm print:hidden">
 			<div
 				ref={dialogRef}
 				role="dialog"
@@ -234,7 +234,7 @@ export function PcrModal({
 										label="Маркер"
 										value={pcrForm.marker}
 										onChange={(e) =>
-											setPcrForm({ ...pcrForm, marker: e.target.value })
+											setPCRForm({ ...pcrForm, marker: e.target.value })
 										}
 									>
 										<option value=""></option>
@@ -257,14 +257,14 @@ export function PcrModal({
 									label="Прямой праймер"
 									value={pcrForm.forwardPrimer}
 									onChange={(e) =>
-										setPcrForm({ ...pcrForm, forwardPrimer: e.target.value })
+										setPCRForm({ ...pcrForm, forwardPrimer: e.target.value })
 									}
 								/>
 								<MD3Field
 									label="Обратный праймер"
 									value={pcrForm.reversePrimer}
 									onChange={(e) =>
-										setPcrForm({ ...pcrForm, reversePrimer: e.target.value })
+										setPCRForm({ ...pcrForm, reversePrimer: e.target.value })
 									}
 								/>
 								<MD3Field
@@ -272,14 +272,14 @@ export function PcrModal({
 									label="Объем (мкл)"
 									value={pcrForm.volume}
 									onChange={(e) =>
-										setPcrForm({ ...pcrForm, volume: e.target.value })
+										setPCRForm({ ...pcrForm, volume: e.target.value })
 									}
 								/>
 								<MD3Field
 									label="Матрица ДНК (мкл)"
 									value={pcrForm.dnaMatrix}
 									onChange={(e) =>
-										setPcrForm({ ...pcrForm, dnaMatrix: e.target.value })
+										setPCRForm({ ...pcrForm, dnaMatrix: e.target.value })
 									}
 								/>
 								<div className="sm:col-span-2">
@@ -288,7 +288,7 @@ export function PcrModal({
 										label="Результат"
 										value={pcrForm.result}
 										onChange={(e) =>
-											setPcrForm({
+											setPCRForm({
 												...pcrForm,
 												result: e.target.value as 'Success' | 'Failed',
 											})

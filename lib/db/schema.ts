@@ -69,7 +69,7 @@ export const specimens = sqliteTable('Specimen', {
 		.default(sql`(strftime('%s', 'now') * 1000)`),
 });
 
-export const pcrAttempts = sqliteTable('PcrAttempt', {
+export const pcrAttempts = sqliteTable('PCRAttempt', {
 	id: text('id').primaryKey(),
 	specimenId: text('specimenId').notNull(),
 	date: integer('date', { mode: 'timestamp' })

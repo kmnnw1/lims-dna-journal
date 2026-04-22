@@ -105,7 +105,7 @@ export async function POST(req: Request) {
 				data: rollbackData,
 			});
 		} else if (logEntry.resourceType === 'PCR_ATTEMPT') {
-			await prisma.pcrAttempt.update({
+			await prisma.pCRAttempt.update({
 				where: { id: logEntry.resourceId },
 				data: rollbackData,
 			});
