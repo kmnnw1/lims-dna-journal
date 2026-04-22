@@ -140,6 +140,7 @@
 body {
 	background-color: var(--md-sys-color-surface);
 	color: var(--md-sys-color-on-surface);
+	overflow-y: scroll; /* Fix layout shift */
 	transition:
 		background-color 0s,
 		color 0s; /* Reset for view transitions */
