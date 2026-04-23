@@ -7,15 +7,28 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  username  String   @unique
+  id        String     @id @default(uuid())
+  username  String     @unique
   password  String
-  role      String   @default("EDITOR")
+  role      String     @default("EDITOR")
   firstName String?
   lastName  String?
-  createdAt DateTime @default(now())
-  specimens Specimen[] @relation("LabTechnician")
+  lastSeenAt DateTime?
+  createdAt DateTime   @default(now())
+  activities UserActivity[]
   auditLogs AuditLog[] @relation("UserAuditLogs")
+  specimens Specimen[] @relation("LabTechnician")
+}
+
+model UserActivity {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  resourceType String?
+  resourceId   String?
+  lastUpdate   DateTime @default(now())
+
+  @@index([resourceType, resourceId])
 }
 
 model Specimen {
@@ -52,45 +65,45 @@ model Specimen {
   mtSsuStatus      String?
   mtSsuGb          String?
   herbarium        String?
-  accessionNumber  String?
-  collectionNumber String?
-  connections      String?
   labNo            String?
   notes            String?
   importOrigin     String?
   importRow        Int?
-  importNotes      String?      
+  importNotes      String?
   reviewNotes      String?
-  reviewPhotos     String?      
-  attempts         PCRAttempt[]
-  deletedAt        DateTime?    
+  reviewPhotos     String?
+  deletedAt        DateTime?
   labTechnicianId  String?
-  labTechnician    User?        @relation("LabTechnician", fields: [labTechnicianId], references: [id])
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
+  accessionNumber  String?
+  collectionNumber String?
+  connections      String?
+  attempts         PCRAttempt[]
+  labTechnician    User?        @relation("LabTechnician", fields: [labTechnicianId], references: [id])
 
   @@index([deletedAt])
 }
 
 model PCRAttempt {
-  id               String            @id @default(uuid())
-  specimenId       String
-  date             DateTime          @default(now())
-  marker           String?
-  forwardPrimer    String?
-  reversePrimer    String?
-  dnaMatrix        String?
-  volume           String?
-  polymerase       String?
-  cycler           String?
-  cycles           String?
-  annealingTemp    String?
-  extensionTime    String?
-  result           String
-  resultNotes      String?
-  specimen         Specimen          @relation(fields: [specimenId], references: [id], onDelete: Cascade)
-  deletedAt        DateTime?    
-  createdAt        DateTime          @default(now())
+  id            String    @id @default(uuid())
+  specimenId    String
+  date          DateTime  @default(now())
+  marker        String?
+  forwardPrimer String?
+  reversePrimer String?
+  dnaMatrix     String?
+  volume        String?
+  polymerase    String?
+  cycler        String?
+  cycles        String?
+  annealingTemp String?
+  extensionTime String?
+  result        String
+  resultNotes   String?
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  specimen      Specimen  @relation(fields: [specimenId], references: [id], onDelete: Cascade)
 
   @@index([specimenId])
   @@index([marker])
@@ -98,17 +111,17 @@ model PCRAttempt {
 }
 
 model AuditLog {
-  id            String    @id @default(uuid())
-  userId        String
-  user          User      @relation("UserAuditLogs", fields: [userId], references: [id])
-  action        String    // CREATE_SPECIMEN, UPDATE_SPECIMEN, etc.
-  resourceType  String    // SPECIMEN, PCR_ATTEMPT, etc.
-  resourceId    String?   // ID of the affected resource
-  details       String?   // JSON string with action details
-  changes       String?   // JSON string with before/after values
-  ipAddress     String?   // IP address of the request
-  userAgent     String?   // User agent string
-  timestamp     DateTime  @default(now())
+  id           String   @id @default(uuid())
+  userId       String
+  action       String
+  resourceType String
+  resourceId   String?
+  details      String?
+  changes      String?
+  ipAddress    String?
+  userAgent    String?
+  timestamp    DateTime @default(now())
+  user         User     @relation("UserAuditLogs", fields: [userId], references: [id])
 
   @@index([userId])
   @@index([timestamp])

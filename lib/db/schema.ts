@@ -13,7 +13,21 @@ export const users = sqliteTable('User', {
 	role: text('role').notNull().default('EDITOR'),
 	firstName: text('firstName'),
 	lastName: text('lastName'),
+	lastSeenAt: integer('lastSeenAt', { mode: 'timestamp' }),
 	createdAt: integer('createdAt', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(strftime('%s', 'now') * 1000)`),
+});
+
+export const userActivities = sqliteTable('UserActivity', {
+	id: text('id').primaryKey(),
+	userId: text('userId')
+		.notNull()
+		.unique()
+		.references(() => users.id),
+	resourceType: text('resourceType'),
+	resourceId: text('resourceId'),
+	lastUpdate: integer('lastUpdate', { mode: 'timestamp' })
 		.notNull()
 		.default(sql`(strftime('%s', 'now') * 1000)`),
 });
