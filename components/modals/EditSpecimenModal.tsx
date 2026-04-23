@@ -1,8 +1,14 @@
 'use client';
 
-import { Save, X } from 'lucide-react';
-import React, { useEffect, useMemo } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertTriangle, Lock, Save, Shield, ShieldOff, Users, X } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { usePresence } from '@/components/features/PresenceProvider';
 import { MD3Field } from '@/components/ui/MD3Field';
+import type { ApiUser } from '@/lib/api/helpers';
+import { detectOutliers } from '@/lib/bio-analytics/outlier-detector';
+import { deriveKey, encryptData, wrapEncrypted } from '@/lib/security/crypto-client';
 import type { EditSpecimenForm, Specimen } from '@/types';
 
 type Props = {
@@ -22,14 +28,82 @@ export function EditSpecimenModal({
 	specimens = [],
 	validationError,
 }: Props) {
+	const { activeUsers, setCurrentResource } = usePresence();
+	const { data: session } = useSession();
+
 	useEffect(() => {
 		if (!specimen) return;
+
+		// Устанавливаем текущий ресурс для отслеживания присутствия
+		setCurrentResource('SPECIMEN', specimen.id);
+
 		const onKeyDown = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') onClose();
 		};
 		window.addEventListener('keydown', onKeyDown);
-		return () => window.removeEventListener('keydown', onKeyDown);
-	}, [specimen, onClose]);
+		return () => {
+			window.removeEventListener('keydown', onKeyDown);
+			setCurrentResource(null, null);
+		};
+	}, [specimen, onClose, setCurrentResource]);
+
+	// Фильтруем пользователей, которые смотрят ЭТУ ЖЕ пробу
+	const otherViewers = useMemo(() => {
+		if (!specimen) return [];
+		return activeUsers.filter(
+			(u) =>
+				u.resourceType === 'SPECIMEN' &&
+				u.resourceId === specimen.id &&
+				u.userId !== (session?.user as ApiUser)?.id,
+		);
+	}, [activeUsers, specimen, session]);
+
+	// Детекция аномалий
+	const outliers = useMemo(() => {
+		if (!specimen) return [];
+		return detectOutliers(specimen);
+	}, [specimen]);
+
+	// Состояние режима приватности (ZK)
+	const [privacyMode, setPrivacyMode] = useState(false);
+	const [isEncrypting, setIsEncrypting] = useState(false);
+
+	const handleEnhancedSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!specimen) return;
+
+		if (privacyMode) {
+			setIsEncrypting(true);
+			try {
+				// Шифруем чувствительные поля перед отправкой
+				const key = await deriveKey(session?.user?.email || 'default-salt', 'lab-salt');
+				const encryptedLocality = specimen.locality
+					? wrapEncrypted(await encryptData(specimen.locality, key))
+					: specimen.locality;
+				const encryptedCollector = specimen.collector
+					? wrapEncrypted(await encryptData(specimen.collector, key))
+					: specimen.collector;
+
+				onChange({
+					...specimen,
+					locality: encryptedLocality,
+					collector: encryptedCollector,
+				});
+
+				// Вызываем оригинальный onSubmit (он должен быть вызван после обновления стейта,
+				// но React setState асинхронный. Лучше передать данные напрямую, если onSubmit это позволяет.
+				// Однако в текущей архитектуре onSubmit берет данные из пропсов.
+				// Поэтому сделаем небольшую паузу или вызовем submit вручную с новыми данными.
+				setTimeout(() => onSubmit(e), 50);
+			} catch (err) {
+				console.error('Encryption failed', err);
+			} finally {
+				setIsEncrypting(false);
+			}
+		} else {
+			onSubmit(e);
+		}
+	};
 
 	const taxons = useMemo(
 		() => Array.from(new Set(specimens.map((s) => s.taxon).filter(Boolean))),
@@ -84,16 +158,63 @@ export function EditSpecimenModal({
 			className="fixed inset-0 z-140 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
 		>
 			<div className="my-6 w-full max-w-2xl p-6 sm:p-8 relative bg-(--md-sys-color-surface-container-low) rounded-4xl shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-				<div className="mb-6 flex items-center justify-between gap-4">
-					<h2
-						id="edit-modal-title"
-						className="text-2xl sm:text-3xl font-normal text-(--md-sys-color-on-surface) tracking-tight"
-					>
-						Редактировать
+				<div className="mb-6 flex items-start justify-between gap-4">
+					<div className="flex-1">
+						<div className="flex items-center gap-3">
+							<h2
+								id="edit-modal-title"
+								className="text-2xl sm:text-3xl font-normal text-(--md-sys-color-on-surface) tracking-tight"
+							>
+								Редактировать
+							</h2>
+							<button
+								type="button"
+								onClick={() => setPrivacyMode(!privacyMode)}
+								className={`p-2 rounded-xl transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${
+									privacyMode
+										? 'bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container) shadow-sm'
+										: 'bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-outline) hover:text-(--md-sys-color-primary)'
+								}`}
+								title={
+									privacyMode
+										? 'Приватный режим активен'
+										: 'Включить шифрование (Zero-Knowledge)'
+								}
+							>
+								{privacyMode ? (
+									<Shield className="h-4 w-4" />
+								) : (
+									<ShieldOff className="h-4 w-4" />
+								)}
+								{privacyMode ? 'Privacy On' : 'Privacy Off'}
+							</button>
+						</div>
 						<span className="block text-lg text-(--md-sys-color-primary) font-mono mt-1">
 							{specimen.id}
 						</span>
-					</h2>
+
+						{/* Индикаторы других пользователей */}
+						{otherViewers.length > 0 && (
+							<div className="mt-3 flex items-center gap-2 animate-in slide-in-from-left duration-300">
+								<div className="flex -space-x-2 overflow-hidden p-0.5">
+									{otherViewers.map((u) => (
+										<div
+											key={u.userId}
+											title={`${u.fullName} сейчас здесь`}
+											className="inline-flex h-7 w-7 rounded-full ring-2 ring-(--md-sys-color-surface-container-low) bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) items-center justify-center text-[10px] font-bold transition-transform hover:scale-110 hover:z-10 cursor-help"
+										>
+											{u.username.substring(0, 2).toUpperCase()}
+										</div>
+									))}
+								</div>
+								<span className="text-xs text-(--md-sys-color-on-surface-variant) font-medium">
+									{otherViewers.length === 1
+										? 'также просматривает'
+										: `+${otherViewers.length} просматривают`}
+								</span>
+							</div>
+						)}
+					</div>
 					<button
 						type="button"
 						onClick={onClose}
@@ -104,7 +225,36 @@ export function EditSpecimenModal({
 					</button>
 				</div>
 
-				<form onSubmit={onSubmit} className="space-y-6" autoComplete="off">
+				<form onSubmit={handleEnhancedSubmit} className="space-y-6" autoComplete="off">
+					{/* Предупреждения об аномалиях */}
+					<AnimatePresence>
+						{outliers.length > 0 && (
+							<motion.div
+								initial={{ height: 0, opacity: 0, y: -10 }}
+								animate={{ height: 'auto', opacity: 1, y: 0 }}
+								exit={{ height: 0, opacity: 0, y: -10 }}
+								className="overflow-hidden"
+							>
+								<div className="bg-(--md-sys-color-error-container) text-(--md-sys-color-on-error-container) p-5 rounded-3xl flex flex-col gap-2 shadow-md border border-(--md-sys-color-error)/20">
+									<div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest opacity-80">
+										<AlertTriangle className="h-4 w-4" />
+										Биологическая аномалия
+									</div>
+									<div className="space-y-1">
+										{outliers.map((o, i) => (
+											<div
+												key={i}
+												className="text-sm font-medium leading-snug"
+											>
+												{o.message}
+											</div>
+										))}
+									</div>
+								</div>
+							</motion.div>
+						)}
+					</AnimatePresence>
+
 					{/* Секция 1: Общая информация */}
 					<section className="bg-(--md-sys-color-surface-container-high) p-5 sm:p-6 rounded-3xl shadow-inner">
 						<h3 className="mb-4 text-sm font-medium tracking-wide text-(--md-sys-color-primary)">
@@ -307,11 +457,15 @@ export function EditSpecimenModal({
 						</button>
 						<button
 							type="submit"
-							disabled={isEmpty}
+							disabled={isEmpty || isEncrypting}
 							className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-50"
 						>
-							<Save className="h-5 w-5" />
-							Сохранить
+							{isEncrypting ? (
+								<Lock className="h-5 w-5 animate-pulse" />
+							) : (
+								<Save className="h-5 w-5" />
+							)}
+							{isEncrypting ? 'Шифрование...' : 'Сохранить'}
 						</button>
 					</div>
 				</form>

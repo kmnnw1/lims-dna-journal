@@ -1,9 +1,13 @@
 'use client';
 
-import { ChevronDown, ChevronUp, FlaskConical, History, Pencil } from 'lucide-react';
+import { ChevronDown, ChevronUp, FlaskConical, History, Lock, Pencil } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import React from 'react';
+import type { ApiUser } from '@/lib/api/helpers';
+import { decryptData, deriveKey, isEncrypted, unwrapEncrypted } from '@/lib/security/crypto-client';
 import type { Specimen } from '@/types';
 import { PCRStatusBadge } from './PCRStatusBadge';
+import { usePresence } from './PresenceProvider';
 
 interface SpecimenTableProps {
 	specimens: Specimen[];
@@ -34,6 +38,47 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 	onSort,
 	onHistory,
 }) => {
+	const { activeUsers } = usePresence();
+	const { data: session } = useSession();
+
+	const [cryptoKey, setCryptoKey] = React.useState<CryptoKey | null>(null);
+
+	React.useEffect(() => {
+		if (session?.user?.email) {
+			deriveKey(session.user.email, 'lab-salt').then(setCryptoKey);
+		}
+	}, [session?.user?.email]);
+
+	// Компонент для отображения дешифрованного текста
+	const DecryptedCell: React.FC<{ text: string | null | undefined; className?: string }> = ({
+		text,
+		className,
+	}) => {
+		const [val, setVal] = React.useState<string | null>(null);
+		React.useEffect(() => {
+			if (text && isEncrypted(text)) {
+				if (cryptoKey) {
+					decryptData(unwrapEncrypted(text), cryptoKey)
+						.then(setVal)
+						.catch(() => setVal('[Error]'));
+				} else {
+					setVal(null);
+				}
+			} else {
+				setVal(text || null);
+			}
+		}, [text]);
+
+		if (text && isEncrypted(text) && !val) {
+			return (
+				<span className="flex items-center gap-1 opacity-40 italic text-xs">
+					<Lock className="w-3 h-3" /> зашифровано
+				</span>
+			);
+		}
+
+		return <span className={className}>{val || '—'}</span>;
+	};
 	// Хелпер для подсветки поиска (MD3 Tertiary Container Style)
 	const highlightText = (
 		text: string | number | null | undefined | { result: string | number },
@@ -208,7 +253,23 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 									<td
 										className={`sticky left-12 z-30 ${stickyBgClass} px-3 py-2 w-24 border-b border-b-(--md-sys-color-outline-variant)/20 border-r border-r-(--md-sys-color-outline-variant)/30 font-mono text-sm text-(--md-sys-color-primary) font-medium tracking-tight whitespace-nowrap`}
 									>
-										{highlightText(specimen.id, searchQuery)}
+										<div className="flex items-center gap-2">
+											{highlightText(specimen.id, searchQuery)}
+											{activeUsers.some(
+												(u) =>
+													u.resourceType === 'SPECIMEN' &&
+													u.resourceId === specimen.id &&
+													u.userId !== (session?.user as ApiUser)?.id,
+											) && (
+												<span
+													className="relative flex h-2 w-2"
+													title="Эту пробу сейчас кто-то редактирует или просматривает"
+												>
+													<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-(--md-sys-color-primary) opacity-75"></span>
+													<span className="relative inline-flex rounded-full h-2 w-2 bg-(--md-sys-color-primary)"></span>
+												</span>
+											)}
+										</div>
 									</td>
 									<td className="px-4 py-2 border-b border-(--md-sys-color-outline-variant)/20">
 										<div className="flex flex-col gap-0.5 min-w-[180px]">
@@ -216,17 +277,19 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 												{highlightText(specimen.taxon, searchQuery)}
 											</span>
 											{specimen.locality && (
-												<span className="text-(--md-sys-color-outline) text-xs line-clamp-1">
-													{specimen.locality}
-												</span>
+												<div className="text-(--md-sys-color-outline) text-xs line-clamp-1">
+													<DecryptedCell text={specimen.locality} />
+												</div>
 											)}
 										</div>
 									</td>
 									{hasAnyNotes && (
 										<td className="px-4 py-2 border-b border-(--md-sys-color-outline-variant)/20">
-											<p className="text-(--md-sys-color-on-surface) opacity-80 text-sm line-clamp-2 max-w-[200px]">
-												{specimen.notes || specimen.collectNotes || '—'}
-											</p>
+											<div className="text-(--md-sys-color-on-surface) opacity-80 text-sm line-clamp-2 max-w-[200px]">
+												<DecryptedCell
+													text={specimen.notes || specimen.collectNotes}
+												/>
+											</div>
 										</td>
 									)}
 									<td className="px-4 py-2 border-b border-(--md-sys-color-outline-variant)/20">
