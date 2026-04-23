@@ -1,6 +1,7 @@
 import { Zap } from 'lucide-react';
 import type { Metadata, Viewport } from 'next';
 import { Montserrat, Outfit } from 'next/font/google';
+import { DevHotkeys } from '@/components/features/DevHotkeys';
 import { DevOverlay } from '@/components/features/DevOverlay';
 import { DevSettingsProvider } from '@/components/features/DevSettingsProvider';
 import { DevToolsButton } from '@/components/features/DevToolsButton';
@@ -73,6 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				<Providers>
 					<ThemeProvider>
 						<DevSettingsProvider>
+							<DevHotkeys />
 							<PageTransition>{children}</PageTransition>
 							<DevOverlay />
 							<DevToolsButton />

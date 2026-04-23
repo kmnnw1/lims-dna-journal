@@ -440,11 +440,11 @@ export function JournalPageContent() {
 				<FAB
 					extended
 					onClick={() => setIsAddModalOpen(true)}
-					className="fixed bottom-6 right-6 z-50 bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) flex items-center gap-2 px-4 shadow-xl"
+					className="fixed bottom-6 right-6 z-50 bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) flex items-center gap-2 px-3 sm:px-4 shadow-xl h-14 sm:h-16"
 					aria-label="Добавить пробу"
 				>
 					<Plus className="w-6 h-6" />
-					<span className="font-medium mr-1">Новая проба</span>
+					<span className="font-medium mr-1 hidden sm:inline">Новая проба</span>
 				</FAB>
 			)}
 

@@ -21,6 +21,7 @@ export interface DevSettings {
 		table: boolean;
 		fab: boolean;
 	};
+	hotkey: string;
 }
 
 interface DevSettingsContextType {
@@ -28,6 +29,8 @@ interface DevSettingsContextType {
 	updateSettings: (settings: DevSettings) => void;
 	isOverlayOpen: boolean;
 	setOverlayOpen: (open: boolean) => void;
+	anchorPos: { x: number; y: number };
+	setAnchorPos: (pos: { x: number; y: number }) => void;
 }
 
 const DevSettingsContext = createContext<DevSettingsContextType | undefined>(undefined);
@@ -50,8 +53,10 @@ export const DevSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 			table: true,
 			fab: true,
 		},
+		hotkey: 'Shift+D',
 	});
 	const [isOverlayOpen, setOverlayOpen] = useState(false);
+	const [anchorPos, setAnchorPos] = useState({ x: 0, y: 0 });
 
 	// Загружаем настройки из localStorage при старте
 	useEffect(() => {
@@ -86,6 +91,8 @@ export const DevSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 				updateSettings,
 				isOverlayOpen,
 				setOverlayOpen,
+				anchorPos,
+				setAnchorPos,
 			}}
 		>
 			<MotionConfig transition={{ duration: 0.4 / settings.animationSpeed }}>

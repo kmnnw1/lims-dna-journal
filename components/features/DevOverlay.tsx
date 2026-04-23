@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
 	Activity,
 	Check,
@@ -9,6 +9,7 @@ import {
 	EyeOff,
 	Gauge,
 	LogIn,
+	Settings2,
 	ShieldAlert,
 	Smartphone,
 	Sparkles,
@@ -16,29 +17,37 @@ import {
 	Zap,
 } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDevSettings } from './DevSettingsProvider';
 
 /**
- * Оверлей инструментов разработчика (переведено на русский)
- * Убраны iOS-слайдеры, заменены на чистые MD3-контролы.
+ * DevOverlay (Vercel/Next.js Style Popover)
+ * Компактное меню инструментов, открывающееся рядом с кнопкой.
+ * Стиль: 1-в-1 как Next.js Dev Tools (Glassmorphism, Dark, Compact).
  */
 export const DevOverlay: React.FC = () => {
-	const { settings, updateSettings, isOverlayOpen, setOverlayOpen } = useDevSettings();
+	const { settings, updateSettings, isOverlayOpen, setOverlayOpen, anchorPos } = useDevSettings();
 	const { data: session } = useSession();
-	const [isBypassing, setIsBypassing] = useState(false);
+	const [_isBypassing, setIsBypassing] = useState(false);
 	const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'EDITOR' | 'READER'>('ADMIN');
+	const containerRef = useRef<HTMLDivElement>(null);
 
 	const currentRole = (session?.user as { role?: string })?.role;
 	const isAuthenticated = !!session;
 
-	// Доступ ограничен для Павла и Asus
-	const isAuthorized =
-		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'pavel' ||
-		process.env.NEXT_PUBLIC_OS_USER?.toLowerCase() === 'asus' ||
-		process.env.NODE_ENV === 'development';
+	// Закрытие при клике вне
+	useEffect(() => {
+		if (!isOverlayOpen) return;
+		const handleClickOutside = (e: MouseEvent) => {
+			if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+				setOverlayOpen(false);
+			}
+		};
+		document.addEventListener('mousedown', handleClickOutside);
+		return () => document.removeEventListener('mousedown', handleClickOutside);
+	}, [isOverlayOpen, setOverlayOpen]);
 
-	if (!isOverlayOpen || !isAuthorized) return null;
+	if (!isOverlayOpen) return null;
 
 	const toggle = (key: keyof typeof settings) => {
 		updateSettings({ ...settings, [key]: !settings[key] });
@@ -48,271 +57,152 @@ export const DevOverlay: React.FC = () => {
 		setIsBypassing(true);
 		try {
 			await signIn('credentials', {
-				token: 'test-token-123',
+				token: process.env.NEXT_PUBLIC_AUTH_TEST_TOKEN || 'test-token-bypass',
 				role: selectedRole,
 				redirect: true,
 				callbackUrl: '/',
 			});
 		} catch (error) {
-			console.error('Ошибка байпаса логина:', error);
+			console.error('Bypass error:', error);
 		} finally {
 			setIsBypassing(false);
 			setOverlayOpen(false);
 		}
 	};
 
-	const roles = [
-		{ id: 'ADMIN', label: 'Администратор', color: 'bg-(--md-sys-color-primary)' },
-		{ id: 'EDITOR', label: 'Редактор', color: 'bg-(--md-sys-color-secondary)' },
-		{ id: 'READER', label: 'Читатель', color: 'bg-(--md-sys-color-tertiary)' },
-	] as const;
+	// Определение направления открытия (вверх или вниз)
+	const isBottom = anchorPos.y > (typeof window !== 'undefined' ? window.innerHeight / 2 : 500);
+	const isRight = anchorPos.x > (typeof window !== 'undefined' ? window.innerWidth / 2 : 500);
 
 	return (
-		<div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
-			{/* Backdrop */}
-			<div
-				className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
-				onClick={() => setOverlayOpen(false)}
-			/>
-
-			{/* Modal Panel */}
+		<AnimatePresence>
 			<motion.div
-				initial={{ opacity: 0, scale: 0.9, y: 20 }}
+				ref={containerRef}
+				initial={{ opacity: 0, scale: 0.9, y: isBottom ? 20 : -20 }}
 				animate={{ opacity: 1, scale: 1, y: 0 }}
-				exit={{ opacity: 0, scale: 0.9, y: 20 }}
-				className="relative w-full max-w-sm max-h-[85vh] bg-(--md-sys-color-surface-container-high) rounded-4xl shadow-2xl overflow-hidden flex flex-col"
+				exit={{ opacity: 0, scale: 0.9, y: isBottom ? 20 : -20 }}
+				transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+				style={{
+					position: 'fixed',
+					left: isRight ? 'auto' : anchorPos.x,
+					right: isRight
+						? typeof window !== 'undefined'
+							? window.innerWidth - anchorPos.x - 56
+							: 24
+						: 'auto',
+					top: isBottom ? 'auto' : anchorPos.y + 64,
+					bottom: isBottom
+						? typeof window !== 'undefined'
+							? window.innerHeight - anchorPos.y + 8
+							: 80
+						: 'auto',
+				}}
+				className="z-9999 w-[320px] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"
 			>
-				{/* Header */}
-				<div className="shrink-0 p-4 pb-3 border-b border-(--md-sys-color-outline-variant)/10 flex flex-col items-center">
-					<div className="p-2 rounded-xl bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container) mb-2">
-						<ShieldAlert className="w-6 h-6" />
+				{/* Header - Compact */}
+				<div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/5">
+					<div className="flex items-center gap-2">
+						<Settings2 className="w-4 h-4 text-white/60" />
+						<span className="text-[11px] font-bold text-white/90 uppercase tracking-widest">
+							Dev Tools
+						</span>
 					</div>
-					<h2 className="text-lg font-black text-(--md-sys-color-on-surface) tracking-tight">
-						Dev Tools
-					</h2>
+					<button
+						onClick={() => setOverlayOpen(false)}
+						className="p-1 hover:bg-white/10 rounded-md transition-colors"
+					>
+						<X className="w-3.5 h-3.5 text-white/40" />
+					</button>
 				</div>
 
 				{/* Scrollable Content */}
-				<div className="flex-1 overflow-y-auto p-5 space-y-3 scrollbar-none">
-					{/* Role Selection */}
-					<div className="space-y-2">
-						<label className="text-[10px] font-bold uppercase tracking-wider text-(--md-sys-color-outline) opacity-70 ml-1">
-							Выберите полномочия
-						</label>
-						<div className="flex gap-2">
-							{roles.map((role) => (
+				<div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[60vh] scrollbar-none">
+					{/* Быстрые действия (Bypass) */}
+					<div className="p-2 space-y-2">
+						<div className="grid grid-cols-3 gap-1">
+							{['ADMIN', 'EDITOR', 'READER'].map((r) => (
 								<button
-									key={role.id}
-									onClick={() => setSelectedRole(role.id)}
-									className={`flex-1 py-3 px-2 rounded-xl text-[10px] font-bold transition-all border-2 ${
-										selectedRole === role.id
-											? `${role.color} text-white border-transparent shadow-md scale-105`
-											: 'bg-(--md-sys-color-surface-container-lowest) border-(--md-sys-color-outline-variant)/30 text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
+									key={r}
+									onClick={() =>
+										setSelectedRole(r as 'ADMIN' | 'EDITOR' | 'READER')
+									}
+									className={`py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
+										selectedRole === r
+											? 'bg-white/15 border-white/20 text-white'
+											: 'bg-white/5 border-transparent text-white/40 hover:text-white/60'
 									}`}
 								>
-									{role.label}
+									{r === 'ADMIN'
+										? 'АДМИН'
+										: r === 'EDITOR'
+											? 'РЕДАКТОР'
+											: 'ГОСТЬ'}
 								</button>
 							))}
 						</div>
+						<button
+							onClick={handleBypassLogin}
+							className="w-full py-2 px-3 bg-white text-black rounded-lg text-[11px] font-black hover:bg-white/90 transition-all flex items-center justify-center gap-2"
+						>
+							<LogIn className="w-3.5 h-3.5" />
+							{isAuthenticated ? 'СМЕНИТЬ РОЛЬ' : 'ЗАЙТИ БЕЗ ЛОГИНА'}
+						</button>
+						{isAuthenticated && (
+							<p className="text-[9px] text-center text-white/30 font-mono">
+								АКТИВЕН: {currentRole}
+							</p>
+						)}
 					</div>
 
-					{/* Bypass Login Button */}
-					<button
-						onClick={handleBypassLogin}
-						disabled={isBypassing}
-						className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl md-elevation-1 hover:md-elevation-2 active:scale-95 transition-all disabled:opacity-50 ${
-							isAuthenticated
-								? 'bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container)'
-								: 'bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary)'
-						}`}
-					>
-						<LogIn className={`w-5 h-5 ${isBypassing ? 'animate-pulse' : ''}`} />
-						<div className="text-left">
-							<h3 className="font-bold text-sm">
-								{isAuthenticated ? 'Сменить права' : 'Зайти без логина'}
-							</h3>
-							<p className="text-[10px] opacity-80">
-								{isAuthenticated
-									? `Текущая роль: ${currentRole}`
-									: 'Авторизация по тест-токену'}
-							</p>
-						</div>
-					</button>
+					<div className="h-px bg-white/5 mx-2 my-1" />
 
-					<div className="h-px bg-(--md-sys-color-outline-variant)/10 my-2" />
+					{/* Переключатели */}
+					<div className="px-2 space-y-0.5">
+						{[
+							{
+								id: 'enableMobileCards',
+								label: 'Мобильные карточки',
+								icon: Smartphone,
+							},
+							{ id: 'forceDesktopView', label: 'Режим десктопа', icon: Cpu },
+							{ id: 'useAI', label: 'Gemini AI (Очистка)', icon: Sparkles },
+							{
+								id: 'hideNextIndicator',
+								label: 'Скрыть Next.js лого',
+								icon: Activity,
+							},
+						].map((item) => {
+							const isOn = settings[item.id as keyof typeof settings];
+							return (
+								<button
+									key={item.id}
+									onClick={() => toggle(item.id as keyof typeof settings)}
+									className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors group"
+								>
+									<div className="flex items-center gap-2.5">
+										<item.icon
+											className={`w-4 h-4 ${isOn ? 'text-blue-400' : 'text-white/30 group-hover:text-white/50'}`}
+										/>
+										<span
+											className={`text-[12px] ${isOn ? 'text-white/90' : 'text-white/50'}`}
+										>
+											{item.label}
+										</span>
+									</div>
+									{isOn && <Check className="w-3.5 h-3.5 text-blue-400" />}
+								</button>
+							);
+						})}
+					</div>
 
-					{/* Toggles */}
-					<div className="space-y-3">
-						<button
-							onClick={() => toggle('enableMobileCards')}
-							className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
-								settings.enableMobileCards
-									? 'bg-(--md-sys-color-primary-container) border-(--md-sys-color-primary)/30 text-(--md-sys-color-on-primary-container)'
-									: 'bg-(--md-sys-color-surface-container-low) border-transparent text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
-							}`}
-						>
-							<div className="flex items-center gap-3">
-								<Smartphone
-									className={`w-5 h-5 ${settings.enableMobileCards ? 'text-(--md-sys-color-primary)' : 'opacity-60'}`}
-								/>
-								<div className="text-left">
-									<h3 className="font-bold text-sm">Мобильные карточки</h3>
-									<p className="text-[10px] opacity-60">Экспериментальный вид</p>
-								</div>
-							</div>
-							<div
-								className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-									settings.enableMobileCards
-										? 'bg-(--md-sys-color-primary) border-(--md-sys-color-primary)'
-										: 'border-(--md-sys-color-outline-variant)'
-								}`}
-							>
-								{settings.enableMobileCards && (
-									<Check className="w-4 h-4 text-white" strokeWidth={3} />
-								)}
-							</div>
-						</button>
+					<div className="h-px bg-white/5 mx-2 my-1" />
 
-						<button
-							onClick={() => toggle('forceDesktopView')}
-							className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
-								settings.forceDesktopView
-									? 'bg-(--md-sys-color-tertiary-container) border-(--md-sys-color-tertiary)/30 text-(--md-sys-color-on-tertiary-container)'
-									: 'bg-(--md-sys-color-surface-container-low) border-transparent text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
-							}`}
-						>
-							<div className="flex items-center gap-3">
-								<Cpu
-									className={`w-5 h-5 ${settings.forceDesktopView ? 'text-(--md-sys-color-tertiary)' : 'opacity-60'}`}
-								/>
-								<div className="text-left">
-									<h3 className="font-bold text-sm">Принудительно ПК</h3>
-									<p className="text-[10px] opacity-60">
-										Игнорировать тип устройства
-									</p>
-								</div>
-							</div>
-							<div
-								className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-									settings.forceDesktopView
-										? 'bg-(--md-sys-color-tertiary) border-(--md-sys-color-tertiary)'
-										: 'border-(--md-sys-color-outline-variant)'
-								}`}
-							>
-								{settings.forceDesktopView && (
-									<Check className="w-4 h-4 text-white" strokeWidth={3} />
-								)}
-							</div>
-						</button>
-
-						<button
-							onClick={() => toggle('forceMobileView')}
-							className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
-								settings.forceMobileView
-									? 'bg-(--md-sys-color-secondary-container) border-(--md-sys-color-secondary)/30 text-(--md-sys-color-on-secondary-container)'
-									: 'bg-(--md-sys-color-surface-container-low) border-transparent text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
-							}`}
-						>
-							<div className="flex items-center gap-3">
-								<Zap
-									className={`w-5 h-5 ${settings.forceMobileView ? 'text-(--md-sys-color-secondary)' : 'opacity-60'}`}
-								/>
-								<div className="text-left">
-									<h3 className="font-bold text-sm">Принудительно Мобильный</h3>
-									<p className="text-[10px] opacity-60">
-										Эмуляция телефона на ПК
-									</p>
-								</div>
-							</div>
-							<div
-								className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-									settings.forceMobileView
-										? 'bg-(--md-sys-color-secondary) border-(--md-sys-color-secondary)'
-										: 'border-(--md-sys-color-outline-variant)'
-								}`}
-							>
-								{settings.forceMobileView && (
-									<Check className="w-4 h-4 text-white" strokeWidth={3} />
-								)}
-							</div>
-						</button>
-
-						<div className="h-px bg-(--md-sys-color-outline-variant)/10 my-1" />
-
-						{/* Gemini AI Toggle */}
-						<button
-							onClick={() => toggle('useAI')}
-							className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
-								settings.useAI
-									? 'bg-(--md-sys-color-primary-container) border-(--md-sys-color-primary)/30 text-(--md-sys-color-on-primary-container)'
-									: 'bg-(--md-sys-color-surface-container-low) border-transparent text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
-							}`}
-						>
-							<div className="flex items-center gap-3">
-								<Sparkles
-									className={`w-5 h-5 ${settings.useAI ? 'text-(--md-sys-color-primary)' : 'opacity-60'}`}
-								/>
-								<div className="text-left">
-									<h3 className="font-bold text-sm">Gemini AI (Очистка)</h3>
-									<p className="text-[10px] opacity-60">
-										Использовать при импорте
-									</p>
-								</div>
-							</div>
-							<div
-								className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-									settings.useAI
-										? 'bg-(--md-sys-color-primary) border-(--md-sys-color-primary)'
-										: 'border-(--md-sys-color-outline-variant)'
-								}`}
-							>
-								{settings.useAI && (
-									<Check className="w-4 h-4 text-white" strokeWidth={3} />
-								)}
-							</div>
-						</button>
-
-						{/* Next.js Indicator Toggle */}
-						<button
-							onClick={() => toggle('hideNextIndicator')}
-							className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
-								settings.hideNextIndicator
-									? 'bg-(--md-sys-color-error-container) border-(--md-sys-color-error)/30 text-(--md-sys-color-on-error-container)'
-									: 'bg-(--md-sys-color-surface-container-low) border-transparent text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
-							}`}
-						>
-							<div className="flex items-center gap-3">
-								<Activity
-									className={`w-5 h-5 ${settings.hideNextIndicator ? 'text-(--md-sys-color-error)' : 'opacity-60'}`}
-								/>
-								<div className="text-left">
-									<h3 className="font-bold text-sm">Скрыть индикатор Next.js</h3>
-									<p className="text-[10px] opacity-60">Только в dev-режиме</p>
-								</div>
-							</div>
-							<div
-								className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-									settings.hideNextIndicator
-										? 'bg-(--md-sys-color-error) border-(--md-sys-color-error)'
-										: 'border-(--md-sys-color-outline-variant)'
-								}`}
-							>
-								{settings.hideNextIndicator && (
-									<Check className="w-4 h-4 text-white" strokeWidth={3} />
-								)}
-							</div>
-						</button>
-
-						{/* Animation Speed Slider */}
-						<div className="p-4 bg-(--md-sys-color-surface-container-low) rounded-2xl space-y-3">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-3">
-									<Gauge className="w-5 h-5 opacity-60" />
-									<h3 className="font-bold text-sm text-(--md-sys-color-on-surface-variant)">
-										Скорость анимаций
-									</h3>
-								</div>
-								<span className="text-xs font-mono bg-(--md-sys-color-primary-container) px-2 py-0.5 rounded-full text-(--md-sys-color-primary)">
+					{/* Слайдеры */}
+					<div className="px-2 space-y-3 py-2">
+						<div className="space-y-1.5">
+							<div className="flex justify-between text-[10px] font-mono text-white/40">
+								<span>СКОРОСТЬ АНИМАЦИЙ</span>
+								<span className="text-white/70">
 									{settings.animationSpeed.toFixed(1)}x
 								</span>
 							</div>
@@ -325,115 +215,57 @@ export const DevOverlay: React.FC = () => {
 								onChange={(e) =>
 									updateSettings({
 										...settings,
-										animationSpeed: Number.parseFloat(e.target.value),
+										animationSpeed: parseFloat(e.target.value),
 									})
 								}
-								className="w-full h-1.5 bg-(--md-sys-color-outline-variant) rounded-lg appearance-none cursor-pointer accent-(--md-sys-color-primary)"
+								className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-white"
 							/>
-						</div>
-
-						{/* Flask Event Multiplier Slider */}
-						<div className="p-4 bg-(--md-sys-color-surface-container-low) rounded-2xl space-y-3">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-3">
-									<Sparkles className="w-5 h-5 opacity-60" />
-									<h3 className="font-bold text-sm text-(--md-sys-color-on-surface-variant)">
-										События колбы
-									</h3>
-								</div>
-								<span className="text-xs font-mono bg-(--md-sys-color-primary-container) px-2 py-0.5 rounded-full text-(--md-sys-color-primary)">
-									{settings.flaskEventMultiplier}x
-								</span>
-							</div>
-							<input
-								type="range"
-								min="1"
-								max="100"
-								step="1"
-								value={settings.flaskEventMultiplier}
-								onChange={(e) =>
-									updateSettings({
-										...settings,
-										flaskEventMultiplier: parseInt(e.target.value, 10),
-									})
-								}
-								className="w-full h-1.5 bg-(--md-sys-color-outline-variant) rounded-lg appearance-none cursor-pointer accent-(--md-sys-color-primary)"
-							/>
-						</div>
-
-						{/* Element Visibility Section */}
-						<div className="space-y-3 pt-2">
-							<div className="flex items-center gap-2 px-1">
-								<Eye className="w-4 h-4 opacity-60" />
-								<h3 className="text-[10px] font-bold uppercase tracking-wider text-(--md-sys-color-outline)">
-									Видимость элементов
-								</h3>
-							</div>
-							<div className="grid grid-cols-2 gap-2">
-								{(
-									Object.keys(settings.visibility) as Array<
-										keyof typeof settings.visibility
-									>
-								).map((key) => {
-									const isVisible = settings.visibility[key];
-									const labels: Record<string, string> = {
-										header: 'Шапка',
-										stats: 'Статистика',
-										filters: 'Фильтры',
-										table: 'Таблица',
-										fab: 'Кнопка +',
-									};
-									return (
-										<button
-											key={key}
-											onClick={() =>
-												updateSettings({
-													...settings,
-													visibility: {
-														...settings.visibility,
-														[key]: !isVisible,
-													},
-												})
-											}
-											className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all ${
-												isVisible
-													? 'bg-(--md-sys-color-surface-container-highest) border-transparent text-(--md-sys-color-on-surface)'
-													: 'bg-(--md-sys-color-error-container)/10 border-(--md-sys-color-error)/20 text-(--md-sys-color-error) opacity-80'
-											}`}
-										>
-											{isVisible ? (
-												<Eye className="w-3.5 h-3.5 shrink-0" />
-											) : (
-												<EyeOff className="w-3.5 h-3.5 shrink-0" />
-											)}
-											<span className="text-xs font-bold truncate">
-												{labels[key] || key}
-											</span>
-										</button>
-									);
-								})}
-							</div>
 						</div>
 					</div>
 
-					<div className="pt-4 border-t border-(--md-sys-color-outline-variant)/10 flex justify-center">
-						<div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-(--md-sys-color-primary-container)/30 text-[10px] font-bold text-(--md-sys-color-primary) uppercase tracking-widest">
-							<Zap className="w-3 h-3" />
-							Бета-режим активен
+					<div className="h-px bg-white/5 mx-2 my-1" />
+
+					{/* Скрытие панели */}
+					<div className="p-2">
+						<div className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-3">
+							<div className="flex items-start justify-between gap-3">
+								<div className="space-y-0.5">
+									<h4 className="text-[11px] font-bold text-white/90 uppercase tracking-tight">
+										Скрыть панель
+									</h4>
+									<p className="text-[9px] text-white/40 leading-tight">
+										До рестарта сервера или на 24 часа.
+									</p>
+								</div>
+								<button
+									onClick={() => {
+										const until = Date.now() + 24 * 60 * 60 * 1000;
+										localStorage.setItem(
+											'lab_journal_dev_hidden_until',
+											until.toString(),
+										);
+										window.location.reload();
+									}}
+									className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-white text-[9px] font-bold"
+								>
+									СКРЫТЬ
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>
 
-				{/* Footer */}
-				<div className="shrink-0 p-4 pt-2 border-t border-(--md-sys-color-outline-variant)/10 flex justify-center bg-(--md-sys-color-surface-container-high)">
-					<button
-						onClick={() => setOverlayOpen(false)}
-						className="flex items-center gap-2 px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) shadow-lg hover:shadow-xl active:scale-95 transition-all"
-					>
-						<X className="w-4 h-4" /> Закрыть
-					</button>
+				{/* Footer - Branding */}
+				<div className="px-4 py-2 border-t border-white/5 flex items-center justify-between bg-black/50">
+					<span className="text-[9px] font-mono text-white/20">VER. 0.21.0.5</span>
+					<div className="flex items-center gap-1 opacity-20 hover:opacity-50 transition-opacity cursor-default">
+						<Zap className="w-2.5 h-2.5" />
+						<span className="text-[9px] font-black tracking-tighter italic">
+							AG-LIMS
+						</span>
+					</div>
 				</div>
 			</motion.div>
-		</div>
+		</AnimatePresence>
 	);
 };

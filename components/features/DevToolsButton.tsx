@@ -12,7 +12,7 @@ import { useDevSettings } from './DevSettingsProvider';
  * Использование MotionValue гарантирует отсутствие «прыжков» (телепортации) при наведении.
  */
 export function DevToolsButton() {
-	const { setOverlayOpen, isOverlayOpen, settings } = useDevSettings();
+	const { setOverlayOpen, isOverlayOpen, settings, setAnchorPos } = useDevSettings();
 	const pathname = usePathname();
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const [isDragging, setIsDragging] = useState(false);
@@ -31,7 +31,10 @@ export function DevToolsButton() {
 		const devMode = process.env.NODE_ENV === 'development';
 
 		if (devMode || devDevice || devUser) {
-			if (!window.location.search.includes('hideDev=true')) {
+			const hiddenUntil = localStorage.getItem('lab_journal_dev_hidden_until');
+			if (hiddenUntil && Date.now() < parseInt(hiddenUntil, 10)) {
+				setIsAuthorized(false);
+			} else if (!window.location.search.includes('hideDev=true')) {
 				setIsAuthorized(true);
 			}
 		}
@@ -87,10 +90,9 @@ export function DevToolsButton() {
 			const winHeight = window.innerHeight;
 			const edgePadding = 24;
 			const btnSize = 54;
-			const initialAvoidance = 80;
 
 			const startX = winWidth - btnSize - edgePadding;
-			const startY = winHeight - btnSize - edgePadding - initialAvoidance;
+			const startY = winHeight - btnSize - edgePadding;
 
 			x.set(startX);
 			y.set(startY);
@@ -127,17 +129,14 @@ export function DevToolsButton() {
 			let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
 			let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
 
-			const isJournalPage = pathname === '/';
-
-			// Флаг: занят ли текущий угол логотипом, FAB или кнопкой темы
-			const isFABInCorner = isJournalPage && !isLeft && !isTop;
+			// Флаг: занят ли текущий угол логотипом или кнопкой темы
 			const isLogoInCorner =
 				logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop;
 			const isThemeInCorner =
 				themeCorner && isLeft === themeCorner.isLeft && isTop === themeCorner.isTop;
 
-			if (isFABInCorner || isLogoInCorner || isThemeInCorner) {
-				const avoidanceX = isFABInCorner ? 180 : 80;
+			if (isLogoInCorner || isThemeInCorner) {
+			const avoidanceX = 80;
 				const avoidanceY = 80;
 
 				const distToYEdge = isTop ? info.point.y : winHeight - info.point.y;
@@ -192,13 +191,22 @@ export function DevToolsButton() {
 			whileTap={{ scale: 0.94 }}
 			type="button"
 			onClick={() => {
-				if (!isDragging) setOverlayOpen(true);
+				if (!isDragging) {
+					setAnchorPos({ x: x.get(), y: y.get() });
+					setOverlayOpen(true);
+				}
 			}}
-			className="w-14 h-14 rounded-2xl bg-(--md-sys-color-error-container) text-(--md-sys-color-on-error-container) shadow-2xl flex items-center justify-center border border-(--md-sys-color-error)/20 cursor-grab z-9999"
+			className="w-10 h-10 rounded-full bg-black text-white shadow-2xl flex items-center justify-center border border-white/10 cursor-grab z-9999"
 			aria-label="Инструменты разработчика"
 		>
-			<div className="absolute inset-0 bg-(--md-sys-color-primary)/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-			<ShieldAlert className="w-5 h-5 text-(--md-sys-color-error) group-hover:rotate-12 transition-transform relative z-10" />
+			<div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+			<svg 
+				viewBox="0 0 24 24" 
+				fill="currentColor" 
+				className="w-5 h-5 transition-transform group-hover:scale-110 relative z-10"
+			>
+				<path d="M12 4L4 20H20L12 4Z" />
+			</svg>
 		</motion.button>
 	);
 }

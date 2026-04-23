@@ -65,7 +65,7 @@ export const authOptions: NextAuthOptions = {
 
 					if (authToken && !authToken.used && authToken.expiresAt > new Date()) {
 						// Invalidate token (skip for test token to allow multiple E2E runs)
-						if (passOrToken !== 'test-token-123') {
+						if (passOrToken !== process.env.AUTH_TEST_TOKEN) {
 							await prisma.authToken.update({
 								where: { id: authToken.id },
 								data: { used: true },
