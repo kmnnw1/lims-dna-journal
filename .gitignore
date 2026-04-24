@@ -10,6 +10,7 @@
 .internal_data/
 local/
 AGENTS.md
+GEMINI.md
 .gemini/
 .antigravity/
 .cortex/

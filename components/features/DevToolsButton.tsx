@@ -136,7 +136,7 @@ export function DevToolsButton() {
 				themeCorner && isLeft === themeCorner.isLeft && isTop === themeCorner.isTop;
 
 			if (isLogoInCorner || isThemeInCorner) {
-			const avoidanceX = 80;
+				const avoidanceX = 80;
 				const avoidanceY = 80;
 
 				const distToYEdge = isTop ? info.point.y : winHeight - info.point.y;
@@ -200,9 +200,9 @@ export function DevToolsButton() {
 			aria-label="Инструменты разработчика"
 		>
 			<div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-			<svg 
-				viewBox="0 0 24 24" 
-				fill="currentColor" 
+			<svg
+				viewBox="0 0 24 24"
+				fill="currentColor"
 				className="w-5 h-5 transition-transform group-hover:scale-110 relative z-10"
 			>
 				<path d="M12 4L4 20H20L12 4Z" />
