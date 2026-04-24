@@ -104,10 +104,13 @@ export function validatePagination(
 /**
  * Проверка Content-Type для мутирующих запросов
  */
-export function validateContentType(contentType: string | null): boolean {
+export function validateContentType(
+	contentType: string | null,
+	expected = 'application/json',
+): boolean {
 	if (!contentType) return false;
 	const type = contentType.split(';')[0].trim().toLowerCase();
-	return type === 'application/json';
+	return type === expected;
 }
 
 /**

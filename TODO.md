@@ -38,6 +38,6 @@
 
 ## 🧬 Modernization Phase 2 (Security Hardening)
 
-- [ ] Интеграция `input-validator` во все API-роуты (specimens, pcr, import)
+- [x] Интеграция `input-validator` во все API-роуты (specimens, pcr, import, presence)
 - [ ] Унификация обработки ошибок во всех API-роутах через shared helpers
-- [ ] Валидация File Upload (MIME, размер) в `api/import`
+- [x] Валидация File Upload (MIME, размер) в `api/import` и `api/upload`

@@ -13,7 +13,7 @@ import {
 	parseSheetToRows,
 } from '@/lib/excel';
 import { parseWithAI } from '@/lib/excel/ai-parser';
-import { validateContentType } from '@/lib/security/input-validator';
+import { validateContentType, validateFileSize } from '@/lib/security/input-validator';
 
 export async function GET(req: Request) {
 	try {
@@ -132,32 +132,99 @@ export async function POST(req: Request) {
 	try {
 		await requireRole('ADMIN');
 
-		const contentType = req.headers.get('content-type');
-		if (!validateContentType(contentType)) {
-			throw { statusCode: 415, message: 'Content-Type должен быть application/json' };
+		const contentType = req.headers.get('content-type') || '';
+
+		// Случай 1: Загрузка файла (Multipart)
+		if (contentType.includes('multipart/form-data')) {
+			const formData = await req.formData();
+			const file = formData.get('file') as File;
+
+			if (!file) {
+				throw { statusCode: 400, message: 'Файл не найден в запросе' };
+			}
+
+			// Валидация размера (10MB)
+			if (!validateFileSize(file.size, 10)) {
+				throw { statusCode: 413, message: 'Файл слишком большой (макс 10MB)' };
+			}
+
+			// Валидация расширения
+			const extension = file.name.split('.').pop()?.toLowerCase();
+			if (extension !== 'xlsx') {
+				throw { statusCode: 400, message: 'Допустимы только файлы .xlsx' };
+			}
+
+			const bytes = await file.arrayBuffer();
+			const workbook = new ExcelJS.Workbook();
+			await workbook.xlsx.load(bytes);
+
+			const dataToInsert: ParsedSpecimenRow[] = [];
+			for (const sheet of workbook.worksheets) {
+				const rows = parseSheetToRows(sheet, sheet.name);
+				dataToInsert.push(...rows);
+			}
+
+			const uniqueData = mergeById(dataToInsert);
+			const beforeCount = await prisma.specimen.count();
+
+			let inserted = 0;
+			let updated = 0;
+
+			await prisma.$transaction(async (tx) => {
+				for (const row of uniqueData) {
+					const { id, ...data } = row;
+					const existing = await tx.specimen.findUnique({ where: { id } });
+					await tx.specimen.upsert({
+						where: { id },
+						update: { ...data, updatedAt: new Date() },
+						create: { id, ...data },
+					});
+					if (existing) updated++;
+					else inserted++;
+				}
+			});
+
+			await logAuditAction({
+				userId: 'admin-system',
+				action: 'IMPORT_SPECIMENS',
+				resourceType: 'IMPORT',
+				details: { source: 'upload', count: inserted + updated, filename: file.name },
+			});
+
+			return NextResponse.json({
+				success: true,
+				message: `Загрузка завершена. Новых: ${inserted}, обновлено: ${updated}`,
+				inserted,
+				updated,
+				previousCount: beforeCount,
+			});
 		}
 
-		const body = await req.json().catch(() => ({}));
-		if (body.action !== 'clear') {
-			throw { statusCode: 400, message: 'Укажите JSON: { "action": "clear" }' };
+		// Случай 2: JSON команды (очистка)
+		if (validateContentType(contentType)) {
+			const body = await req.json().catch(() => ({}));
+			if (body.action === 'clear') {
+				const beforeCount = await prisma.specimen.count();
+				const result = await prisma.specimen.deleteMany({});
+
+				await logAuditAction({
+					userId: 'admin-system',
+					action: 'UPDATE_SPECIMEN',
+					resourceType: 'SPECIMEN',
+					resourceId: 'ALL',
+					details: { action: 'CLEAR_DATABASE', deletedCount: result.count },
+				});
+
+				return NextResponse.json({
+					success: true,
+					deleted: result.count,
+					previousCount: beforeCount,
+					message: `Удалено записей: ${result.count}`,
+				});
+			}
 		}
-		const beforeCount = await prisma.specimen.count();
-		const result = await prisma.specimen.deleteMany({});
 
-		await logAuditAction({
-			userId: 'admin-system',
-			action: 'UPDATE_SPECIMEN',
-			resourceType: 'SPECIMEN',
-			resourceId: 'ALL',
-			details: { action: 'CLEAR_DATABASE', deletedCount: result.count },
-		});
-
-		return NextResponse.json({
-			success: true,
-			deleted: result.count,
-			previousCount: beforeCount,
-			message: `Удалено записей: ${result.count}`,
-		});
+		throw { statusCode: 400, message: 'Неподдерживаемый тип запроса или действие' };
 	} catch (e: unknown) {
 		return handleError(e, req);
 	}

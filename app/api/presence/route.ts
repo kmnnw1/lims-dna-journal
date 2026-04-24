@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { type ApiUser, handleError, requireRole } from '@/lib/api/helpers';
 import { prisma } from '@/lib/database/prisma';
+import { sanitizeString } from '@/lib/security/input-validator';
 
 /**
  * API для отслеживания присутствия пользователей (Heartbeat).
@@ -55,8 +56,8 @@ export async function POST(req: Request) {
 		const user = session.user as ApiUser;
 		const body = await req.json();
 
-		const resourceType = body.resourceType || null;
-		const resourceId = body.resourceId || null;
+		const resourceType = sanitizeString(body.resourceType, 50) || null;
+		const resourceId = sanitizeString(body.resourceId, 50) || null;
 
 		await prisma.$transaction([
 			prisma.user.update({
