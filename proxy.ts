@@ -31,6 +31,14 @@ export default withAuth(
 		const token = req.nextauth.token;
 		const isLoginPage = req.nextUrl.pathname === '/login';
 
+		// Принудительный HTTPS в продакшене для защиты от Wireshark
+		if (process.env.NODE_ENV === 'production' && req.nextUrl.protocol === 'http:') {
+			return NextResponse.redirect(
+				`https://${req.nextUrl.host}${req.nextUrl.pathname}${req.nextUrl.search}`,
+				301,
+			);
+		}
+
 		// Redirect authenticated users away from login page
 		if (token && isLoginPage) {
 			return NextResponse.redirect(new URL('/', req.url));
