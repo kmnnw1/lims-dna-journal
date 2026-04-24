@@ -41,7 +41,8 @@
 		"types/**/*.tsx",
 		".next/types/**/*.ts",
 		"**/*.mts",
-		".next/dev/types/**/*.ts"
+		".next/dev/types/**/*.ts",
+		"proxy.ts"
 	],
 	"exclude": ["node_modules", "dist", "build", "scripts"]
 }
