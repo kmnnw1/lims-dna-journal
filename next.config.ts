@@ -30,10 +30,6 @@ const securityHeaders = [
 			"form-action 'self'",
 		].join('; '),
 	},
-	{
-		key: 'Strict-Transport-Security',
-		value: 'max-age=31536000; includeSubDomains; preload',
-	},
 ];
 
 const nextConfig: NextConfig = {
