@@ -77,11 +77,15 @@ jobs:
                   echo "AUTH_TEST_TOKEN=${CI_TOKEN}" >> .env
                   echo "CI_TOKEN=${CI_TOKEN}" >> "$GITHUB_ENV"
                   npx prisma db push
-                  npx tsx scripts/fix-auth.ts
+                  AUTH_TEST_TOKEN=${CI_TOKEN} npx tsx scripts/fix-auth.ts
             - name: Build application
-              run: npm run build
+              run: |
+                npm run build
+                cp -r public .next/standalone/public
+                cp -r .next/static .next/standalone/.next/static
               env:
                 DATABASE_URL: file:./prisma/dev.db
+
 
             - name: Run Playwright tests
               run: TEST_TOKEN=$CI_TOKEN AUTH_TEST_TOKEN=$CI_TOKEN npx playwright test
