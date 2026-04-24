@@ -32,7 +32,13 @@ export default withAuth(
 		const isLoginPage = req.nextUrl.pathname === '/login';
 
 		// Принудительный HTTPS в продакшене для защиты от Wireshark
-		if (process.env.NODE_ENV === 'production' && req.nextUrl.protocol === 'http:') {
+		// Пропускаем для localhost и 127.0.0.1 (для локальной разработки и E2E тестов)
+		if (
+			process.env.NODE_ENV === 'production' &&
+			req.nextUrl.protocol === 'http:' &&
+			!req.nextUrl.hostname.includes('localhost') &&
+			!req.nextUrl.hostname.includes('127.0.0.1')
+		) {
 			return NextResponse.redirect(
 				`https://${req.nextUrl.host}${req.nextUrl.pathname}${req.nextUrl.search}`,
 				301,
