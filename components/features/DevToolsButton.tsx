@@ -134,7 +134,7 @@ export function DevToolsButton() {
 
 				if (isFabInCorner) {
 					avoidanceX = 185;
-					avoidanceY = 85; // Дальше по вертикали (скрин 4)
+					avoidanceY = 76; // Чуть ближе (золотая середина)
 				}
 
 				if (isLogoInCorner && logoCorner && logoCorner.width > 50) {
