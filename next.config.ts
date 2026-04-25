@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
 		},
 	},
 	experimental: {
-		optimizePackageImports: ['lucide-react'],
+		// optimizePackageImports removed to silence build warnings
 	},
 	env: {
 		NEXT_PUBLIC_OS_USER: process.env.USERNAME || process.env.USER || 'unknown',
