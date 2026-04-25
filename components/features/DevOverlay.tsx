@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { signIn, useSession } from 'next-auth/react';
 import React, { useEffect, useRef, useState } from 'react';
+import pkg from '../../package.json';
 import { useDevSettings } from './DevSettingsProvider';
 
 /**
@@ -30,10 +31,27 @@ export const DevOverlay: React.FC = () => {
 	const { data: session } = useSession();
 	const [_isBypassing, setIsBypassing] = useState(false);
 	const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'EDITOR' | 'READER'>('ADMIN');
-	const containerRef = useRef<HTMLDivElement>(null);
 
 	const currentRole = (session?.user as { role?: string })?.role;
 	const isAuthenticated = !!session;
+
+	// Синхронизация выбранной роли с localStorage и текущей сессией
+	useEffect(() => {
+		const savedRole = localStorage.getItem('lab_journal_dev_selected_role');
+		if (savedRole) {
+			setSelectedRole(savedRole as 'ADMIN' | 'EDITOR' | 'READER');
+		} else if (currentRole) {
+			const mappedRole =
+				currentRole === 'ADMIN' ? 'ADMIN' : currentRole === 'EDITOR' ? 'EDITOR' : 'READER';
+			setSelectedRole(mappedRole);
+		}
+	}, [currentRole]);
+
+	const handleSetRole = (role: 'ADMIN' | 'EDITOR' | 'READER') => {
+		setSelectedRole(role);
+		localStorage.setItem('lab_journal_dev_selected_role', role);
+	};
+	const containerRef = useRef<HTMLDivElement>(null);
 
 	// Закрытие при клике вне
 	useEffect(() => {
@@ -87,17 +105,17 @@ export const DevOverlay: React.FC = () => {
 					left: isRight ? 'auto' : anchorPos.x,
 					right: isRight
 						? typeof window !== 'undefined'
-							? window.innerWidth - anchorPos.x - 56
+							? window.innerWidth - anchorPos.x - 40 // Align with button right edge
 							: 24
 						: 'auto',
-					top: isBottom ? 'auto' : anchorPos.y + 64,
+					top: isBottom ? 'auto' : anchorPos.y + 48, // Slightly below button
 					bottom: isBottom
 						? typeof window !== 'undefined'
-							? window.innerHeight - anchorPos.y + 8
+							? window.innerHeight - anchorPos.y + 8 // Slightly above button
 							: 80
 						: 'auto',
 				}}
-				className="z-9999 w-[320px] bg-[#0a0a0a]/85 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"
+				className="z-9999 w-[320px] bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden"
 			>
 				{/* Header - Compact */}
 				<div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/5">
@@ -124,7 +142,7 @@ export const DevOverlay: React.FC = () => {
 								<button
 									key={r}
 									onClick={() =>
-										setSelectedRole(r as 'ADMIN' | 'EDITOR' | 'READER')
+										handleSetRole(r as 'ADMIN' | 'EDITOR' | 'READER')
 									}
 									className={`py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
 										selectedRole === r
@@ -255,9 +273,8 @@ export const DevOverlay: React.FC = () => {
 					</div>
 				</div>
 
-				{/* Footer - Branding */}
 				<div className="px-4 py-2 border-t border-white/5 flex items-center justify-between bg-black/50">
-					<span className="text-[9px] font-mono text-white/20">VER. 0.21.0.5</span>
+					<span className="text-[9px] font-mono text-white/20">VER. {pkg.version}</span>
 					<div className="flex items-center gap-1 opacity-20 hover:opacity-50 transition-opacity cursor-default">
 						<Zap className="w-2.5 h-2.5" />
 						<span className="text-[9px] font-black tracking-tighter italic">
