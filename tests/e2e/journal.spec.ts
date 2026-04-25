@@ -46,7 +46,7 @@ async function loginAdmin(page: Page) {
 	// Ждем перехода на главную или появления индикатора авторизации
 	try {
 		await page.waitForURL('/', { timeout: 15000 });
-	} catch (e) {
+	} catch (_e) {
 		const currentUrl = page.url();
 		console.log(`Timeout waiting for redirect to /. Current URL: ${currentUrl}`);
 
