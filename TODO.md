@@ -2,7 +2,7 @@
 
 ## 🛠 Стабилизация и Исправления
 
-- [x] Стабилизация E2E тестов (100% pass на Playwright)
+- [ ] Стабилизация E2E тестов (100% pass на Playwright)
 - [x] Оптимизация API (numeric filtering, buildSpecimenQuery)
 - [x] Оптимизация AnimatedFlask (SVG вместо Canvas)
 - [x] Добавить валидацию форм на фронтенде (минимум 3 символа для таксона, проверка ID формата)
@@ -40,5 +40,5 @@
 ## 🧬 Modernization Phase 2 (Security Hardening)
 
 - [x] Интеграция `input-validator` во все API-роуты (specimens, pcr, import, presence)
-- [ ] Унификация обработки ошибок во всех API-роутах через shared helpers
+- [x] Унификация обработки ошибок во всех API-роутах через shared helpers
 - [x] Валидация File Upload (MIME, размер) в `api/import` и `api/upload`
