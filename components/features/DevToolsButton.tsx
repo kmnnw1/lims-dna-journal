@@ -91,39 +91,49 @@ export function DevToolsButton() {
 
 			const logoCorner = getNextLogoCorner();
 			const themeCorner = getThemeToggleCorner();
+
+			// Логотип учитываем только если он не скрыт в настройках
+			const isLogoInCorner =
+				!settings.hideNextIndicator &&
+				logoCorner &&
+				isLeft === logoCorner.isLeft &&
+				isTop === logoCorner.isTop;
+			const isThemeInCorner =
+				themeCorner && isLeft === themeCorner.isLeft && isTop === themeCorner.isTop;
 			const isFabInCorner = settings.visibility.fab && !isLeft && !isTop;
 
 			let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
 			let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
 
-			const isLogoInCorner =
-				logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop;
-			const isThemeInCorner =
-				themeCorner && isLeft === themeCorner.isLeft && isTop === themeCorner.isTop;
-
 			if (isLogoInCorner || isThemeInCorner || isFabInCorner) {
-				// Если угол занят, сдвигаем по оси, которая ближе к краю
+				// Дистанции обхода: для логотипа меньше, для FAB больше
+				const avoidanceX = isFabInCorner ? 170 : 46;
+				const avoidanceY = isFabInCorner ? 80 : 46;
+
 				const distToYEdge = isTop ? currentY : winHeight - currentY;
 				const distToXEdge = isLeft ? currentX : winWidth - currentX;
 
-				// Для FAB (правый нижний) сдвигаем ВЛЕВО сильнее, так как он может быть расширенным
-				const avoidanceX = isFabInCorner ? 180 : 80;
-				const avoidanceY = 80;
-
-				if (distToYEdge < distToXEdge) {
-					snapX = isLeft
-						? edgePadding + avoidanceX
-						: winWidth - btnWidth - edgePadding - avoidanceX;
-				} else {
+				// Если мы ближе к боковому краю, чем к верхнему/нижнему — вытесняем по вертикали
+				if (distToXEdge < distToYEdge) {
 					snapY = isTop
 						? edgePadding + avoidanceY
 						: winHeight - btnHeight - edgePadding - avoidanceY;
+				} else {
+					// Иначе вытесняем по горизонтали
+					snapX = isLeft
+						? edgePadding + avoidanceX
+						: winWidth - btnWidth - edgePadding - avoidanceX;
 				}
 			}
 
 			return { snapX, snapY };
 		},
-		[getNextLogoCorner, getThemeToggleCorner, settings.visibility.fab],
+		[
+			getNextLogoCorner,
+			getThemeToggleCorner,
+			settings.visibility.fab,
+			settings.hideNextIndicator,
+		],
 	);
 
 	// Установка стабильной начальной позиции, если нет сохраненной
