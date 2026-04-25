@@ -4,6 +4,14 @@ import { expect, type Page, test } from '@playwright/test';
 
 // Универсальная функция входа
 async function loginAdmin(page: Page) {
+	// Включаем проброс консоли браузера в терминал
+	page.on('console', (msg) => {
+		const text = msg.text();
+		if (text.includes('[LOGIN DEBUG]')) {
+			console.log(`BROWSER: ${text}`);
+		}
+	});
+
 	// Переходим на страницу входа
 	await page.goto('/login');
 
@@ -59,7 +67,7 @@ async function loginAdmin(page: Page) {
 			.catch(() => '');
 
 		if (errorText) {
-			console.log(`Login error found on page: ${errorText.trim()}`);
+			console.log(`Login error found on page: ${errorText?.trim()}`);
 		}
 
 		// Пытаемся получить содержимое body для отладки

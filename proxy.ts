@@ -79,12 +79,21 @@ export const proxy = withAuth(
 		callbacks: {
 			authorized: ({ token, req }) => {
 				const isLoginPage = req.nextUrl.pathname === '/login';
+				const hasToken = Boolean(token && typeof token === 'object');
+
 				console.log(
-					`[PROXY DEBUG] Path: ${req.nextUrl.pathname}, Has Token: ${Boolean(token)}, Is Login Page: ${isLoginPage}`,
+					`[PROXY DEBUG] Path: ${req.nextUrl.pathname}, Has Token: ${hasToken}, Is Login Page: ${isLoginPage}`,
 				);
+
+				// Если пользователь авторизован и пытается зайти на страницу логина — отправляем на главную
+				if (isLoginPage && hasToken) {
+					console.log('[PROXY DEBUG] Authenticated user on login page, redirecting to /');
+					return false; // withAuth перенаправит на successUrl или мы можем вернуть true и сделать редирект в самой функции
+				}
+
 				// Разрешаем доступ к странице логина без авторизации
 				if (isLoginPage) return true;
-				return Boolean(token && typeof token === 'object');
+				return hasToken;
 			},
 		},
 		pages: {
