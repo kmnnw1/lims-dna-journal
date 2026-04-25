@@ -6,8 +6,7 @@ import { useDevSettings } from './DevSettingsProvider';
 
 /**
  * Плавающая кнопка вызова инструментов разработчика.
- * С умной привязкой, исключающей перекрытие индикатора Next.js и FAB.
- * Использование MotionValue гарантирует отсутствие «прыжков» (телепортации) при наведении.
+ * С умной привязкой, исключающей перекрытие индикатора Next.js, FAB и кнопки темы.
  */
 export function DevToolsButton() {
 	const { setOverlayOpen, settings, setAnchorPos } = useDevSettings();
@@ -36,7 +35,6 @@ export function DevToolsButton() {
 			}
 		}
 
-		// Инициализируем x и y из localStorage сразу при монтировании (клиентская часть)
 		const savedX = localStorage.getItem('lab_journal_dev_btn_x');
 		const savedY = localStorage.getItem('lab_journal_dev_btn_y');
 		if (savedX !== null && savedY !== null) {
@@ -46,7 +44,6 @@ export function DevToolsButton() {
 		}
 	}, [x, y]);
 
-	// Поиск логотипа Next.js в Shadow DOM для определения его позиции
 	const getNextLogoCorner = useCallback(() => {
 		if (typeof document === 'undefined') return null;
 		const portal = document.querySelector('nextjs-portal');
@@ -78,6 +75,30 @@ export function DevToolsButton() {
 		};
 	}, []);
 
+	// Проверка наличия FAB в DOM
+	const getFABCorner = useCallback(() => {
+		if (typeof document === 'undefined') return null;
+		const fab = document.getElementById('main-fab');
+		if (!fab) return null;
+
+		// Проверяем видимость (на случай, если он в DOM, но скрыт стилями)
+		const style = window.getComputedStyle(fab);
+		if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+			return null;
+		}
+
+		const rect = fab.getBoundingClientRect();
+		if (rect.width === 0 || rect.height === 0) return null;
+
+		const winWidth = window.innerWidth;
+		const winHeight = window.innerHeight;
+
+		return {
+			isLeft: rect.left + rect.width / 2 < winWidth / 2,
+			isTop: rect.top + rect.height / 2 < winHeight / 2,
+		};
+	}, []);
+
 	const calculateSnapPoint = useCallback(
 		(currentX: number, currentY: number) => {
 			const winWidth = window.innerWidth;
@@ -91,6 +112,7 @@ export function DevToolsButton() {
 
 			const logoCorner = getNextLogoCorner();
 			const themeCorner = getThemeToggleCorner();
+			const fabCorner = getFABCorner();
 
 			// Логотип учитываем только если он не скрыт в настройках
 			const isLogoInCorner =
@@ -98,28 +120,29 @@ export function DevToolsButton() {
 				logoCorner &&
 				isLeft === logoCorner.isLeft &&
 				isTop === logoCorner.isTop;
+
 			const isThemeInCorner =
 				themeCorner && isLeft === themeCorner.isLeft && isTop === themeCorner.isTop;
-			const isFabInCorner = settings.visibility.fab && !isLeft && !isTop;
+
+			// FAB учитываем только если он реально найден в этом углу
+			const isFabInCorner =
+				fabCorner && isLeft === fabCorner.isLeft && isTop === fabCorner.isTop;
 
 			let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
 			let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
 
 			if (isLogoInCorner || isThemeInCorner || isFabInCorner) {
-				// Дистанции обхода: для логотипа и темы чуть больше, для FAB — значительно больше
 				const avoidanceX = isFabInCorner ? 170 : 60;
 				const avoidanceY = isFabInCorner ? 80 : 60;
 
 				const distToYEdge = isTop ? currentY : winHeight - currentY;
 				const distToXEdge = isLeft ? currentX : winWidth - currentX;
 
-				// Если мы ближе к боковому краю, чем к верхнему/нижнему — вытесняем по вертикали
 				if (distToXEdge < distToYEdge) {
 					snapY = isTop
 						? edgePadding + avoidanceY
 						: winHeight - btnHeight - edgePadding - avoidanceY;
 				} else {
-					// Иначе вытесняем по горизонтали
 					snapX = isLeft
 						? edgePadding + avoidanceX
 						: winWidth - btnWidth - edgePadding - avoidanceX;
@@ -128,20 +151,13 @@ export function DevToolsButton() {
 
 			return { snapX, snapY };
 		},
-		[
-			getNextLogoCorner,
-			getThemeToggleCorner,
-			settings.visibility.fab,
-			settings.hideNextIndicator,
-		],
+		[getNextLogoCorner, getThemeToggleCorner, getFABCorner, settings.hideNextIndicator],
 	);
 
-	// Установка стабильной начальной позиции, если нет сохраненной
 	useEffect(() => {
 		if (!isAuthorized || isPositioned) return;
 
 		const loadPosition = () => {
-			// Начинаем из правого нижнего угла для расчета привязки
 			const { snapX, snapY } = calculateSnapPoint(window.innerWidth, window.innerHeight);
 			x.set(snapX);
 			y.set(snapY);
@@ -154,7 +170,6 @@ export function DevToolsButton() {
 
 	useEffect(() => {
 		if (!isAuthorized || !isPositioned) return;
-		// Реактивно перепривязываем кнопку, если состояние углов изменилось (например, включили FAB)
 		const { snapX, snapY } = calculateSnapPoint(x.get(), y.get());
 		if (Math.abs(snapX - x.get()) > 5 || Math.abs(snapY - y.get()) > 5) {
 			animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
@@ -162,7 +177,6 @@ export function DevToolsButton() {
 		}
 	}, [isAuthorized, isPositioned, x, y, calculateSnapPoint]);
 
-	// Скрытие индикатора Next.js
 	useEffect(() => {
 		if (typeof document === 'undefined') return;
 		const portal = document.querySelector('nextjs-portal');

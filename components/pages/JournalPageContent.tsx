@@ -527,6 +527,7 @@ export function JournalPageContent() {
 				<FAB
 					extended
 					onClick={() => setIsAddModalOpen(true)}
+					id="main-fab"
 					className="fixed bottom-6 right-6 z-50 bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) flex items-center gap-2 px-3 sm:px-4 shadow-xl h-14 sm:h-16"
 					aria-label="Добавить пробу"
 				>
