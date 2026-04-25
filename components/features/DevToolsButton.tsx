@@ -6,7 +6,8 @@ import { useDevSettings } from './DevSettingsProvider';
 
 /**
  * Плавающая кнопка вызова инструментов разработчика.
- * С умной привязкой и динамическим слежением за расширением логотипа Next.js.
+ * С умной привязкой и реакцией на расширение логотипа Next.js.
+ * Обеспечивает полную свободу при перетаскивании (без «сопротивления»).
  */
 export function DevToolsButton() {
 	const { setOverlayOpen, settings, setAnchorPos } = useDevSettings();
@@ -17,9 +18,6 @@ export function DevToolsButton() {
 	const [isAuthorized, setIsAuthorized] = useState(false);
 	const x = useMotionValue(0);
 	const y = useMotionValue(0);
-
-	// Храним последнее известное состояние углов для реактивности
-	const [cornersState, setCornersState] = useState<string>('');
 
 	useEffect(() => {
 		setMounted(true);
@@ -58,10 +56,10 @@ export function DevToolsButton() {
 		const winHeight = window.innerHeight;
 
 		return {
+			element: indicator as HTMLElement,
 			isLeft: rect.left + rect.width / 2 < winWidth / 2,
 			isTop: rect.top + rect.height / 2 < winHeight / 2,
 			width: rect.width,
-			height: rect.height,
 		};
 	}, []);
 
@@ -91,8 +89,6 @@ export function DevToolsButton() {
 		}
 
 		const rect = fab.getBoundingClientRect();
-		if (rect.width === 0 || rect.height === 0) return null;
-
 		const winWidth = window.innerWidth;
 		const winHeight = window.innerHeight;
 
@@ -133,19 +129,15 @@ export function DevToolsButton() {
 			let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
 
 			if (isLogoInCorner || isThemeInCorner || isFabInCorner) {
-				// Тонкая настройка дистанций по запросу пользователя
-				// Logo/Theme: 48px (ближе), FAB-X: 185px (дальше), FAB-Y: 64px (ближе)
 				let avoidanceX = 48;
 				let avoidanceY = 48;
 
 				if (isFabInCorner) {
 					avoidanceX = 185;
-					avoidanceY = 64;
+					avoidanceY = 85; // Дальше по вертикали (скрин 4)
 				}
 
-				// Динамический обход логотипа при расширении (Compiling...)
 				if (isLogoInCorner && logoCorner && logoCorner.width > 50) {
-					// Если логотип стал шире стандартного, увеличиваем X-отступ
 					avoidanceX = Math.max(avoidanceX, logoCorner.width + 12);
 				}
 
@@ -168,41 +160,42 @@ export function DevToolsButton() {
 		[getNextLogoCorner, getThemeToggleCorner, getFABCorner, settings.hideNextIndicator],
 	);
 
-	// Мониторинг состояния углов (включая размеры логотипа)
+	// Элегантное слежение за расширением логотипа через ResizeObserver
 	useEffect(() => {
 		if (!isAuthorized || !isPositioned || isDragging) return;
 
-		const checkCorners = () => {
-			const logo = getNextLogoCorner();
-			const theme = getThemeToggleCorner();
-			const fab = getFABCorner();
-			const newState = `${logo?.width || 0}-${logo?.isLeft}-${theme ? 1 : 0}-${fab ? 1 : 0}-${settings.hideNextIndicator}`;
+		const logo = getNextLogoCorner();
+		if (!logo?.element) return;
 
-			if (newState !== cornersState) {
-				setCornersState(newState);
-				const { snapX, snapY } = calculateSnapPoint(x.get(), y.get());
-				if (Math.abs(snapX - x.get()) > 2 || Math.abs(snapY - y.get()) > 2) {
-					animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
-					animate(y, snapY, { type: 'spring', stiffness: 400, damping: 30 });
-				}
+		const observer = new ResizeObserver(() => {
+			const { snapX, snapY } = calculateSnapPoint(x.get(), y.get());
+			if (Math.abs(snapX - x.get()) > 1 || Math.abs(snapY - y.get()) > 1) {
+				animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
+				animate(y, snapY, { type: 'spring', stiffness: 400, damping: 30 });
 			}
-			requestAnimationFrame(checkCorners);
-		};
+		});
 
-		const rafId = requestAnimationFrame(checkCorners);
-		return () => cancelAnimationFrame(rafId);
+		observer.observe(logo.element);
+		return () => observer.disconnect();
+	}, [isAuthorized, isPositioned, isDragging, calculateSnapPoint, x, y, getNextLogoCorner]);
+
+	// Реакция на изменение настроек или появление элементов (FAB, темы)
+	useEffect(() => {
+		if (!isAuthorized || !isPositioned || isDragging) return;
+		const { snapX, snapY } = calculateSnapPoint(x.get(), y.get());
+		if (Math.abs(snapX - x.get()) > 5 || Math.abs(snapY - y.get()) > 5) {
+			animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
+			animate(y, snapY, { type: 'spring', stiffness: 400, damping: 30 });
+		}
 	}, [
 		isAuthorized,
 		isPositioned,
 		isDragging,
-		cornersState,
 		calculateSnapPoint,
 		x,
 		y,
-		getNextLogoCorner,
-		getThemeToggleCorner,
-		getFABCorner,
 		settings.hideNextIndicator,
+		settings.visibility.fab,
 	]);
 
 	useEffect(() => {
