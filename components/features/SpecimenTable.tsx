@@ -23,6 +23,7 @@ interface SpecimenTableProps {
 	onSort: (key: string) => void;
 	onHistory: (specimen: Specimen) => void;
 	onCopyID?: (id: string) => void;
+	focusedIndex?: number | null;
 }
 
 export const SpecimenTable: React.FC<SpecimenTableProps> = ({
@@ -39,6 +40,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 	onSort,
 	onHistory,
 	onCopyID,
+	focusedIndex,
 }) => {
 	const { activeUsers } = usePresence();
 	const { data: session } = useSession();
@@ -217,18 +219,24 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 						</tr>
 					</thead>
 					<tbody className="divide-y divide-(--md-sys-color-outline-variant)/20">
-						{specimens.map((specimen) => {
+						{specimens.map((specimen, index) => {
 							const isSelected = selectedIds.has(specimen.id);
+							const isFocused = focusedIndex === index;
 							// Динамический фон для липких колонок. Если строка выбрана - заливаем акцентом, иначе поверхностью
 							const stickyBgClass = isSelected
 								? 'bg-(--md-sys-color-primary-container)'
-								: 'bg-(--md-sys-color-surface) group-hover:bg-(--md-sys-color-surface-container-lowest)';
+								: isFocused
+									? 'bg-(--md-sys-color-surface-container-high)'
+									: 'bg-(--md-sys-color-surface) group-hover:bg-(--md-sys-color-surface-container-lowest)';
 
 							return (
 								<tr
 									key={specimen.id}
 									onDoubleClick={() => onEdit(specimen)}
-									className={`group transition-colors duration-150 cursor-default ${isSelected ? 'bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container)' : 'hover:bg-(--md-sys-color-surface-container-lowest) bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface)'}`}
+									className={`group transition-all duration-150 cursor-default relative
+										${isSelected ? 'bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container)' : 'hover:bg-(--md-sys-color-surface-container-lowest) bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface)'}
+										${isFocused ? 'ring-2 ring-inset ring-(--md-sys-color-primary) z-10 bg-(--md-sys-color-surface-container-high)!' : ''}
+									`}
 								>
 									<td
 										className={`sticky left-0 z-30 ${stickyBgClass} px-3 py-2 w-12 text-center border-b border-b-(--md-sys-color-outline-variant)/20 border-r border-r-(--md-sys-color-outline-variant)/10`}

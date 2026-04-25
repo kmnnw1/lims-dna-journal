@@ -91,6 +91,7 @@ export function JournalPageContent() {
 	const searchInputRef = useRef<HTMLInputElement>(null);
 	const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 	const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
+	const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
 	// Load last export format from localStorage
 	useEffect(() => {
@@ -132,11 +133,54 @@ export function JournalPageContent() {
 					searchInputRef.current?.focus();
 				}
 			}
+
+			// New Specimen: Alt+N
+			if (e.altKey && e.key === 'n') {
+				e.preventDefault();
+				setIsAddModalOpen(true);
+			}
+
+			// Table Navigation (only if not in input)
+			if (
+				document.activeElement?.tagName !== 'INPUT' &&
+				document.activeElement?.tagName !== 'TEXTAREA' &&
+				!isCommandPaletteOpen &&
+				!isAddModalOpen &&
+				!editingSpecimen &&
+				!activePCRSpecimen
+			) {
+				if (e.key === 'ArrowDown') {
+					e.preventDefault();
+					setFocusedIndex((prev) =>
+						prev === null || prev >= specimens.length - 1 ? 0 : prev + 1,
+					);
+				} else if (e.key === 'ArrowUp') {
+					e.preventDefault();
+					setFocusedIndex((prev) =>
+						prev === null || prev <= 0 ? specimens.length - 1 : prev - 1,
+					);
+				} else if (e.key === ' ' && focusedIndex !== null) {
+					e.preventDefault();
+					handleSelect(specimens[focusedIndex].id, e.shiftKey);
+				} else if (e.key === 'Enter' && focusedIndex !== null) {
+					e.preventDefault();
+					setEditingSpecimen(specimens[focusedIndex]);
+				} else if (e.key === 'Escape') {
+					setFocusedIndex(null);
+				}
+			}
 		};
 
 		window.addEventListener('keydown', handleKeyDown);
 		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [isCommandPaletteOpen]);
+	}, [
+		isCommandPaletteOpen,
+		specimens,
+		focusedIndex,
+		isAddModalOpen,
+		editingSpecimen,
+		activePCRSpecimen,
+	]);
 
 	// Auto-dismiss toast after 4 seconds
 	useEffect(() => {
@@ -398,6 +442,7 @@ export function JournalPageContent() {
 								onHistory={handleHistoryOpen}
 								onCopyID={handleCopyID}
 								searchQuery={searchQuery}
+								focusedIndex={focusedIndex}
 							/>
 						)}
 					</div>
