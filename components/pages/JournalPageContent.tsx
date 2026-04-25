@@ -120,7 +120,7 @@ export function JournalPageContent() {
 
 			setLastSelectedIndex(currentIndex);
 		},
-		[specimens, lastSelectedIndex, setSelectedIds, setLastSelectedIndex],
+		[specimens, lastSelectedIndex, setSelectedIds],
 	);
 
 	// Load last export format from localStorage
@@ -213,8 +213,6 @@ export function JournalPageContent() {
 		handleSelect,
 		setIsAddModalOpen,
 		setEditingSpecimen,
-		setIsCommandPaletteOpen,
-		setFocusedIndex,
 	]);
 
 	// Auto-dismiss toast after 4 seconds
