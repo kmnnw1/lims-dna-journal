@@ -25,6 +25,19 @@ function getDiffFiles(): string[] {
 	}
 }
 
+function getHeadVersion(): string | null {
+	try {
+		const stdout = execSync('git show HEAD:package.json', {
+			encoding: 'utf8',
+			stdio: ['pipe', 'pipe', 'ignore'],
+		}).trim();
+		const pkg = JSON.parse(stdout);
+		return pkg.version;
+	} catch {
+		return null;
+	}
+}
+
 const changedFiles = getDiffFiles();
 if (changedFiles.length === 0) {
 	console.log('[SYSTEM] Изменений в отслеживаемых файлах не обнаружено. Пропуск бампа.');
@@ -48,8 +61,30 @@ const hasLogic = changedFiles.some(isLogic);
 const hasMeta = changedFiles.some(isMeta);
 
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
-let [major, minor, patch, build] = pkg.version.split('.').map(Number);
-const initialVersion = pkg.version;
+const currentVersion = pkg.version;
+const headVersion = getHeadVersion();
+
+// Если версия в файле уже больше, чем в HEAD, значит мы уже бампнули её в этой сессии коммита
+// (например, при повторной попытке после ошибки линтера)
+if (headVersion && currentVersion !== headVersion) {
+	const [cMajor, cMinor, cPatch, cBuild] = currentVersion.split('.').map(Number);
+	const [hMajor, hMinor, hPatch, hBuild] = headVersion.split('.').map(Number);
+
+	const isAlreadyBumped =
+		cMajor > hMajor ||
+		(cMajor === hMajor && cMinor > hMinor) ||
+		(cMajor === hMajor && cMinor === hMinor && cPatch > hPatch) ||
+		(cMajor === hMajor && cMinor === hMinor && cPatch === hPatch && cBuild > hBuild);
+
+	if (isAlreadyBumped) {
+		console.log(
+			`[SYSTEM] Версия уже была обновлена (${headVersion} -> ${currentVersion}). Пропуск повторного бампа.`,
+		);
+		process.exit(0);
+	}
+}
+
+let [major, minor, patch, build] = currentVersion.split('.').map(Number);
 
 // Определение типа инкремента (Semantic Heuristic 2026)
 if (hasDB) {
@@ -80,7 +115,7 @@ if (hasDB) {
 
 pkg.version = [major, minor, patch, build].join('.');
 writeFileSync(pkgPath, JSON.stringify(pkg, null, '\t') + '\n');
-console.log(`[SYSTEM] Версия обновлена: ${initialVersion} -> ${pkg.version}`);
+console.log(`[SYSTEM] Версия обновлена: ${currentVersion} -> ${pkg.version}`);
 
 try {
 	execSync('git add package.json', { cwd: root });
