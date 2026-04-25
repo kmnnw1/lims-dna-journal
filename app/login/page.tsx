@@ -30,27 +30,37 @@ function LoginContent() {
 			if (e) e.preventDefault();
 			setError('');
 			setLoading(true);
-
 			try {
+				console.log(
+					`[LOGIN DEBUG] Attempting signIn with token length: ${password.trim().length}`,
+				);
 				const res = await signIn('credentials', {
 					username,
 					password: password.trim(),
 					token: password.trim(),
 					redirect: false,
 				});
+				console.log(`[LOGIN DEBUG] signIn response: ${JSON.stringify(res)}`);
 
 				if (res?.error) {
+					console.log(`[LOGIN DEBUG] Login error: ${res.error}`);
 					setError('Неверный логин или токен');
 					setLoading(false);
 				} else {
+					console.log(`[LOGIN DEBUG] Login success! Redirecting to /`);
 					// Принудительный редирект на главную
 					router.push('/');
 					router.refresh(); // Обновляем состояние сессии во всем приложении
 
 					// Fallback в случае зависания роутера
 					setTimeout(() => {
-						window.location.href = '/';
-					}, 500);
+						if (window.location.pathname === '/login') {
+							console.log(
+								`[LOGIN DEBUG] Router push failed, using window.location.href`,
+							);
+							window.location.href = '/';
+						}
+					}, 1000);
 				}
 			} catch (_err) {
 				setError('Произошла ошибка при входе');

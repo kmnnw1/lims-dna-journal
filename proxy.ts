@@ -78,8 +78,12 @@ export const proxy = withAuth(
 	{
 		callbacks: {
 			authorized: ({ token, req }) => {
+				const isLoginPage = req.nextUrl.pathname === '/login';
+				console.log(
+					`[PROXY DEBUG] Path: ${req.nextUrl.pathname}, Has Token: ${Boolean(token)}, Is Login Page: ${isLoginPage}`,
+				);
 				// Разрешаем доступ к странице логина без авторизации
-				if (req.nextUrl.pathname === '/login') return true;
+				if (isLoginPage) return true;
 				return Boolean(token && typeof token === 'object');
 			},
 		},

@@ -45,7 +45,8 @@ async function loginAdmin(page: Page) {
 
 	// Ждем перехода на главную или появления индикатора авторизации
 	try {
-		await page.waitForURL('/', { timeout: 15000 });
+		// Увеличиваем таймаут до 20 секунд для CI
+		await page.waitForURL('/', { timeout: 20000 });
 	} catch (_e) {
 		const currentUrl = page.url();
 		console.log(`Timeout waiting for redirect to /. Current URL: ${currentUrl}`);
@@ -61,13 +62,15 @@ async function loginAdmin(page: Page) {
 			console.log(`Login error found on page: ${errorText.trim()}`);
 		}
 
+		// Пытаемся получить содержимое body для отладки
 		const bodySnippet = await page
-			.locator('body')
-			.innerText()
-			.catch(() => 'Could not get body text');
+			.evaluate(() => document.body.innerText)
+			.catch(() => 'Could not get body text via evaluate');
 		console.log(`Page content snippet (first 500 chars): ${bodySnippet.slice(0, 500)}`);
 
-		throw new Error(`Login failed. Stayed on ${currentUrl}. Error: ${errorText || 'Unknown'}`);
+		throw new Error(
+			`Login failed. Stayed on ${currentUrl}. Error: ${errorText.trim() || 'None'}. Snippet: ${bodySnippet.slice(0, 100)}`,
+		);
 	}
 
 	// ФИКС: Заголовка больше нет, поэтому ждем появления поля поиска
