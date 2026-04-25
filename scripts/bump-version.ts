@@ -58,7 +58,7 @@ const isMeta = (f: string) =>
 
 const hasDB = changedFiles.some(isDatabase);
 const hasLogic = changedFiles.some(isLogic);
-const hasMeta = changedFiles.some(isMeta);
+const _hasMeta = changedFiles.some(isMeta);
 
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
 const currentVersion = pkg.version;
@@ -96,21 +96,18 @@ if (hasDB) {
 		`[SYSTEM] Изменение схемы базы данных (${changedFiles.length} ф.). Инкремент: Minor.`,
 	);
 } else if (hasLogic) {
-	// Изменения в прикладной логике или UI (теперь Build для плавности атомных коммитов)
-	build++;
+	// Новые UI-элементы или логика (Patch)
+	patch++;
+	build = 0;
 	console.log(
-		`[SYSTEM] Изменение программной логики/UI (${changedFiles.length} ф.). Инкремент: Build.`,
+		`[SYSTEM] Изменение программной логики/UI (${changedFiles.length} ф.). Инкремент: Patch.`,
 	);
-} else if (hasMeta) {
-	// Мета-данные, стили, тесты или инфраструктура (Build)
+} else {
+	// Технические правки, тесты, мета-данные или инфраструктура (Build)
 	build++;
 	console.log(
 		`[SYSTEM] Техническая правка/Тесты/Мета (${changedFiles.length} ф.). Инкремент: Build.`,
 	);
-} else {
-	// Неизвестный тип файлов - по умолчанию Build
-	build++;
-	console.log(`[SYSTEM] Прочие изменения (${changedFiles.length} ф.). Инкремент: Build.`);
 }
 
 pkg.version = [major, minor, patch, build].join('.');
