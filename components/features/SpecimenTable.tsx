@@ -22,6 +22,7 @@ interface SpecimenTableProps {
 	sortConfig: { key: string; direction: 'asc' | 'desc' } | null;
 	onSort: (key: string) => void;
 	onHistory: (specimen: Specimen) => void;
+	onCopyID?: (id: string) => void;
 }
 
 export const SpecimenTable: React.FC<SpecimenTableProps> = ({
@@ -37,6 +38,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 	sortConfig,
 	onSort,
 	onHistory,
+	onCopyID,
 }) => {
 	const { activeUsers } = usePresence();
 	const { data: session } = useSession();
@@ -253,7 +255,11 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 									<td
 										className={`sticky left-12 z-30 ${stickyBgClass} px-3 py-2 w-24 border-b border-b-(--md-sys-color-outline-variant)/20 border-r border-r-(--md-sys-color-outline-variant)/30 font-mono text-sm text-(--md-sys-color-primary) font-medium tracking-tight whitespace-nowrap`}
 									>
-										<div className="flex items-center gap-2">
+										<div
+											className="flex items-center gap-2 cursor-pointer hover:underline decoration-dotted underline-offset-4"
+											onClick={() => onCopyID?.(specimen.id)}
+											title="Нажмите, чтобы скопировать ID"
+										>
 											{highlightText(specimen.id, searchQuery)}
 											{activeUsers.some(
 												(u) =>

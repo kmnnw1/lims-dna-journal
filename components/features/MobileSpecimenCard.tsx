@@ -31,6 +31,7 @@ type Props = {
 	favorite?: boolean;
 	onToggleFavorite?: () => void;
 	searchQuery?: string;
+	onCopyID?: (id: string) => void;
 };
 
 export function MobileSpecimenCard({
@@ -44,6 +45,7 @@ export function MobileSpecimenCard({
 	favorite,
 	onToggleFavorite,
 	searchQuery = '',
+	onCopyID,
 }: Props) {
 	const [copied, setCopied] = useState(false);
 
@@ -52,6 +54,7 @@ export function MobileSpecimenCard({
 			await navigator.clipboard.writeText(s.id);
 			setCopied(true);
 			setTimeout(() => setCopied(false), 1200);
+			onCopyID?.(s.id);
 		} catch {}
 	};
 

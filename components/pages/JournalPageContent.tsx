@@ -21,6 +21,7 @@ import { AddSpecimenModal } from '@/components/modals/AddSpecimenModal';
 import BatchPCRModal from '@/components/modals/BatchPCRModal';
 import { EditSpecimenModal } from '@/components/modals/EditSpecimenModal';
 import { PCRModal } from '@/components/modals/PCRModal';
+import { CommandPalette } from '@/components/ui/CommandPalette';
 import { FAB } from '@/components/ui/FAB';
 import { useJournalPage } from '@/hooks/useJournalPage';
 import type { Specimen } from '@/types';
@@ -87,6 +88,8 @@ export function JournalPageContent() {
 		type: 'SPECIMEN' | 'PCR_ATTEMPT';
 	} | null>(null);
 	const exportRef = useRef<HTMLDivElement>(null);
+	const searchInputRef = useRef<HTMLInputElement>(null);
+	const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
 	// Load last export format from localStorage
 	useEffect(() => {
@@ -106,6 +109,33 @@ export function JournalPageContent() {
 		document.addEventListener('mousedown', handleClick);
 		return () => document.removeEventListener('mousedown', handleClick);
 	}, []);
+
+	// Global Hotkeys (Ctrl+K, /, Ctrl+F)
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			// Command Palette: Ctrl+K
+			if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+				e.preventDefault();
+				setIsCommandPaletteOpen((prev) => !prev);
+			}
+
+			// Focus Search: / (if not in input) or Ctrl+F
+			if (
+				(e.key === '/' &&
+					document.activeElement?.tagName !== 'INPUT' &&
+					document.activeElement?.tagName !== 'TEXTAREA') ||
+				((e.ctrlKey || e.metaKey) && e.key === 'f')
+			) {
+				if (!isCommandPaletteOpen) {
+					e.preventDefault();
+					searchInputRef.current?.focus();
+				}
+			}
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, [isCommandPaletteOpen]);
 
 	// Auto-dismiss toast after 4 seconds
 	useEffect(() => {
@@ -132,6 +162,12 @@ export function JournalPageContent() {
 
 	const handleHistoryOpen = (specimen: Specimen) => {
 		setHistoryTarget({ id: specimen.id, type: 'SPECIMEN' });
+	};
+
+	const handleCopyID = (id: string) => {
+		navigator.clipboard.writeText(id).then(() => {
+			setToastMessage({ text: `ID ${id} скопирован в буфер обмена`, type: 'success' });
+		});
 	};
 
 	const handleMainExportClick = () => {
@@ -163,6 +199,7 @@ export function JournalPageContent() {
 			<div className="w-full">
 				{devSettings.visibility?.header && (
 					<JournalHeader
+						ref={searchInputRef}
 						userName={session?.user?.name || 'Пользователь'}
 						userRole={(session?.user as { role?: string })?.role || 'READER'}
 						searchQuery={searchQuery}
@@ -287,6 +324,7 @@ export function JournalPageContent() {
 										}
 										onPcr={() => setActivePCRSpecimen(s)}
 										onEdit={() => setEditingSpecimen(s)}
+										onCopyID={handleCopyID}
 										searchQuery={searchQuery}
 										renderStatus={(spec, marker) => (
 											<PCRStatusBadge
@@ -325,6 +363,7 @@ export function JournalPageContent() {
 								onPcr={setActivePCRSpecimen}
 								onStatusClick={handleStatusToggle}
 								onHistory={handleHistoryOpen}
+								onCopyID={handleCopyID}
 								searchQuery={searchQuery}
 							/>
 						)}
@@ -433,6 +472,19 @@ export function JournalPageContent() {
 						// Триггерим рефреш через смену фильтра или страницы
 						setPage(page);
 					}}
+				/>
+				<CommandPalette
+					open={isCommandPaletteOpen}
+					onClose={() => setIsCommandPaletteOpen(false)}
+					specimens={specimens}
+					onPickSpecimen={(id) => {
+						const s = specimens.find((x: Specimen) => x.id === id);
+						if (s) setEditingSpecimen(s);
+					}}
+					onNewSpecimen={() => setIsAddModalOpen(true)}
+					onRefresh={() => setPage(page)}
+					isReader={(session?.user as { role?: string })?.role === 'READER'}
+					isAdmin={(session?.user as { role?: string })?.role === 'ADMIN'}
 				/>
 			</div>
 
