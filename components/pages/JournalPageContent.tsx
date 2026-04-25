@@ -1,7 +1,7 @@
 'use client';
 
 import { Camera, ChevronDown, Download, Plus, Printer } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { BarcodeScanDialog } from '@/components/features/BarcodeScanDialog';
 import { useDevSettings } from '@/components/features/DevSettingsProvider';
@@ -93,6 +93,36 @@ export function JournalPageContent() {
 	const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
 	const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
+	const handleSelect = useCallback(
+		(id: string, shiftKey?: boolean) => {
+			const currentIndex = specimens.findIndex((s: Specimen) => s.id === id);
+
+			setSelectedIds((current) => {
+				const next = new Set(current);
+
+				if (shiftKey && lastSelectedIndex !== null) {
+					const start = Math.min(lastSelectedIndex, currentIndex);
+					const end = Math.max(lastSelectedIndex, currentIndex);
+					const rangeIds = specimens.slice(start, end + 1).map((s: Specimen) => s.id);
+
+					const isChecking = !next.has(id);
+					for (const rid of rangeIds) {
+						if (isChecking) next.add(rid);
+						else next.delete(rid);
+					}
+				} else {
+					if (next.has(id)) next.delete(id);
+					else next.add(id);
+				}
+
+				return next;
+			});
+
+			setLastSelectedIndex(currentIndex);
+		},
+		[specimens, lastSelectedIndex, setSelectedIds, setLastSelectedIndex],
+	);
+
 	// Load last export format from localStorage
 	useEffect(() => {
 		const saved = localStorage.getItem('lastExportFormat');
@@ -180,6 +210,11 @@ export function JournalPageContent() {
 		isAddModalOpen,
 		editingSpecimen,
 		activePCRSpecimen,
+		handleSelect,
+		setIsAddModalOpen,
+		setEditingSpecimen,
+		setIsCommandPaletteOpen,
+		setFocusedIndex,
 	]);
 
 	// Auto-dismiss toast after 4 seconds
@@ -189,31 +224,16 @@ export function JournalPageContent() {
 		return () => clearTimeout(timer);
 	}, [toastMessage, setToastMessage]);
 
-	const handleSelect = (id: string, shiftKey?: boolean) => {
-		const currentIndex = specimens.findIndex((s: Specimen) => s.id === id);
+	const saveFormat = (format: 'XLSX' | 'CSV' | 'SQL') => {
+		setLastExportFormat(format);
+		localStorage.setItem('lastExportFormat', format);
+		setIsExportOpen(false);
+	};
 
-		setSelectedIds((current) => {
-			const next = new Set(current);
-
-			if (shiftKey && lastSelectedIndex !== null) {
-				const start = Math.min(lastSelectedIndex, currentIndex);
-				const end = Math.max(lastSelectedIndex, currentIndex);
-				const rangeIds = specimens.slice(start, end + 1).map((s: Specimen) => s.id);
-
-				const isChecking = !next.has(id);
-				for (const rid of rangeIds) {
-					if (isChecking) next.add(rid);
-					else next.delete(rid);
-				}
-			} else {
-				if (next.has(id)) next.delete(id);
-				else next.add(id);
-			}
-
-			return next;
-		});
-
-		setLastSelectedIndex(currentIndex);
+	const getFormatLabel = (format: 'XLSX' | 'CSV' | 'SQL') => {
+		if (format === 'XLSX') return 'Excel';
+		if (format === 'CSV') return 'CSV';
+		return 'SQL';
 	};
 
 	const handleSelectAll = (ids: string[]) => {
@@ -251,18 +271,6 @@ export function JournalPageContent() {
 
 	const handleExportDB = () => {
 		window.open('/api/export/db', '_blank');
-	};
-
-	const saveFormat = (format: 'XLSX' | 'CSV' | 'SQL') => {
-		setLastExportFormat(format);
-		localStorage.setItem('lastExportFormat', format);
-		setIsExportOpen(false);
-	};
-
-	const getFormatLabel = (format: 'XLSX' | 'CSV' | 'SQL') => {
-		if (format === 'XLSX') return 'Excel';
-		if (format === 'CSV') return 'CSV';
-		return 'SQL';
 	};
 
 	if (status === 'loading') return null;
@@ -317,12 +325,12 @@ export function JournalPageContent() {
 									)}
 									<div className="relative flex items-center" ref={exportRef}>
 										{/* Main Export Action (Split Button) */}
-										<div className="flex items-center bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-full shadow-sm hover:md-elevation-2 transition-all overflow-hidden group">
+										<div className="flex items-center h-9 sm:h-10 bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-full shadow-sm hover:md-elevation-2 overflow-hidden group">
 											<button
 												onClick={handleMainExportClick}
 												aria-label="Экспорт"
 												data-testid="export-button"
-												className="flex items-center gap-2 pl-3 sm:pl-4 pr-1.5 py-2 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors font-medium text-xs sm:text-sm active:scale-95 whitespace-nowrap min-w-max"
+												className="flex items-center h-full gap-2 pl-3 sm:pl-4 pr-1.5 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors font-medium text-xs sm:text-sm active:scale-95 whitespace-nowrap min-w-max"
 												title={`Экспорт в ${getFormatLabel(lastExportFormat)}`}
 											>
 												<Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -331,7 +339,7 @@ export function JournalPageContent() {
 											<div className="w-px h-4 bg-(--md-sys-color-on-tertiary-container)/20" />
 											<button
 												onClick={() => setIsExportOpen(!isExportOpen)}
-												className="flex items-center justify-center px-1.5 sm:px-2 py-2 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors active:scale-90"
+												className="flex items-center justify-center h-full px-1.5 sm:px-2 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors active:scale-90"
 												aria-label="Выбор формата экспорта"
 											>
 												<ChevronDown
