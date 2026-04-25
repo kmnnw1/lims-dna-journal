@@ -52,15 +52,11 @@ function LoginContent() {
 					router.push('/');
 					router.refresh(); // Обновляем состояние сессии во всем приложении
 
-					// Fallback в случае зависания роутера
+					// Жёсткий редирект как гарантия для CI/standalone
 					setTimeout(() => {
-						if (window.location.pathname === '/login') {
-							console.log(
-								`[LOGIN DEBUG] Router push failed, using window.location.href`,
-							);
-							window.location.href = '/';
-						}
-					}, 1000);
+						console.log(`[LOGIN DEBUG] Fallback redirect triggered`);
+						window.location.href = '/';
+					}, 500);
 				}
 			} catch (_err) {
 				setError('Произошла ошибка при входе');

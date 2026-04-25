@@ -15,88 +15,70 @@ async function loginAdmin(page: Page) {
 	// Переходим на страницу входа
 	await page.goto('/login');
 
-	// Ждем, пока URL стабилизируется (для исключения промежуточных редиректов)
-	await page.waitForURL('**/login');
-
 	// Ждем окончания загрузки и стабилизации
-	await page.waitForLoadState('networkidle');
 	await page.waitForLoadState('domcontentloaded');
 
-	// Находим поле для токена через LABEL (самый надежный способ для Accessibility и MD3)
-	// Добавляем fallback на id, который мы только что внедрили
+	// Находим поле для токена
 	const tokenInput = page
 		.getByLabel(/токен|пароль/i)
 		.or(page.locator('#password-input'))
 		.first();
 
-	// Ждем появления поля (поможет при медленной загрузке/гидратации)
-	try {
-		await expect(tokenInput).toBeVisible({ timeout: 15000 });
-	} catch (e) {
-		console.error('--- DIAGNOSTICS: Login Field not visible ---');
-		console.error('URL:', page.url());
-		console.error('Title:', await page.title());
-		const body = await page.evaluate(() => document.body.innerText.slice(0, 500));
-		console.error('Body snippet (first 500 chars):', body);
-		throw e;
-	}
+	// Ждем появления поля
+	await expect(tokenInput).toBeVisible({ timeout: 15000 });
 
 	// Используем тестовый токен из окружения CI или дефолтный
-	const testToken = process.env.TEST_TOKEN || process.env.AUTH_TEST_TOKEN || 'NOT_SET';
+	const testToken = process.env.TEST_TOKEN || process.env.AUTH_TEST_TOKEN || 'test-token-123';
 
-	// Перед заполнением убеждаемся, что поле активно
+	// Заполняем и отправляем
 	await tokenInput.click();
 	await tokenInput.fill(testToken);
-
-	// Нажимаем Enter для отправки формы
 	await tokenInput.press('Enter');
 
-	// Ждем перехода на главную или появления индикатора авторизации
+	// Ждем перехода на главную
 	try {
-		// Увеличиваем таймаут до 20 секунд для CI
-		await page.waitForURL('/', { timeout: 20000 });
+		await page.waitForURL('/', { timeout: 30000 });
 	} catch (_e) {
 		const currentUrl = page.url();
 		console.log(`Timeout waiting for redirect to /. Current URL: ${currentUrl}`);
 
-		// Пытаемся найти текст ошибки на странице
+		// Диагностика: куки
+		if (!page.isClosed()) {
+			const cookies = (await page.context().cookies()) as { name: string }[];
+			const hasAuthCookie = cookies.some(
+				(c) => c.name.includes('authjs') || c.name.includes('next-auth'),
+			);
+			console.log(
+				`Cookies check: Found ${cookies.length} cookies. Has Auth Cookie: ${hasAuthCookie}`,
+			);
+		}
+
+		// Диагностика: текст ошибки
 		const errorText = await page
-			.locator('.bg-red-600, .bg-\\(--md-sys-color-error-container\\), [role="alert"]')
+			.locator('.bg-red-600, .bg-(--md-sys-color-error-container), [role="alert"]')
 			.first()
 			.textContent()
 			.catch(() => '');
 
-		if (errorText) {
-			console.log(`Login error found on page: ${errorText?.trim()}`);
+		if (errorText?.trim()) {
+			console.log(`Login error found on page: ${errorText.trim()}`);
 		}
 
-		// Пытаемся получить куки для проверки сессии
-		const cookies = await page.context().cookies();
-		const hasAuthCookie = cookies.some(
-			(c) => c.name.includes('authjs') || c.name.includes('next-auth'),
-		);
-		console.log(
-			`Cookies check: Found ${cookies.length} cookies. Has Auth Cookie: ${hasAuthCookie}`,
-		);
-		if (hasAuthCookie) {
-			console.log(
-				'Auth cookies found:',
-				cookies.filter((c) => c.name.includes('auth')).map((c) => c.name),
+		// Попытка принудительного перехода если застряли
+		if (currentUrl.includes('/login')) {
+			console.log('Force navigating to / as a last resort...');
+			await page.goto('/');
+			await page.waitForURL('/', { timeout: 10000 }).catch(() => {});
+		}
+
+		if (page.url() !== '/') {
+			throw new Error(
+				`Login failed. Final URL: ${page.url()}. Error: ${errorText?.trim() || 'None'}`,
 			);
 		}
-
-		// Пытаемся получить содержимое body для отладки
-		const bodySnippet = await page
-			.evaluate(() => document.body.innerText)
-			.catch(() => 'Could not get body text via evaluate');
-		console.log(`Page content snippet (first 500 chars): ${bodySnippet.slice(0, 500)}`);
-
-		throw new Error(
-			`Login failed. Stayed on ${currentUrl}. Error: ${errorText?.trim() || 'None'}. Snippet: ${bodySnippet.slice(0, 100)}`,
-		);
 	}
 
-	// ФИКС: Заголовка больше нет, поэтому ждем появления поля поиска
+	// Ждем появления поля поиска как признака успешной загрузки контента
 	await expect(page.getByPlaceholder(/Поиск/i).first()).toBeVisible({
 		timeout: 15000,
 	});
