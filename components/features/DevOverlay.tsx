@@ -3,16 +3,22 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
 	Activity,
+	BarChart3,
 	Check,
 	Cpu,
+	Database,
 	Eye,
 	EyeOff,
+	Filter,
 	Gauge,
+	LayoutTemplate,
 	LogIn,
+	PlusCircle,
 	Settings2,
 	ShieldAlert,
 	Smartphone,
 	Sparkles,
+	Table,
 	X,
 	Zap,
 } from 'lucide-react';
@@ -240,43 +246,48 @@ export const DevOverlay: React.FC = () => {
 							</div>
 						</div>
 
-						<div className="flex flex-col gap-2 p-2">
+						{/* Настройки видимости */}
+						<div className="px-2 space-y-0.5">
 							{[
-								{ id: 'header', label: 'Шапка' },
-								{ id: 'stats', label: 'Статистика' },
-								{ id: 'filters', label: 'Фильтры' },
-								{ id: 'table', label: 'Таблица' },
-								{ id: 'fab', label: 'Кнопка +' },
-								{ id: 'erModel', label: 'ER Модель' },
-							].map((v) => (
-								<label
-									key={v.id}
-									className="flex items-center justify-between group cursor-pointer"
-								>
-									<span className="text-[11px] font-medium opacity-60 group-hover:opacity-100 transition-opacity">
-										{v.label}
-									</span>
-									<input
-										type="checkbox"
-										checked={
-											settings.visibility[
-												v.id as keyof typeof settings.visibility
-											]
-										}
-										onChange={() => {
+								{ id: 'header', label: 'Шапка', icon: LayoutTemplate },
+								{ id: 'stats', label: 'Статистика', icon: BarChart3 },
+								{ id: 'filters', label: 'Фильтры', icon: Filter },
+								{ id: 'table', label: 'Таблица', icon: Table },
+								{ id: 'fab', label: 'Кнопка +', icon: PlusCircle },
+								{ id: 'erModel', label: 'ER Модель', icon: Database },
+							].map((v) => {
+								const isVisible =
+									settings.visibility[v.id as keyof typeof settings.visibility];
+								return (
+									<button
+										key={v.id}
+										onClick={() => {
 											const newVis = {
 												...settings.visibility,
-												[v.id]:
-													!settings.visibility[
-														v.id as keyof typeof settings.visibility
-													],
+												[v.id]: !isVisible,
 											};
 											updateSettings({ ...settings, visibility: newVis });
 										}}
-										className="rounded border-(--md-sys-color-outline-variant) bg-transparent"
-									/>
-								</label>
-							))}
+										className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors group"
+									>
+										<div className="flex items-center gap-2.5">
+											<v.icon
+												className={`w-4 h-4 ${isVisible ? 'text-blue-400' : 'text-white/30 group-hover:text-white/50'}`}
+											/>
+											<span
+												className={`text-[12px] ${isVisible ? 'text-white/90' : 'text-white/50'}`}
+											>
+												{v.label}
+											</span>
+										</div>
+										{isVisible ? (
+											<Eye className="w-3.5 h-3.5 text-blue-400" />
+										) : (
+											<EyeOff className="w-3.5 h-3.5 text-white/20" />
+										)}
+									</button>
+								);
+							})}
 						</div>
 					</div>
 
