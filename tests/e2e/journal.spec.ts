@@ -34,7 +34,7 @@ async function loginAdmin(page: Page) {
 	}
 
 	// Используем тестовый токен из окружения CI или дефолтный
-	const testToken = process.env.TEST_TOKEN || process.env.AUTH_TEST_TOKEN || 'test-token-123';
+	const testToken = process.env.TEST_TOKEN || process.env.AUTH_TEST_TOKEN || 'NOT_SET';
 
 	// Перед заполнением убеждаемся, что поле активно
 	await tokenInput.click();
@@ -44,8 +44,18 @@ async function loginAdmin(page: Page) {
 	await tokenInput.press('Enter');
 
 	// Ждем перехода на главную или появления индикатора авторизации
-	await page.waitForURL('/', { timeout: 15000 }).catch(() => {
-		console.log('Timeout waiting for redirect to /');
+	await page.waitForURL('/', { timeout: 15000 }).catch(async () => {
+		const currentUrl = page.url();
+		console.log(`Timeout waiting for redirect to /. Current URL: ${currentUrl}`);
+		const errorText = await page
+			.locator('.bg-red-600, .bg-\\(--md-sys-color-error-container\\)')
+			.textContent()
+			.catch(() => '');
+		if (errorText) {
+			console.log(`Login error found on page: ${errorText.trim()}`);
+		}
+		const bodySnippet = await page.evaluate(() => document.body.innerText.slice(0, 1000));
+		console.log(`Page content snippet: ${bodySnippet}`);
 	});
 
 	// ФИКС: Заголовка больше нет, поэтому ждем появления поля поиска
