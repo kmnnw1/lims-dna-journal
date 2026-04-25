@@ -6,7 +6,7 @@ import { useDevSettings } from './DevSettingsProvider';
 
 /**
  * Плавающая кнопка вызова инструментов разработчика.
- * С умной привязкой, исключающей перекрытие индикатора Next.js, FAB и кнопки темы.
+ * С умной привязкой и динамическим слежением за расширением логотипа Next.js.
  */
 export function DevToolsButton() {
 	const { setOverlayOpen, settings, setAnchorPos } = useDevSettings();
@@ -17,6 +17,9 @@ export function DevToolsButton() {
 	const [isAuthorized, setIsAuthorized] = useState(false);
 	const x = useMotionValue(0);
 	const y = useMotionValue(0);
+
+	// Храним последнее известное состояние углов для реактивности
+	const [cornersState, setCornersState] = useState<string>('');
 
 	useEffect(() => {
 		setMounted(true);
@@ -57,6 +60,8 @@ export function DevToolsButton() {
 		return {
 			isLeft: rect.left + rect.width / 2 < winWidth / 2,
 			isTop: rect.top + rect.height / 2 < winHeight / 2,
+			width: rect.width,
+			height: rect.height,
 		};
 	}, []);
 
@@ -75,13 +80,11 @@ export function DevToolsButton() {
 		};
 	}, []);
 
-	// Проверка наличия FAB в DOM
 	const getFABCorner = useCallback(() => {
 		if (typeof document === 'undefined') return null;
 		const fab = document.getElementById('main-fab');
 		if (!fab) return null;
 
-		// Проверяем видимость (на случай, если он в DOM, но скрыт стилями)
 		const style = window.getComputedStyle(fab);
 		if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
 			return null;
@@ -114,7 +117,6 @@ export function DevToolsButton() {
 			const themeCorner = getThemeToggleCorner();
 			const fabCorner = getFABCorner();
 
-			// Логотип учитываем только если он не скрыт в настройках
 			const isLogoInCorner =
 				!settings.hideNextIndicator &&
 				logoCorner &&
@@ -124,7 +126,6 @@ export function DevToolsButton() {
 			const isThemeInCorner =
 				themeCorner && isLeft === themeCorner.isLeft && isTop === themeCorner.isTop;
 
-			// FAB учитываем только если он реально найден в этом углу
 			const isFabInCorner =
 				fabCorner && isLeft === fabCorner.isLeft && isTop === fabCorner.isTop;
 
@@ -132,8 +133,21 @@ export function DevToolsButton() {
 			let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
 
 			if (isLogoInCorner || isThemeInCorner || isFabInCorner) {
-				const avoidanceX = isFabInCorner ? 170 : 60;
-				const avoidanceY = isFabInCorner ? 80 : 60;
+				// Тонкая настройка дистанций по запросу пользователя
+				// Logo/Theme: 48px (ближе), FAB-X: 185px (дальше), FAB-Y: 64px (ближе)
+				let avoidanceX = 48;
+				let avoidanceY = 48;
+
+				if (isFabInCorner) {
+					avoidanceX = 185;
+					avoidanceY = 64;
+				}
+
+				// Динамический обход логотипа при расширении (Compiling...)
+				if (isLogoInCorner && logoCorner && logoCorner.width > 50) {
+					// Если логотип стал шире стандартного, увеличиваем X-отступ
+					avoidanceX = Math.max(avoidanceX, logoCorner.width + 12);
+				}
 
 				const distToYEdge = isTop ? currentY : winHeight - currentY;
 				const distToXEdge = isLeft ? currentX : winWidth - currentX;
@@ -154,6 +168,43 @@ export function DevToolsButton() {
 		[getNextLogoCorner, getThemeToggleCorner, getFABCorner, settings.hideNextIndicator],
 	);
 
+	// Мониторинг состояния углов (включая размеры логотипа)
+	useEffect(() => {
+		if (!isAuthorized || !isPositioned || isDragging) return;
+
+		const checkCorners = () => {
+			const logo = getNextLogoCorner();
+			const theme = getThemeToggleCorner();
+			const fab = getFABCorner();
+			const newState = `${logo?.width || 0}-${logo?.isLeft}-${theme ? 1 : 0}-${fab ? 1 : 0}-${settings.hideNextIndicator}`;
+
+			if (newState !== cornersState) {
+				setCornersState(newState);
+				const { snapX, snapY } = calculateSnapPoint(x.get(), y.get());
+				if (Math.abs(snapX - x.get()) > 2 || Math.abs(snapY - y.get()) > 2) {
+					animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
+					animate(y, snapY, { type: 'spring', stiffness: 400, damping: 30 });
+				}
+			}
+			requestAnimationFrame(checkCorners);
+		};
+
+		const rafId = requestAnimationFrame(checkCorners);
+		return () => cancelAnimationFrame(rafId);
+	}, [
+		isAuthorized,
+		isPositioned,
+		isDragging,
+		cornersState,
+		calculateSnapPoint,
+		x,
+		y,
+		getNextLogoCorner,
+		getThemeToggleCorner,
+		getFABCorner,
+		settings.hideNextIndicator,
+	]);
+
 	useEffect(() => {
 		if (!isAuthorized || isPositioned) return;
 
@@ -166,15 +217,6 @@ export function DevToolsButton() {
 
 		const timer = setTimeout(loadPosition, 50);
 		return () => clearTimeout(timer);
-	}, [isAuthorized, isPositioned, x, y, calculateSnapPoint]);
-
-	useEffect(() => {
-		if (!isAuthorized || !isPositioned) return;
-		const { snapX, snapY } = calculateSnapPoint(x.get(), y.get());
-		if (Math.abs(snapX - x.get()) > 5 || Math.abs(snapY - y.get()) > 5) {
-			animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
-			animate(y, snapY, { type: 'spring', stiffness: 400, damping: 30 });
-		}
 	}, [isAuthorized, isPositioned, x, y, calculateSnapPoint]);
 
 	useEffect(() => {
