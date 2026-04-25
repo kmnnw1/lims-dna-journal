@@ -70,6 +70,21 @@ async function loginAdmin(page: Page) {
 			console.log(`Login error found on page: ${errorText?.trim()}`);
 		}
 
+		// Пытаемся получить куки для проверки сессии
+		const cookies = await page.context().cookies();
+		const hasAuthCookie = cookies.some(
+			(c) => c.name.includes('authjs') || c.name.includes('next-auth'),
+		);
+		console.log(
+			`Cookies check: Found ${cookies.length} cookies. Has Auth Cookie: ${hasAuthCookie}`,
+		);
+		if (hasAuthCookie) {
+			console.log(
+				'Auth cookies found:',
+				cookies.filter((c) => c.name.includes('auth')).map((c) => c.name),
+			);
+		}
+
 		// Пытаемся получить содержимое body для отладки
 		const bodySnippet = await page
 			.evaluate(() => document.body.innerText)
