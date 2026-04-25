@@ -32,14 +32,20 @@ export const proxy = withAuth(
 		const token = req.nextauth.token;
 		const isLoginPage = req.nextUrl.pathname === '/login';
 
+		console.log(
+			`[PROXY EXEC] Path: ${req.nextUrl.pathname}, Hostname: ${req.nextUrl.hostname}, Protocol: ${req.nextUrl.protocol}, env: ${process.env.NODE_ENV}`,
+		);
+
 		// Принудительный HTTPS в продакшене для защиты от Wireshark
-		// Пропускаем для localhost и 127.0.0.1 (для локальной разработки и E2E тестов)
+		// Пропускаем для localhost, 127.0.0.1 и CI (для локальной разработки и E2E тестов)
 		if (
 			process.env.NODE_ENV === 'production' &&
+			!process.env.CI &&
 			req.nextUrl.protocol === 'http:' &&
 			!req.nextUrl.hostname.includes('localhost') &&
 			!req.nextUrl.hostname.includes('127.0.0.1')
 		) {
+			console.log(`[PROXY REDIRECT] Forcing HTTPS redirect for ${req.nextUrl.hostname}`);
 			return NextResponse.redirect(
 				`https://${req.nextUrl.host}${req.nextUrl.pathname}${req.nextUrl.search}`,
 				301,
