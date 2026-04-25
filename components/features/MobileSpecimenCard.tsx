@@ -147,7 +147,7 @@ export function MobileSpecimenCard({
 							<button
 								type="button"
 								onClick={onToggleFavorite}
-								className={`${btnClass} ${favorite ? '!text-[#f59e0b]' : ''}`}
+								className={`${btnClass} ${favorite ? 'text-[#f59e0b]!' : ''}`}
 								aria-label={favorite ? 'Убрать из избранного' : 'В избранное'}
 								title={favorite ? 'Убрать из избранного' : 'В избранное'}
 							>
@@ -188,7 +188,7 @@ export function MobileSpecimenCard({
 						<button
 							type="button"
 							onClick={onPcr}
-							className={`${btnClass} ${(s.attempts?.length ?? 0) > 0 ? '!bg-(--md-sys-color-primary) !text-(--md-sys-color-on-primary)' : ''}`}
+							className={`${btnClass} ${(s.attempts?.length ?? 0) > 0 ? 'bg-(--md-sys-color-primary)! text-(--md-sys-color-on-primary)!' : ''}`}
 							aria-label="PCR"
 							title="PCR"
 						>
@@ -200,7 +200,7 @@ export function MobileSpecimenCard({
 
 			{s.notes && (
 				<div
-					className={`mt-5 p-4 rounded-3xl text-sm line-clamp-3 whitespace-pre-wrap break-words
+					className={`mt-5 p-4 rounded-3xl text-sm line-clamp-3 whitespace-pre-wrap wrap-break-word
 					${selected ? 'bg-black/10' : 'bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-on-surface)'}
 				`}
 				>
