@@ -127,13 +127,14 @@ export function DevToolsButton() {
 			let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
 			let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
 
-			// Флаг: занят ли текущий угол логотипом или кнопкой темы
+			// Флаг: занят ли текущий угол логотипом, кнопкой темы или FAB
 			const isLogoInCorner =
 				logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop;
 			const isThemeInCorner =
 				themeCorner && isLeft === themeCorner.isLeft && isTop === themeCorner.isTop;
+			const isFabInCorner = settings.visibility.fab && !isLeft && !isTop;
 
-			if (isLogoInCorner || isThemeInCorner) {
+			if (isLogoInCorner || isThemeInCorner || isFabInCorner) {
 				const avoidanceX = 80;
 				const avoidanceY = 80;
 
@@ -157,7 +158,7 @@ export function DevToolsButton() {
 			localStorage.setItem('lab_journal_dev_btn_x', snapX.toString());
 			localStorage.setItem('lab_journal_dev_btn_y', snapY.toString());
 		},
-		[x, y, getNextLogoCorner, getThemeToggleCorner],
+		[x, y, getNextLogoCorner, getThemeToggleCorner, settings.visibility.fab],
 	);
 
 	if (!mounted || !isAuthorized) return null;
