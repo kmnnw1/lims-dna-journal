@@ -3,8 +3,10 @@
 import { Camera, ChevronDown, Download, Plus, Printer } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
+
 import { BarcodeScanDialog } from '@/components/features/BarcodeScanDialog';
 import { useDevSettings } from '@/components/features/DevSettingsProvider';
+import { ERModelVisualizer } from '@/components/features/ERModelVisualizer';
 import { HistoryDialog } from '@/components/features/HistoryDialog';
 import { JournalHeader } from '@/components/features/JournalHeader';
 import {
@@ -78,6 +80,10 @@ export function JournalPageContent() {
 		setToastMessage,
 		validationError,
 		setValidationError,
+		searchInputRef,
+		isCommandPaletteOpen,
+		setIsCommandPaletteOpen,
+		focusedIndex,
 	} = useJournalPage();
 
 	const { settings: devSettings } = useDevSettings();
@@ -88,10 +94,7 @@ export function JournalPageContent() {
 		type: 'SPECIMEN' | 'PCR_ATTEMPT';
 	} | null>(null);
 	const exportRef = useRef<HTMLDivElement>(null);
-	const searchInputRef = useRef<HTMLInputElement>(null);
-	const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 	const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
-	const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
 	const handleSelect = useCallback(
 		(id: string, shiftKey?: boolean) => {
@@ -141,79 +144,6 @@ export function JournalPageContent() {
 		document.addEventListener('mousedown', handleClick);
 		return () => document.removeEventListener('mousedown', handleClick);
 	}, []);
-
-	// Global Hotkeys (Ctrl+K, /, Ctrl+F)
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			// Command Palette: Ctrl+K
-			if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-				e.preventDefault();
-				setIsCommandPaletteOpen((prev) => !prev);
-			}
-
-			// Focus Search: / (if not in input) or Ctrl+F
-			if (
-				(e.key === '/' &&
-					document.activeElement?.tagName !== 'INPUT' &&
-					document.activeElement?.tagName !== 'TEXTAREA') ||
-				((e.ctrlKey || e.metaKey) && e.key === 'f')
-			) {
-				if (!isCommandPaletteOpen) {
-					e.preventDefault();
-					searchInputRef.current?.focus();
-				}
-			}
-
-			// New Specimen: Alt+N
-			if (e.altKey && e.key === 'n') {
-				e.preventDefault();
-				setIsAddModalOpen(true);
-			}
-
-			// Table Navigation (only if not in input)
-			if (
-				document.activeElement?.tagName !== 'INPUT' &&
-				document.activeElement?.tagName !== 'TEXTAREA' &&
-				!isCommandPaletteOpen &&
-				!isAddModalOpen &&
-				!editingSpecimen &&
-				!activePCRSpecimen
-			) {
-				if (e.key === 'ArrowDown') {
-					e.preventDefault();
-					setFocusedIndex((prev) =>
-						prev === null || prev >= specimens.length - 1 ? 0 : prev + 1,
-					);
-				} else if (e.key === 'ArrowUp') {
-					e.preventDefault();
-					setFocusedIndex((prev) =>
-						prev === null || prev <= 0 ? specimens.length - 1 : prev - 1,
-					);
-				} else if (e.key === ' ' && focusedIndex !== null) {
-					e.preventDefault();
-					handleSelect(specimens[focusedIndex].id, e.shiftKey);
-				} else if (e.key === 'Enter' && focusedIndex !== null) {
-					e.preventDefault();
-					setEditingSpecimen(specimens[focusedIndex]);
-				} else if (e.key === 'Escape') {
-					setFocusedIndex(null);
-				}
-			}
-		};
-
-		window.addEventListener('keydown', handleKeyDown);
-		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [
-		isCommandPaletteOpen,
-		specimens,
-		focusedIndex,
-		isAddModalOpen,
-		editingSpecimen,
-		activePCRSpecimen,
-		handleSelect,
-		setIsAddModalOpen,
-		setEditingSpecimen,
-	]);
 
 	// Auto-dismiss toast after 4 seconds
 	useEffect(() => {
@@ -322,7 +252,6 @@ export function JournalPageContent() {
 										</button>
 									)}
 									<div className="relative flex items-center" ref={exportRef}>
-										{/* Main Export Action (Split Button) */}
 										<div className="flex items-center h-9 sm:h-10 bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-full shadow-sm hover:md-elevation-2 overflow-hidden group">
 											<button
 												onClick={handleMainExportClick}
@@ -393,11 +322,11 @@ export function JournalPageContent() {
 					</div>
 				)}
 				{devSettings.visibility?.table && (
-					<div className="bg-(--md-sys-color-surface-container-lowest) rounded-3xl sm:rounded-4xl md-elevation-1 border border-(--md-sys-color-outline-variant)/10 overflow-hidden transition-all duration-500 min-h-[400px]">
+					<div className="bg-(--md-sys-color-surface-container-lowest) rounded-2xl sm:rounded-3xl md-elevation-1 border border-(--md-sys-color-outline-variant)/10 overflow-hidden transition-all duration-500 min-h-[400px]">
 						{(isMobileDevice || devSettings.forceMobileView) &&
 						devSettings.enableMobileCards &&
 						!devSettings.forceDesktopView ? (
-							<div className="grid grid-cols-1 gap-3 p-3">
+							<div className="grid grid-cols-1 gap-3 p-1 sm:p-0">
 								{specimens.map((s: Specimen) => (
 									<MobileSpecimenCard
 										key={s.id}
@@ -591,6 +520,8 @@ export function JournalPageContent() {
 					isAdmin={(session?.user as { role?: string })?.role === 'ADMIN'}
 				/>
 			</div>
+
+			{devSettings.visibility?.erModel && <ERModelVisualizer />}
 
 			{devSettings.visibility?.fab && (
 				<FAB
