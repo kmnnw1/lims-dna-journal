@@ -32,7 +32,15 @@ export function buildDrizzleQuery(params: {
 	}
 
 	if (params.filterType === 'success') conditions.push(eq(specimens.itsStatus, '✓'));
-	if (params.filterType === 'error') conditions.push(eq(specimens.itsStatus, '✕'));
+	if (params.filterType === 'error') {
+		conditions.push(
+			or(
+				eq(specimens.itsStatus, '✕'),
+				eq(specimens.itsStatus, '?'),
+				isNull(specimens.itsStatus),
+			) as unknown as SQL,
+		);
+	}
 
 	if (params.operator) conditions.push(eq(specimens.extrOperator, params.operator));
 

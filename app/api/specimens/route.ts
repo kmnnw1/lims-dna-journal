@@ -62,8 +62,15 @@ export async function GET(req: Request) {
 
 		const skip = (page - 1) * limit;
 		const where = buildDrizzleQuery({ search, filterType, operator, minConc, maxConc });
+		const whereStats = buildDrizzleQuery({
+			search,
+			filterType: 'all',
+			operator,
+			minConc,
+			maxConc,
+		});
 
-		const [results, totalCount, suggestions] = await Promise.all([
+		const [results, totalCount, statsData, suggestions] = await Promise.all([
 			db
 				.select()
 				.from(specimensTable)
@@ -78,10 +85,21 @@ export async function GET(req: Request) {
 							desc((specimensTable as any)[sortKey]),
 				),
 			db.select({ count: count() }).from(specimensTable).where(where),
+			db
+				.select({ itsStatus: specimensTable.itsStatus })
+				.from(specimensTable)
+				.where(whereStats),
 			getDrizzleDistinctFields(),
 		]);
 
 		const total = totalCount[0]?.count || 0;
+		const stats = {
+			total: statsData.length,
+			successful: statsData.filter((s) => s.itsStatus === '✓').length,
+			others: statsData.filter(
+				(s) => s.itsStatus === '✕' || s.itsStatus === '?' || s.itsStatus === null,
+			).length,
+		};
 
 		const response = {
 			specimens: results.map((s) => ({
@@ -94,6 +112,7 @@ export async function GET(req: Request) {
 			})),
 			suggestions,
 			total,
+			stats,
 			page,
 			totalPages: Math.max(1, Math.ceil(total / limit)),
 		};
