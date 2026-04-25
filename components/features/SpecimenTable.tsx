@@ -13,7 +13,7 @@ interface SpecimenTableProps {
 	specimens: Specimen[];
 	loading: boolean;
 	selectedIds: Set<string>;
-	onSelect: (id: string) => void;
+	onSelect: (id: string, shiftKey?: boolean) => void;
 	onSelectAll: (ids: string[]) => void;
 	onEdit: (specimen: Specimen) => void;
 	onPcr: (specimen: Specimen) => void;
@@ -227,7 +227,8 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 							return (
 								<tr
 									key={specimen.id}
-									className={`group transition-colors duration-150 ${isSelected ? 'bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container)' : 'hover:bg-(--md-sys-color-surface-container-lowest) bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface)'}`}
+									onDoubleClick={() => onEdit(specimen)}
+									className={`group transition-colors duration-150 cursor-default ${isSelected ? 'bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container)' : 'hover:bg-(--md-sys-color-surface-container-lowest) bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface)'}`}
 								>
 									<td
 										className={`sticky left-0 z-30 ${stickyBgClass} px-3 py-2 w-12 text-center border-b border-b-(--md-sys-color-outline-variant)/20 border-r border-r-(--md-sys-color-outline-variant)/10`}
@@ -236,7 +237,12 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 											<input
 												type="checkbox"
 												checked={isSelected}
-												onChange={() => onSelect(specimen.id)}
+												onChange={(e) =>
+													onSelect(
+														specimen.id,
+														(e.nativeEvent as MouseEvent).shiftKey,
+													)
+												}
 												className="peer size-5 cursor-pointer appearance-none rounded-md border-2 border-(--md-sys-color-outline) checked:border-(--md-sys-color-primary) checked:bg-(--md-sys-color-primary) transition-all"
 											/>
 											<svg

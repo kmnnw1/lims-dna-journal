@@ -90,6 +90,7 @@ export function JournalPageContent() {
 	const exportRef = useRef<HTMLDivElement>(null);
 	const searchInputRef = useRef<HTMLInputElement>(null);
 	const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+	const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
 
 	// Load last export format from localStorage
 	useEffect(() => {
@@ -144,13 +145,31 @@ export function JournalPageContent() {
 		return () => clearTimeout(timer);
 	}, [toastMessage, setToastMessage]);
 
-	const handleSelect = (id: string) => {
+	const handleSelect = (id: string, shiftKey?: boolean) => {
+		const currentIndex = specimens.findIndex((s: Specimen) => s.id === id);
+
 		setSelectedIds((current) => {
 			const next = new Set(current);
-			if (next.has(id)) next.delete(id);
-			else next.add(id);
+
+			if (shiftKey && lastSelectedIndex !== null) {
+				const start = Math.min(lastSelectedIndex, currentIndex);
+				const end = Math.max(lastSelectedIndex, currentIndex);
+				const rangeIds = specimens.slice(start, end + 1).map((s: Specimen) => s.id);
+
+				const isChecking = !next.has(id);
+				for (const rid of rangeIds) {
+					if (isChecking) next.add(rid);
+					else next.delete(rid);
+				}
+			} else {
+				if (next.has(id)) next.delete(id);
+				else next.add(id);
+			}
+
 			return next;
 		});
+
+		setLastSelectedIndex(currentIndex);
 	};
 
 	const handleSelectAll = (ids: string[]) => {
@@ -167,6 +186,16 @@ export function JournalPageContent() {
 	const handleCopyID = (id: string) => {
 		navigator.clipboard.writeText(id).then(() => {
 			setToastMessage({ text: `ID ${id} скопирован в буфер обмена`, type: 'success' });
+		});
+	};
+
+	const handleCopySelectedIds = () => {
+		const idsString = Array.from(selectedIds).join(', ');
+		navigator.clipboard.writeText(idsString).then(() => {
+			setToastMessage({
+				text: `Скопировано ${selectedIds.size} ID в буфер обмена`,
+				type: 'success',
+			});
 		});
 	};
 
@@ -222,7 +251,11 @@ export function JournalPageContent() {
 					<div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4 bg-(--md-sys-color-surface-container-low)/50 p-2 sm:p-3 rounded-2xl sm:rounded-4xl border border-(--md-sys-color-outline-variant)/20">
 						{devSettings.visibility?.stats && (
 							<div className="flex-1 flex flex-wrap items-center justify-start gap-2 sm:gap-4">
-								<StatsCards {...stats} />
+								<StatsCards
+									{...stats}
+									activeFilter={filterType}
+									onFilterSelect={setFilterType}
+								/>
 							</div>
 						)}
 
@@ -398,6 +431,26 @@ export function JournalPageContent() {
 							<span className="font-medium">выбрано</span>
 						</div>
 						<div className="flex gap-2">
+							<button
+								onClick={handleCopySelectedIds}
+								className="px-5 py-2.5 text-sm font-medium text-(--md-sys-color-inverse-primary) hover:bg-white/10 rounded-full transition-colors flex items-center gap-2"
+								title="Копировать все выбранные ID"
+							>
+								<svg
+									width="16"
+									height="16"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2.5"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								>
+									<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+									<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+								</svg>
+								ID
+							</button>
 							<button
 								onClick={handlePrintLabels}
 								className="px-5 py-2.5 text-sm font-medium text-(--md-sys-color-inverse-primary) hover:bg-white/10 rounded-full transition-colors flex items-center gap-2"
