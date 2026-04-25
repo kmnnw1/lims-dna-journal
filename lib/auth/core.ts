@@ -113,7 +113,11 @@ export const authOptions: NextAuthOptions = {
 				if (!credentials?.username?.trim() || !credentials?.password) {
 					// CI/CD Support: Allow a specifically configured test token if set in environment
 					const testToken = process.env.AUTH_TEST_TOKEN;
+					console.log(
+						`[AUTH DEBUG] Checking test token. passOrToken: ${passOrToken}, testToken: ${testToken}`,
+					);
 					if (testToken && passOrToken === testToken) {
+						console.log(`[AUTH DEBUG] Test token match! Logging in as admin.`);
 						let user = await findUserByUsername('admin');
 						const targetRole = isValidRole ? requestedRole : 'ADMIN';
 

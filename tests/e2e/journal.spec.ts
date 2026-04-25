@@ -44,19 +44,31 @@ async function loginAdmin(page: Page) {
 	await tokenInput.press('Enter');
 
 	// Ждем перехода на главную или появления индикатора авторизации
-	await page.waitForURL('/', { timeout: 15000 }).catch(async () => {
+	try {
+		await page.waitForURL('/', { timeout: 15000 });
+	} catch (e) {
 		const currentUrl = page.url();
 		console.log(`Timeout waiting for redirect to /. Current URL: ${currentUrl}`);
+
+		// Пытаемся найти текст ошибки на странице
 		const errorText = await page
-			.locator('.bg-red-600, .bg-\\(--md-sys-color-error-container\\)')
+			.locator('.bg-red-600, .bg-\\(--md-sys-color-error-container\\), [role="alert"]')
+			.first()
 			.textContent()
 			.catch(() => '');
+
 		if (errorText) {
 			console.log(`Login error found on page: ${errorText.trim()}`);
 		}
-		const bodySnippet = await page.evaluate(() => document.body.innerText.slice(0, 1000));
-		console.log(`Page content snippet: ${bodySnippet}`);
-	});
+
+		const bodySnippet = await page
+			.locator('body')
+			.innerText()
+			.catch(() => 'Could not get body text');
+		console.log(`Page content snippet (first 500 chars): ${bodySnippet.slice(0, 500)}`);
+
+		throw new Error(`Login failed. Stayed on ${currentUrl}. Error: ${errorText || 'Unknown'}`);
+	}
 
 	// ФИКС: Заголовка больше нет, поэтому ждем появления поля поиска
 	await expect(page.getByPlaceholder(/Поиск/i).first()).toBeVisible({
