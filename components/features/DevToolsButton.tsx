@@ -11,7 +11,7 @@ import { useDevSettings } from './DevSettingsProvider';
  * Использование MotionValue гарантирует отсутствие «прыжков» (телепортации) при наведении.
  */
 export function DevToolsButton() {
-	const { setOverlayOpen, isOverlayOpen, settings, setAnchorPos } = useDevSettings();
+	const { setOverlayOpen, settings, setAnchorPos } = useDevSettings();
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const [isDragging, setIsDragging] = useState(false);
 	const [isPositioned, setIsPositioned] = useState(false);
@@ -172,8 +172,8 @@ export function DevToolsButton() {
 			onDragEnd={handleDragEnd}
 			initial={{ opacity: 0, scale: 0.5 }}
 			animate={{
-				opacity: isPositioned && !isOverlayOpen ? 1 : 0,
-				scale: isPositioned && !isOverlayOpen ? 1 : 0.5,
+				opacity: isPositioned ? 1 : 0,
+				scale: isPositioned ? 1 : 0.5,
 			}}
 			style={{
 				x,
@@ -183,7 +183,7 @@ export function DevToolsButton() {
 				left: 0,
 				top: 0,
 				zIndex: 9999,
-				pointerEvents: isOverlayOpen ? 'none' : 'auto',
+				pointerEvents: 'auto',
 			}}
 			whileHover={{ scale: 1.08 }}
 			whileTap={{ scale: 0.94 }}
