@@ -67,8 +67,8 @@ export const JournalHeader = forwardRef<HTMLInputElement, JournalHeaderProps>(
 
 				<div className="flex flex-1 items-center gap-2 min-w-0">
 					{/* Группа поиска и быстрых фильтров */}
-					<div className="flex-1 flex items-center min-w-0">
-						<div className="relative flex-1 group flex items-center bg-(--md-sys-color-surface-container-high) focus-within:bg-(--md-sys-color-surface) border-2 border-transparent focus-within:border-(--md-sys-color-primary) rounded-full transition-all md-elevation-1 focus-within:md-elevation-2 pr-2 w-full max-w-md">
+					<div className="flex-1 flex items-center min-w-0 max-w-4xl">
+						<div className="relative flex-1 group flex items-center bg-(--md-sys-color-surface-container-high) focus-within:bg-(--md-sys-color-surface) border-2 border-transparent focus-within:border-(--md-sys-color-primary) rounded-full transition-all md-elevation-1 focus-within:md-elevation-2 pr-2 w-full">
 							<Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-(--md-sys-color-outline) group-focus-within:text-(--md-sys-color-primary) transition-colors pointer-events-none" />
 							<input
 								ref={ref}
@@ -76,7 +76,7 @@ export const JournalHeader = forwardRef<HTMLInputElement, JournalHeaderProps>(
 								placeholder='Поиск... (нажмите "/")'
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
-								className="flex-1 pl-9 sm:pl-12 pr-1 py-2 sm:py-3 bg-transparent outline-none text-xs sm:text-base placeholder:text-(--md-sys-color-outline) min-w-0"
+								className="flex-1 pl-9 sm:pl-12 pr-1 py-2 sm:py-3.5 bg-transparent outline-none text-sm sm:text-base placeholder:text-(--md-sys-color-outline) min-w-0"
 							/>
 
 							{searchQuery && (
@@ -90,7 +90,7 @@ export const JournalHeader = forwardRef<HTMLInputElement, JournalHeaderProps>(
 							)}
 
 							{/* Встроенные статусы-фильтры */}
-							<div className="hidden md:flex items-center p-1 bg-(--md-sys-color-surface-container-low) rounded-full mr-2 shrink-0">
+							<div className="hidden lg:flex items-center p-1 bg-(--md-sys-color-surface-container-low) rounded-full mr-2 shrink-0">
 								{[
 									{ value: 'all', label: 'Все' },
 									{ value: 'success', label: 'Успешные' },
@@ -160,15 +160,6 @@ export const JournalHeader = forwardRef<HTMLInputElement, JournalHeaderProps>(
 								<Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
 							</div>
 						)}
-
-						<button
-							onClick={onAddClick}
-							className="hidden sm:flex items-center justify-center gap-2 px-4 py-2.5 bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium md-state-layer"
-							title="Добавить новую пробу"
-						>
-							<Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-							<span className="hidden xl:inline text-sm">Добавить</span>
-						</button>
 
 						<Link
 							href="/admin"
