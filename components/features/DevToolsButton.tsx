@@ -1,8 +1,7 @@
 'use client';
 
 import { animate, motion, type PanInfo, useMotionValue } from 'framer-motion';
-import { ShieldAlert } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDevSettings } from './DevSettingsProvider';
 
 /**
@@ -79,27 +78,80 @@ export function DevToolsButton() {
 		};
 	}, []);
 
+	const calculateSnapPoint = useCallback(
+		(currentX: number, currentY: number) => {
+			const winWidth = window.innerWidth;
+			const winHeight = window.innerHeight;
+			const btnWidth = buttonRef.current?.offsetWidth || 40;
+			const btnHeight = buttonRef.current?.offsetHeight || 40;
+			const edgePadding = 24;
+
+			const isLeft = currentX < winWidth / 2;
+			const isTop = currentY < winHeight / 2;
+
+			const logoCorner = getNextLogoCorner();
+			const themeCorner = getThemeToggleCorner();
+			const isFabInCorner = settings.visibility.fab && !isLeft && !isTop;
+
+			let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
+			let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
+
+			const isLogoInCorner =
+				logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop;
+			const isThemeInCorner =
+				themeCorner && isLeft === themeCorner.isLeft && isTop === themeCorner.isTop;
+
+			if (isLogoInCorner || isThemeInCorner || isFabInCorner) {
+				// Если угол занят, сдвигаем по оси, которая ближе к краю
+				const distToYEdge = isTop ? currentY : winHeight - currentY;
+				const distToXEdge = isLeft ? currentX : winWidth - currentX;
+
+				// Для FAB (правый нижний) сдвигаем ВЛЕВО сильнее, так как он может быть расширенным
+				const avoidanceX = isFabInCorner ? 160 : 80;
+				const avoidanceY = 80;
+
+				if (distToYEdge < distToXEdge) {
+					snapX = isLeft
+						? edgePadding + avoidanceX
+						: winWidth - btnWidth - edgePadding - avoidanceX;
+				} else {
+					snapY = isTop
+						? edgePadding + avoidanceY
+						: winHeight - btnHeight - edgePadding - avoidanceY;
+				}
+			}
+
+			return { snapX, snapY };
+		},
+		[getNextLogoCorner, getThemeToggleCorner, settings.visibility.fab],
+	);
+
+	// Установка стабильной начальной позиции, если нет сохраненной
 	// Установка стабильной начальной позиции, если нет сохраненной
 	useEffect(() => {
 		if (!isAuthorized || isPositioned) return;
 
 		const loadPosition = () => {
-			const winWidth = window.innerWidth;
-			const winHeight = window.innerHeight;
-			const edgePadding = 24;
-			const btnSize = 54;
-
-			const startX = winWidth - btnSize - edgePadding;
-			const startY = winHeight - btnSize - edgePadding;
-
-			x.set(startX);
-			y.set(startY);
+			// Начинаем из правого нижнего угла для расчета привязки
+			const { snapX, snapY } = calculateSnapPoint(window.innerWidth, window.innerHeight);
+			x.set(snapX);
+			y.set(snapY);
 			setIsPositioned(true);
 		};
 
 		const timer = setTimeout(loadPosition, 50);
 		return () => clearTimeout(timer);
-	}, [isAuthorized, isPositioned, x, y]);
+	}, [isAuthorized, isPositioned, x, y, calculateSnapPoint]);
+
+	useEffect(() => {
+		if (!isAuthorized || !isPositioned) return;
+		// Реактивно перепривязываем кнопку, если состояние углов изменилось (например, включили FAB)
+		const { snapX, snapY } = calculateSnapPoint(x.get(), y.get());
+		if (Math.abs(snapX - x.get()) > 5 || Math.abs(snapY - y.get()) > 5) {
+			animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
+			animate(y, snapY, { type: 'spring', stiffness: 400, damping: 30 });
+		}
+	}, [isAuthorized, isPositioned, x, y, calculateSnapPoint]);
 
 	// Скрытие индикатора Next.js
 	useEffect(() => {
@@ -113,44 +165,7 @@ export function DevToolsButton() {
 	const handleDragEnd = useCallback(
 		(_: unknown, info: PanInfo) => {
 			setIsDragging(false);
-			const winWidth = document.documentElement.clientWidth;
-			const winHeight = document.documentElement.clientHeight;
-			const btnWidth = buttonRef.current?.offsetWidth || 54;
-			const btnHeight = buttonRef.current?.offsetHeight || 54;
-			const edgePadding = 24;
-
-			const isLeft = info.point.x < winWidth / 2;
-			const isTop = info.point.y < winHeight / 2;
-			const logoCorner = getNextLogoCorner();
-			const themeCorner = getThemeToggleCorner();
-
-			let snapX = isLeft ? edgePadding : winWidth - btnWidth - edgePadding;
-			let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
-
-			// Флаг: занят ли текущий угол логотипом, кнопкой темы или FAB
-			const isLogoInCorner =
-				logoCorner && isLeft === logoCorner.isLeft && isTop === logoCorner.isTop;
-			const isThemeInCorner =
-				themeCorner && isLeft === themeCorner.isLeft && isTop === themeCorner.isTop;
-			const isFabInCorner = settings.visibility.fab && !isLeft && !isTop;
-
-			if (isLogoInCorner || isThemeInCorner || isFabInCorner) {
-				const avoidanceX = 80;
-				const avoidanceY = 80;
-
-				const distToYEdge = isTop ? info.point.y : winHeight - info.point.y;
-				const distToXEdge = isLeft ? info.point.x : winWidth - info.point.x;
-
-				if (distToYEdge < distToXEdge) {
-					snapX = isLeft
-						? edgePadding + avoidanceX
-						: winWidth - btnWidth - edgePadding - avoidanceX;
-				} else {
-					snapY = isTop
-						? edgePadding + avoidanceY
-						: winHeight - btnHeight - edgePadding - avoidanceY;
-				}
-			}
+			const { snapX, snapY } = calculateSnapPoint(info.point.x, info.point.y);
 
 			animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
 			animate(y, snapY, { type: 'spring', stiffness: 400, damping: 30 });
@@ -158,7 +173,7 @@ export function DevToolsButton() {
 			localStorage.setItem('lab_journal_dev_btn_x', snapX.toString());
 			localStorage.setItem('lab_journal_dev_btn_y', snapY.toString());
 		},
-		[x, y, getNextLogoCorner, getThemeToggleCorner, settings.visibility.fab],
+		[x, y, calculateSnapPoint],
 	);
 
 	if (!mounted || !isAuthorized) return null;
