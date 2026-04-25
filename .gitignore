@@ -325,6 +325,7 @@ data/
 web-lab/
 support/
 /support/
+middleware.ts
 public/lottie/
 scripts/local-*.mjs
 scripts/debug.mjs
