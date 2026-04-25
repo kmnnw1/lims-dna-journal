@@ -29,7 +29,7 @@ export function useJournalPage() {
 	const [minConc, setMinConc] = useState<number | null>(null);
 	const [maxConc, setMaxConc] = useState<number | null>(null);
 	const [selectedOperator, setSelectedOperator] = useState<string>('');
-
+	const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [editingSpecimen, setEditingSpecimen] = useState<Specimen | null>(null);
 	const [activePCRSpecimen, setActivePCRSpecimen] = useState<Specimen | null>(null);
@@ -47,63 +47,65 @@ export function useJournalPage() {
 		extrDateRaw: '',
 	});
 
-	const [isMobileDevice, setIsMobileDevice] = useState(false);
-	const [devSettings, setDevSettings] = useState({
-		enableMobileCards: false,
-		forceDesktopView: false,
-		forceMobileView: false,
-	});
-	const [pcrForm, setPCRForm] = useState({
+	const [pcrForm, setPCRForm] = useState<{
+		volume: string;
+		marker: string;
+		forwardPrimer: string;
+		reversePrimer: string;
+		dnaMatrix: string;
+		result: 'Success' | 'Failed';
+		id?: string;
+	}>({
 		volume: '25',
 		marker: '',
 		forwardPrimer: '',
 		reversePrimer: '',
 		dnaMatrix: '',
-		result: 'Success' as 'Success' | 'Failed',
+		result: 'Success',
 	});
 
-	// Физическое определение мобильного устройства (даже если включен "Режим ПК")
+	const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+	const searchInputRef = useRef<HTMLInputElement>(null);
+
+	// Hotkeys
 	useEffect(() => {
-		if (typeof window === 'undefined') return;
-		const ua = navigator.userAgent;
-		const isHandheld = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-			ua,
-		);
-
-		// Для iPad и других планшетов, которые могут мимикрировать под десктоп
-		// Но у них много точек касания и нет десктопной платформы в некоторых проверках
-		const isTablet =
-			navigator.maxTouchPoints > 0 &&
-			!/Win32|Win64|MacIntel|Linux x86_64/i.test(navigator.platform);
-
-		// Дополнительная проверка на "Pingvin" или типа того (вероятно Puffin или Linux Mobile)
-		const isSpecialMobile = /Linux/i.test(ua) && navigator.maxTouchPoints > 0;
-
-		setIsMobileDevice(isHandheld || isTablet || isSpecialMobile);
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+				e.preventDefault();
+				setIsCommandPaletteOpen((prev) => !prev);
+			}
+			if (e.key === 'n' && e.altKey) {
+				e.preventDefault();
+				setIsAddModalOpen(true);
+			}
+			if (e.key === '/') {
+				if (
+					document.activeElement?.tagName !== 'INPUT' &&
+					document.activeElement?.tagName !== 'TEXTAREA'
+				) {
+					e.preventDefault();
+					searchInputRef.current?.focus();
+				}
+			}
+			if (e.key === 'Escape') {
+				setSearchQuery('');
+			}
+		};
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
 	}, []);
 
-	// Dev settings sync
+	// Физическое определение мобильного устройства
+	const [isMobileDevice, setIsMobileDevice] = useState(false);
 	useEffect(() => {
-		if (typeof window === 'undefined') return;
-		const saved = localStorage.getItem('devSettings');
-		if (saved) {
-			try {
-				setDevSettings(JSON.parse(saved));
-			} catch (_) {}
-		}
+		const checkMobile = () => {
+			setIsMobileDevice(window.innerWidth < 768);
+		};
+		checkMobile();
+		window.addEventListener('resize', checkMobile);
+		return () => window.removeEventListener('resize', checkMobile);
 	}, []);
 
-	useEffect(() => {
-		if (typeof window === 'undefined') return;
-		localStorage.setItem('devSettings', JSON.stringify(devSettings));
-	}, [devSettings]);
-
-	// Reset page on filter change
-	useEffect(() => {
-		setPage(1);
-	}, []);
-
-	// Fetch Query
 	const { data, isLoading: loading } = useQuery({
 		queryKey: [
 			'specimens',
@@ -111,7 +113,8 @@ export function useJournalPage() {
 				page,
 				search: debouncedSearch,
 				filter: filterType,
-				sort: sortConfig,
+				sortBy: sortConfig?.key,
+				sortOrder: sortConfig?.direction,
 				minConc,
 				maxConc,
 				operator: selectedOperator,
@@ -120,20 +123,20 @@ export function useJournalPage() {
 		queryFn: async () => {
 			const params = new URLSearchParams({
 				page: page.toString(),
-				limit: '50',
+				limit: '15',
 				search: debouncedSearch,
 				filter: filterType,
 				sortBy: sortConfig?.key || 'id',
 				sortOrder: sortConfig?.direction || 'asc',
-				minConc: minConc?.toString() || '',
-				maxConc: maxConc?.toString() || '',
-				operator: selectedOperator,
 			});
-			const res = await fetch(`/api/specimens?${params.toString()}`);
-			if (!res.ok) throw new Error('Failed to fetch specimens');
+			if (minConc !== null) params.append('minConc', minConc.toString());
+			if (maxConc !== null) params.append('maxConc', maxConc.toString());
+			if (selectedOperator) params.append('operator', selectedOperator);
+
+			const res = await fetch(`/api/specimens?${params}`);
+			if (!res.ok) throw new Error('Network error');
 			return res.json();
 		},
-		enabled: status === 'authenticated',
 	});
 
 	const specimens = data?.specimens || [];
@@ -141,24 +144,22 @@ export function useJournalPage() {
 	const totalGlobal = data?.total || 0;
 	const suggestions = data?.suggestions || { labs: [], operators: [], methods: [] };
 
-	// Mutations
 	const addMutation = useMutation({
-		mutationFn: async (payload: typeof newRecordData) => {
+		mutationFn: async (newRecord: typeof newRecordData) => {
 			const res = await fetch('/api/specimens', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload),
+				body: JSON.stringify(newRecord),
 			});
 			if (!res.ok) {
 				const error = await res.json();
-				throw new Error(error.error || 'Ошибка сохранения');
+				throw new Error(error.error || 'Ошибка при сохранении');
 			}
 			return res.json();
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['specimens'] });
 			setIsAddModalOpen(false);
-			setToastMessage({ text: 'Проба успешно добавлена', type: 'success' });
 			setNewRecordData({
 				id: '',
 				taxon: '',
@@ -170,31 +171,29 @@ export function useJournalPage() {
 			});
 		},
 		onError: (error: Error) => {
-			setToastMessage({ text: error.message, type: 'error' });
+			setValidationError(error.message);
 		},
 	});
 
 	const editMutation = useMutation({
 		mutationFn: async (specimen: Specimen) => {
-			const { id, ...rest } = specimen;
 			const res = await fetch('/api/specimens', {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ id, ...rest }),
+				body: JSON.stringify(specimen),
 			});
 			if (!res.ok) {
 				const error = await res.json();
-				throw new Error(error.error || 'Ошибка редактирования');
+				throw new Error(error.error || 'Ошибка при обновлении');
 			}
 			return res.json();
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['specimens'] });
 			setEditingSpecimen(null);
-			setToastMessage({ text: 'Проба успешно обновлена', type: 'success' });
 		},
 		onError: (error: Error) => {
-			setToastMessage({ text: error.message, type: 'error' });
+			setValidationError(error.message);
 		},
 	});
 
@@ -221,13 +220,13 @@ export function useJournalPage() {
 	});
 
 	const stats = useMemo(() => {
-		const list = Array.isArray(specimens) ? specimens : [];
+		if (data?.stats) return data.stats;
 		return {
 			total: totalGlobal,
-			successful: list.filter((s) => s.itsStatus === '✓').length,
-			others: list.filter((s) => s.itsStatus !== '✓').length,
+			successful: 0,
+			others: 0,
 		};
-	}, [specimens, totalGlobal]);
+	}, [data?.stats, totalGlobal]);
 
 	const handleSort = (key: string) => {
 		setSortConfig((curr) => ({
@@ -301,11 +300,10 @@ export function useJournalPage() {
 						: '✓';
 
 		try {
-			// Оптимистичное обновление или просто мутация
 			await fetch('/api/specimens', {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ singleId: id, updateData: { [statusKey]: newStatus } }),
+				body: JSON.stringify({ singleId: id, singleStatus: newStatus }),
 			});
 			queryClient.invalidateQueries({ queryKey: ['specimens'] });
 		} catch {
@@ -374,7 +372,6 @@ export function useJournalPage() {
 		if (status === 'unauthenticated') router.push('/login');
 	}, [status, router]);
 
-	// Auto-fill operator from session when modal opens
 	useEffect(() => {
 		if (isAddModalOpen && !newRecordData.extrOperator) {
 			const user = session?.user;
@@ -392,16 +389,40 @@ export function useJournalPage() {
 		loading:
 			loading || addMutation.isPending || editMutation.isPending || pcrMutation.isPending,
 		page,
+		setPage,
 		totalPages,
 		totalGlobal,
+		stats,
 		searchQuery,
 		setSearchQuery,
 		filterType,
 		setFilterType,
 		sortConfig,
-		setSortConfig,
+		handleSort,
 		selectedIds,
 		setSelectedIds,
+		handleSelect: (id: string) => {
+			setSelectedIds((prev) => {
+				const next = new Set(prev);
+				if (next.has(id)) next.delete(id);
+				else next.add(id);
+				return next;
+			});
+		},
+		handleSelectAll: (ids: string[]) => {
+			setSelectedIds((prev) => (prev.size === ids.length ? new Set() : new Set(ids)));
+		},
+		toastMessage,
+		setToastMessage,
+		handleSignOut,
+		minConc,
+		setMinConc,
+		maxConc,
+		setMaxConc,
+		selectedOperator,
+		setSelectedOperator,
+		isCommandPaletteOpen,
+		setIsCommandPaletteOpen,
 		isAddModalOpen,
 		setIsAddModalOpen,
 		editingSpecimen,
@@ -412,15 +433,16 @@ export function useJournalPage() {
 		setIsBatchModalOpen,
 		isScanOpen,
 		setIsScanOpen,
-		isMobileDevice,
-		devSettings,
-		setDevSettings,
+		validationError,
+		setValidationError,
 		newRecordData,
 		setNewRecordData,
 		pcrForm,
 		setPCRForm,
-		stats,
-		handleSort,
+		focusedIndex,
+		setFocusedIndex,
+		searchInputRef,
+		suggestions,
 		handleAddSubmit,
 		handleEditSubmit,
 		handlePCRSubmit,
@@ -428,18 +450,6 @@ export function useJournalPage() {
 		handleExportCSV,
 		handleExportXLSX,
 		handlePrintLabels,
-		handleSignOut,
-		setPage,
-		minConc,
-		setMinConc,
-		maxConc,
-		setMaxConc,
-		selectedOperator,
-		setSelectedOperator,
-		suggestions,
-		toastMessage,
-		setToastMessage,
-		validationError,
-		setValidationError,
+		isMobileDevice,
 	};
 }
