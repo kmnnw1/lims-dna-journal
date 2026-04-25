@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from 'next-auth/middleware';
+import { applySecurityHeaders } from '@/lib/security/headers';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/security/rate-limiter';
 
 /**
@@ -26,7 +27,7 @@ function getClientIp(req: Request): string {
 	return 'unknown';
 }
 
-export default withAuth(
+export const proxy = withAuth(
 	function proxy(req) {
 		const token = req.nextauth.token;
 		const isLoginPage = req.nextUrl.pathname === '/login';
@@ -69,10 +70,16 @@ export default withAuth(
 				);
 			}
 		}
+
+		// Если лимиты не превышены, применяем security-заголовки
+		const response = NextResponse.next();
+		return applySecurityHeaders(response, req);
 	},
 	{
 		callbacks: {
-			authorized: ({ token }) => {
+			authorized: ({ token, req }) => {
+				// Разрешаем доступ к странице логина без авторизации
+				if (req.nextUrl.pathname === '/login') return true;
 				return Boolean(token && typeof token === 'object');
 			},
 		},
@@ -87,8 +94,9 @@ export const config = {
 		/*
 		 * Защищаем всё приложение за исключением:
 		 * - api/auth (авторизация)
+		 * - login (страница входа)
 		 * - статика, иконки, манифесты
 		 */
-		'/((?!api/auth|_next/static|_next/image|favicon.ico|icon-.*\\.png|icon\\.svg|apple-touch-icon\\.png|manifest\\.json|offline\\.html).*)',
+		'/((?!api/auth|login|_next/static|_next/image|favicon.ico|icon-.*\\.png|icon\\.svg|apple-touch-icon\\.png|manifest\\.json|offline\\.html).*)',
 	],
 };
