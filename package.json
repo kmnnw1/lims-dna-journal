@@ -1,6 +1,6 @@
 {
 	"name": "lab-journal",
-	"version": "0.21.0.54",
+	"version": "0.21.0.55",
 	"description": "Система управления лабораторной информацией (LIMS) для учёта генетического материала и протоколирования ПЦР-исследований.",
 	"private": true,
 	"scripts": {
@@ -95,9 +95,8 @@
 		"sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.4.15",
 		"@rollup/plugin-terser": "^1.0.0",
 		"source-map": "0.7.6",
-		"workbox-build": {
-			"source-map": "0.7.6"
-		},
+		"workbox-build": "7.4.0",
+		"workbox-webpack-plugin": "7.4.0",
 		"@esbuild-kit/esm-loader": "npm:tsx@^4.19.2",
 		"@esbuild-kit/core-utils": "npm:tsx@^4.19.2"
 	},
