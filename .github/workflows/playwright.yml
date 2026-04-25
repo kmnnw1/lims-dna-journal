@@ -75,7 +75,13 @@ jobs:
                   echo "NEXTAUTH_URL=http://127.0.0.1:3000" >> .env
                   echo "DATABASE_URL=file:./prisma/dev.db" >> .env
                   echo "AUTH_TEST_TOKEN=${CI_TOKEN}" >> .env
+                  
+                  # Export to GitHub Env for the Next.js standalone process
+                  echo "NEXTAUTH_SECRET=${CI_SECRET}" >> "$GITHUB_ENV"
+                  echo "NEXTAUTH_URL=http://127.0.0.1:3000" >> "$GITHUB_ENV"
+                  echo "AUTH_TEST_TOKEN=${CI_TOKEN}" >> "$GITHUB_ENV"
                   echo "CI_TOKEN=${CI_TOKEN}" >> "$GITHUB_ENV"
+                  
                   npx prisma db push
                   AUTH_TEST_TOKEN=${CI_TOKEN} npx tsx scripts/fix-auth.ts
             - name: Build application
