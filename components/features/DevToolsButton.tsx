@@ -107,7 +107,7 @@ export function DevToolsButton() {
 				const distToXEdge = isLeft ? currentX : winWidth - currentX;
 
 				// Для FAB (правый нижний) сдвигаем ВЛЕВО сильнее, так как он может быть расширенным
-				const avoidanceX = isFabInCorner ? 160 : 80;
+				const avoidanceX = isFabInCorner ? 200 : 80;
 				const avoidanceY = 80;
 
 				if (distToYEdge < distToXEdge) {
@@ -126,7 +126,6 @@ export function DevToolsButton() {
 		[getNextLogoCorner, getThemeToggleCorner, settings.visibility.fab],
 	);
 
-	// Установка стабильной начальной позиции, если нет сохраненной
 	// Установка стабильной начальной позиции, если нет сохраненной
 	useEffect(() => {
 		if (!isAuthorized || isPositioned) return;
