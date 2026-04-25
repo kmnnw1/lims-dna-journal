@@ -106,9 +106,9 @@ export function DevToolsButton() {
 			let snapY = isTop ? edgePadding : winHeight - btnHeight - edgePadding;
 
 			if (isLogoInCorner || isThemeInCorner || isFabInCorner) {
-				// Дистанции обхода: для логотипа меньше, для FAB больше
-				const avoidanceX = isFabInCorner ? 170 : 46;
-				const avoidanceY = isFabInCorner ? 80 : 46;
+				// Дистанции обхода: для логотипа и темы чуть больше, для FAB — значительно больше
+				const avoidanceX = isFabInCorner ? 170 : 60;
+				const avoidanceY = isFabInCorner ? 80 : 60;
 
 				const distToYEdge = isTop ? currentY : winHeight - currentY;
 				const distToXEdge = isLeft ? currentX : winWidth - currentX;
