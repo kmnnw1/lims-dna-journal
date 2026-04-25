@@ -69,7 +69,7 @@ async function loginAdmin(page: Page) {
 		console.log(`Page content snippet (first 500 chars): ${bodySnippet.slice(0, 500)}`);
 
 		throw new Error(
-			`Login failed. Stayed on ${currentUrl}. Error: ${errorText.trim() || 'None'}. Snippet: ${bodySnippet.slice(0, 100)}`,
+			`Login failed. Stayed on ${currentUrl}. Error: ${errorText?.trim() || 'None'}. Snippet: ${bodySnippet.slice(0, 100)}`,
 		);
 	}
 
