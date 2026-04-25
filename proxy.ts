@@ -37,19 +37,26 @@ export const proxy = withAuth(
 		);
 
 		// Принудительный HTTPS в продакшене для защиты от Wireshark
-		// Пропускаем для localhost, 127.0.0.1 и CI (для локальной разработки и E2E тестов)
-		if (
-			process.env.NODE_ENV === 'production' &&
-			!process.env.CI &&
-			req.nextUrl.protocol === 'http:' &&
-			!req.nextUrl.hostname.includes('localhost') &&
-			!req.nextUrl.hostname.includes('127.0.0.1')
-		) {
-			console.log(`[PROXY REDIRECT] Forcing HTTPS redirect for ${req.nextUrl.hostname}`);
-			return NextResponse.redirect(
-				`https://${req.nextUrl.host}${req.nextUrl.pathname}${req.nextUrl.search}`,
-				301,
-			);
+		// Пропускаем для localhost, 127.0.0.1, 0.0.0.0 и CI (для локальной разработки и E2E тестов)
+		const isLocalHost =
+			req.nextUrl.hostname.includes('localhost') ||
+			req.nextUrl.hostname.includes('127.0.0.1') ||
+			req.nextUrl.hostname.includes('0.0.0.0');
+
+		const isCI = process.env.CI === 'true' || process.env.CI === '1' || Boolean(process.env.CI);
+
+		if (process.env.NODE_ENV === 'production' && req.nextUrl.protocol === 'http:') {
+			if (isCI || isLocalHost) {
+				console.log(
+					`[PROXY SKIP] Skipping HTTPS redirect (CI: ${isCI}, Local: ${isLocalHost}) for ${req.nextUrl.hostname}`,
+				);
+			} else {
+				console.log(`[PROXY REDIRECT] Forcing HTTPS redirect for ${req.nextUrl.hostname}`);
+				return NextResponse.redirect(
+					`https://${req.nextUrl.host}${req.nextUrl.pathname}${req.nextUrl.search}`,
+					301,
+				);
+			}
 		}
 
 		// Redirect authenticated users away from login page
