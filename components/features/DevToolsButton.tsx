@@ -107,7 +107,7 @@ export function DevToolsButton() {
 				const distToXEdge = isLeft ? currentX : winWidth - currentX;
 
 				// Для FAB (правый нижний) сдвигаем ВЛЕВО сильнее, так как он может быть расширенным
-				const avoidanceX = isFabInCorner ? 200 : 80;
+				const avoidanceX = isFabInCorner ? 180 : 80;
 				const avoidanceY = 80;
 
 				if (distToYEdge < distToXEdge) {
