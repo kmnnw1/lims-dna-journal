@@ -1,4 +1,4 @@
-import { Check, LogOut, Moon, Plus, Search, Settings, Sparkles, Sun } from 'lucide-react';
+import { Check, LogOut, Moon, Plus, Search, Settings, Sparkles, Sun, X } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { forwardRef } from 'react';
@@ -76,8 +76,18 @@ export const JournalHeader = forwardRef<HTMLInputElement, JournalHeaderProps>(
 								placeholder='Поиск... (нажмите "/")'
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
-								className="flex-1 pl-9 sm:pl-12 pr-2 py-2 sm:py-3 bg-transparent outline-none text-xs sm:text-base placeholder:text-(--md-sys-color-outline) min-w-0"
+								className="flex-1 pl-9 sm:pl-12 pr-1 py-2 sm:py-3 bg-transparent outline-none text-xs sm:text-base placeholder:text-(--md-sys-color-outline) min-w-0"
 							/>
+
+							{searchQuery && (
+								<button
+									onClick={() => setSearchQuery('')}
+									className="p-1 hover:bg-(--md-sys-color-on-surface)/10 rounded-full transition-colors mr-1"
+									title="Очистить поиск"
+								>
+									<X className="w-4 h-4 text-(--md-sys-color-outline)" />
+								</button>
+							)}
 
 							{/* Встроенные статусы-фильтры */}
 							<div className="hidden md:flex items-center p-1 bg-(--md-sys-color-surface-container-low) rounded-full mr-2 shrink-0">
