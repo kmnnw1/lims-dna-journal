@@ -20,6 +20,7 @@ export interface DevSettings {
 		filters: boolean;
 		table: boolean;
 		fab: boolean;
+		erModel: boolean;
 	};
 	hotkey: string;
 }
@@ -51,7 +52,8 @@ export const DevSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 			stats: true,
 			filters: true,
 			table: true,
-			fab: true,
+			fab: false,
+			erModel: false,
 		},
 		hotkey: 'Shift+D',
 	});
