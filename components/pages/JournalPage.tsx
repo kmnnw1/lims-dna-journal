@@ -1,8 +1,12 @@
 'use client';
 
+import { PresenceProvider } from '@/components/features/PresenceProvider';
 import { JournalPageContent } from '@/components/pages/JournalPageContent';
-import { useJournalPage } from '@/hooks/useJournalPage';
 
 export default function JournalPage() {
-	return <JournalPageContent />;
+	return (
+		<PresenceProvider>
+			<JournalPageContent />
+		</PresenceProvider>
+	);
 }
