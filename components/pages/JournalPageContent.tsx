@@ -221,8 +221,8 @@ export function JournalPageContent() {
 	if (status === 'loading') return null;
 
 	return (
-		<main className="min-h-screen bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface) p-3 md:p-6 pb-24 transition-colors duration-300">
-			<div className="w-full">
+		<main className="min-h-screen bg-(--md-sys-color-surface) text-(--md-sys-color-on-surface) px-3 md:px-6 pb-24 transition-colors duration-300">
+			<div className="w-full pt-0">
 				{devSettings.visibility?.header && (
 					<JournalHeader
 						ref={searchInputRef}

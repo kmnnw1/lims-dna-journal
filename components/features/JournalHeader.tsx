@@ -60,7 +60,7 @@ export const JournalHeader = forwardRef<HTMLInputElement, JournalHeaderProps>(
 					: 'bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface-variant)';
 
 		return (
-			<header className="sticky top-0 z-60 flex items-center gap-2 sm:gap-3 px-1 sm:px-6 py-4 -mx-3 md:-mx-6 bg-(--md-sys-color-surface)/80 backdrop-blur-xl border-b border-(--md-sys-color-outline-variant)/10 transition-all duration-300">
+			<header className="sticky top-0 z-60 flex items-center gap-2 sm:gap-3 px-1 sm:px-6 h-[72px] -mx-3 md:-mx-6 bg-(--md-sys-color-surface)/80 backdrop-blur-xl border-b border-(--md-sys-color-outline-variant)/10 transition-all duration-300">
 				<div className="shrink-0 scale-90 sm:scale-100">
 					<AnimatedFlask />
 				</div>

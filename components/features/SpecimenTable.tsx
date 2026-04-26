@@ -191,7 +191,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 		<div className="rounded-4xl overflow-hidden border border-(--md-sys-color-outline-variant)/30 bg-(--md-sys-color-surface-container-lowest) shadow-sm transition-all duration-300">
 			<div className="overflow-x-auto custom-scrollbar">
 				<table className="w-full min-w-[1000px] text-left border-separate border-spacing-0 relative text-sm">
-					<thead className="sticky top-[73px] z-40 bg-(--md-sys-color-surface)/95 backdrop-blur-md shadow-sm">
+					<thead className="sticky top-[72px] z-40 bg-(--md-sys-color-surface)/95 backdrop-blur-md shadow-sm">
 						<tr>
 							<th className="sticky left-0 z-50 bg-(--md-sys-color-surface) px-3 py-3 w-12 text-center border-b border-b-(--md-sys-color-outline-variant)/50 border-r border-r-(--md-sys-color-outline-variant)/10">
 								<div className="relative flex items-center justify-center">

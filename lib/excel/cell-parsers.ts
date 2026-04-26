@@ -2,13 +2,30 @@ import ExcelJS from 'exceljs';
 import { ColumnBinding } from './types';
 
 // --- Умный парсинг сложных ячеек ---
-export function cellText(v: unknown): string {
+export function cellText(v: unknown, workbook?: ExcelJS.Workbook): string {
 	if (v === undefined || v === null) return '';
 	if (v instanceof Date) return v.toISOString().slice(0, 10);
 	if (typeof v === 'number' && Number.isFinite(v)) return String(v);
 
 	if (typeof v === 'object' && v !== null) {
 		const obj = v as Record<string, unknown>;
+
+		// Обработка формул
+		if (obj.formula !== undefined || obj.result !== undefined) {
+			const res = obj.result;
+			
+			// Если ошибка #REF! - пробуем разрешить ссылку вручную
+			if (res && typeof res === 'object' && 'error' in res && res.error === '#REF!' && obj.formula && workbook) {
+				const resolved = resolveCellReference(String(obj.formula), workbook);
+				if (resolved) return resolved;
+			}
+
+			if (res === undefined || res === null) return '';
+			if (res instanceof Date) return res.toISOString().slice(0, 10);
+			if (typeof res === 'object' && res !== null && 'error' in res) return '';
+			return String(res).trim();
+		}
+
 		if (Array.isArray(obj.richText)) {
 			return obj.richText
 				.map((t: unknown) => (t as Record<string, unknown>).text || '')
@@ -17,10 +34,6 @@ export function cellText(v: unknown): string {
 		}
 		if (obj.text && obj.hyperlink) {
 			return String(obj.text).trim();
-		}
-		if (obj.result !== undefined) {
-			if (obj.result instanceof Date) return obj.result.toISOString().slice(0, 10);
-			return String(obj.result).trim();
 		}
 		try {
 			return JSON.stringify(v);
@@ -33,6 +46,32 @@ export function cellText(v: unknown): string {
 		.trim()
 		.replace(/[\r\n]+/g, ' | ')
 		.replace(/\s{2,}/g, ' ');
+}
+
+/**
+ * Пытается разрешить текстовую ссылку на ячейку (напр. "ITS!G3553")
+ */
+function resolveCellReference(formula: string, workbook: ExcelJS.Workbook): string | null {
+	try {
+		// Поддержка формата 'Sheet'!A1 или Sheet!A1
+		const match = formula.match(/^'?(.*?)'?!([A-Z]+[0-9]+)$/);
+		if (!match) return null;
+
+		const sheetName = match[1];
+		const cellAddr = match[2];
+
+		const targetSheet = workbook.getWorksheet(sheetName);
+		if (!targetSheet) return null;
+
+		const targetCell = targetSheet.getCell(cellAddr);
+		if (!targetCell || targetCell.address === cellAddr && (targetCell as any)._value?.error) return null;
+
+		// Рекурсивно вызываем cellText без передачи workbook, чтобы избежать бесконечного цикла,
+		// но если там тоже ссылка - она просто вернет результат или пустую строку.
+		return cellText(targetCell.value);
+	} catch {
+		return null;
+	}
 }
 
 export function normalizeHeader(h: string): string {
@@ -48,7 +87,7 @@ export function isGarbageId(id: string): boolean {
 	const s = id.toLowerCase().replace(/\s+/g, '');
 	if (!s) return true;
 	if (
-		/^(ref|reference|ref\.|справочно|справка|k\-|k\+|к\-|к\+|nk|pk|нк|пк|blank|control|контроль|isolate|id)$/.test(
+		/^(ref|reference|ref\.|справочно|справка|k\-|k\+|к\-|к\+|nk|pk|нк|пк|blank|control|контроль|isolate|id|#ref!|#n\/a|#value!)$/.test(
 			s,
 		)
 	)
@@ -229,22 +268,39 @@ export function buildColumnBindings(headerRow: unknown[]): ColumnBinding[] {
 	return out;
 }
 
-export function getByKey(row: unknown[], bindings: ColumnBinding[], baseKey: string): string {
-	const matches = bindings
-		.filter((b) => {
-			if (b.key === baseKey) return true;
-			if (b.key.startsWith(baseKey + '_')) {
-				const rest = b.key.slice(baseKey.length + 1);
-				return /^\d+$/.test(rest);
-			}
-			return false;
-		})
-		.sort((a, b) => a.index - b.index);
-	for (const b of matches) {
-		const v = cellText(row[b.index]);
+export function getByKey(
+	row: unknown[],
+	bindings: ColumnBinding[],
+	key: string,
+	workbook?: ExcelJS.Workbook,
+): string {
+	const b = bindings.find((x) => x.key === key);
+	if (!b) return '';
+	return cellText(row[b.index], workbook);
+}
+
+export function getByKeyFirst(
+	row: unknown[],
+	bindings: ColumnBinding[],
+	keys: string[],
+	workbook?: ExcelJS.Workbook,
+): string {
+	for (const k of keys) {
+		const v = getByKey(row, bindings, k, workbook);
 		if (v) return v;
 	}
 	return '';
+}
+
+export function getByKeyFull(
+	row: unknown[],
+	bindings: ColumnBinding[],
+	key: string,
+	workbook?: ExcelJS.Workbook,
+): { val: string; header: string } | null {
+	const b = bindings.find((x) => x.key === key);
+	if (!b) return null;
+	return { val: cellText(row[b.index], workbook), header: b.rawHeader };
 }
 
 export function collectRowCellComments(sheet: ExcelJS.Worksheet, rowIndex0: number): string {
