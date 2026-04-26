@@ -50,12 +50,12 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
 		<AnimatePresence>
 			<motion.div
 				ref={menuRef}
-				initial={{ opacity: 0, scale: 0.9, y: -10 }}
+				initial={{ opacity: 0, scale: 0.96, y: 4 }}
 				animate={{ opacity: 1, scale: 1, y: 0 }}
-				exit={{ opacity: 0, scale: 0.9, y: -10 }}
-				transition={{ duration: 0.1, ease: 'easeOut' }}
+				exit={{ opacity: 0, scale: 0.96, y: 4 }}
+				transition={{ type: 'spring', stiffness: 500, damping: 35 }}
 				style={{ top: adjustedY, left: adjustedX }}
-				className="fixed z-1000 min-w-[200px] bg-(--md-sys-color-surface-container-lowest) border border-(--md-sys-color-outline-variant)/30 rounded-2xl shadow-2xl py-2 overflow-hidden md-elevation-5"
+				className="fixed z-500 min-w-[180px] bg-(--md-sys-color-surface-container-lowest)/85 backdrop-blur-2xl border border-(--md-sys-color-outline-variant)/20 rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.15)] p-1 overflow-hidden"
 			>
 				{items.map((item, index) => (
 					<button
@@ -65,16 +65,16 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
 							item.onClick();
 							onClose();
 						}}
-						className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors text-left
+						className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-[13px] font-semibold transition-all rounded-lg text-left active:scale-[0.98]
 							${
 								item.variant === 'danger'
-									? 'text-red-500 hover:bg-red-50'
-									: 'text-(--md-sys-color-on-surface) hover:bg-(--md-sys-color-surface-container-high)'
+									? 'text-red-500 hover:bg-red-500/10'
+									: 'text-(--md-sys-color-on-surface) hover:bg-(--md-sys-color-surface-container-highest)'
 							}
 						`}
 					>
-						{item.icon && <span className="opacity-70">{item.icon}</span>}
-						{item.label}
+						{item.icon && <span className="opacity-60 scale-90">{item.icon}</span>}
+						<span className="flex-1">{item.label}</span>
 					</button>
 				))}
 			</motion.div>
