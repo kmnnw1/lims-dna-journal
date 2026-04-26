@@ -71,7 +71,7 @@ export function ShortcutsModal({ open, onClose, isReader }: Props) {
 	if (!open) return null;
 
 	return (
-		<div className="fixed inset-0 z-[125] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm print:hidden">
+		<div className="fixed inset-0 z-125 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm print:hidden">
 			<button
 				type="button"
 				className="absolute inset-0 cursor-default"
