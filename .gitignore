@@ -15,6 +15,7 @@ GEMINI.md
 .gemini/
 .antigravity/
 .cortex/
+skills/
 .aider*
 .cursor/
 .windsurf/
@@ -333,5 +334,14 @@ scripts/meta-sync.ps1
 scripts/thoughts-autosave.ps1
 
 # ------------------------------------------------------------------------------
+# 14. PROJECT SPECIFIC GENERATED ASSETS
+# ------------------------------------------------------------------------------
+public/*.png
+public/favicon.ico
+scratch/
+.system_generated/
+.gemini/antigravity/
+
+# ==============================================================================
 # END OF GITIGNORE
 # ==============================================================================
