@@ -187,16 +187,7 @@ export function DevToolsButton() {
 			animate(x, snapX, { type: 'spring', stiffness: 400, damping: 30 });
 			animate(y, snapY, { type: 'spring', stiffness: 400, damping: 30 });
 		}
-	}, [
-		isAuthorized,
-		isPositioned,
-		isDragging,
-		calculateSnapPoint,
-		x,
-		y,
-		settings.hideNextIndicator,
-		settings.visibility.fab,
-	]);
+	}, [isAuthorized, isPositioned, isDragging, calculateSnapPoint, x, y]);
 
 	useEffect(() => {
 		if (!isAuthorized || isPositioned) return;
