@@ -1,7 +1,7 @@
 'use client';
 
 import { Camera, ChevronDown, Download, Plus, Printer } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 
 import { BarcodeScanDialog } from '@/components/features/BarcodeScanDialog';
@@ -27,6 +27,8 @@ import { CommandPalette } from '@/components/ui/CommandPalette';
 import { FAB } from '@/components/ui/FAB';
 import { useJournalPage } from '@/hooks/useJournalPage';
 import type { Specimen } from '@/types';
+
+const MemoizedSpecimenTable = React.memo(SpecimenTable);
 
 export function JournalPageContent() {
 	const {
@@ -84,6 +86,7 @@ export function JournalPageContent() {
 		isCommandPaletteOpen,
 		setIsCommandPaletteOpen,
 		focusedIndex,
+		toggleMyFilter,
 	} = useJournalPage();
 
 	const { settings: devSettings } = useDevSettings();
@@ -126,6 +129,37 @@ export function JournalPageContent() {
 		[specimens, lastSelectedIndex, setSelectedIds],
 	);
 
+	const handleFilterChange = useCallback(
+		(type: 'all' | 'success' | 'error' | 'fav') => {
+			setFilterType(type);
+			setSelectedOperator('');
+		},
+		[setFilterType, setSelectedOperator],
+	);
+
+	const handleSelectAll = useCallback(
+		(ids: string[]) => {
+			setSelectedIds((current) => {
+				const allSelected = ids.every((id) => current.has(id));
+				return allSelected ? new Set() : new Set(ids);
+			});
+		},
+		[setSelectedIds],
+	);
+
+	const handleHistoryOpen = useCallback((specimen: Specimen) => {
+		setHistoryTarget({ id: specimen.id, type: 'SPECIMEN' });
+	}, []);
+
+	const handleCopyID = useCallback(
+		(id: string) => {
+			navigator.clipboard.writeText(id).then(() => {
+				setToastMessage({ text: `ID ${id} скопирован в буфер обмена`, type: 'success' });
+			});
+		},
+		[setToastMessage],
+	);
+
 	// Load last export format from localStorage
 	useEffect(() => {
 		const saved = localStorage.getItem('lastExportFormat');
@@ -162,23 +196,6 @@ export function JournalPageContent() {
 		if (format === 'XLSX') return 'Excel';
 		if (format === 'CSV') return 'CSV';
 		return 'SQL';
-	};
-
-	const handleSelectAll = (ids: string[]) => {
-		setSelectedIds((current) => {
-			const allSelected = ids.every((id) => current.has(id));
-			return allSelected ? new Set() : new Set(ids);
-		});
-	};
-
-	const handleHistoryOpen = (specimen: Specimen) => {
-		setHistoryTarget({ id: specimen.id, type: 'SPECIMEN' });
-	};
-
-	const handleCopyID = (id: string) => {
-		navigator.clipboard.writeText(id).then(() => {
-			setToastMessage({ text: `ID ${id} скопирован в буфер обмена`, type: 'success' });
-		});
 	};
 
 	const handleCopySelectedIds = () => {
@@ -236,6 +253,38 @@ export function JournalPageContent() {
 									activeFilter={filterType}
 									onFilterSelect={setFilterType}
 								/>
+								<div className="flex items-center gap-1.5 ml-2 border-l border-(--md-sys-color-outline-variant)/30 pl-4">
+									<button
+										onClick={() => handleFilterChange('all')}
+										className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+											filterType === 'all' && !selectedOperator
+												? 'bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary)'
+												: 'bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
+										}`}
+									>
+										Все
+									</button>
+									<button
+										onClick={() => handleFilterChange('error')}
+										className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+											filterType === 'error'
+												? 'bg-(--md-sys-color-error) text-white'
+												: 'bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
+										}`}
+									>
+										Ошибки
+									</button>
+									<button
+										onClick={toggleMyFilter}
+										className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+											selectedOperator
+												? 'bg-(--md-sys-color-tertiary) text-(--md-sys-color-on-tertiary)'
+												: 'bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-on-surface-variant) hover:bg-(--md-sys-color-surface-container-highest)'
+										}`}
+									>
+										Мои
+									</button>
+								</div>
 							</div>
 						)}
 
@@ -322,7 +371,7 @@ export function JournalPageContent() {
 					</div>
 				)}
 				{devSettings.visibility?.table && (
-					<div className="bg-(--md-sys-color-surface-container-lowest) rounded-2xl sm:rounded-3xl md-elevation-1 border border-(--md-sys-color-outline-variant)/10 overflow-hidden transition-all duration-500 min-h-[400px]">
+					<div className="bg-(--md-sys-color-surface-container-lowest) rounded-2xl sm:rounded-3xl md-elevation-1 border border-(--md-sys-color-outline-variant)/10 overflow-hidden min-h-[400px]">
 						{(isMobileDevice || devSettings.forceMobileView) &&
 						devSettings.enableMobileCards &&
 						!devSettings.forceDesktopView ? (
@@ -361,7 +410,7 @@ export function JournalPageContent() {
 								))}
 							</div>
 						) : (
-							<SpecimenTable
+							<MemoizedSpecimenTable
 								specimens={specimens}
 								loading={loading}
 								onSort={handleSort}
@@ -502,7 +551,6 @@ export function JournalPageContent() {
 							text: 'Данные успешно восстановлены к старой версии',
 							type: 'success',
 						});
-						// Триггерим рефреш через смену фильтра или страницы
 						setPage(page);
 					}}
 				/>
@@ -536,7 +584,6 @@ export function JournalPageContent() {
 				</FAB>
 			)}
 
-			{/* Toast/Snackbar */}
 			{toastMessage && (
 				<div
 					role="alert"
