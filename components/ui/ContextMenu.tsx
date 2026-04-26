@@ -55,7 +55,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
 				exit={{ opacity: 0, scale: 0.9, y: -10 }}
 				transition={{ duration: 0.1, ease: 'easeOut' }}
 				style={{ top: adjustedY, left: adjustedX }}
-				className="fixed z-[1000] min-w-[200px] bg-(--md-sys-color-surface-container-lowest) border border-(--md-sys-color-outline-variant)/30 rounded-2xl shadow-2xl py-2 overflow-hidden md-elevation-5"
+				className="fixed z-1000 min-w-[200px] bg-(--md-sys-color-surface-container-lowest) border border-(--md-sys-color-outline-variant)/30 rounded-2xl shadow-2xl py-2 overflow-hidden md-elevation-5"
 			>
 				{items.map((item, index) => (
 					<button
