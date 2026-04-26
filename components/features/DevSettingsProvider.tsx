@@ -52,7 +52,7 @@ export const DevSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 			stats: true,
 			filters: true,
 			table: true,
-			fab: false,
+			fab: true,
 			erModel: false,
 		},
 		hotkey: 'Shift+D',
