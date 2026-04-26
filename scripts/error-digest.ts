@@ -1,104 +1,63 @@
-import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
-const root = process.cwd();
-const targetDir = join(root, '.internal_data');
-const logsDir = join(targetDir, 'logs');
-const digestPath = join(targetDir, 'error_digest.md');
-
-// Ensure directories exist
-[targetDir, logsDir].forEach((dir) => {
-	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true });
-	}
-});
+const execAsync = promisify(exec);
 
 /**
- * Очищает вывод от ANSI-кодов и повторяющегося шума
+ * Enhanced Error Digest
+ * Агрегирует ошибки из Biome и TSC для быстрого анализа.
  */
-function smartFilter(text: string): string {
-	// 1. Убираем ANSI escape-последовательности (цвета и т.д.)
-	const cleanAnsi = text.replace(
-		/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
-		'',
-	);
 
-	// 2. Убираем повторяющийся шум Biome и TSC
-	const lines = cleanAnsi.split('\n');
-	const usefulLines = lines.filter((line) => {
-		// Оставляем всё, кроме чисто информационных строк прогресса Biome/TSC
-		const purelyInfo = [
-			'Checked 130 files',
-			'No fixes applied',
-			'npx tsc --noEmit',
-			'biome check .',
-			'npm run lint',
-		];
-		const isInfo = purelyInfo.some((n) => line.trim() === n);
-		// Если в строке есть намек на ошибку или ворнинг - обязательно оставляем
-		const hasAlert =
-			line.toLowerCase().includes('error') ||
-			line.includes('!') ||
-			line.toLowerCase().includes('warning');
-		return !isInfo || hasAlert;
-	});
+async function runQA() {
+	console.log('\n[QA] Запуск анализа проекта (Biome + TSC)...');
+	const issues: string[] = [];
 
-	return usefulLines.join('\n');
-}
-
-function runCheck(name: string, cmd: string, filename: string): string {
-	const logPath = join(logsDir, filename);
-	let output = '';
-	let isError = false;
-
+	// 1. Biome
 	try {
-		output = execSync(cmd, { encoding: 'utf8', stdio: 'pipe' });
-	} catch (error: unknown) {
-		isError = true;
-		const err = error as { stdout?: string; stderr?: string; message?: string };
-		output = err.stdout || err.stderr || err.message || 'Unknown error';
+		console.log('  -> Анализ Biome...');
+		await execAsync('npx biome check .');
+	} catch (e: unknown) {
+		const err = e as { stdout: string };
+		const lines = err.stdout.split('\n');
+		lines.forEach((l: string) => {
+			if (l.includes('error') || l.includes('✖') || l.includes('warning')) {
+				issues.push(`[BIOME] ${l.trim()}`);
+			}
+		});
 	}
 
-	// Всегда сохраняем полный лог
-	writeFileSync(logPath, output);
-
-	const summary = smartFilter(output);
-	const statusIcon = isError ? '❌' : '✅';
-	const statusText = isError ? 'Errors detected' : 'No errors found';
-
-	let section = `### ${statusIcon} ${name}\n`;
-	section += `Status: **${statusText}** | [Full Log](file:///${logPath.replace(/\\/g, '/')})\n\n`;
-
-	if (isError || summary.length > 0) {
-		section += `#### Highlights:\n\`\`\`text\n${summary.slice(0, 2000)}${summary.length > 2000 ? '\n... truncated ...' : ''}\n\`\`\`\n`;
+	// 2. TSC
+	try {
+		console.log('  -> Анализ TypeScript...');
+		await execAsync('npx tsc --noEmit');
+	} catch (e: unknown) {
+		const err = e as { stdout: string };
+		const lines = err.stdout.split('\n');
+		lines.forEach((l: string) => {
+			if (l.match(/error TS\d+:/)) {
+				issues.push(`[TSC] ${l.trim()}`);
+			}
+		});
 	}
 
-	return section;
-}
+	if (issues.length > 0) {
+		console.log(`\n[!] Найдено проблем: ${issues.length}`);
+		console.log(issues.slice(0, 10).join('\n'));
+		if (issues.length > 10) console.log(`... и еще ${issues.length - 10} проблем.`);
 
-async function generateDigest() {
-	console.log('📝 Generating advanced diagnostic digest...');
-
-	let content = `# Project Diagnostic Digest 🕵️‍♂️\n`;
-	content += `Generated: ${new Date().toLocaleString()}\n\n`;
-	content += `> [!NOTE]\n> Full logs are archived in \`.internal_data/logs/\` for deep analysis.\n\n`;
-
-	content += runCheck('Biome Lint', 'npm run lint --silent', 'lint.log');
-	content += runCheck('TypeScript Check', 'npm run check --silent', 'tsc.log');
-	content += runCheck('Unit Tests', 'npm test -- --run --silent', 'test.log');
-
-	// Inject GitHub Status if available
-	content += '\n---\n\n';
-	const githubStatusPath = join(targetDir, 'github_ci_status.md');
-	if (existsSync(githubStatusPath)) {
-		content += readFileSync(githubStatusPath, 'utf8');
+		// В Windows можно копировать в буфер через clip
+		const report = `--- ERROR REPORT (${issues.length} issues) ---\n\n${issues.join('\n')}\n\n--- END ---`;
+		try {
+			const child = exec('clip');
+			child.stdin?.write(report);
+			child.stdin?.end();
+			console.log('\n[*] Полный отчет скопирован в буфер обмена.');
+		} catch {
+			// clip failed
+		}
 	} else {
-		content += '### 🛰️ GitHub Actions Status\nSyncing...\n';
+		console.log('\n[+] Проект чист! Ошибок не найдено.');
 	}
-
-	writeFileSync(digestPath, content);
-	console.log(`🟢 Diagnostic Digest updated: ${digestPath}`);
 }
 
-generateDigest();
+runQA().catch(console.error);
