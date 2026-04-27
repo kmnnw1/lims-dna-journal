@@ -44,11 +44,4 @@ git fetch origin && git add -A && (git diff --staged --quiet || git stash push -
 - **Environment**: Требует настройки переменных AUTH и DATABASE_URL.
 - **Scroll Behavior**: Иерархический липкий скролл (Sticky Stack) для удобства навигации в больших таблицах.
 
-## Статистика проекта
-
-![Lines of Code](https://img.shields.io/tokei/lines/github/kmnnw1/lims-dna-journal?color=0f766e&label=строк%20кода&style=for-the-badge)
-![GitHub repo size](https://img.shields.io/github/repo-size/kmnnw1/lims-dna-journal?color=4338ca&label=размер&style=for-the-badge)
-![GitHub last commit](https://img.shields.io/github/last-commit/kmnnw1/lims-dna-journal?color=7c3aed&label=обновлено&style=for-the-badge)
-
----
 © 2007 DNA Lab
