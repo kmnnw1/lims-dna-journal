@@ -66,7 +66,7 @@ export function AddSpecimenModal({
 			ref={overlayRef}
 			role="dialog"
 			aria-modal="true"
-			className="fixed inset-0 z-140 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+			className="fixed inset-0 z-[140] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200"
 			onClick={handleOverlayClick}
 		>
 			<div className="my-6 w-full max-w-md p-6 sm:p-8 relative bg-(--md-sys-color-surface-container-low) rounded-4xl shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
