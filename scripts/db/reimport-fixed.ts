@@ -25,7 +25,7 @@ async function reimport() {
 		`ЁЯУж ╨Т╤Б╨╡╨│╨╛ ╤Г╨╜╨╕╨║╨░╨╗╤М╨╜╤Л╤Е ╤Б╤В╤А╨╛╨║ ╨┤╨╗╤П ╨╛╨▒╤А╨░╨▒╨╛╤В╨║╨╕: ${uniqueData.length}`,
 	);
 
-	const fixedCount = 0;
+	const _fixedCount = 0;
 	for (let i = 0; i < uniqueData.length; i++) {
 		const row = uniqueData[i];
 		const { id, ...data } = row;
