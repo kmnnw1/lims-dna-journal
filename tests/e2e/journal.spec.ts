@@ -28,7 +28,7 @@ async function loginAdmin(page: Page) {
 	await expect(tokenInput).toBeVisible({ timeout: 15000 });
 
 	// Используем тестовый токен из окружения CI или дефолтный
-	const testToken = process.env.TEST_TOKEN || process.env.AUTH_TEST_TOKEN || 'test-token-123';
+	const testToken = process.env.TEST_TOKEN || process.env.AUTH_TEST_TOKEN || 'local_dev_bypass';
 
 	// Заполняем и отправляем
 	await tokenInput.click();
