@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/database/prisma';
-import { clearCache, getCached, setCache } from '@/lib/utilities/cache';
+import { prisma } from '@/lib/db/prisma/prisma';
+import { clearCache, getCached, setCache } from '@/lib/utils/cache';
 
 export {
 	type ApiUser,

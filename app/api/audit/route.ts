@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { handleError, requireRole } from '@/lib/api/helpers';
-import { getAuditLogs, getResourceAuditHistory } from '@/lib/database/audit-log';
+import { getAuditLogs, getResourceAuditHistory } from '@/lib/db/prisma/audit-log';
 import { sanitizeString, validatePagination } from '@/lib/security/input-validator';
 
 export async function GET(req: Request) {

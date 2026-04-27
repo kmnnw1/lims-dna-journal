@@ -2,7 +2,7 @@ import type { Session } from 'next-auth';
 import { getServerSession } from 'next-auth/next';
 import { describe, expect, it, vi } from 'vitest';
 import { GET, POST } from '@/app/api/specimens/route';
-import { prisma } from '@/lib/database/prisma';
+import { prisma } from '@/lib/db/prisma/prisma';
 
 // Мокаем сессию пользователя
 vi.mock('next-auth/next', () => ({

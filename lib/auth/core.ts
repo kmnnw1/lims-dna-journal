@@ -2,8 +2,8 @@ import bcrypt from 'bcryptjs';
 import type { NextAuthOptions, User as NextAuthUser, Session } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { logAuditAction } from '@/lib/database/audit-log';
-import { prisma } from '@/lib/database/prisma';
+import { logAuditAction } from '@/lib/db/prisma/audit-log';
+import { prisma } from '@/lib/db/prisma/prisma';
 
 async function findUserByUsername(username: string) {
 	try {

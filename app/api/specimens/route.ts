@@ -1,9 +1,9 @@
 import { asc, count, desc } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import { logAuditAction } from '@/lib/database/audit-log';
-import { prisma } from '@/lib/database/prisma';
-import { db } from '@/lib/db/drizzle';
-import { specimens as specimensTable } from '@/lib/db/schema';
+import { db } from '@/lib/db/drizzle/drizzle';
+import { specimens as specimensTable } from '@/lib/db/drizzle/schema';
+import { logAuditAction } from '@/lib/db/prisma/audit-log';
+import { prisma } from '@/lib/db/prisma/prisma';
 import {
 	sanitizeString,
 	validateContentType,

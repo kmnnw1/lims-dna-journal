@@ -1,8 +1,8 @@
 'use server';
 
 import { eq } from 'drizzle-orm';
-import { db } from '@/lib/db/drizzle';
-import { systemSettings } from '@/lib/db/schema';
+import { db } from '@/lib/db/drizzle/drizzle';
+import { systemSettings } from '@/lib/db/drizzle/schema';
 
 const THEME_HUE_KEY = 'app_theme_hue';
 

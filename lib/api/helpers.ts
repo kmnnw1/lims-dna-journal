@@ -56,7 +56,7 @@ export function handleError(e: unknown, req?: Request) {
 /**
  * Очистка всех кэшей списка образцов.
  */
-import { clearCache } from '@/lib/utilities/cache';
+import { clearCache } from '@/lib/utils/cache';
 export function invalidateSpecimenCaches() {
 	clearCache('specimens:*');
 }

@@ -1,6 +1,6 @@
 import { and, eq, gte, isNull, like, lte, or, SQL, sql } from 'drizzle-orm';
-import { db } from '@/lib/db/drizzle';
-import { specimens } from '@/lib/db/schema';
+import { db } from '@/lib/db/drizzle/drizzle';
+import { specimens } from '@/lib/db/drizzle/schema';
 
 /**
  * Высокопроизводительный построитель запросов для Drizzle.

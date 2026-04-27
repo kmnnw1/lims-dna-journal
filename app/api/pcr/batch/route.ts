@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { type ApiUser, handleError, requireRole } from '@/lib/api/helpers';
-import { logAuditAction } from '@/lib/database/audit-log';
-import { prisma } from '@/lib/database/prisma';
+import { logAuditAction } from '@/lib/db/prisma/audit-log';
+import { prisma } from '@/lib/db/prisma/prisma';
 import {
 	sanitizeString,
 	validateContentType,

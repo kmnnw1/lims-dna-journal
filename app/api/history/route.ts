@@ -6,7 +6,7 @@ import {
 	invalidateSpecimenCaches,
 	requireRole,
 } from '@/lib/api/helpers';
-import { prisma } from '@/lib/database/prisma';
+import { prisma } from '@/lib/db/prisma/prisma';
 import { sanitizeString, validateContentType } from '@/lib/security/input-validator';
 
 export async function GET(req: Request) {

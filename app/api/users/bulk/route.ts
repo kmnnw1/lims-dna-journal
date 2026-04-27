@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 import { type ApiUser, handleError, requireRole } from '@/lib/api/helpers';
-import { prisma } from '@/lib/database/prisma';
+import { prisma } from '@/lib/db/prisma/prisma';
 import { sanitizeString, validateContentType } from '@/lib/security/input-validator';
 import { transliterate } from '@/lib/translit';
 
