@@ -60,7 +60,7 @@ export const JournalHeader = forwardRef<HTMLInputElement, JournalHeaderProps>(
 					: 'bg-(--md-sys-color-surface-container-highest) text-(--md-sys-color-on-surface-variant)';
 
 		return (
-			<header className="sticky top-0 z-60 flex items-center gap-2 sm:gap-3 px-1 sm:px-6 h-[72px] -mx-3 md:-mx-6 bg-(--md-sys-color-surface)/80 backdrop-blur-xl border-b border-(--md-sys-color-outline-variant)/10 transition-all duration-300">
+			<header className="relative z-60 flex items-center gap-2 sm:gap-3 mb-6 mt-1.5 px-1 sm:px-0 w-full">
 				<div className="shrink-0 scale-90 sm:scale-100">
 					<AnimatedFlask />
 				</div>
@@ -159,17 +159,6 @@ export const JournalHeader = forwardRef<HTMLInputElement, JournalHeaderProps>(
 							>
 								<Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
 							</div>
-						)}
-
-						{onAddClick && (
-							<button
-								onClick={onAddClick}
-								className="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container) rounded-full hover:bg-(--md-sys-color-primary) hover:text-(--md-sys-color-on-primary) transition-all font-medium text-sm md-elevation-1 active:scale-95"
-								title="Новая проба"
-							>
-								<Plus className="w-4 h-4" />
-								<span className="hidden lg:inline">Новая проба</span>
-							</button>
 						)}
 
 						<Link

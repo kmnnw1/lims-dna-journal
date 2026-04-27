@@ -71,7 +71,7 @@ export function QuickFilterBar({
 
 			{/* Dropdown Panel */}
 			{isOpen && (
-				<div className="absolute top-full right-0 mt-3 w-[340px] sm:w-[380px] z-100 bg-(--md-sys-color-surface-container-lowest) border border-(--md-sys-color-outline-variant)/60 rounded-3xl shadow-2xl overflow-hidden md-elevation-4 animate-in slide-in-from-top-4 fade-in duration-300">
+				<div className="absolute top-full right-0 mt-3 w-[340px] sm:w-[380px] z-[100] bg-(--md-sys-color-surface-container-lowest) border border-(--md-sys-color-outline-variant)/60 rounded-3xl shadow-2xl overflow-hidden md-elevation-4 animate-in slide-in-from-top-4 fade-in duration-300">
 					<div className="p-4 border-b border-(--md-sys-color-outline-variant)/30 flex items-center justify-between bg-(--md-sys-color-surface-container-low)">
 						<h3 className="font-bold text-base text-(--md-sys-color-on-surface) tracking-tight">
 							Фильтры
