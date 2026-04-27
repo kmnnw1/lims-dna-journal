@@ -256,6 +256,24 @@ $RECYCLE.BIN/
 *.iws
 *.ipr
 
+# Public assets
+/public/next.svg
+/public/vercel.svg
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# Generated PWA assets
+/public/apple-touch-icon.png
+/public/apple-touch-icon.webp
+/public/icon-192.png
+/public/icon-192.webp
+/public/icon-512.png
+/public/icon-512.webp
+/public/icon.png
+/public/icon.webp
+/public/mobile-screenshot.png
+/public/mobile-screenshot.webp
+
 # Sublime Text
 *.sublime-project
 *.sublime-workspace
