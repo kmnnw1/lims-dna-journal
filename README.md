@@ -50,13 +50,5 @@ git fetch origin && git add -A && (git diff --staged --quiet || git stash push -
 ![GitHub repo size](https://img.shields.io/github/repo-size/kmnnw1/lims-dna-journal?color=4338ca&label=размер&style=for-the-badge)
 ![GitHub last commit](https://img.shields.io/github/last-commit/kmnnw1/lims-dna-journal?color=7c3aed&label=обновлено&style=for-the-badge)
 
-```mermaid
-pie title Распределение технологий
-    "TypeScript (TSX)" : 65
-    "TypeScript (Logic)" : 25
-    "CSS / Styles" : 8
-    "Prisma / SQL" : 2
-```
-
 ---
 © 2007 DNA Lab

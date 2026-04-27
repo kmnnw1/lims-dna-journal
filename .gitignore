@@ -334,15 +334,5 @@ scripts/meta-sync.ps1
 scripts/thoughts-autosave.ps1
 
 # ------------------------------------------------------------------------------
-# 14. PROJECT SPECIFIC GENERATED ASSETS
-# ------------------------------------------------------------------------------
-public/*.png
-public/*.webp
-public/favicon.ico
-scratch/
-.system_generated/
-.gemini/antigravity/
-
-# ==============================================================================
 # END OF GITIGNORE
 # ==============================================================================

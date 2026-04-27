@@ -1,7 +1,6 @@
-import { and, eq, gte, isNull, like, lte, or, type SQL, sql } from 'drizzle-orm';
+import { and, eq, gte, isNull, like, lte, or, SQL, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
-import { specimens, technicians } from '@/lib/db/schema';
-import { smartSearchTransform } from '@/lib/translit';
+import { specimens } from '@/lib/db/schema';
 
 /**
  * Высокопроизводительный построитель запросов для Drizzle.
@@ -17,21 +16,19 @@ export function buildDrizzleQuery(params: {
 	const conditions = [isNull(specimens.deletedAt)];
 
 	if (params.search) {
-		const variations = smartSearchTransform(params.search);
-		const searchFilters = variations.flatMap((v) => {
-			const pattern = `%${v}%`;
-			return [
-				like(specimens.id, pattern),
-				like(specimens.taxon, pattern),
-				like(specimens.locality, pattern),
-				like(specimens.extrOperator, pattern),
-				like(specimens.extrLab, pattern),
-				like(specimens.extrMethod, pattern),
-				like(specimens.notes, pattern),
-				like(specimens.itsStatus, pattern),
-			];
-		});
-		conditions.push(or(...searchFilters) as unknown as SQL);
+		const s = `%${params.search}%`;
+		conditions.push(
+			or(
+				like(specimens.id, s),
+				like(specimens.taxon, s),
+				like(specimens.locality, s),
+				like(specimens.extrOperator, s),
+				like(specimens.extrLab, s),
+				like(specimens.extrMethod, s),
+				like(specimens.notes, s),
+				like(specimens.itsStatus, s),
+			) as unknown as SQL,
+		);
 	}
 
 	if (params.filterType === 'success') conditions.push(eq(specimens.itsStatus, '✓'));
@@ -63,9 +60,9 @@ export async function getDrizzleDistinctFields() {
 		.from(specimens)
 		.where(isNull(specimens.deletedAt));
 	const operators = await db
-		.select({ val: technicians.name })
-		.from(technicians)
-		.orderBy(technicians.name);
+		.selectDistinct({ val: specimens.extrOperator })
+		.from(specimens)
+		.where(isNull(specimens.deletedAt));
 	const methods = await db
 		.selectDistinct({ val: specimens.extrMethod })
 		.from(specimens)
