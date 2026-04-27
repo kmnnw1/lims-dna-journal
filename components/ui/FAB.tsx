@@ -38,7 +38,7 @@ export interface FABProps
 }
 
 const FAB = forwardRef<HTMLButtonElement, FABProps>(
-	({ className, variant, size, extended, onClick, ...props }, ref) => {
+	({ className, variant, size, extended, onClick, children, ...props }, ref) => {
 		const isExtended = extended || size === 'extended';
 
 		const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -58,7 +58,9 @@ const FAB = forwardRef<HTMLButtonElement, FABProps>(
 				onClick={handleClick}
 				ref={ref}
 				{...props}
-			/>
+			>
+				{children}
+			</button>
 		);
 	},
 );
