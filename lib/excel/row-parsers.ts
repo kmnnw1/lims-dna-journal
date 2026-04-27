@@ -30,41 +30,41 @@ export function parseRowWithBindings(
 ): ParsedSpecimenRow | null {
 	if (!Array.isArray(row)) return null;
 
-	const id = getByKey(row, bindings, 'isolate', sheet.workbook);
+	const id = getByKey(row, bindings, 'isolate');
 	if (isGarbageId(id)) return null;
 
-	const extrRawFull = getByKey(row, bindings, 'extrDate', sheet.workbook);
+	const extrRawFull = getByKey(row, bindings, 'extrDate');
 	const extrDateRaw = extrRawFull ? extractEmbeddedDate(extrRawFull) || extrRawFull : '';
 	const parsedDate = parseLabDate(extrDateRaw || extrRawFull);
 
-	const its = getByKey(row, bindings, 'its', sheet.workbook) || getByKey(row, bindings, 'itsRef', sheet.workbook);
-	const itsGb = getByKey(row, bindings, 'itsGb', sheet.workbook);
-	const ssu = getByKey(row, bindings, 'ssu', sheet.workbook);
-	const ssuGb = getByKey(row, bindings, 'ssuGb', sheet.workbook);
-	const mtlsu = getByKey(row, bindings, 'mtlsu', sheet.workbook);
-	const mtlsuGb = getByKey(row, bindings, 'mtlsuGb', sheet.workbook);
-	const mtssu = getByKey(row, bindings, 'mtssu', sheet.workbook);
-	const mtssuGb = getByKey(row, bindings, 'mtssuGb', sheet.workbook);
-	const nuLsu = getByKey(row, bindings, 'nuLsu', sheet.workbook);
-	const nuSsu = getByKey(row, bindings, 'nuSsu', sheet.workbook);
-	const mcm7 = getByKey(row, bindings, 'mcm7', sheet.workbook);
-	const mcm7Gb = getByKey(row, bindings, 'mcm7Gb', sheet.workbook);
-	const rpb2 = getByKey(row, bindings, 'rpb2', sheet.workbook);
-	const rpb2Gb = getByKey(row, bindings, 'rpb2Gb', sheet.workbook);
+	const its = getByKey(row, bindings, 'its') || getByKey(row, bindings, 'itsRef');
+	const itsGb = getByKey(row, bindings, 'itsGb');
+	const ssu = getByKey(row, bindings, 'ssu');
+	const ssuGb = getByKey(row, bindings, 'ssuGb');
+	const mtlsu = getByKey(row, bindings, 'mtlsu');
+	const mtlsuGb = getByKey(row, bindings, 'mtlsuGb');
+	const mtssu = getByKey(row, bindings, 'mtssu');
+	const mtssuGb = getByKey(row, bindings, 'mtssuGb');
+	const nuLsu = getByKey(row, bindings, 'nuLsu');
+	const nuSsu = getByKey(row, bindings, 'nuSsu');
+	const mcm7 = getByKey(row, bindings, 'mcm7');
+	const mcm7Gb = getByKey(row, bindings, 'mcm7Gb');
+	const rpb2 = getByKey(row, bindings, 'rpb2');
+	const rpb2Gb = getByKey(row, bindings, 'rpb2Gb');
 
-	const collector = getByKey(row, bindings, 'collector', sheet.workbook);
+	const collector = getByKey(row, bindings, 'collector');
 
 	const noteParts: string[] = [];
 
 	for (const b of bindings) {
 		if (b.key.startsWith('__col_')) {
-			const v = cellText(row[b.index], sheet.workbook);
+			const v = cellText(row[b.index]);
 			if (v) noteParts.push(`${b.rawHeader}: ${v}`);
 			continue;
 		}
 		const base = b.key.replace(/_\d+$/, '');
 		if (NOTE_EXTRA_KEYS.has(base)) {
-			const v = cellText(row[b.index], sheet.workbook);
+			const v = cellText(row[b.index]);
 			if (v) noteParts.push(`${b.rawHeader}: ${v}`);
 		}
 	}
@@ -97,14 +97,12 @@ export function parseRowWithBindings(
 
 	return {
 		id,
-		taxon: getByKey(row, bindings, 'taxon', sheet.workbook),
-		locality: getByKey(row, bindings, 'locality', sheet.workbook),
+		taxon: getByKey(row, bindings, 'taxon'),
+		locality: getByKey(row, bindings, 'locality'),
 		collector,
-		extrLab: getByKey(row, bindings, 'extrLab', sheet.workbook),
+		extrLab: getByKey(row, bindings, 'labor'),
 		extrOperator: collector,
-		extrMethod: getByKey(row, bindings, 'extrMethod', sheet.workbook),
-		dnaConcentration: Number.parseFloat(getByKey(row, bindings, 'dnaConc', sheet.workbook)) || null,
-		labNo: getByKey(row, bindings, 'labNo', sheet.workbook),
+		extrMethod: getByKey(row, bindings, 'method'),
 		extrDateRaw: extrRawFull || extrDateRaw,
 		extrDate: extrDateString(parsedDate),
 		itsStatus: its,
@@ -127,7 +125,7 @@ export function parseRowLegacy(
 	sheetName: string,
 ): ParsedSpecimenRow | null {
 	if (!Array.isArray(row) || row[2] == null || String(row[2]).trim() === '') return null;
-	const id = cellText(row[2], sheet.workbook);
+	const id = cellText(row[2]);
 	if (isGarbageId(id)) return null;
 
 	const rawDateStr = row[10] != null ? String(row[10]).trim() : '';
@@ -136,7 +134,7 @@ export function parseRowLegacy(
 	const unmapped: string[] = [];
 	for (let j = 0; j < 50; j++) {
 		if ([2, 3, 5, 6, 7, 8, 9, 10, 13, 14].includes(j)) continue;
-		const t = cellText(row[j], sheet.workbook);
+		const t = cellText(row[j]);
 		if (t) unmapped.push(t);
 	}
 
@@ -145,12 +143,12 @@ export function parseRowLegacy(
 
 	return {
 		id,
-		taxon: cellText(row[3], sheet.workbook),
-		locality: cellText(row[5], sheet.workbook),
-		collector: cellText(row[6], sheet.workbook),
-		extrLab: cellText(row[8], sheet.workbook),
-		extrMethod: cellText(row[9], sheet.workbook),
-		extrOperator: cellText(row[7], sheet.workbook),
+		taxon: row[3] != null ? String(row[3]).trim() : '',
+		locality: row[5] != null ? String(row[5]).trim() : '',
+		collector: row[6] != null ? String(row[6]).trim() : '',
+		extrLab: row[8] != null ? String(row[8]).trim() : '',
+		extrMethod: row[9] != null ? String(row[9]).trim() : '',
+		extrOperator: row[7] != null ? String(row[7]).trim() : '',
 		extrDateRaw: rawDateStr,
 		extrDate: extrDateString(parsedDate),
 		itsStatus: row[13] != null ? String(row[13]).trim() : '',
@@ -175,10 +173,10 @@ export function parseLySheetRows(
 	for (let i = 0; i < rawData.length; i++) {
 		const row = rawData[i];
 		if (!Array.isArray(row)) continue;
-		const id = cellText(row[0], sheet.workbook);
+		const id = cellText(row[0]);
 		if (isGarbageId(id)) continue;
 
-		const taxon = cellText(row[1], sheet.workbook);
+		const taxon = cellText(row[1]);
 		const c2 = row[2];
 		let extrDateRaw = '';
 		let parsedDate: Date | null = null;
@@ -190,16 +188,16 @@ export function parseLySheetRows(
 			extrDateRaw = d.toISOString().slice(0, 10);
 			parsedDate = d;
 		} else {
-			const comment = cellText(row[2], sheet.workbook);
+			const comment = cellText(row[2]);
 			extrDateRaw = comment;
 			parsedDate = parseLabDate(extractEmbeddedDate(comment) || comment);
 		}
 
-		const locality = cellText(row[3], sheet.workbook);
-		const collector = cellText(row[4], sheet.workbook);
-		const herbarium = cellText(row[5], sheet.workbook);
-		const labor = cellText(row[6], sheet.workbook);
-		const method = cellText(row[7], sheet.workbook);
+		const locality = cellText(row[3]);
+		const collector = cellText(row[4]);
+		const herbarium = cellText(row[5]);
+		const labor = cellText(row[6]);
+		const method = cellText(row[7]);
 
 		const noteParts = [herbarium && `Гербарий: ${herbarium}`].filter(Boolean) as string[];
 		const cellComments = collectRowCellComments(sheet, i);
