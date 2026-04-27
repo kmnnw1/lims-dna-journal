@@ -1,4 +1,4 @@
-import { prisma } from '../lib/database/prisma';
+﻿import { prisma } from '../lib/database/prisma';
 
 async function check() {
 	const refs = await prisma.specimen.count({
@@ -11,7 +11,7 @@ async function check() {
 			],
 		},
 	});
-	console.log(`🔍 Найдено строк с мусором (#REF!/formula): ${refs}`);
+	console.log(`ЁЯФН ╨Э╨░╨╣╨┤╨╡╨╜╨╛ ╤Б╤В╤А╨╛╨║ ╤Б ╨╝╤Г╤Б╨╛╤А╨╛╨╝ (#REF!/formula): ${refs}`);
 }
 
 check()

@@ -18,7 +18,7 @@ export const PCRStatusBadge: React.FC<PCRStatusBadgeProps> = ({ status, marker, 
 			case '?':
 				return 'bg-(--md-sys-color-tertiary) text-(--md-sys-color-on-tertiary) shadow-sm';
 			default:
-				return 'bg-transparent border border-(--md-sys-color-outline-variant) text-(--md-sys-color-outline) hover:bg-(--md-sys-color-surface-container-high) border-dashed';
+				return 'bg-transparent border border-(--md-sys-color-outline-variant) text-(--md-sys-color-outline) hover:bg-(--md-sys-color-surface-container-high) border-solid';
 		}
 	};
 
@@ -30,7 +30,7 @@ export const PCRStatusBadge: React.FC<PCRStatusBadgeProps> = ({ status, marker, 
 				onClick();
 			}}
 			title={`Статус: ${status || 'Нет данных'}`}
-			className={`inline-flex items-center justify-center h-6 px-2.5 rounded-full text-[9px] font-black tracking-widest transition-all duration-300 active:scale-90 ${getStatusStyle(status)}`}
+			className={`inline-flex items-center justify-center h-6 px-2.5 rounded-full text-[10.5px] font-black tracking-widest transition-all duration-300 active:scale-90 ${getStatusStyle(status)}`}
 		>
 			{marker}
 		</button>

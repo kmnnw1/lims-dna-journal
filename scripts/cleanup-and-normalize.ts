@@ -1,26 +1,30 @@
-import { prisma } from '../lib/database/prisma';
+﻿import { prisma } from '../lib/database/prisma';
 
 async function cleanup() {
-	console.log('🚀 Запуск последовательной нормализации (без параллелизма)...');
+	console.log(
+		'ЁЯЪА ╨Ч╨░╨┐╤Г╤Б╨║ ╨┐╨╛╤Б╨╗╨╡╨┤╨╛╨▓╨░╤В╨╡╨╗╤М╨╜╨╛╨╣ ╨╜╨╛╤А╨╝╨░╨╗╨╕╨╖╨░╤Ж╨╕╨╕ (╨▒╨╡╨╖ ╨┐╨░╤А╨░╨╗╨╗╨╡╨╗╨╕╨╖╨╝╨░)...',
+	);
 
 	const allSpecimens = await prisma.specimen.findMany({
 		select: { id: true, extrOperator: true, collector: true },
 	});
 
-	const davydovName = 'Е. А. Давыдов';
+	const davydovName = '╨Х. ╨Р. ╨Ф╨░╨▓╤Л╨┤╨╛╨▓';
 	const davydovAliases = [
-		'давыдов 5315',
+		'╨┤╨░╨▓╤Л╨┤╨╛╨▓ 5315',
 		'f. a. davydov 5295',
 		'e. a. davydov 5309',
 		'e. a. davydov',
-		'давыдов',
+		'╨┤╨░╨▓╤Л╨┤╨╛╨▓',
 		'davydov',
 	];
 
 	const uniqueNames = new Set<string>();
 	uniqueNames.add(davydovName);
 
-	console.log('🔍 Предварительное сканирование уникальных имен...');
+	console.log(
+		'ЁЯФН ╨Я╤А╨╡╨┤╨▓╨░╤А╨╕╤В╨╡╨╗╤М╨╜╨╛╨╡ ╤Б╨║╨░╨╜╨╕╤А╨╛╨▓╨░╨╜╨╕╨╡ ╤Г╨╜╨╕╨║╨░╨╗╤М╨╜╤Л╤Е ╨╕╨╝╨╡╨╜...',
+	);
 	for (const s of allSpecimens) {
 		const raw = s.extrOperator || s.collector || '';
 		if (!raw || raw.includes('John Doe')) continue;
@@ -31,7 +35,7 @@ async function cleanup() {
 		for (const name of names) {
 			if (
 				davydovAliases.some((a) => name.toLowerCase().includes(a)) ||
-				name.toLowerCase().includes('давыдов')
+				name.toLowerCase().includes('╨┤╨░╨▓╤Л╨┤╨╛╨▓')
 			) {
 				uniqueNames.add(davydovName);
 			} else {
@@ -50,14 +54,16 @@ async function cleanup() {
 		techCache.set(name, tech.id);
 	}
 
-	console.log(`📊 Всего уникальных лаборантов в справочнике: ${uniqueNames.size}`);
-	console.log('🔗 Привязка проб (обработка всего массива)...');
+	console.log(
+		`ЁЯУК ╨Т╤Б╨╡╨│╨╛ ╤Г╨╜╨╕╨║╨░╨╗╤М╨╜╤Л╤Е ╨╗╨░╨▒╨╛╤А╨░╨╜╤В╨╛╨▓ ╨▓ ╤Б╨┐╤А╨░╨▓╨╛╤З╨╜╨╕╨║╨╡: ${uniqueNames.size}`,
+	);
+	console.log('ЁЯФЧ ╨Я╤А╨╕╨▓╤П╨╖╨║╨░ ╨┐╤А╨╛╨▒ (╨╛╨▒╤А╨░╨▒╨╛╤В╨║╨░ ╨▓╤Б╨╡╨│╨╛ ╨╝╨░╤Б╤Б╨╕╨▓╨░)...');
 
 	let totalProcessed = 0;
 	for (const s of allSpecimens) {
 		const raw = s.extrOperator || s.collector || '';
 
-		// Удаляем John Doe если встретился
+		// ╨г╨┤╨░╨╗╤П╨╡╨╝ John Doe ╨╡╤Б╨╗╨╕ ╨▓╤Б╤В╤А╨╡╤В╨╕╨╗╤Б╤П
 		if (raw && raw.includes('John Doe')) {
 			await prisma.specimen.update({
 				where: { id: s.id },
@@ -73,7 +79,7 @@ async function cleanup() {
 				let target = name;
 				if (
 					davydovAliases.some((a) => name.toLowerCase().includes(a)) ||
-					name.toLowerCase().includes('давыдов')
+					name.toLowerCase().includes('╨┤╨░╨▓╤Л╨┤╨╛╨▓')
 				) {
 					target = davydovName;
 				}
@@ -91,11 +97,11 @@ async function cleanup() {
 
 		totalProcessed++;
 		if (totalProcessed % 500 === 0 || totalProcessed === allSpecimens.length) {
-			console.log(`  -> Прогресс: ${totalProcessed}/${allSpecimens.length}`);
+			console.log(`  -> ╨Я╤А╨╛╨│╤А╨╡╤Б╤Б: ${totalProcessed}/${allSpecimens.length}`);
 		}
 	}
 
-	console.log('✨ База данных успешно нормализована!');
+	console.log('тЬи ╨С╨░╨╖╨░ ╨┤╨░╨╜╨╜╤Л╤Е ╤Г╤Б╨┐╨╡╤И╨╜╨╛ ╨╜╨╛╤А╨╝╨░╨╗╨╕╨╖╨╛╨▓╨░╨╜╨░!');
 }
 
 cleanup()

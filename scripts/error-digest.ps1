@@ -1,4 +1,4 @@
-# scripts/error-digest.ps1
+﻿# scripts/error-digest.ps1
 $ErrorActionPreference = "Continue"
 
 # Fix terminal encoding for output stability
@@ -20,7 +20,7 @@ $errList = @()
 
 # Filter Biome results
 foreach ($l in $biomeRes) {
-    if ($l -match "error" -or $l -match "warning" -or $l -match "✖" -or $l -match "⚠") {
+    if ($l -match "error" -or $l -match "warning" -or $l -match "тЬЦ" -or $l -match "тЪа") {
         $errList += "[BIOME] $l"
     }
 }

@@ -84,13 +84,10 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 		return <span className={className}>{val || '—'}</span>;
 	};
 	// Хелпер для подсветки поиска (MD3 Tertiary Container Style)
-	const highlightText = (
-		text: string | number | null | undefined | { result: string | number },
-		query: string | undefined,
-	): React.ReactNode => {
+	const highlightText = (text: unknown, query: string | undefined): React.ReactNode => {
 		if (!text || !query || !query.trim()) {
 			if (typeof text === 'object' && text !== null && 'result' in text) {
-				return text.result;
+				return (text as { result: string | number }).result;
 			}
 			return (text as React.ReactNode) ?? null;
 		}
@@ -98,7 +95,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 		// Handle Excel formula objects
 		const displayValue =
 			typeof text === 'object' && text !== null && 'result' in text
-				? String(text.result)
+				? String((text as { result: string | number }).result)
 				: String(text);
 
 		const parts = displayValue.split(new RegExp(`(${query})`, 'gi'));
@@ -157,7 +154,7 @@ export const SpecimenTable: React.FC<SpecimenTableProps> = ({
 		<div className="rounded-4xl overflow-hidden border border-(--md-sys-color-outline-variant)/30 bg-(--md-sys-color-surface-container-lowest) shadow-sm transition-all duration-300">
 			<div className="overflow-x-auto custom-scrollbar max-h-[75vh]">
 				<table className="w-full min-w-[1000px] text-left border-separate border-spacing-0 relative text-sm">
-					<thead className="sticky top-0 z-40 bg-(--md-sys-color-surface) backdrop-blur-xl shadow-sm">
+					<thead className="sticky top-[72px] z-40 bg-(--md-sys-color-surface) backdrop-blur-xl shadow-sm">
 						<tr>
 							<th className="sticky left-0 z-50 bg-(--md-sys-color-surface) px-3 py-3 w-12 text-center border-b border-b-(--md-sys-color-outline-variant)/50 border-r border-r-(--md-sys-color-outline-variant)/10">
 								<div className="relative flex items-center justify-center">

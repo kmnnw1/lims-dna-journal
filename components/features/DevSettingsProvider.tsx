@@ -14,6 +14,7 @@ export interface DevSettings {
 	hideNextIndicator: boolean; // Скрытие логотипа Next.js
 	animationSpeed: number; // Множитель скорости анимаций (0.1 - 2.0)
 	flaskEventMultiplier: number; // Множитель вероятностей редких событий колбы (1 - 100)
+	logCleanupTimeout: number; // Время жизни логов в секундах
 	visibility: {
 		header: boolean;
 		stats: boolean;
@@ -25,6 +26,12 @@ export interface DevSettings {
 	hotkey: string;
 }
 
+export interface DevLog {
+	timestamp: number;
+	type: 'info' | 'warn' | 'error' | 'debug';
+	message: string;
+}
+
 interface DevSettingsContextType {
 	settings: DevSettings;
 	updateSettings: (settings: DevSettings) => void;
@@ -32,6 +39,11 @@ interface DevSettingsContextType {
 	setOverlayOpen: (open: boolean) => void;
 	anchorPos: { x: number; y: number };
 	setAnchorPos: (pos: { x: number; y: number }) => void;
+	isLogViewerOpen: boolean;
+	setLogViewerOpen: (open: boolean) => void;
+	logs: DevLog[];
+	addLog: (message: string, type?: DevLog['type']) => void;
+	clearLogs: () => void;
 }
 
 const DevSettingsContext = createContext<DevSettingsContextType | undefined>(undefined);
@@ -47,6 +59,7 @@ export const DevSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 		hideNextIndicator: false,
 		animationSpeed: 1,
 		flaskEventMultiplier: 1,
+		logCleanupTimeout: 60,
 		visibility: {
 			header: true,
 			stats: true,
@@ -59,6 +72,14 @@ export const DevSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 	});
 	const [isOverlayOpen, setOverlayOpen] = useState(false);
 	const [anchorPos, setAnchorPos] = useState({ x: 0, y: 0 });
+	const [isLogViewerOpen, setLogViewerOpen] = useState(false);
+	const [logs, setLogs] = useState<DevLog[]>([]);
+
+	const addLog = (message: string, type: DevLog['type'] = 'info') => {
+		setLogs((prev) => [...prev, { timestamp: Date.now(), type, message }].slice(-100));
+	};
+
+	const clearLogs = () => setLogs([]);
 
 	// Загружаем настройки из localStorage при старте
 	useEffect(() => {
@@ -95,6 +116,11 @@ export const DevSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 				setOverlayOpen,
 				anchorPos,
 				setAnchorPos,
+				isLogViewerOpen,
+				setLogViewerOpen,
+				logs,
+				addLog,
+				clearLogs,
 			}}
 		>
 			<MotionConfig transition={{ duration: 0.4 / settings.animationSpeed }}>

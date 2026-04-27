@@ -1,4 +1,4 @@
-# PowerShell script for Silent Background CI (Agent Optimized)
+﻿# PowerShell script for Silent Background CI (Agent Optimized)
 $intervalSeconds = 120 # 2 minutes
 $healthFile = ".internal_data/health.status"
 
