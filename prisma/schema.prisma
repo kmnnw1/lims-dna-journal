@@ -7,26 +7,34 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(uuid())
-  username  String     @unique
-  password  String
-  role      String     @default("EDITOR")
-  firstName String?
-  lastName  String?
+  id         String        @id @default(uuid())
+  username   String        @unique
+  password   String
+  role       String        @default("EDITOR")
+  createdAt  DateTime      @default(now())
+  firstName  String?
+  lastName   String?
   lastSeenAt DateTime?
+  auditLogs  AuditLog[]    @relation("UserAuditLogs")
+  specimens  Specimen[]    @relation("LabTechnician")
+  activities UserActivity?
+}
+
+model Technician {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  aliases   String?
   createdAt DateTime   @default(now())
-  activities UserActivity[]
-  auditLogs AuditLog[] @relation("UserAuditLogs")
-  specimens Specimen[] @relation("LabTechnician")
+  specimens Specimen[] @relation("SpecimenTechnicians")
 }
 
 model UserActivity {
   id           String   @id @default(uuid())
   userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id])
   resourceType String?
   resourceId   String?
   lastUpdate   DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id])
 
   @@index([resourceType, resourceId])
 }
@@ -79,8 +87,10 @@ model Specimen {
   accessionNumber  String?
   collectionNumber String?
   connections      String?
+  addedBy          String?
   attempts         PCRAttempt[]
   labTechnician    User?        @relation("LabTechnician", fields: [labTechnicianId], references: [id])
+  technicians      Technician[] @relation("SpecimenTechnicians")
 
   @@index([deletedAt])
 }
@@ -103,6 +113,7 @@ model PCRAttempt {
   resultNotes   String?
   deletedAt     DateTime?
   createdAt     DateTime  @default(now())
+  addedBy       String?
   specimen      Specimen  @relation(fields: [specimenId], references: [id], onDelete: Cascade)
 
   @@index([specimenId])
