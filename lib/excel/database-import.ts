@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import ExcelJS from 'exceljs';
-import { prisma } from '../database/prisma';
+import { prisma } from '../db/prisma/prisma';
 import { mergeById } from './merge-utils';
 import { parseSheetToRows } from './sheet-parsers';
 import { ParsedSpecimenRow } from './types';

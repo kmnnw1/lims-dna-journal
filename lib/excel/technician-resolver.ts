@@ -1,4 +1,4 @@
-import { prisma } from '../database/prisma';
+import { prisma } from '../db/prisma/prisma';
 
 /**
  * Утилита для сопоставления имен из Excel со справочником лаборантов.
@@ -26,7 +26,9 @@ export async function resolveTechnicians(rawString: string): Promise<string[]> {
 				foundId = tech.id;
 				break;
 			}
-			const aliases = (tech.aliases || '').split(',').map((a) => a.trim().toLowerCase());
+			const aliases = ((tech as { aliases?: string }).aliases || '')
+				.split(',')
+				.map((a: string) => a.trim().toLowerCase());
 			if (aliases.includes(lowerName)) {
 				foundId = tech.id;
 				break;
@@ -35,7 +37,7 @@ export async function resolveTechnicians(rawString: string): Promise<string[]> {
 
 		// Если не нашли, но имя похоже на Давыдова
 		if (!foundId && lowerName.includes('давыдов')) {
-			const davydov = allTechs.find((t) => t.name === 'Е. А. Давыдов');
+			const davydov = allTechs.find((t: { name: string }) => t.name === 'Е. А. Давыдов');
 			if (davydov) foundId = davydov.id;
 		}
 
