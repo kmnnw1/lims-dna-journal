@@ -6,7 +6,14 @@ import { signOut, useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { formatOperatorName } from '@/lib/utils';
-import type { Specimen } from '@/types';
+import type {
+	EditSpecimenForm,
+	NewRecordForm,
+	PCRAttempt,
+	PCRForm,
+	Specimen,
+	Suggestions,
+} from '@/types';
 
 export function useJournalPage() {
 	const { data: session, status } = useSession();
@@ -47,15 +54,7 @@ export function useJournalPage() {
 		extrDateRaw: '',
 	});
 
-	const [pcrForm, setPCRForm] = useState<{
-		volume: string;
-		marker: string;
-		forwardPrimer: string;
-		reversePrimer: string;
-		dnaMatrix: string;
-		result: 'Success' | 'Failed';
-		id?: string;
-	}>({
+	const [pcrForm, setPCRForm] = useState<PCRForm & { id?: string }>({
 		volume: '25',
 		marker: '',
 		forwardPrimer: '',
@@ -66,6 +65,34 @@ export function useJournalPage() {
 
 	const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 	const searchInputRef = useRef<HTMLInputElement>(null);
+
+	// Hotkeys
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+				e.preventDefault();
+				setIsCommandPaletteOpen((prev) => !prev);
+			}
+			if (e.key === 'n' && e.altKey) {
+				e.preventDefault();
+				setIsAddModalOpen(true);
+			}
+			if (e.key === '/') {
+				if (
+					document.activeElement?.tagName !== 'INPUT' &&
+					document.activeElement?.tagName !== 'TEXTAREA'
+				) {
+					e.preventDefault();
+					searchInputRef.current?.focus();
+				}
+			}
+			if (e.key === 'Escape') {
+				setSearchQuery('');
+			}
+		};
+		window.addEventListener('keydown', handleKeyDown);
+		return () => window.removeEventListener('keydown', handleKeyDown);
+	}, []);
 
 	// Физическое определение мобильного устройства
 	const [isMobileDevice, setIsMobileDevice] = useState(false);
@@ -111,92 +138,10 @@ export function useJournalPage() {
 		},
 	});
 
-	const specimens = useMemo(() => data?.specimens || [], [data?.specimens]);
+	const specimens = data?.specimens || [];
 	const totalPages = data?.totalPages || 1;
 	const totalGlobal = data?.total || 0;
-	const suggestions = useMemo(
-		() => data?.suggestions || { labs: [], operators: [], methods: [] },
-		[data?.suggestions],
-	);
-
-	// Hotkeys
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			const isInput =
-				document.activeElement?.tagName === 'INPUT' ||
-				document.activeElement?.tagName === 'TEXTAREA' ||
-				document.activeElement?.getAttribute('contenteditable') === 'true';
-
-			// Command Palette
-			if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-				e.preventDefault();
-				setIsCommandPaletteOpen((prev) => !prev);
-				return;
-			}
-
-			// New Specimen
-			if (e.key === 'n' && e.altKey) {
-				e.preventDefault();
-				setIsAddModalOpen(true);
-				return;
-			}
-
-			// Focus Search
-			if (e.key === '/' && !isInput) {
-				e.preventDefault();
-				searchInputRef.current?.focus();
-				return;
-			}
-
-			// Keyboard Navigation (Only if not in input)
-			if (!isInput && specimens.length > 0) {
-				if (e.key === 'ArrowDown' || (e.key === 'j' && !e.ctrlKey)) {
-					e.preventDefault();
-					setFocusedIndex((prev) =>
-						prev === null || prev >= specimens.length - 1 ? 0 : prev + 1,
-					);
-				} else if (e.key === 'ArrowUp' || (e.key === 'k' && !e.ctrlKey)) {
-					e.preventDefault();
-					setFocusedIndex((prev) =>
-						prev === null || prev <= 0 ? specimens.length - 1 : prev - 1,
-					);
-				} else if (e.key === 'Enter' && focusedIndex !== null) {
-					e.preventDefault();
-					const specimen = specimens[focusedIndex];
-					if (specimen) setEditingSpecimen(specimen);
-				} else if (e.key === ' ' && focusedIndex !== null) {
-					e.preventDefault();
-					const specimen = specimens[focusedIndex];
-					if (specimen) {
-						const id = specimen.id;
-						setSelectedIds((prev) => {
-							const next = new Set(prev);
-							if (next.has(id)) next.delete(id);
-							else next.add(id);
-							return next;
-						});
-					}
-				}
-			}
-
-			if (e.key === 'Escape') {
-				if (isCommandPaletteOpen) setIsCommandPaletteOpen(false);
-				else if (isAddModalOpen) setIsAddModalOpen(false);
-				else if (editingSpecimen) setEditingSpecimen(null);
-				else if (activePCRSpecimen) setActivePCRSpecimen(null);
-				else setSearchQuery('');
-			}
-		};
-		window.addEventListener('keydown', handleKeyDown);
-		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [
-		specimens,
-		focusedIndex,
-		isCommandPaletteOpen,
-		isAddModalOpen,
-		editingSpecimen,
-		activePCRSpecimen,
-	]);
+	const suggestions = data?.suggestions || { labs: [], operators: [], methods: [] };
 
 	const addMutation = useMutation({
 		mutationFn: async (newRecord: typeof newRecordData) => {
@@ -282,55 +227,49 @@ export function useJournalPage() {
 		};
 	}, [data?.stats, totalGlobal]);
 
-	const handleSort = useCallback((key: string) => {
+	const handleSort = (key: string) => {
 		setSortConfig((curr) => ({
 			key,
 			direction: curr?.key === key && curr.direction === 'asc' ? 'desc' : 'asc',
 		}));
-	}, []);
+	};
 
-	const handleSignOut = useCallback(() => {
+	const handleSignOut = () => {
 		signOut();
-	}, []);
+	};
 
-	const handleAddSubmit = useCallback(
-		async (e: React.FormEvent) => {
-			e.preventDefault();
-			setValidationError(null);
+	const handleAddSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setValidationError(null);
 
-			const { id, taxon } = newRecordData;
-			if (!id.trim()) {
-				setValidationError('ID пробы обязателен');
-				return;
-			}
-			if (taxon.trim() && taxon.trim().length < 3) {
+		const { id, taxon } = newRecordData;
+		if (!id.trim()) {
+			setValidationError('ID пробы обязателен');
+			return;
+		}
+		if (taxon.trim() && taxon.trim().length < 3) {
+			setValidationError('Таксон должен содержать не менее 3 символов');
+			return;
+		}
+
+		addMutation.mutate(newRecordData);
+	};
+
+	const handleEditSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setValidationError(null);
+
+		if (editingSpecimen) {
+			const { taxon } = editingSpecimen;
+			if (taxon && taxon.trim().length > 0 && taxon.trim().length < 3) {
 				setValidationError('Таксон должен содержать не менее 3 символов');
 				return;
 			}
+			editMutation.mutate(editingSpecimen);
+		}
+	};
 
-			addMutation.mutate(newRecordData);
-		},
-		[newRecordData, addMutation],
-	);
-
-	const handleEditSubmit = useCallback(
-		async (e: React.FormEvent) => {
-			e.preventDefault();
-			setValidationError(null);
-
-			if (editingSpecimen) {
-				const { taxon } = editingSpecimen;
-				if (taxon && taxon.trim().length > 0 && taxon.trim().length < 3) {
-					setValidationError('Таксон должен содержать не менее 3 символов');
-					return;
-				}
-				editMutation.mutate(editingSpecimen);
-			}
-		},
-		[editingSpecimen, editMutation],
-	);
-
-	const handlePCRSubmit = useCallback(async () => {
+	const handlePCRSubmit = async () => {
 		if (activePCRSpecimen) {
 			pcrMutation.mutate({
 				specimenId: activePCRSpecimen.id,
@@ -338,43 +277,40 @@ export function useJournalPage() {
 				date: new Date().toISOString(),
 			});
 		}
-	}, [activePCRSpecimen, pcrMutation, pcrForm]);
+	};
 
-	const handleStatusToggle = useCallback(
-		async (id: string, marker: string) => {
-			const specimen = specimens.find((s: Specimen) => s.id === id);
-			if (!specimen) return;
+	const handleStatusToggle = async (id: string, marker: string) => {
+		const specimen = specimens.find((s: Specimen) => s.id === id);
+		if (!specimen) return;
 
-			let statusKey: keyof Specimen = 'itsStatus';
-			if (marker === 'SSU') statusKey = 'ssuStatus';
-			else if (marker === 'LSU') statusKey = 'lsuStatus';
-			else if (marker === 'MCM7') statusKey = 'mcm7Status';
+		let statusKey: keyof Specimen = 'itsStatus';
+		if (marker === 'SSU') statusKey = 'ssuStatus';
+		else if (marker === 'LSU') statusKey = 'lsuStatus';
+		else if (marker === 'MCM7') statusKey = 'mcm7Status';
 
-			const currentStatus = specimen[statusKey];
-			const newStatus: string | null =
-				currentStatus === '✓'
-					? '✕'
-					: currentStatus === '✕'
-						? '?'
-						: currentStatus === '?'
-							? null
-							: '✓';
+		const currentStatus = specimen[statusKey];
+		const newStatus: string | null =
+			currentStatus === '✓'
+				? '✕'
+				: currentStatus === '✕'
+					? '?'
+					: currentStatus === '?'
+						? null
+						: '✓';
 
-			try {
-				await fetch('/api/specimens', {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ singleId: id, singleStatus: newStatus }),
-				});
-				queryClient.invalidateQueries({ queryKey: ['specimens'] });
-			} catch {
-				queryClient.invalidateQueries({ queryKey: ['specimens'] });
-			}
-		},
-		[specimens, queryClient],
-	);
+		try {
+			await fetch('/api/specimens', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ singleId: id, singleStatus: newStatus }),
+			});
+			queryClient.invalidateQueries({ queryKey: ['specimens'] });
+		} catch {
+			queryClient.invalidateQueries({ queryKey: ['specimens'] });
+		}
+	};
 
-	const handleExportCSV = useCallback(() => {
+	const handleExportCSV = () => {
 		const csvContent =
 			'data:text/csv;charset=utf-8,' +
 			'ID,Taxon,Locality,ITS,SSU,LSU,MCM7\n' +
@@ -391,9 +327,9 @@ export function useJournalPage() {
 		document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
-	}, [specimens]);
+	};
 
-	const handleExportXLSX = useCallback(async () => {
+	const handleExportXLSX = async () => {
 		try {
 			const ExcelJS = (await import('exceljs')).default;
 			const workbook = new ExcelJS.Workbook();
@@ -425,11 +361,11 @@ export function useJournalPage() {
 		} catch (_error) {
 			setToastMessage({ text: 'Ошибка при формировании XLSX', type: 'error' });
 		}
-	}, [specimens]);
+	};
 
-	const handlePrintLabels = useCallback(() => {
-		// Реализация печати этикеток перенесена в TODO_LOCAL.md
-	}, []);
+	const handlePrintLabels = () => {
+		alert('Функция печати этикеток будет реализована позже.');
+	};
 
 	useEffect(() => {
 		if (status === 'unauthenticated') router.push('/login');
@@ -464,17 +400,17 @@ export function useJournalPage() {
 		handleSort,
 		selectedIds,
 		setSelectedIds,
-		handleSelect: useCallback((id: string) => {
+		handleSelect: (id: string) => {
 			setSelectedIds((prev) => {
 				const next = new Set(prev);
 				if (next.has(id)) next.delete(id);
 				else next.add(id);
 				return next;
 			});
-		}, []),
-		handleSelectAll: useCallback((ids: string[]) => {
+		},
+		handleSelectAll: (ids: string[]) => {
 			setSelectedIds((prev) => (prev.size === ids.length ? new Set() : new Set(ids)));
-		}, []),
+		},
 		toastMessage,
 		setToastMessage,
 		handleSignOut,
@@ -514,12 +450,5 @@ export function useJournalPage() {
 		handleExportXLSX,
 		handlePrintLabels,
 		isMobileDevice,
-		toggleMyFilter: useCallback(() => {
-			const user = session?.user;
-			if (user?.lastName) {
-				const formatted = formatOperatorName(user.firstName, user.lastName);
-				setSelectedOperator((prev) => (prev === formatted ? '' : formatted));
-			}
-		}, [session]),
 	};
 }
