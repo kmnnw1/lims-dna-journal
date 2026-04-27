@@ -1,6 +1,6 @@
 {
 	"name": "lab-journal",
-	"version": "0.21.26.0",
+	"version": "0.21.27.0",
 	"description": "Система управления лабораторной информацией (LIMS) для учёта генетического материала и протоколирования ПЦР-исследований.",
 	"private": true,
 	"scripts": {
@@ -29,10 +29,10 @@
 		"prisma:generate": "prisma generate",
 		"install:all": "npx tsx scripts/install-all.mjs",
 		"auth": "npx tsx scripts/auth-cli.ts",
-		"qa:copy": "npx tsx scripts/error-digest.ts",
+		"qa:copy": "npx tsx scripts/error-digest.ts --copy",
 		"qa:audit": "npx tsx scripts/qa-audit.ts",
-		"orm:check": "npx tsx scripts/check-orm-sync.ts",
-		"docs:erd": "npx tsx scripts/gen-erd.ts",
+		"db:check-ink": "npx tsx scripts/check-ink.ts",
+		"db:cleanup": "npx tsx scripts/cleanup-and-normalize.ts",
 		"optimize:images": "npx tsx scripts/optimize-images.ts",
 		"check:watch": "npx tsc --noEmit --watch"
 	},

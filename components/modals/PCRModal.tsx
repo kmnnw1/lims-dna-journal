@@ -4,33 +4,15 @@ import { FlaskConical, History, Pencil, Plus, Save, Trash2, X } from 'lucide-rea
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { MD3Field } from '@/components/ui/MD3Field';
-import type { PCRAttempt, Specimen } from '@/types';
+import type { PCRAttempt, PCRForm, Specimen } from '@/types';
 
 interface Props {
 	open: boolean;
 	specimenId: string;
 	activeSpecimen: Specimen | null;
 	onClose: () => void;
-	pcrForm: {
-		volume: string;
-		marker: string;
-		forwardPrimer: string;
-		reversePrimer: string;
-		dnaMatrix: string;
-		result: 'Success' | 'Failed';
-		id?: string; // ID для редактирования существующей попытки
-	};
-	setPCRForm: React.Dispatch<
-		React.SetStateAction<{
-			volume: string;
-			marker: string;
-			forwardPrimer: string;
-			reversePrimer: string;
-			dnaMatrix: string;
-			result: 'Success' | 'Failed';
-			id?: string;
-		}>
-	>;
+	pcrForm: PCRForm & { id?: string };
+	setPCRForm: React.Dispatch<React.SetStateAction<PCRForm & { id?: string }>>;
 	onSubmit: () => void;
 	isReader?: boolean;
 }
@@ -86,7 +68,7 @@ export function PCRModal({
 			reversePrimer: attempt.reversePrimer || '',
 			volume: attempt.volume || '',
 			dnaMatrix: attempt.dnaMatrix || '',
-			result: attempt.result === 'Success' ? 'Success' : 'Failed',
+			result: attempt.result === 'Success' ? 'Success' : 'Fail',
 		});
 		setIsEditing(true);
 	};
@@ -98,7 +80,7 @@ export function PCRModal({
 			reversePrimer: '',
 			volume: '',
 			dnaMatrix: '',
-			result: 'Failed',
+			result: 'Fail',
 		});
 		setIsEditing(false);
 	};
@@ -290,12 +272,12 @@ export function PCRModal({
 										onChange={(e) =>
 											setPCRForm({
 												...pcrForm,
-												result: e.target.value as 'Success' | 'Failed',
+												result: e.target.value as 'Success' | 'Fail',
 											})
 										}
 									>
 										<option value="Success">✓ Успешно</option>
-										<option value="Failed">✕ Ошибка</option>
+										<option value="Fail">✕ Ошибка</option>
 									</MD3Field>
 								</div>
 							</div>
