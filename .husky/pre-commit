@@ -1,4 +1,4 @@
-npx tsx scripts/bump-version.ts
-npx tsx scripts/secret-audit.ts
+npx tsx scripts/utils/bump-version.ts
+npx tsx scripts/audit/secret-audit.ts
 npm run lint
 npm run check
