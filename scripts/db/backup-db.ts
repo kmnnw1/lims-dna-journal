@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 async function main() {
 	try {
 		const __dirname = path.dirname(fileURLToPath(import.meta.url));
-		const root = path.join(__dirname, '..');
+		const root = path.join(__dirname, '..', '..');
 		const db = path.join(root, 'prisma', 'dev.db');
 		const dir = path.join(root, 'backups');
 
