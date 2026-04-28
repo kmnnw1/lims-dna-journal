@@ -1,15 +1,34 @@
 {
-	"editor.defaultFormatter": "biomejs.biome",
-	"editor.formatOnSave": true,
-	"editor.codeActionsOnSave": {
-		"source.organizeImports.biome": "explicit"
+	"files.exclude": {
+		"**/.next": true,
+		"**/.meta": true,
+		"**/.antigravity": true,
+		"**/.gemini": true,
+		"**/.internal_data": true,
+		"**/.husky": true,
+		"**/node_modules": true,
+		"**/package-lock.json": true,
+		"**/tsconfig.tsbuildinfo": true,
+		"**/postcss.config.mjs": true,
+		"**/prisma.config.ts": true,
+		"**/drizzle.config.ts": true,
+		"**/next-env.d.ts": true,
+		"**/Dockerfile": true,
+		"**/.dockerignore": true,
+		"**/docker-compose.yml": true,
+		"**/.npmrc": true,
+		"**/proxy.ts": true,
+		"**/start-dev.bat": true,
+		"**/playwright.config.ts": true,
+		"**/vitest.config.ts": true,
+		"**/biome.json": true,
+		"**/.git": true,
+		"**/.github": true
 	},
-	"editor.guides.bracketPairs": true,
-	"editor.unicodeHighlight.nonBasicASCII": false,
-	"workbench.colorCustomizations": {
-		"activityBar.background": "#1e1e1e",
-		"sideBar.background": "#1e1e1e"
-	},
-	"typescript.tsdk": "node_modules/typescript/lib",
-	"css.lint.unknownAtRules": "ignore"
+	"explorer.compactFolders": true,
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/.next": true,
+		"**/.meta": true
+	}
 }
