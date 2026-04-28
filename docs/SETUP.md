@@ -1,184 +1,227 @@
-# Development Setup Guide
+# Руководство по установке
 
-## Prerequisites
+## Системные требования
 
-- **Node.js 20 or newer** - [Download from nodejs.org](https://nodejs.org/en/download)
-- **Git** - For cloning the repository
-- **Optional: Docker** - For containerized deployment
+- **Node.js 24+** — [nodejs.org](https://nodejs.org/en/download)
+- **npm 10+** — устанавливается с Node.js
+- **Git** — для клонирования репозитория
+- **Docker** (опционально) — для контейнерного развёртывания
 
-## Local Development Setup
+## Локальная установка
 
-### 1. Clone the Repository
+### 1. Клонирование репозитория
 
 ```bash
 git clone <repository-url> lab-journal
 cd lab-journal
 ```
 
-### 2. Install Dependencies
-
-Run the automated installation script:
+### 2. Установка зависимостей
 
 ```bash
-# For Windows, Linux, and macOS:
-node scripts/install-all.mjs
+npm install
 ```
 
-This script will:
-- Install all npm dependencies
-- Create `.env` with a cryptographic key
-- Generate Prisma client
-- Apply database schema
-- Start the development server at `http://localhost:3000`
+### 3. Настройка проекта
 
-### 3. First Login
+Автоматическая первоначальная настройка:
 
-If the database is empty, use these default credentials:
-- **Username**: `admin`
-- **Password**: `admin`
+```bash
+npm run setup
+```
 
-The system will automatically create the main administrator account.
+Скрипт выполнит:
 
-### 4. Environment Configuration
+- Создание `.env` с криптографическим ключом
+- Генерацию Prisma-клиента
+- Применение схемы базы данных (SQLite)
+- Создание начальной базы `dev.db`
 
-The installation script creates a basic `.env` file. For production or advanced setup, configure these variables:
+### 4. Запуск
+
+```bash
+npm run dev
+```
+
+Приложение доступно по адресу `http://localhost:3000` (и в локальной сети на `0.0.0.0:3000`).
+
+### 5. Авторизация
+
+Проект использует одноразовые токены (Hiddify-стиль). Для создания токена:
+
+```bash
+npm run auth
+```
+
+CLI создаст временный токен, который можно использовать для входа на странице `/login`.
+
+## Переменные среды
+
+Шаблон — `.env.example`. Основные переменные:
 
 ```env
-# Database
-DATABASE_URL="file:./dev.db"
+# База данных
+DATABASE_URL="file:./prisma/dev.db"
 
-# Authentication
-NEXTAUTH_SECRET="your-secure-random-string-here"
+# NextAuth
+NEXTAUTH_SECRET="<сгенерируйте: openssl rand -base64 32>"
 NEXTAUTH_URL="http://localhost:3000"
-
-# Optional: External Services
-# Add any external API keys or service URLs here
 ```
 
-Generate a secure `NEXTAUTH_SECRET`:
+Генерация секрета:
+
 ```bash
 openssl rand -base64 32
 ```
 
-## Docker Deployment
+## Docker
 
-For production environments, use Docker for consistent deployment.
-
-### 1. Prepare Environment
-
-```bash
-cp .env.example .env
-# Edit .env with production values
-```
-
-### 2. Build and Run
+### Сборка и запуск
 
 ```bash
 docker compose up -d --build
 ```
 
-The application will be available at the configured `NEXTAUTH_URL`.
+Приложение запустится на порте, указанном в `docker-compose.yml`.
 
-## Database Management
+### Конфигурация
 
-### Initial Setup
-The installation script handles initial database setup. To manually set up:
+- **Image**: `ghcr.io/kmnnw1/lims-dna-journal:alpha`
+- **Database**: SQLite (монтирование тома в `/data/dev.db`)
+- **Переменные**: `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`
 
-```bash
-# Generate Prisma client
-npx prisma generate
+## Управление базой данных
 
-# Apply migrations
-npx prisma db push
-
-# Optional: Seed with sample data
-npx prisma db seed
-```
-
-### Backup Database
-Create a hot backup of the SQLite database:
+### Бэкап
 
 ```bash
-npm run backup
+npm run db:backup
 ```
 
-Backups are stored in the `backups/` directory.
+Дампы сохраняются в директорию `backups/`.
 
-## Data Import/Export
+### Экспорт данных (JSON seed)
 
-### Excel Import
-1. Place your `data.xlsx` file in the `./data/` directory
-2. Log in as an `ADMIN` user
-3. Go to Administration section
-4. Click "Import" - the current database will be cleared and Excel data imported
-
-### CSV Export
-Export current database snapshot to CSV through the UI or API.
-
-## Testing
-
-### Unit Tests
 ```bash
-npm run test:unit
+npm run db:seed-export
 ```
 
-### E2E Tests
+### Prisma Studio
+
+Визуальный просмотр и редактирование данных:
+
 ```bash
-npm run test:e2e
+npm run prisma:studio
 ```
 
-### All Tests
+### Миграции
+
+```bash
+# Создание миграции
+npm run prisma:migrate
+
+# Генерация клиента
+npm run prisma:generate
+```
+
+## Импорт данных
+
+### Импорт из Excel
+
+1. Поместите файл `data.xlsx` в директорию `./data/`
+2. Войдите как пользователь с ролью `ADMIN`
+3. Перейдите в раздел «Администрирование»
+4. Нажмите «Импорт» — данные будут разобраны и добавлены в базу
+
+### Экспорт
+
+Экспорт данных доступен через UI (кнопка экспорта в журнале).
+
+## Тестирование
+
+### Unit-тесты (Vitest)
+
 ```bash
 npm test
 ```
 
-## Development Scripts
+### Интерфейс тестов
 
-Available npm scripts in `package.json`:
+```bash
+npm run test:ui
+```
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run type-check` - Run TypeScript type checking
-- `npm run backup` - Create database backup
-- `npm run logs:collect` - Collect diagnostic logs
-- `npm run ota:check` - Check for over-the-air updates
+### Проверка типов
 
-## Troubleshooting
+```bash
+npm run check
+```
 
-### Common Issues
+## Все npm-скрипты
 
-1. **Port 3000 already in use**
+| Команда | Описание |
+| :--- | :--- |
+| `npm run dev` | Запуск dev-сервера (Turbopack + meta-sync) |
+| `npm run dev:https` | Dev-сервер с HTTPS |
+| `npm run build` | Production-сборка |
+| `npm start` | Запуск production-сервера |
+| `npm run check` | TypeScript type-check |
+| `npm run check:watch` | TypeScript type-check (watch) |
+| `npm run lint` | Проверка Biome |
+| `npm run format` | Форматирование Biome |
+| `npm test` | Unit-тесты (Vitest) |
+| `npm run test:ui` | UI для тестов |
+| `npm run db:backup` | Бэкап базы данных |
+| `npm run db:seed-export` | Экспорт данных в JSON (seed) |
+| `npm run db:analyze` | Анализ Excel-файлов |
+| `npm run setup` | Первоначальная настройка |
+| `npm run auth` | Генерация токена авторизации |
+| `npm run bump` | Инкремент версии |
+| `npm run icons` | Генерация PWA-иконок |
+| `npm run logs:collect` | Сбор диагностических логов |
+| `npm run ota:check` | Проверка OTA-обновлений |
+| `npm run qa:copy` | Сбор ошибок для QA |
+| `npm run prisma:studio` | Визуальный просмотр БД |
+| `npm run prisma:migrate` | Создание миграции |
+| `npm run prisma:generate` | Генерация Prisma-клиента |
+
+## Устранение проблем
+
+### Порт 3000 занят
+
+```bash
+npx kill-port 3000
+```
+
+### Проблемы с базой данных
+
+1. Убедитесь, что файл `dev.db` существует в директории `prisma/`
+2. Проверьте `DATABASE_URL` в `.env`
+3. Пересоздайте базу:
+
    ```bash
-   # Kill process on port 3000
-   npx kill-port 3000
+   npx prisma db push --accept-data-loss
    ```
 
-2. **Database connection issues**
-   - Ensure `dev.db` file exists in project root
-   - Check `DATABASE_URL` in `.env`
+### Ошибки сборки
 
-3. **Build failures**
-   ```bash
-   # Clear Next.js cache
-   rm -rf .next
-   npm run build
-   ```
+```bash
+# Очистка кеша Next.js
+Remove-Item -Recurse -Force .next   # Windows
+rm -rf .next                         # macOS/Linux
 
-### Diagnostic Tools
+npm run build
+```
 
-- `npm run logs:collect` - Creates diagnostic bundle in `support/` directory
-- Check `support/logs-<timestamp>/` for detailed error information
-- Review browser console and server logs for debugging
+### Диагностика
 
-## Project Structure
+```bash
+npm run logs:collect
+```
 
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed project organization.
+Создаёт диагностический пакет в `support/logs-<timestamp>/`.
 
-## Contributing
+## Связанные документы
 
-1. Follow the coding conventions in [ARCHITECTURE.md](./ARCHITECTURE.md)
-2. Run tests before committing
-3. Use conventional commit messages
-4. Update documentation for significant changes
+- [ARCHITECTURE.md](ARCHITECTURE.md) — архитектура проекта
+- [DATABASE.md](DATABASE.md) — схема базы данных
