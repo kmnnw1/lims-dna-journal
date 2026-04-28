@@ -84,7 +84,7 @@ jobs:
                   echo "CI_TOKEN=${CI_TOKEN}" >> "$GITHUB_ENV"
                   
                   npx prisma db push
-                  AUTH_TEST_TOKEN=${CI_TOKEN} npx tsx scripts/fix-auth.ts
+                  AUTH_TEST_TOKEN=${CI_TOKEN} npx tsx scripts/dev/fix-auth.ts
             - name: Build application
               run: |
                 npm run build
