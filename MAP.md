@@ -8,19 +8,24 @@
 ## 🧬 Ядро приложения
 
 ### `app/` — Next.js App Router
+
 | Путь | Назначение |
-|------|------------|
+| :--- | :--- |
 | `page.tsx` | Главная (redirect → журнал) |
 | `layout.tsx` | Root layout, шрифты, metadata |
-| `globals.css` | CSS-переменные, base-стили, компоненты |
+| `globals.css` | Базовые стили, скроллбары, ресеты (импорт в theme/utils/anim) |
+| `theme.css` | MD3 токены (цвета, motion, shape) |
+| `utilities.css` | MD3 утилиты (elevations, typography) |
+| `animations.css` | Keyframes и View Transitions |
 | `login/page.tsx` | Страница авторизации (Hiddify Token) |
 | `admin/page.tsx` | Панель администрирования |
 | `admin/audit/` | Журнал аудита действий |
 | `actions/theme.ts` | Server Action для темы |
 
 ### `app/api/` — REST API
+
 | Route | Методы | Что делает |
-|-------|--------|------------|
+| :--- | :--- | :--- |
 | `specimens/` | GET POST PUT DELETE | CRUD проб (Drizzle read, Prisma write) |
 | `pcr/` | POST | Создание ПЦР-попытки |
 | `pcr/batch/` | POST | Массовая ПЦР |
@@ -42,15 +47,17 @@
 ## 🧩 Компоненты
 
 ### `components/pages/` — Страницы (контейнеры)
+
 | Файл | Строки | Описание |
-|------|--------|----------|
-| `JournalPageContent.tsx` | 602 | Главная страница журнала проб |
+| :--- | :--- | :--- |
+| `JournalPageContent.tsx` | ~320 | Главная страница журнала проб (оркестратор) |
 | `AdminPageContent.tsx` | 307 | Администрирование пользователей |
 | `AdminUserRow.tsx` | — | Строка пользователя в админке |
 
 ### `components/features/` — Feature-компоненты
+
 | Файл | Описание |
-|------|----------|
+| :--- | :--- |
 | `SpecimenTable.tsx` | Таблица проб (десктоп) |
 | `MobileSpecimenCard.tsx` | Карточка пробы (мобильное) |
 | `QuickFilterBar.tsx` | Панель быстрых фильтров |
@@ -58,6 +65,8 @@
 | `JournalHeader.tsx` | Шапка журнала (статистика, поиск) |
 | `StatsCards.tsx` | Карточки статистики |
 | `HistoryDialog.tsx` | Диалог истории изменений |
+| `JournalToolbar.tsx` | Панель инструментов (экспорт, пагинация) |
+| `SelectionBar.tsx` | Панель действий при выделении строк |
 | `BarcodeScanDialog.tsx` | Сканер штрих-кодов |
 | `ERModelVisualizer.tsx` | Визуализация ER-модели БД |
 | `DevOverlay.tsx` | Оверлей разработчика |
@@ -73,8 +82,9 @@
 | `ThemeToggle.tsx` | Переключатель темы |
 
 ### `components/ui/` — Базовые UI-примитивы
+
 | Файл | Описание |
-|------|----------|
+| :--- | :--- |
 | `Button.tsx` | Кнопка (CVA-варианты) |
 | `Card.tsx` | Карточка |
 | `FAB.tsx` | Floating Action Button |
@@ -88,8 +98,9 @@
 | `InteractiveFluidFlask.tsx` | Интерактивная версия колбы |
 
 ### `components/modals/` — Модальные окна
+
 | Файл | Описание |
-|------|----------|
+| :--- | :--- |
 | `AddSpecimenModal.tsx` | Создание новой пробы |
 | `EditSpecimenModal.tsx` | Редактирование пробы (475 строк) |
 | `PCRModal.tsx` | Запись ПЦР-реакции |
@@ -97,8 +108,9 @@
 | `ShortcutsModal.tsx` | Справка по горячим клавишам |
 
 ### `components/layout/` — Layout-провайдеры
+
 | Файл | Описание |
-|------|----------|
+| :--- | :--- |
 | `Providers.tsx` | Композиция провайдеров |
 | `QueryProvider.tsx` | TanStack Query |
 | `ThemeProvider.tsx` | Тема (dark/light) |
@@ -110,8 +122,10 @@
 ## 🪝 Хуки
 
 | Файл | Строки | Описание |
-|------|--------|----------|
-| `useJournalPage.ts` | 525 | Оркестратор страницы журнала (state, CRUD, ПЦР) |
+| :--- | :--- | :--- |
+| `useJournalPage.ts` | ~250 | Оркестратор страницы (делегирует мутации и hotkeys) |
+| `useSpecimenMutations.ts` | ~150 | Мутации проб (add, edit, pcr) |
+| `useJournalHotkeys.ts` | ~100 | Клавиатурная навигация и горячие клавиши |
 | `useAdminPage.ts` | 277 | Логика страницы администрирования |
 | `useDebounce.ts` | — | Debounce-хук |
 | `usePullToRefresh.ts` | — | Pull-to-Refresh (мобильное) |
@@ -122,30 +136,34 @@
 ## 📚 Библиотеки (`lib/`)
 
 ### `lib/db/` — Слой данных
+
 | Путь | Описание |
-|------|----------|
+| :--- | :--- |
 | `drizzle/drizzle.ts` | Инициализация Drizzle (LibSQL) |
 | `drizzle/schema.ts` | Drizzle-схема (specimens, users, audit) |
 | `prisma/prisma.ts` | Инициализация Prisma (better-sqlite3 adapter) |
 | `prisma/audit-log.ts` | Логирование действий (GLP) |
 
 ### `lib/auth/` — Авторизация
+
 | Путь | Описание |
-|------|----------|
+| :--- | :--- |
 | `core.ts` | NextAuth config (Hiddify Token + Legacy Password) |
 | `index.ts` | Re-export |
 
 ### `lib/security/` — Безопасность
+
 | Путь | Описание |
-|------|----------|
+| :--- | :--- |
 | `input-validator.ts` | Валидация входных данных |
 | `rate-limiter.ts` | Rate Limiting |
 | `headers.ts` | Security Headers |
 | `crypto-client.ts` | Клиентская криптография |
 
 ### `lib/excel/` — Импорт из Excel
+
 | Путь | Описание |
-|------|----------|
+| :--- | :--- |
 | `index.ts` | Barrel |
 | `cell-parsers.ts` | Парсеры ячеек |
 | `row-parsers.ts` | Парсеры строк |
@@ -157,19 +175,22 @@
 | `types.ts` | Типы Excel-импорта |
 
 ### `lib/animations/` — Анимации
+
 | Путь | Описание |
-|------|----------|
+| :--- | :--- |
 | `fluid-engine.ts` | Физический движок жидкости (977 строк) |
 
 ### `lib/api/` — API-утилиты
+
 | Путь | Описание |
-|------|----------|
+| :--- | :--- |
 | `api-client.ts` | Fetch-обёртка с retry |
 | `helpers.ts` | Shared API helpers (cache, auth, errors) |
 
 ### `lib/utils/` — Утилиты
+
 | Путь | Описание |
-|------|----------|
+| :--- | :--- |
 | `cn.ts` | `clsx` + `tailwind-merge` |
 | `cache.ts` | In-memory cache |
 | `export.ts` | Экспорт в Excel |
@@ -177,16 +198,30 @@
 | `index.ts` | Barrel |
 
 ### `lib/bio-analytics/` — Биоаналитика
+
 | Путь | Описание |
-|------|----------|
+| :--- | :--- |
 | `outlier-detector.ts` | Определение выбросов в данных |
+
+### `lib/shims/` — Полифилы
+
+| Путь | Описание |
+| :--- | :--- |
+| Shim-файлы | Совместимость модулей |
+
+### `lib/` — Standalone файлы
+
+| Путь | Описание |
+| :--- | :--- |
+| `excel-backup.ts` | Бэкап Excel-данных |
+| `translit.ts` | Транслитерация кириллицы |
 
 ---
 
 ## 🧪 Тесты
 
 | Путь | Описание |
-|------|----------|
+| :--- | :--- |
 | `tests/e2e/journal.spec.ts` | Playwright E2E (журнал проб) |
 | `tests/unit/` | Vitest unit-тесты |
 | `tests/integration/api/` | Интеграционные тесты API |
@@ -196,7 +231,7 @@
 ## 🔧 Скрипты (`scripts/`)
 
 | Группа | Файлы | Назначение |
-|--------|-------|------------|
+| :--- | :--- | :--- |
 | `audit/` | 9 | Аудит безопасности, ERD, QA, сбор логов |
 | `ci/` | 3 | GitHub CI, статус, мониторинг |
 | `db/` | 11 | Импорт, бэкап, сидинг, анализ Excel |
@@ -209,7 +244,7 @@
 ## 📁 Прочее
 
 | Путь | Описание |
-|------|----------|
+| :--- | :--- |
 | `prisma/schema.prisma` | Prisma Schema (Specimen, User, PCR, Audit...) |
 | `prisma/migrations/` | SQL-миграции |
 | `types/index.ts` | Глобальные TypeScript-типы |
