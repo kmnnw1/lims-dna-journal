@@ -1,0 +1,72 @@
+/*
+ * Animations & View Transitions
+ * Keyframes, view transition API for theme switching.
+ */
+
+@keyframes gentle-shake {
+	0%,
+	100% {
+		transform: rotate(0deg);
+	}
+	25% {
+		transform: rotate(-6deg);
+	}
+	75% {
+		transform: rotate(6deg);
+	}
+}
+
+.animate-gentle-shake {
+	animation: gentle-shake 0.3s ease-in-out;
+}
+
+@keyframes bubble {
+	0% {
+		transform: translateY(0) scale(0.8);
+		opacity: 0.6;
+	}
+	100% {
+		transform: translateY(-24px) scale(1.2);
+		opacity: 0;
+	}
+}
+
+.animate-bubble {
+	animation: bubble 0.8s ease-out forwards;
+}
+
+/* ======================================= */
+/* View Transitions API (Dark/Light Mode)  */
+/* ======================================= */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+	z-index: 1;
+}
+::view-transition-new(root) {
+	z-index: 2;
+	animation: theme-ripple 400ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.transition-reverse::view-transition-old(root) {
+	z-index: 2;
+	animation: theme-ripple 400ms cubic-bezier(0.4, 0, 1, 1) reverse;
+}
+.transition-reverse::view-transition-new(root) {
+	z-index: 1;
+	animation: none;
+}
+
+@keyframes theme-ripple {
+	from {
+		clip-path: circle(0% at var(--target-x, 50%) var(--target-y, 50%));
+	}
+	to {
+		clip-path: circle(150% at var(--target-x, 50%) var(--target-y, 50%));
+	}
+}
