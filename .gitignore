@@ -9,6 +9,7 @@
 # ------------------------------------------------------------------------------
 .internal_data/
 local/
+.meta/
 AGENTS.md
 CLAUDE.md
 GEMINI.md
