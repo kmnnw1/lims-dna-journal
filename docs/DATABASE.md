@@ -1,138 +1,283 @@
-# Database Schema Documentation
+# Схема базы данных
 
-## Overview
-The Lab Journal uses SQLite as the database with Prisma ORM for type-safe database access. The schema is designed to track laboratory specimens, PCR attempts, sequencing results, and audit logs.
+## Обзор
 
-## Models
+Проект использует SQLite (LibSQL) с гибридным ORM-стеком: **Prisma** (определение схемы, миграции) и **Drizzle ORM** (чтение, пагинация). Схема охватывает учёт проб, ПЦР-попыток, пользователей, аудит действий и авторизацию.
+
+Источник истины — [`prisma/schema.prisma`](../prisma/schema.prisma).
+
+## Модели
 
 ### User
-Represents system users with authentication and authorization.
 
-**Fields:**
-- `id`: UUID primary key
-- `username`: Unique username for login
-- `password`: Hashed password
-- `role`: User role (default: "EDITOR")
-- `createdAt`: Account creation timestamp
+Пользователь системы с авторизацией и ролями.
+
+| Поле | Тип | Описание |
+| :--- | :--- | :--- |
+| `id` | String (UUID) | Первичный ключ |
+| `username` | String (unique) | Имя пользователя для входа |
+| `password` | String | Хеш пароля (bcrypt) |
+| `role` | String | Роль: `ADMIN`, `EDITOR` (по умолчанию) |
+| `firstName` | String? | Имя |
+| `lastName` | String? | Фамилия |
+| `lastSeenAt` | DateTime? | Последний вход |
+| `createdAt` | DateTime | Дата создания аккаунта |
+
+**Связи**: `auditLogs` → AuditLog[], `specimens` → Specimen[], `activities` → UserActivity?
+
+---
+
+### Technician
+
+Лаборант/техник. Отдельная модель для маппинга имён при импорте из Excel.
+
+| Поле | Тип | Описание |
+| :--- | :--- | :--- |
+| `id` | String (UUID) | Первичный ключ |
+| `name` | String (unique) | Имя техника |
+| `aliases` | String? | Альтернативные написания (для маппинга) |
+| `createdAt` | DateTime | Дата создания |
+
+**Связи**: `specimens` → Specimen[] (many-to-many)
+
+---
+
+### UserActivity
+
+Отслеживание текущей активности пользователя (присутствие).
+
+| Поле | Тип | Описание |
+| :--- | :--- | :--- |
+| `id` | String (UUID) | Первичный ключ |
+| `userId` | String (unique) | FK → User |
+| `resourceType` | String? | Тип ресурса |
+| `resourceId` | String? | ID ресурса |
+| `lastUpdate` | DateTime | Время обновления |
+
+**Индексы**: `[resourceType, resourceId]`
+
+---
 
 ### Specimen
-Core entity representing biological specimens in the lab.
 
-**Fields:**
-- `id`: UUID primary key
-- `taxon`: Taxonomic classification
-- `locality`: Collection location
-- `collector`: Person who collected the specimen
-- `collectedAt`: Collection date and time
-- `collectNotes`: Additional collection notes
-- `extrLab`: Extraction laboratory
-- `extrOperator`: Extraction operator
-- `extrMethod`: Extraction method used
-- `extrDateRaw`: Raw extraction date string
-- `extrDate`: Parsed extraction date
-- `dnaMeter`: DNA measurement instrument
-- `measDate`: DNA measurement date
-- `measOperator`: Measurement operator
-- `dnaConcentration`: DNA concentration value
-- `dnaProfile`: DNA profile information
-- `measComm`: Measurement comments
-- `imageUrl`: URL to specimen image
-- `itsStatus`: ITS sequencing status
-- `itsGb`: ITS GenBank accession
-- `ssuStatus`: SSU sequencing status
-- `ssuGb`: SSU GenBank accession
-- `lsuStatus`: LSU sequencing status
-- `lsuGb`: LSU GenBank accession
-- `mcm7Status`: MCM7 sequencing status
-- `mcm7Gb`: MCM7 GenBank accession
-- `notes`: General notes
-- `importOrigin`: Source of import data
-- `importRow`: Row number in import file
-- `importNotes`: Import-related notes
-- `createdAt`: Record creation timestamp
-- `updatedAt`: Last update timestamp
+Биологическая проба — центральная сущность системы.
 
-**Relationships:**
-- `attempts`: One-to-many with PcrAttempt
+| Поле | Тип | Описание |
+| :--- | :--- | :--- |
+| `id` | String (UUID) | Первичный ключ |
+| `taxon` | String? | Таксономическая классификация |
+| `locality` | String? | Место сбора |
+| `collector` | String? | Сборщик |
+| `collectedAt` | DateTime? | Дата сбора |
+| `collectNotes` | String? | Заметки о сборе |
+| `herbarium` | String? | Гербарий |
+| `labNo` | String? | Лабораторный номер |
+| `accessionNumber` | String? | Инвентарный номер |
+| `collectionNumber` | String? | Номер коллекции |
+| `connections` | String? | Связи с другими пробами |
+| **Экстракция** | | |
+| `extrLab` | String? | Лаборатория экстракции |
+| `extrOperator` | String? | Оператор экстракции |
+| `extrMethod` | String? | Метод экстракции |
+| `extrDateRaw` | String? | Дата экстракции (сырая строка) |
+| `extrDate` | DateTime? | Дата экстракции (разобранная) |
+| **Измерение ДНК** | | |
+| `dnaMeter` | String? | Прибор измерения ДНК |
+| `measDate` | DateTime? | Дата измерения |
+| `measOperator` | String? | Оператор измерения |
+| `dnaConcentration` | Float? | Концентрация ДНК |
+| `dnaProfile` | String? | Профиль ДНК |
+| `measComm` | String? | Комментарий к измерению |
+| **Секвенирование** | | |
+| `itsStatus` / `itsGb` | String? | ITS: статус / GenBank accession |
+| `ssuStatus` / `ssuGb` | String? | SSU: статус / accession |
+| `lsuStatus` / `lsuGb` | String? | LSU: статус / accession |
+| `mcm7Status` / `mcm7Gb` | String? | MCM7: статус / accession |
+| `rpb2Status` / `rpb2Gb` | String? | RPB2: статус / accession |
+| `mtLsuStatus` / `mtLsuGb` | String? | mtLSU: статус / accession |
+| `mtSsuStatus` / `mtSsuGb` | String? | mtSSU: статус / accession |
+| **Мета** | | |
+| `imageUrl` | String? | URL изображения |
+| `notes` | String? | Общие заметки |
+| `reviewNotes` | String? | Заметки рецензента |
+| `reviewPhotos` | String? | Фотографии для рецензии |
+| `importOrigin` | String? | Источник импорта |
+| `importRow` | Int? | Номер строки в файле импорта |
+| `importNotes` | String? | Заметки импорта |
+| `addedBy` | String? | Кем добавлена |
+| `labTechnicianId` | String? | FK → User (лаборант) |
+| `deletedAt` | DateTime? | Soft delete |
+| `createdAt` | DateTime | Дата создания |
+| `updatedAt` | DateTime | Дата обновления |
 
-### PcrAttempt
-Represents individual PCR amplification attempts.
+**Связи**: `attempts` → PCRAttempt[], `labTechnician` → User?, `technicians` → Technician[] (many-to-many)
 
-**Fields:**
-- `id`: UUID primary key
-- `specimenId`: Foreign key to Specimen
-- `date`: Attempt date (default: now)
-- `marker`: Genetic marker targeted
-- `forwardPrimer`: Forward primer sequence
-- `reversePrimer`: Reverse primer sequence
-- `dnaMatrix`: DNA matrix used
-- `volume`: Reaction volume
-- `polymerase`: DNA polymerase used
-- `cycler`: PCR machine used
-- `cycles`: Number of cycles
-- `annealingTemp`: Annealing temperature
-- `extensionTime`: Extension time
-- `result`: PCR result (SUCCESS, FAILED, etc.)
-- `resultNotes`: Additional result notes
-- `createdAt`: Record creation timestamp
+**Индексы**: `[deletedAt]`
 
-**Relationships:**
-- `specimen`: Many-to-one with Specimen
+---
 
+### PCRAttempt
 
+Попытка ПЦР-амплификации.
+
+| Поле | Тип | Описание |
+| :--- | :--- | :--- |
+| `id` | String (UUID) | Первичный ключ |
+| `specimenId` | String | FK → Specimen |
+| `date` | DateTime | Дата попытки |
+| `marker` | String? | Генетический маркер |
+| `forwardPrimer` | String? | Прямой праймер |
+| `reversePrimer` | String? | Обратный праймер |
+| `dnaMatrix` | String? | ДНК-матрица |
+| `volume` | String? | Объём реакции |
+| `polymerase` | String? | ДНК-полимераза |
+| `cycler` | String? | ПЦР-амплификатор |
+| `cycles` | String? | Количество циклов |
+| `annealingTemp` | String? | Температура отжига |
+| `extensionTime` | String? | Время элонгации |
+| `result` | String | Результат: `SUCCESS`, `FAILED`, `WEAK`, `REPEAT` |
+| `resultNotes` | String? | Заметки к результату |
+| `addedBy` | String? | Кем добавлена |
+| `deletedAt` | DateTime? | Soft delete |
+| `createdAt` | DateTime | Дата создания |
+
+**Связи**: `specimen` → Specimen (onDelete: Cascade)
+
+**Индексы**: `[specimenId]`, `[marker]`, `[deletedAt]`
+
+---
 
 ### AuditLog
-Tracks all changes and actions in the system for compliance and debugging.
 
-**Fields:**
-- `id`: UUID primary key
-- `userId`: User who performed the action
-- `action`: Action type (CREATE_SPECIMEN, UPDATE_SPECIMEN, etc.)
-- `resourceType`: Type of resource affected (SPECIMEN, PCR_ATTEMPT, etc.)
-- `resourceId`: ID of the affected resource
-- `details`: JSON string with action details
-- `changes`: JSON string with before/after values
-- `ipAddress`: IP address of the request
-- `userAgent`: User agent string
-- `timestamp`: Action timestamp
+Журнал аудита действий (соответствие GLP).
 
-**Indexes:**
-- `userId` for user activity queries
-- `timestamp` for chronological queries
-- `resourceType, resourceId` for resource-specific audit trails
+| Поле | Тип | Описание |
+| :--- | :--- | :--- |
+| `id` | String (UUID) | Первичный ключ |
+| `userId` | String | FK → User |
+| `action` | String | Действие: `CREATE_SPECIMEN`, `UPDATE_SPECIMEN`, `DELETE_SPECIMEN`... |
+| `resourceType` | String | Тип ресурса: `SPECIMEN`, `PCR_ATTEMPT`, `USER`... |
+| `resourceId` | String? | ID ресурса |
+| `details` | String? | Подробности (JSON) |
+| `changes` | String? | Изменения before/after (JSON) |
+| `ipAddress` | String? | IP-адрес |
+| `userAgent` | String? | User Agent |
+| `timestamp` | DateTime | Время действия |
 
-## Relationships Diagram
+**Связи**: `user` → User
 
+**Индексы**: `[userId]`, `[timestamp]`, `[resourceType, resourceId]`
+
+---
+
+### AuthToken
+
+Одноразовый токен авторизации (Hiddify-стиль).
+
+| Поле | Тип | Описание |
+| :--- | :--- | :--- |
+| `id` | String (UUID) | Первичный ключ |
+| `token` | String (unique) | Значение токена |
+| `used` | Boolean | Использован (по умолчанию `false`) |
+| `expiresAt` | DateTime | Срок действия |
+| `createdAt` | DateTime | Дата создания |
+
+---
+
+### SystemSetting
+
+Системные настройки (key-value).
+
+| Поле | Тип | Описание |
+| :--- | :--- | :--- |
+| `key` | String | Ключ (первичный ключ) |
+| `value` | String | Значение |
+| `updatedAt` | DateTime | Дата обновления |
+
+## ER-диаграмма
+
+```mermaid
+erDiagram
+    User ||--o{ AuditLog : "auditLogs"
+    User ||--o{ Specimen : "specimens (labTechnician)"
+    User ||--o| UserActivity : "activities"
+    Specimen ||--o{ PCRAttempt : "attempts"
+    Specimen }o--o{ Technician : "technicians"
+
+    User {
+        string id PK
+        string username UK
+        string role
+        string firstName
+        string lastName
+    }
+
+    Specimen {
+        string id PK
+        string taxon
+        string locality
+        string labNo
+        datetime deletedAt
+    }
+
+    PCRAttempt {
+        string id PK
+        string specimenId FK
+        string marker
+        string result
+        datetime deletedAt
+    }
+
+    AuditLog {
+        string id PK
+        string userId FK
+        string action
+        string resourceType
+    }
+
+    Technician {
+        string id PK
+        string name UK
+        string aliases
+    }
+
+    AuthToken {
+        string id PK
+        string token UK
+        boolean used
+        datetime expiresAt
+    }
+
+    UserActivity {
+        string id PK
+        string userId FK
+        string resourceType
+    }
+
+    SystemSetting {
+        string key PK
+        string value
+    }
 ```
-User (1) ────► AuditLog (many)
 
-Specimen (1) ────► PcrAttempt (many)
-```
+## Проектные решения
 
-## Data Flow
+- **UUID Primary Keys** — глобальная уникальность, защита от перебора
+- **Soft Delete** — `deletedAt` в `Specimen` и `PCRAttempt` для безопасного удаления с возможностью восстановления
+- **Cascading Deletes** — удаление пробы каскадно удаляет PCRAttempt
+- **Отслеживание импорта** — поля `importOrigin`, `importRow`, `importNotes` для трассировки происхождения данных
+- **Аудит по GLP** — все действия логируются с деталями изменений (before/after)
+- **Маркерные статусы** — 7 маркеров секвенирования (ITS, SSU, LSU, MCM7, RPB2, mtLSU, mtSSU) со статусами и GenBank accession
 
-1. **Specimen Collection**: Specimen records are created with collection and extraction data
-2. **PCR Attempts**: Multiple PCR attempts can be made per specimen
-3. **Audit Trail**: All changes are logged in AuditLog for compliance
-
-## Key Design Decisions
-
-- **UUID Primary Keys**: Ensures global uniqueness and prevents enumeration attacks
-- **Cascading Deletes**: Deleting a specimen automatically removes related PCR attempts
-- **Flexible Status Fields**: Status fields (itsStatus, ssuStatus, etc.) allow tracking progress through sequencing pipeline
-- **Import Tracking**: Fields like `importOrigin` and `importRow` help trace data provenance
-- **Comprehensive Auditing**: All actions are logged with detailed change tracking
-
-## Migration Strategy
-
-Database migrations are handled by Prisma. To create a new migration:
+## Миграции
 
 ```bash
-npx prisma migrate dev --name <migration-name>
-```
+# Создание новой миграции
+npx prisma migrate dev --name <имя-миграции>
 
-To apply migrations in production:
-
-```bash
+# Применение в production
 npx prisma migrate deploy
+
+# Визуальный просмотр базы
+npm run prisma:studio
 ```
