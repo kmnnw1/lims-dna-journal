@@ -1,10 +1,12 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useJournalHotkeys } from '@/hooks/useJournalHotkeys';
+import { useSpecimenMutations } from '@/hooks/useSpecimenMutations';
 import { formatOperatorName } from '@/lib/utils';
 import type { Specimen } from '@/types';
 
@@ -78,6 +80,8 @@ export function useJournalPage() {
 		return () => window.removeEventListener('resize', checkMobile);
 	}, []);
 
+	// === Data Fetching ===
+
 	const { data, isLoading: loading } = useQuery({
 		queryKey: [
 			'specimens',
@@ -119,159 +123,42 @@ export function useJournalPage() {
 		[data?.suggestions],
 	);
 
-	// Hotkeys
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			const isInput =
-				document.activeElement?.tagName === 'INPUT' ||
-				document.activeElement?.tagName === 'TEXTAREA' ||
-				document.activeElement?.getAttribute('contenteditable') === 'true';
+	// === Mutations (delegated) ===
 
-			// Command Palette
-			if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-				e.preventDefault();
-				setIsCommandPaletteOpen((prev) => !prev);
-				return;
-			}
+	const { handleAddSubmit, handleEditSubmit, handlePCRSubmit, isAnyMutationPending } =
+		useSpecimenMutations({
+			setIsAddModalOpen,
+			setEditingSpecimen,
+			setActivePCRSpecimen,
+			setValidationError,
+			setToastMessage,
+			newRecordData,
+			setNewRecordData,
+			editingSpecimen,
+			activePCRSpecimen,
+			pcrForm,
+		});
 
-			// New Specimen
-			if (e.key === 'n' && e.altKey) {
-				e.preventDefault();
-				setIsAddModalOpen(true);
-				return;
-			}
+	// === Hotkeys (delegated) ===
 
-			// Focus Search
-			if (e.key === '/' && !isInput) {
-				e.preventDefault();
-				searchInputRef.current?.focus();
-				return;
-			}
-
-			// Keyboard Navigation (Only if not in input)
-			if (!isInput && specimens.length > 0) {
-				if (e.key === 'ArrowDown' || (e.key === 'j' && !e.ctrlKey)) {
-					e.preventDefault();
-					setFocusedIndex((prev) =>
-						prev === null || prev >= specimens.length - 1 ? 0 : prev + 1,
-					);
-				} else if (e.key === 'ArrowUp' || (e.key === 'k' && !e.ctrlKey)) {
-					e.preventDefault();
-					setFocusedIndex((prev) =>
-						prev === null || prev <= 0 ? specimens.length - 1 : prev - 1,
-					);
-				} else if (e.key === 'Enter' && focusedIndex !== null) {
-					e.preventDefault();
-					const specimen = specimens[focusedIndex];
-					if (specimen) setEditingSpecimen(specimen);
-				} else if (e.key === ' ' && focusedIndex !== null) {
-					e.preventDefault();
-					const specimen = specimens[focusedIndex];
-					if (specimen) {
-						const id = specimen.id;
-						setSelectedIds((prev) => {
-							const next = new Set(prev);
-							if (next.has(id)) next.delete(id);
-							else next.add(id);
-							return next;
-						});
-					}
-				}
-			}
-
-			if (e.key === 'Escape') {
-				if (isCommandPaletteOpen) setIsCommandPaletteOpen(false);
-				else if (isAddModalOpen) setIsAddModalOpen(false);
-				else if (editingSpecimen) setEditingSpecimen(null);
-				else if (activePCRSpecimen) setActivePCRSpecimen(null);
-				else setSearchQuery('');
-			}
-		};
-		window.addEventListener('keydown', handleKeyDown);
-		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, [
+	useJournalHotkeys({
 		specimens,
 		focusedIndex,
+		setFocusedIndex,
 		isCommandPaletteOpen,
+		setIsCommandPaletteOpen,
 		isAddModalOpen,
+		setIsAddModalOpen,
 		editingSpecimen,
+		setEditingSpecimen,
 		activePCRSpecimen,
-	]);
-
-	const addMutation = useMutation({
-		mutationFn: async (newRecord: typeof newRecordData) => {
-			const res = await fetch('/api/specimens', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(newRecord),
-			});
-			if (!res.ok) {
-				const error = await res.json();
-				throw new Error(error.error || 'Ошибка при сохранении');
-			}
-			return res.json();
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['specimens'] });
-			setIsAddModalOpen(false);
-			setNewRecordData({
-				id: '',
-				taxon: '',
-				locality: '',
-				extrLab: '',
-				extrOperator: '',
-				extrMethod: '',
-				extrDateRaw: '',
-			});
-		},
-		onError: (error: Error) => {
-			setValidationError(error.message);
-		},
+		setActivePCRSpecimen,
+		setSearchQuery,
+		setSelectedIds,
+		searchInputRef,
 	});
 
-	const editMutation = useMutation({
-		mutationFn: async (specimen: Specimen) => {
-			const res = await fetch('/api/specimens', {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(specimen),
-			});
-			if (!res.ok) {
-				const error = await res.json();
-				throw new Error(error.error || 'Ошибка при обновлении');
-			}
-			return res.json();
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['specimens'] });
-			setEditingSpecimen(null);
-		},
-		onError: (error: Error) => {
-			setValidationError(error.message);
-		},
-	});
-
-	const pcrMutation = useMutation({
-		mutationFn: async (payload: Record<string, unknown>) => {
-			const res = await fetch('/api/pcr', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload),
-			});
-			if (!res.ok) {
-				const error = await res.json();
-				throw new Error(error.error || 'Ошибка ПЦР');
-			}
-			return res.json();
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['specimens'] });
-			setActivePCRSpecimen(null);
-		},
-		onError: (error: Error) => {
-			setToastMessage({ text: error.message, type: 'error' });
-		},
-	});
+	// === Handlers ===
 
 	const stats = useMemo(() => {
 		if (data?.stats) return data.stats;
@@ -292,53 +179,6 @@ export function useJournalPage() {
 	const handleSignOut = useCallback(() => {
 		signOut();
 	}, []);
-
-	const handleAddSubmit = useCallback(
-		async (e: React.FormEvent) => {
-			e.preventDefault();
-			setValidationError(null);
-
-			const { id, taxon } = newRecordData;
-			if (!id.trim()) {
-				setValidationError('ID пробы обязателен');
-				return;
-			}
-			if (taxon.trim() && taxon.trim().length < 3) {
-				setValidationError('Таксон должен содержать не менее 3 символов');
-				return;
-			}
-
-			addMutation.mutate(newRecordData);
-		},
-		[newRecordData, addMutation],
-	);
-
-	const handleEditSubmit = useCallback(
-		async (e: React.FormEvent) => {
-			e.preventDefault();
-			setValidationError(null);
-
-			if (editingSpecimen) {
-				const { taxon } = editingSpecimen;
-				if (taxon && taxon.trim().length > 0 && taxon.trim().length < 3) {
-					setValidationError('Таксон должен содержать не менее 3 символов');
-					return;
-				}
-				editMutation.mutate(editingSpecimen);
-			}
-		},
-		[editingSpecimen, editMutation],
-	);
-
-	const handlePCRSubmit = useCallback(async () => {
-		if (activePCRSpecimen) {
-			pcrMutation.mutate({
-				specimenId: activePCRSpecimen.id,
-				...pcrForm,
-				date: new Date().toISOString(),
-			});
-		}
-	}, [activePCRSpecimen, pcrMutation, pcrForm]);
 
 	const handleStatusToggle = useCallback(
 		async (id: string, marker: string) => {
@@ -449,8 +289,7 @@ export function useJournalPage() {
 		session,
 		status,
 		specimens,
-		loading:
-			loading || addMutation.isPending || editMutation.isPending || pcrMutation.isPending,
+		loading: loading || isAnyMutationPending,
 		page,
 		setPage,
 		totalPages,

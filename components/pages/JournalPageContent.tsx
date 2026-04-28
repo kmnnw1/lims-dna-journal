@@ -1,21 +1,21 @@
 'use client';
 
-import { Camera, ChevronDown, Download, Plus, Printer } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
+import { Plus } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { BarcodeScanDialog } from '@/components/features/BarcodeScanDialog';
 import { useDevSettings } from '@/components/features/DevSettingsProvider';
 import { ERModelVisualizer } from '@/components/features/ERModelVisualizer';
 import { HistoryDialog } from '@/components/features/HistoryDialog';
 import { JournalHeader } from '@/components/features/JournalHeader';
+import { JournalToolbar } from '@/components/features/JournalToolbar';
 import {
 	MobileSpecimenCard,
 	type MobileSpecimenShape,
 } from '@/components/features/MobileSpecimenCard';
-import { PaginationControls } from '@/components/features/PaginationControls';
 import { PCRStatusBadge } from '@/components/features/PCRStatusBadge';
 import { QuickFilterBar } from '@/components/features/QuickFilterBar';
+import { SelectionBar } from '@/components/features/SelectionBar';
 import { SpecimenTable } from '@/components/features/SpecimenTable';
 import { StatsCards } from '@/components/features/StatsCards';
 import { useTheme } from '@/components/layout/ThemeProvider';
@@ -90,13 +90,10 @@ export function JournalPageContent() {
 	} = useJournalPage();
 
 	const { settings: devSettings } = useDevSettings();
-	const [isExportOpen, setIsExportOpen] = useState(false);
-	const [lastExportFormat, setLastExportFormat] = useState<'XLSX' | 'CSV' | 'SQL'>('XLSX');
 	const [historyTarget, setHistoryTarget] = useState<{
 		id: string;
 		type: 'SPECIMEN' | 'PCR_ATTEMPT';
 	} | null>(null);
-	const exportRef = useRef<HTMLDivElement>(null);
 	const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
 
 	const handleSelect = useCallback(
@@ -160,45 +157,7 @@ export function JournalPageContent() {
 		[setToastMessage],
 	);
 
-	// Load last export format from localStorage
-	useEffect(() => {
-		const saved = localStorage.getItem('lastExportFormat');
-		if (saved === 'XLSX' || saved === 'CSV' || saved === 'SQL') {
-			setLastExportFormat(saved);
-		}
-	}, []);
-
-	// Close export dropdown on outside click
-	useEffect(() => {
-		const handleClick = (e: MouseEvent) => {
-			if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
-				setIsExportOpen(false);
-			}
-		};
-		document.addEventListener('mousedown', handleClick);
-		return () => document.removeEventListener('mousedown', handleClick);
-	}, []);
-
-	// Auto-dismiss toast after 4 seconds
-	useEffect(() => {
-		if (!toastMessage) return;
-		const timer = setTimeout(() => setToastMessage(null), 4000);
-		return () => clearTimeout(timer);
-	}, [toastMessage, setToastMessage]);
-
-	const saveFormat = (format: 'XLSX' | 'CSV' | 'SQL') => {
-		setLastExportFormat(format);
-		localStorage.setItem('lastExportFormat', format);
-		setIsExportOpen(false);
-	};
-
-	const getFormatLabel = (format: 'XLSX' | 'CSV' | 'SQL') => {
-		if (format === 'XLSX') return 'Excel';
-		if (format === 'CSV') return 'CSV';
-		return 'SQL';
-	};
-
-	const handleCopySelectedIds = () => {
+	const handleCopySelectedIds = useCallback(() => {
 		const idsString = Array.from(selectedIds).join(', ');
 		navigator.clipboard.writeText(idsString).then(() => {
 			setToastMessage({
@@ -206,17 +165,14 @@ export function JournalPageContent() {
 				type: 'success',
 			});
 		});
-	};
+	}, [selectedIds, setToastMessage]);
 
-	const handleMainExportClick = () => {
-		if (lastExportFormat === 'XLSX') handleExportXLSX();
-		else if (lastExportFormat === 'CSV') handleExportCSV();
-		else if (lastExportFormat === 'SQL') handleExportDB();
-	};
-
-	const handleExportDB = () => {
-		window.open('/api/export/db', '_blank');
-	};
+	// Auto-dismiss toast after 4 seconds
+	useEffect(() => {
+		if (!toastMessage) return;
+		const timer = setTimeout(() => setToastMessage(null), 4000);
+		return () => clearTimeout(timer);
+	}, [toastMessage, setToastMessage]);
 
 	if (status === 'loading') return null;
 
@@ -289,84 +245,16 @@ export function JournalPageContent() {
 						)}
 
 						{devSettings.visibility?.filters && (
-							<div className="flex flex-row items-end md:items-center justify-end gap-2 shrink-0 md:pr-2 w-full md:w-auto">
-								<div className="flex items-center gap-1.5 sm:gap-2">
-									{isMobileDevice && (
-										<button
-											onClick={() => setIsScanOpen(true)}
-											className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
-										>
-											<Camera className="w-4 h-4 sm:w-5 sm:h-5" />
-											<span className="hidden sm:inline">Сканировать</span>
-										</button>
-									)}
-									<div className="relative flex items-center" ref={exportRef}>
-										<div className="flex items-center h-9 sm:h-10 bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-full shadow-sm hover:md-elevation-2 overflow-hidden group">
-											<button
-												onClick={handleMainExportClick}
-												aria-label="Экспорт"
-												data-testid="export-button"
-												className="flex items-center h-full gap-2 pl-3 sm:pl-4 pr-1.5 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors font-medium text-xs sm:text-sm active:scale-95 whitespace-nowrap min-w-max"
-												title={`Экспорт в ${getFormatLabel(lastExportFormat)}`}
-											>
-												<Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-												<span>{getFormatLabel(lastExportFormat)}</span>
-											</button>
-											<div className="w-px h-4 bg-(--md-sys-color-on-tertiary-container)/20" />
-											<button
-												onClick={() => setIsExportOpen(!isExportOpen)}
-												className="flex items-center justify-center h-full px-1.5 sm:px-2 hover:bg-(--md-sys-color-on-tertiary-container)/10 transition-colors active:scale-90"
-												aria-label="Выбор формата экспорта"
-											>
-												<ChevronDown
-													className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 ${isExportOpen ? 'rotate-180' : ''}`}
-												/>
-											</button>
-										</div>
-
-										{isExportOpen && (
-											<div className="absolute top-full right-0 mt-2 min-w-[240px] py-2 bg-(--md-sys-color-surface-container-lowest) rounded-2xl shadow-xl md-elevation-3 z-50 border border-(--md-sys-color-outline-variant)/30 overflow-hidden">
-												<button
-													onClick={() => {
-														handleExportXLSX();
-														saveFormat('XLSX');
-													}}
-													className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-tertiary-container)/10 transition-colors text-(--md-sys-color-on-surface) whitespace-nowrap"
-												>
-													<div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-													Сохранить Excel (.xlsx)
-												</button>
-												<button
-													onClick={() => {
-														handleExportCSV();
-														saveFormat('CSV');
-													}}
-													className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-tertiary-container)/10 transition-colors text-(--md-sys-color-on-surface) whitespace-nowrap"
-												>
-													<div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-													Сохранить CSV
-												</button>
-												<div className="h-px bg-(--md-sys-color-outline-variant)/20 my-1 mx-2" />
-												<button
-													onClick={() => {
-														handleExportDB();
-														saveFormat('SQL');
-													}}
-													className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium hover:bg-(--md-sys-color-tertiary-container)/10 transition-colors text-(--md-sys-color-on-surface)"
-												>
-													<div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-													Скачать БД (.sqlite)
-												</button>
-											</div>
-										)}
-									</div>
-								</div>
-								<PaginationControls
-									page={page}
-									totalPages={totalPages}
-									onPageChange={setPage}
-								/>
-							</div>
+							<JournalToolbar
+								isMobileDevice={isMobileDevice}
+								isScanOpen={isScanOpen}
+								setIsScanOpen={setIsScanOpen}
+								page={page}
+								totalPages={totalPages}
+								setPage={setPage}
+								handleExportCSV={handleExportCSV}
+								handleExportXLSX={handleExportXLSX}
+							/>
 						)}
 					</div>
 				)}
@@ -432,69 +320,13 @@ export function JournalPageContent() {
 					</div>
 				)}
 
-				{selectedIds.size > 0 && (
-					<div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-3xl bg-(--md-sys-color-inverse-surface) text-(--md-sys-color-inverse-on-surface) rounded-3xl p-4 flex items-center justify-between shadow-2xl z-50">
-						<div className="flex items-center gap-4 pl-2">
-							<button
-								onClick={() => setSelectedIds(new Set())}
-								className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-								title="Сбросить выделение"
-							>
-								<svg
-									width="14"
-									height="14"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="3"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								>
-									<line x1="18" y1="6" x2="6" y2="18"></line>
-									<line x1="6" y1="6" x2="18" y2="18"></line>
-								</svg>
-							</button>
-							<span className="flex items-center justify-center w-8 h-8 rounded-full bg-(--md-sys-color-inverse-primary) text-(--md-sys-color-primary) font-bold text-sm">
-								{selectedIds.size}
-							</span>
-							<span className="font-medium">выбрано</span>
-						</div>
-						<div className="flex gap-2">
-							<button
-								onClick={handleCopySelectedIds}
-								className="px-5 py-2.5 text-sm font-medium text-(--md-sys-color-inverse-primary) hover:bg-white/10 rounded-full transition-colors flex items-center gap-2"
-								title="Копировать все выбранные ID"
-							>
-								<svg
-									width="16"
-									height="16"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="2.5"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								>
-									<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-									<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-								</svg>
-								ID
-							</button>
-							<button
-								onClick={handlePrintLabels}
-								className="px-5 py-2.5 text-sm font-medium text-(--md-sys-color-inverse-primary) hover:bg-white/10 rounded-full transition-colors flex items-center gap-2"
-							>
-								<Printer className="w-4 h-4" /> Печать
-							</button>
-							<button
-								onClick={() => setIsBatchModalOpen(true)}
-								className="px-5 py-2.5 text-sm font-medium text-(--md-sys-color-inverse-primary) hover:bg-white/10 rounded-full transition-colors"
-							>
-								Массовый ПЦР
-							</button>
-						</div>
-					</div>
-				)}
+				<SelectionBar
+					selectedIds={selectedIds}
+					setSelectedIds={setSelectedIds}
+					onCopySelectedIds={handleCopySelectedIds}
+					onPrintLabels={handlePrintLabels}
+					onBatchPCR={() => setIsBatchModalOpen(true)}
+				/>
 
 				<AddSpecimenModal
 					open={isAddModalOpen}
