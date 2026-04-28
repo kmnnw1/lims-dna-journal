@@ -22,8 +22,6 @@
 ## Быстрый старт
 
 ```bash
-git clone <repository-url> lab-journal
-cd lab-journal
 npm install
 npm run setup        # Генерация Prisma, применение схемы, создание .env
 npm run dev          # http://localhost:3000
@@ -147,6 +145,4 @@ git fetch origin && git add -A && (git diff --staged --quiet || git stash push -
 | [`docs/SETUP.md`](docs/SETUP.md) | Руководство по установке |
 | [`TODO.md`](TODO.md) | Дорожная карта развития |
 
-## Лицензия
-
-[LICENSE.md](LICENSE.md)
+© 2026 LIMS DNA Lab Journal. [LICENSE.md](LICENSE.md)
