@@ -175,15 +175,30 @@ export function JournalPageContent() {
 			setToastMessage({ text: 'Нет выбранных проб для экспорта', type: 'error' });
 			return;
 		}
+
+		const csvEscape = (value: unknown) => {
+			const text = String(value ?? '');
+			if (/[",\r\n]/.test(text)) {
+				return `"${text.replaceAll('"', '""')}"`;
+			}
+			return text;
+		};
 		const csvContent =
 			'data:text/csv;charset=utf-8,' +
-			'ID,Taxon,Locality,ITS,SSU,LSU,MCM7\n' +
+			'ID,Taxon,Locality,ITS,SSU,LSU,MCM7\r\n' +
 			selected
-				.map(
-					(s: Specimen) =>
-						`${s.id},${s.taxon || ''},${s.locality || ''},${s.itsStatus || ''},${s.ssuStatus || ''},${s.lsuStatus || ''},${s.mcm7Status || ''}`,
+				.map((s: Specimen) =>
+					[
+						csvEscape(s.id),
+						csvEscape(s.taxon || ''),
+						csvEscape(s.locality || ''),
+						csvEscape(s.itsStatus || ''),
+						csvEscape(s.ssuStatus || ''),
+						csvEscape(s.lsuStatus || ''),
+						csvEscape(s.mcm7Status || ''),
+					].join(','),
 				)
-				.join('\n');
+				.join('\r\n');
 		const encodedUri = encodeURI(csvContent);
 		const link = document.createElement('a');
 		link.setAttribute('href', encodedUri);

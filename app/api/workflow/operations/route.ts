@@ -132,7 +132,7 @@ export async function PUT(req: Request) {
 			});
 			await logAuditAction({
 				userId: user?.id || 'unknown',
-				action: 'CREATE_WORKFLOW_OPERATION',
+				action: 'COMPLETE_WORKFLOW_OPERATION',
 				resourceType: 'WORKFLOW_OPERATION',
 				resourceId: id,
 				details: { transition: 'complete', status },
@@ -157,7 +157,7 @@ export async function PUT(req: Request) {
 			});
 			await logAuditAction({
 				userId: user?.id || 'unknown',
-				action: 'CREATE_WORKFLOW_OPERATION',
+				action: 'CREATE_WORKFLOW_ATTACHMENT',
 				resourceType: 'WORKFLOW_ATTACHMENT',
 				resourceId: created.id,
 				details: { operationId: id, kind },
