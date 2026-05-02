@@ -145,7 +145,7 @@ export function JournalPageContent() {
 	const syncOfflineQueue = useCallback(async () => {
 		const queue = readOfflineQueue();
 		if (queue.length === 0) {
-			setToastMessage({ text: 'Оффлайн-очередь пуста', type: 'success' });
+			setToastMessage({ text: 'Офлайн-очередь пуста', type: 'success' });
 			return;
 		}
 		const failed: OfflineBatchItem[] = [];
@@ -614,7 +614,7 @@ export function JournalPageContent() {
 						} catch {
 							enqueueOfflineBatch(requestBody);
 							setToastMessage({
-								text: `Нет сети: операция сохранена оффлайн (${offlineQueueSize + 1} в очереди)`,
+								text: `Нет сети: операция сохранена офлайн (${offlineQueueSize + 1} в очереди)`,
 								type: 'success',
 							});
 						}
