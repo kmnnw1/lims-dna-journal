@@ -397,8 +397,17 @@ export function JournalPageContent() {
 								lab: payload.lab,
 								method: payload.method,
 								operator: payload.operator,
-								status: 'in_progress',
-								params: { comment: payload.comment },
+								status: payload.resultStatus || 'in_progress',
+								completedAt:
+									payload.resultStatus === 'success' ||
+									payload.resultStatus === 'fail'
+										? new Date().toISOString()
+										: null,
+								params: {
+									comment: payload.comment,
+									sequenceText: payload.sequenceText,
+									rawFileUrl: payload.rawFileUrl,
+								},
 							}),
 						});
 						if (!response.ok) {

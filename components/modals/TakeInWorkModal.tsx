@@ -10,6 +10,9 @@ type TakeInWorkPayload = {
 	method: string;
 	operator: string;
 	comment: string;
+	resultStatus: string;
+	sequenceText: string;
+	rawFileUrl: string;
 	printAfterSave: boolean;
 };
 
@@ -33,6 +36,9 @@ export function TakeInWorkModal({
 	const [method, setMethod] = useState('');
 	const [operator, setOperator] = useState(defaultOperator);
 	const [comment, setComment] = useState('');
+	const [resultStatus, setResultStatus] = useState('in_progress');
+	const [sequenceText, setSequenceText] = useState('');
+	const [rawFileUrl, setRawFileUrl] = useState('');
 	const [printAfterSave, setPrintAfterSave] = useState(true);
 	const [saving, setSaving] = useState(false);
 
@@ -98,6 +104,42 @@ export function TakeInWorkModal({
 							className="px-3 py-2 rounded-xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/30"
 						/>
 					</label>
+					{stage === 'SEQUENCING' && (
+						<>
+							<label className="flex flex-col gap-1 text-sm">
+								<span>Результат</span>
+								<select
+									value={resultStatus}
+									onChange={(e) => setResultStatus(e.target.value)}
+									className="px-3 py-2 rounded-xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/30"
+								>
+									<option value="in_progress">В работе</option>
+									<option value="success">Успех</option>
+									<option value="fail">Неуспех</option>
+									<option value="retry">Повтор</option>
+								</select>
+							</label>
+							<label className="sm:col-span-2 flex flex-col gap-1 text-sm">
+								<span>Ссылка на сырой файл</span>
+								<input
+									value={rawFileUrl}
+									onChange={(e) => setRawFileUrl(e.target.value)}
+									placeholder="URL/путь к сырому файлу"
+									className="px-3 py-2 rounded-xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/30"
+								/>
+							</label>
+							<label className="sm:col-span-2 flex flex-col gap-1 text-sm">
+								<span>Текст последовательности</span>
+								<textarea
+									value={sequenceText}
+									onChange={(e) => setSequenceText(e.target.value)}
+									rows={4}
+									placeholder="ATCG..."
+									className="px-3 py-2 rounded-xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/30"
+								/>
+							</label>
+						</>
+					)}
 				</div>
 
 				<label className="mt-3 flex items-center gap-2 text-sm">
@@ -125,6 +167,9 @@ export function TakeInWorkModal({
 									method,
 									operator,
 									comment,
+									resultStatus,
+									sequenceText,
+									rawFileUrl,
 									printAfterSave,
 								});
 							} finally {
