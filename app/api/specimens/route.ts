@@ -1,5 +1,7 @@
 import { asc, count, desc } from 'drizzle-orm';
+import fs from 'fs';
 import { NextResponse } from 'next/server';
+import path from 'path';
 import { db } from '@/lib/db/drizzle/drizzle';
 import { specimens as specimensTable } from '@/lib/db/drizzle/schema';
 import { logAuditAction } from '@/lib/db/prisma/audit-log';
@@ -355,6 +357,17 @@ export async function DELETE(request: Request) {
 					{ status: 400 },
 				);
 			}
+
+			// Авто-бэкап БД перед потенциально опасной массовой операцией.
+			const dbPath = path.join(process.cwd(), 'prisma', 'dev.db');
+			if (fs.existsSync(dbPath)) {
+				const backupsDir = path.join(process.cwd(), 'backups');
+				if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
+				const ts = new Date().toISOString().replace(/[:.]/g, '-');
+				const backupPath = path.join(backupsDir, `auto-before-delete-${ts}.db`);
+				fs.copyFileSync(dbPath, backupPath);
+			}
+
 			const specimensList = await prisma.specimen.findMany({
 				where: { id: { in: validIds } },
 				select: { id: true, taxon: true },
