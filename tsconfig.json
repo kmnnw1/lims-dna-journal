@@ -30,7 +30,6 @@
 		"types": ["node", "vitest/globals"]
 	},
 	"include": [
-		"next-env.d.ts",
 		"app/**/*.ts",
 		"app/**/*.tsx",
 		"components/**/*.ts",
@@ -41,7 +40,8 @@
 		"types/**/*.tsx",
 		".next/types/**/*.ts",
 		"**/*.mts",
-		"proxy.ts"
+		"proxy.ts",
+		".next/dev/types/**/*.ts"
 	],
 	"exclude": [".next/dev", "node_modules", "dist", "build", "scripts"]
 }

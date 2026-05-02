@@ -1,0 +1,16 @@
+{
+	"extends": "./tsconfig.json",
+	"include": [
+		"app/**/*.ts",
+		"app/**/*.tsx",
+		"components/**/*.ts",
+		"components/**/*.tsx",
+		"lib/**/*.ts",
+		"lib/**/*.tsx",
+		"types/**/*.ts",
+		"types/**/*.tsx",
+		"**/*.mts",
+		"proxy.ts"
+	],
+	"exclude": [".next", "node_modules", "dist", "build", "scripts"]
+}

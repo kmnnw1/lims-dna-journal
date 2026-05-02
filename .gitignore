@@ -66,6 +66,7 @@ dist/
 .svelte-kit/
 .astro/
 .remix/
+next-env.d.ts
 
 # ------------------------------------------------------------------------------
 # 4. ENVIRONMENT & SECURITY (VITAL SECRETS)
