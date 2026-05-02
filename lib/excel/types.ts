@@ -18,6 +18,13 @@ export type ParsedSpecimenRow = {
 	lsuGb: string;
 	mcm7Status: string;
 	mcm7Gb: string;
+	rpb2Status: string;
+	rpb2Gb: string;
+	herbarium: string;
+	collectionNumber: string;
+	accessionNumber: string;
+	labNo: string;
+	connections: string;
 	notes: string;
 	_sources?: SourceRef[];
 };

@@ -101,7 +101,9 @@ export function headerToCanonicalKey(raw: string): string | null {
 	if (/comment/i.test(t)) return 'comment';
 	if (/locality|collection/i.test(t)) return 'locality';
 	if (/collector/i.test(t)) return 'collector';
-	if (/herbarium|acc\.?\s*no/i.test(t)) return 'herbarium';
+	if (/herbarium/i.test(t)) return 'herbarium';
+	if (/acc\.?\s*no|accession/i.test(t)) return 'accessionNumber';
+	if (/coll\.?\s*no|collection/i.test(t)) return 'collectionNumber';
 	if (/^labor$/i.test(t) || n === 'labor') return 'labor';
 	if (/method/i.test(t) && !/mrssu/i.test(n)) return 'method';
 	if (/extr\.?\s*data|extr\.?\s*date/i.test(t)) return 'extrDate';
