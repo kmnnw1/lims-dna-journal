@@ -120,6 +120,7 @@ export function AmplificationTaskBoard({
 			await loadTasks();
 		} catch {
 			onToast('Ошибка при создании заданий', 'error');
+		} finally {
 			setLoading(false);
 		}
 	};
@@ -136,6 +137,7 @@ export function AmplificationTaskBoard({
 			await loadTasks();
 		} catch {
 			onToast('Ошибка изменения задания', 'error');
+		} finally {
 			setLoading(false);
 		}
 	};

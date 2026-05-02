@@ -28,7 +28,26 @@ export function buildDrizzleQuery(params: {
 	// Фильтрация по этапу — базовая эвристика по существующим полям.
 	// Дальше будет уточняться на базе WorkflowOperation/AmplificationTask, но уже сейчас даёт рабочий “вид по этапам”.
 	if (params.stage && params.stage !== 'TASKS') {
-		if (params.stage === 'EXTRACTION') {
+		if (params.stage === 'PREP') {
+			conditions.push(
+				and(
+					isNull(specimens.extrDate),
+					or(
+						isNull(specimens.extrDateRaw),
+						eq(specimens.extrDateRaw, ''),
+					) as unknown as SQL,
+					or(isNull(specimens.extrLab), eq(specimens.extrLab, '')) as unknown as SQL,
+					or(
+						isNull(specimens.extrMethod),
+						eq(specimens.extrMethod, ''),
+					) as unknown as SQL,
+					or(
+						isNull(specimens.extrOperator),
+						eq(specimens.extrOperator, ''),
+					) as unknown as SQL,
+				) as unknown as SQL,
+			);
+		} else if (params.stage === 'EXTRACTION') {
 			conditions.push(isNull(specimens.extrDate));
 		} else if (params.stage === 'DNA_MEASUREMENT') {
 			conditions.push(
