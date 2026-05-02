@@ -7,6 +7,7 @@ import {
 	validateContentType,
 	validateSpecimenId,
 } from '@/lib/security/input-validator';
+import { isOperationStage } from '@/lib/workflow/stages';
 
 function parseJsonOrNull(value: unknown): string | null {
 	if (value === null || value === undefined) return null;
@@ -29,6 +30,10 @@ export async function GET(req: Request) {
 
 		if (!specimenId) {
 			return NextResponse.json({ error: 'specimenId обязателен' }, { status: 400 });
+		}
+
+		if (stage && !isOperationStage(stage)) {
+			return NextResponse.json({ error: 'Некорректный stage' }, { status: 400 });
 		}
 
 		const operations = await prisma.workflowOperation.findMany({
@@ -72,6 +77,9 @@ export async function POST(req: Request) {
 		}
 		if (!stage) {
 			return NextResponse.json({ error: 'stage обязателен' }, { status: 400 });
+		}
+		if (!isOperationStage(stage)) {
+			return NextResponse.json({ error: 'Некорректный stage' }, { status: 400 });
 		}
 
 		const created = await prisma.workflowOperation.create({

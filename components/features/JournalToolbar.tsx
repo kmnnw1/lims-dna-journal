@@ -15,6 +15,8 @@ interface JournalToolbarProps {
 	handleExportCSV: () => void;
 	handleExportXLSX: () => void;
 	onImportUploaded: (message: string, type: 'success' | 'error') => void;
+	offlineQueueSize: number;
+	onSyncOffline: () => Promise<void>;
 }
 
 /**
@@ -29,6 +31,8 @@ export function JournalToolbar({
 	handleExportCSV,
 	handleExportXLSX,
 	onImportUploaded,
+	offlineQueueSize,
+	onSyncOffline,
 }: JournalToolbarProps) {
 	const [isExportOpen, setIsExportOpen] = useState(false);
 	const [lastExportFormat, setLastExportFormat] = useState<ExportFormat>('XLSX');
@@ -159,6 +163,14 @@ export function JournalToolbar({
 						e.currentTarget.value = '';
 					}}
 				/>
+				<button
+					type="button"
+					onClick={() => void onSyncOffline()}
+					className="h-9 sm:h-10 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-medium border border-(--md-sys-color-outline-variant)/40 bg-(--md-sys-color-surface-container-high) text-(--md-sys-color-on-surface) hover:md-elevation-2"
+					title="Отправить сохранённые оффлайн-операции"
+				>
+					Синхр. оффлайн {offlineQueueSize > 0 ? `(${offlineQueueSize})` : ''}
+				</button>
 				<div className="relative flex items-center" ref={exportRef}>
 					<div className="flex items-center h-9 sm:h-10 bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-full shadow-sm hover:md-elevation-2 overflow-hidden group">
 						<button

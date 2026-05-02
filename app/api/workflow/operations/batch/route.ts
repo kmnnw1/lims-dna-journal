@@ -3,6 +3,7 @@ import { type ApiUser, handleError, requireRole } from '@/lib/api/helpers';
 import { logAuditAction } from '@/lib/db/prisma/audit-log';
 import { prisma } from '@/lib/db/prisma/prisma';
 import { sanitizeString, validateContentType } from '@/lib/security/input-validator';
+import { isOperationStage } from '@/lib/workflow/stages';
 
 export async function POST(req: Request) {
 	try {
@@ -32,6 +33,9 @@ export async function POST(req: Request) {
 		const paramsJson = body?.params ? JSON.stringify(body.params) : null;
 
 		if (!stage) return NextResponse.json({ error: 'stage обязателен' }, { status: 400 });
+		if (!isOperationStage(stage)) {
+			return NextResponse.json({ error: 'Некорректный stage' }, { status: 400 });
+		}
 		if (specimenIds.length === 0) {
 			return NextResponse.json({ error: 'specimenIds обязателен' }, { status: 400 });
 		}

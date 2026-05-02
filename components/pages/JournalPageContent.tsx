@@ -27,9 +27,11 @@ import { TakeInWorkModal } from '@/components/modals/TakeInWorkModal';
 import { CommandPalette } from '@/components/ui/CommandPalette';
 import { FAB } from '@/components/ui/FAB';
 import { useJournalPage } from '@/hooks/useJournalPage';
+import { isOperationStage, type OperationStage } from '@/lib/workflow/stages';
 import type { Specimen } from '@/types';
 
 const MemoizedSpecimenTable = React.memo(SpecimenTable);
+const OFFLINE_WORKFLOW_QUEUE_KEY = 'offline-workflow-operations-batch-v1';
 
 export function JournalPageContent() {
 	const {
@@ -102,6 +104,80 @@ export function JournalPageContent() {
 	} | null>(null);
 	const [isTakeInWorkOpen, setIsTakeInWorkOpen] = useState(false);
 	const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
+	const [offlineQueueSize, setOfflineQueueSize] = useState(0);
+
+	type OfflineBatchItem = {
+		id: string;
+		createdAt: string;
+		payload: Record<string, unknown>;
+	};
+
+	const readOfflineQueue = useCallback((): OfflineBatchItem[] => {
+		try {
+			const raw = localStorage.getItem(OFFLINE_WORKFLOW_QUEUE_KEY);
+			if (!raw) return [];
+			const parsed = JSON.parse(raw) as OfflineBatchItem[];
+			return Array.isArray(parsed) ? parsed : [];
+		} catch {
+			return [];
+		}
+	}, []);
+
+	const writeOfflineQueue = useCallback((queue: OfflineBatchItem[]) => {
+		localStorage.setItem(OFFLINE_WORKFLOW_QUEUE_KEY, JSON.stringify(queue));
+		setOfflineQueueSize(queue.length);
+	}, []);
+
+	const enqueueOfflineBatch = useCallback(
+		(payload: Record<string, unknown>) => {
+			const queue = readOfflineQueue();
+			queue.push({
+				id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+				createdAt: new Date().toISOString(),
+				payload,
+			});
+			writeOfflineQueue(queue);
+		},
+		[readOfflineQueue, writeOfflineQueue],
+	);
+
+	const syncOfflineQueue = useCallback(async () => {
+		const queue = readOfflineQueue();
+		if (queue.length === 0) {
+			setToastMessage({ text: 'Оффлайн-очередь пуста', type: 'success' });
+			return;
+		}
+		const failed: OfflineBatchItem[] = [];
+		let synced = 0;
+		for (const item of queue) {
+			try {
+				const response = await fetch('/api/workflow/operations/batch', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(item.payload),
+				});
+				if (response.ok) synced += 1;
+				else failed.push(item);
+			} catch {
+				failed.push(item);
+			}
+		}
+		writeOfflineQueue(failed);
+		if (synced > 0) {
+			await refreshSpecimens();
+		}
+		setToastMessage({
+			text:
+				failed.length === 0
+					? `Синхронизация завершена: ${synced}`
+					: `Синхронизировано: ${synced}, осталось в очереди: ${failed.length}`,
+			type: failed.length === 0 ? 'success' : 'error',
+		});
+	}, [readOfflineQueue, refreshSpecimens, setToastMessage, writeOfflineQueue]);
+
+	useEffect(() => {
+		setOfflineQueueSize(readOfflineQueue().length);
+	}, [readOfflineQueue]);
 
 	const handleSelect = useCallback(
 		(id: string, shiftKey?: boolean) => {
@@ -391,6 +467,8 @@ export function JournalPageContent() {
 										setToastMessage({ text: message, type });
 										setPage(1);
 									}}
+									offlineQueueSize={offlineQueueSize}
+									onSyncOffline={syncOfflineQueue}
 								/>
 							</div>
 						)}
@@ -469,52 +547,75 @@ export function JournalPageContent() {
 					onBulkRename={handleBulkRenameSelected}
 					onPrintLabels={handlePrintLabels}
 					onBatchPCR={() => setIsBatchModalOpen(true)}
-					onTakeInWork={() => setIsTakeInWorkOpen(true)}
+					onTakeInWork={() => {
+						if (!isOperationStage(workflowStage)) {
+							setToastMessage({
+								text: 'Для раздела TASKS действие "В работу" недоступно',
+								type: 'error',
+							});
+							return;
+						}
+						setIsTakeInWorkOpen(true);
+					}}
 				/>
 				<TakeInWorkModal
-					open={isTakeInWorkOpen}
-					stage={workflowStage}
+					open={isTakeInWorkOpen && isOperationStage(workflowStage)}
+					stage={
+						isOperationStage(workflowStage) ? workflowStage : ('PREP' as OperationStage)
+					}
 					selectedCount={selectedIds.size}
 					defaultOperator={session?.user?.name || ''}
 					onClose={() => setIsTakeInWorkOpen(false)}
 					onSubmit={async (payload) => {
-						const response = await fetch('/api/workflow/operations/batch', {
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({
-								specimenIds: Array.from(selectedIds),
-								stage: payload.stage,
-								startedAt: payload.startedAt,
-								lab: payload.lab,
-								method: payload.method,
-								operator: payload.operator,
-								status: payload.resultStatus || 'in_progress',
-								completedAt:
-									payload.resultStatus === 'success' ||
-									payload.resultStatus === 'fail'
-										? new Date().toISOString()
-										: null,
-								params: {
-									comment: payload.comment,
-									failReason: payload.failReason,
-									genbankNo: payload.genbankNo,
-									sequenceText: payload.sequenceText,
-									rawFileUrl: payload.rawFileUrl,
-									processedFileUrl: payload.processedFileUrl,
-									cleanupAtVendor: payload.cleanupAtVendor,
-									postCleanupConcentration: payload.postCleanupConcentration,
-									qualityStatus: payload.qualityStatus,
-								},
-							}),
-						});
-						if (!response.ok) {
-							setToastMessage({ text: 'Не удалось записать работу', type: 'error' });
-							return;
+						const requestBody = {
+							specimenIds: Array.from(selectedIds),
+							stage: payload.stage,
+							startedAt: payload.startedAt,
+							lab: payload.lab,
+							method: payload.method,
+							operator: payload.operator,
+							status: payload.resultStatus || 'in_progress',
+							completedAt:
+								payload.resultStatus === 'success' ||
+								payload.resultStatus === 'fail'
+									? new Date().toISOString()
+									: null,
+							params: {
+								comment: payload.comment,
+								failReason: payload.failReason,
+								genbankNo: payload.genbankNo,
+								sequenceText: payload.sequenceText,
+								rawFileUrl: payload.rawFileUrl,
+								processedFileUrl: payload.processedFileUrl,
+								cleanupAtVendor: payload.cleanupAtVendor,
+								postCleanupConcentration: payload.postCleanupConcentration,
+								qualityStatus: payload.qualityStatus,
+							},
+						};
+						try {
+							const response = await fetch('/api/workflow/operations/batch', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify(requestBody),
+							});
+							if (!response.ok) {
+								setToastMessage({
+									text: 'Не удалось записать работу',
+									type: 'error',
+								});
+								return;
+							}
+							setToastMessage({
+								text: `В работу записано: ${selectedIds.size}`,
+								type: 'success',
+							});
+						} catch {
+							enqueueOfflineBatch(requestBody);
+							setToastMessage({
+								text: `Нет сети: операция сохранена оффлайн (${offlineQueueSize + 1} в очереди)`,
+								type: 'success',
+							});
 						}
-						setToastMessage({
-							text: `В работу записано: ${selectedIds.size}`,
-							type: 'success',
-						});
 						if (payload.printAfterSave) {
 							openPrintBlank(payload);
 						}

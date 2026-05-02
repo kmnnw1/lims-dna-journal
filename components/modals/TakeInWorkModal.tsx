@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { WorkflowStage } from '@/components/features/WorkflowStagePicker';
+import type { OperationStage } from '@/lib/workflow/stages';
 
 type TakeInWorkPayload = {
-	stage: WorkflowStage;
+	stage: OperationStage;
 	startedAt: string;
 	lab: string;
 	method: string;
@@ -31,7 +31,7 @@ export function TakeInWorkModal({
 	onSubmit,
 }: {
 	open: boolean;
-	stage: WorkflowStage;
+	stage: OperationStage;
 	selectedCount: number;
 	defaultOperator: string;
 	onClose: () => void;
