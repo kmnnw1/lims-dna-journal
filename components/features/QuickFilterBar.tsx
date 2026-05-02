@@ -12,6 +12,10 @@ interface QuickFilterBarProps {
 	setMaxConc: (val: number | null) => void;
 	selectedOperator: string;
 	setSelectedOperator: (val: string) => void;
+	selectedMarkers: string[];
+	setSelectedMarkers: (val: string[]) => void;
+	markerCount: number | null;
+	setMarkerCount: (val: number | null) => void;
 	suggestions: { labs: string[]; operators: string[]; methods: string[] };
 }
 
@@ -24,17 +28,22 @@ export function QuickFilterBar({
 	setMaxConc,
 	selectedOperator,
 	setSelectedOperator,
+	selectedMarkers,
+	setSelectedMarkers,
+	markerCount,
+	setMarkerCount,
 	suggestions,
 }: QuickFilterBarProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	const [activeMarkers, setActiveMarkers] = useState<Set<string>>(new Set(['ITS']));
+	const [activeMarkers, setActiveMarkers] = useState<Set<string>>(new Set(selectedMarkers));
 
 	// Local states for the form (Apply logic)
 	const [localMin, setLocalMin] = useState(minConc ?? 0);
 	const [localMax, setLocalMax] = useState(maxConc ?? 200);
 	const [localOperator, setLocalOperator] = useState(selectedOperator);
+	const [localMarkerCount, setLocalMarkerCount] = useState<number | null>(markerCount);
 
 	useEffect(() => {
 		const handleClick = (e: MouseEvent) => {
@@ -45,6 +54,14 @@ export function QuickFilterBar({
 		document.addEventListener('mousedown', handleClick);
 		return () => document.removeEventListener('mousedown', handleClick);
 	}, []);
+
+	useEffect(() => {
+		setActiveMarkers(new Set(selectedMarkers));
+	}, [selectedMarkers]);
+
+	useEffect(() => {
+		setLocalMarkerCount(markerCount);
+	}, [markerCount]);
 
 	const toggleMarker = (m: string) => {
 		setActiveMarkers((prev) => {
@@ -175,6 +192,28 @@ export function QuickFilterBar({
 								))}
 							</select>
 						</div>
+
+						<div className="space-y-3">
+							<label className="text-xs font-bold tracking-wider text-(--md-sys-color-outline) uppercase">
+								Количество маркеров
+							</label>
+							<select
+								value={localMarkerCount === null ? '' : String(localMarkerCount)}
+								onChange={(e) =>
+									setLocalMarkerCount(
+										e.target.value === '' ? null : Number(e.target.value),
+									)
+								}
+								className="w-full p-2.5 rounded-xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/30 text-(--md-sys-color-on-surface) focus:bg-(--md-sys-color-surface-container-high) outline-none text-sm font-medium transition-all"
+							>
+								<option value="">Любое</option>
+								<option value="0">0</option>
+								<option value="1">1</option>
+								<option value="2">2</option>
+								<option value="3">3</option>
+								<option value="4">4</option>
+							</select>
+						</div>
 					</div>
 
 					<div className="p-4 bg-(--md-sys-color-surface-container-lowest) border-t border-(--md-sys-color-outline-variant)/30 flex justify-end gap-3">
@@ -187,6 +226,8 @@ export function QuickFilterBar({
 								setMinConc(null);
 								setMaxConc(null);
 								setSelectedOperator('');
+								setSelectedMarkers([]);
+								setMarkerCount(null);
 								onFilterChange('all');
 							}}
 							className="px-5 py-2 rounded-full text-sm font-semibold text-(--md-sys-color-on-surface) hover:bg-(--md-sys-color-surface-container-high) transition-colors"
@@ -198,6 +239,8 @@ export function QuickFilterBar({
 								setMinConc(localMin);
 								setMaxConc(localMax);
 								setSelectedOperator(localOperator);
+								setSelectedMarkers(Array.from(activeMarkers));
+								setMarkerCount(localMarkerCount);
 								setIsOpen(false);
 							}}
 							className="px-6 py-2 rounded-full text-sm font-bold bg-(--md-sys-color-primary) text-(--md-sys-color-on-primary) hover:opacity-90 transition-opacity md-elevation-1"

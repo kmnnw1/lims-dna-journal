@@ -25,6 +25,10 @@ interface JournalHeaderProps {
 	setMaxConc: (val: number | null) => void;
 	selectedOperator: string;
 	setSelectedOperator: (val: string) => void;
+	selectedMarkers: string[];
+	setSelectedMarkers: (val: string[]) => void;
+	markerCount: number | null;
+	setMarkerCount: (val: number | null) => void;
 	suggestions: { labs: string[]; operators: string[]; methods: string[] };
 	onAddClick?: () => void;
 }
@@ -45,6 +49,10 @@ export const JournalHeader = forwardRef<HTMLInputElement, JournalHeaderProps>(
 			setMaxConc,
 			selectedOperator,
 			setSelectedOperator,
+			selectedMarkers,
+			setSelectedMarkers,
+			markerCount,
+			setMarkerCount,
 			suggestions,
 			onAddClick,
 		},
@@ -132,6 +140,10 @@ export const JournalHeader = forwardRef<HTMLInputElement, JournalHeaderProps>(
 									setMaxConc={setMaxConc}
 									selectedOperator={selectedOperator}
 									setSelectedOperator={setSelectedOperator}
+									selectedMarkers={selectedMarkers}
+									setSelectedMarkers={setSelectedMarkers}
+									markerCount={markerCount}
+									setMarkerCount={setMarkerCount}
 									suggestions={suggestions}
 								/>
 							</div>

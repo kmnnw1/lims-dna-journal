@@ -22,6 +22,8 @@ export function buildDrizzleQuery(params: {
 	minConc?: number | null;
 	maxConc?: number | null;
 	stage?: WorkflowStage | null;
+	markerCombo?: string[];
+	markerCount?: number | null;
 }) {
 	const conditions = [isNull(specimens.deletedAt)];
 
@@ -111,6 +113,36 @@ export function buildDrizzleQuery(params: {
 	}
 
 	if (params.operator) conditions.push(eq(specimens.extrOperator, params.operator));
+
+	if (params.markerCombo && params.markerCombo.length > 0) {
+		const comboSet = new Set(params.markerCombo);
+		const markerConditions: SQL[] = [
+			comboSet.has('ITS')
+				? (sql`coalesce(${specimens.itsStatus}, '') <> ''` as unknown as SQL)
+				: (sql`coalesce(${specimens.itsStatus}, '') = ''` as unknown as SQL),
+			comboSet.has('SSU')
+				? (sql`coalesce(${specimens.ssuStatus}, '') <> ''` as unknown as SQL)
+				: (sql`coalesce(${specimens.ssuStatus}, '') = ''` as unknown as SQL),
+			comboSet.has('LSU')
+				? (sql`coalesce(${specimens.lsuStatus}, '') <> ''` as unknown as SQL)
+				: (sql`coalesce(${specimens.lsuStatus}, '') = ''` as unknown as SQL),
+			comboSet.has('MCM7')
+				? (sql`coalesce(${specimens.mcm7Status}, '') <> ''` as unknown as SQL)
+				: (sql`coalesce(${specimens.mcm7Status}, '') = ''` as unknown as SQL),
+		];
+		conditions.push(and(...markerConditions) as unknown as SQL);
+	}
+
+	if (params.markerCount !== null && params.markerCount !== undefined) {
+		conditions.push(
+			sql`(
+			(case when coalesce(${specimens.itsStatus}, '') <> '' then 1 else 0 end) +
+			(case when coalesce(${specimens.ssuStatus}, '') <> '' then 1 else 0 end) +
+			(case when coalesce(${specimens.lsuStatus}, '') <> '' then 1 else 0 end) +
+			(case when coalesce(${specimens.mcm7Status}, '') <> '' then 1 else 0 end)
+		) = ${params.markerCount}` as unknown as SQL,
+		);
+	}
 
 	if (params.minConc !== null)
 		// biome-ignore lint/suspicious/noExplicitAny: Drizzle comparisons can be strict with column types

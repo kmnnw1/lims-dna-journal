@@ -78,6 +78,10 @@ export function JournalPageContent() {
 		setMaxConc,
 		selectedOperator,
 		setSelectedOperator,
+		selectedMarkers,
+		setSelectedMarkers,
+		markerCount,
+		setMarkerCount,
 		suggestions,
 		toastMessage,
 		setToastMessage,
@@ -317,6 +321,10 @@ export function JournalPageContent() {
 						setMaxConc={setMaxConc}
 						selectedOperator={selectedOperator}
 						setSelectedOperator={setSelectedOperator}
+						selectedMarkers={selectedMarkers}
+						setSelectedMarkers={setSelectedMarkers}
+						markerCount={markerCount}
+						setMarkerCount={setMarkerCount}
 						suggestions={suggestions}
 						onAddClick={() => setIsAddModalOpen(true)}
 					/>

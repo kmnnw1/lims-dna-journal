@@ -33,6 +33,8 @@ type WorkflowStage =
 	| 'SEQUENCING'
 	| 'TASKS';
 
+const KNOWN_MARKERS = ['ITS', 'SSU', 'LSU', 'MCM7'] as const;
+
 function coerceStage(raw: string): WorkflowStage | null {
 	const v = raw.trim().toUpperCase();
 	if (!v) return null;
@@ -72,6 +74,21 @@ export async function GET(req: Request) {
 			? parseFloat(searchParams.get('maxConc')!)
 			: null;
 		const operator = sanitizeString(searchParams.get('operator') || '', 100);
+		const markerCombo = (searchParams.get('markerCombo') || '')
+			.split(',')
+			.map((m) => m.trim().toUpperCase())
+			.filter((m): m is (typeof KNOWN_MARKERS)[number] =>
+				(KNOWN_MARKERS as readonly string[]).includes(m),
+			);
+		const markerCountRaw = searchParams.get('markerCount');
+		const parsedMarkerCount = markerCountRaw ? Number(markerCountRaw) : null;
+		const markerCount =
+			parsedMarkerCount !== null &&
+			Number.isInteger(parsedMarkerCount) &&
+			parsedMarkerCount >= 0 &&
+			parsedMarkerCount <= 4
+				? parsedMarkerCount
+				: null;
 
 		const cacheKey = buildCacheKey({
 			page,
@@ -84,6 +101,8 @@ export async function GET(req: Request) {
 			minConc,
 			maxConc,
 			operator,
+			markerCombo: markerCombo.join(','),
+			markerCount,
 		});
 		const cached = getCached(cacheKey);
 		if (cached) return NextResponse.json(cached);
@@ -96,6 +115,8 @@ export async function GET(req: Request) {
 			minConc,
 			maxConc,
 			stage,
+			markerCombo,
+			markerCount,
 		});
 		const whereStats = buildDrizzleQuery({
 			search,
@@ -104,6 +125,8 @@ export async function GET(req: Request) {
 			minConc,
 			maxConc,
 			stage,
+			markerCombo,
+			markerCount,
 		});
 
 		const [results, totalCount, statsData, suggestions] = await Promise.all([

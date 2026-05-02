@@ -33,6 +33,8 @@ export function useJournalPage() {
 	const [minConc, setMinConc] = useState<number | null>(null);
 	const [maxConc, setMaxConc] = useState<number | null>(null);
 	const [selectedOperator, setSelectedOperator] = useState<string>('');
+	const [selectedMarkers, setSelectedMarkers] = useState<string[]>([]);
+	const [markerCount, setMarkerCount] = useState<number | null>(null);
 	const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [editingSpecimen, setEditingSpecimen] = useState<Specimen | null>(null);
@@ -96,6 +98,8 @@ export function useJournalPage() {
 				minConc,
 				maxConc,
 				operator: selectedOperator,
+				markerCombo: selectedMarkers.join(','),
+				markerCount,
 			},
 		],
 		queryFn: async () => {
@@ -111,6 +115,8 @@ export function useJournalPage() {
 			if (minConc !== null) params.append('minConc', minConc.toString());
 			if (maxConc !== null) params.append('maxConc', maxConc.toString());
 			if (selectedOperator) params.append('operator', selectedOperator);
+			if (selectedMarkers.length > 0) params.append('markerCombo', selectedMarkers.join(','));
+			if (markerCount !== null) params.append('markerCount', String(markerCount));
 
 			const res = await fetch(`/api/specimens?${params}`);
 			if (!res.ok) throw new Error('Network error');
@@ -346,6 +352,10 @@ export function useJournalPage() {
 		setMaxConc,
 		selectedOperator,
 		setSelectedOperator,
+		selectedMarkers,
+		setSelectedMarkers,
+		markerCount,
+		setMarkerCount,
 		isCommandPaletteOpen,
 		setIsCommandPaletteOpen,
 		isAddModalOpen,
