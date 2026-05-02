@@ -5,6 +5,7 @@ export const OPERATION_STAGES = [
 	'AMPLIFICATION',
 	'CLEANUP',
 	'SEQUENCING',
+	'TASKS',
 ] as const;
 
 export type OperationStage = (typeof OPERATION_STAGES)[number];
