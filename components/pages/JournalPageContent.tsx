@@ -169,6 +169,34 @@ export function JournalPageContent() {
 		});
 	}, [selectedIds, setToastMessage]);
 
+	const handleExportSelected = useCallback(async () => {
+		const selected = specimens.filter((s: Specimen) => selectedIds.has(s.id));
+		if (selected.length === 0) {
+			setToastMessage({ text: 'Нет выбранных проб для экспорта', type: 'error' });
+			return;
+		}
+		const csvContent =
+			'data:text/csv;charset=utf-8,' +
+			'ID,Taxon,Locality,ITS,SSU,LSU,MCM7\n' +
+			selected
+				.map(
+					(s: Specimen) =>
+						`${s.id},${s.taxon || ''},${s.locality || ''},${s.itsStatus || ''},${s.ssuStatus || ''},${s.lsuStatus || ''},${s.mcm7Status || ''}`,
+				)
+				.join('\n');
+		const encodedUri = encodeURI(csvContent);
+		const link = document.createElement('a');
+		link.setAttribute('href', encodedUri);
+		link.setAttribute(
+			'download',
+			`selected_export_${new Date().toISOString().split('T')[0]}.csv`,
+		);
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		setToastMessage({ text: `Экспортировано: ${selected.length}`, type: 'success' });
+	}, [specimens, selectedIds, setToastMessage]);
+
 	const openPrintBlank = useCallback(
 		(payload: {
 			stage: string;
@@ -376,6 +404,7 @@ export function JournalPageContent() {
 					selectedIds={selectedIds}
 					setSelectedIds={setSelectedIds}
 					onCopySelectedIds={handleCopySelectedIds}
+					onExportSelected={handleExportSelected}
 					onPrintLabels={handlePrintLabels}
 					onBatchPCR={() => setIsBatchModalOpen(true)}
 					onTakeInWork={() => setIsTakeInWorkOpen(true)}

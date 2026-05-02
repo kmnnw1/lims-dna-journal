@@ -9,6 +9,7 @@ interface SelectionBarProps {
 	onPrintLabels: () => void;
 	onBatchPCR: () => void;
 	onTakeInWork: () => void;
+	onExportSelected: () => void;
 }
 
 /**
@@ -22,6 +23,7 @@ export function SelectionBar({
 	onPrintLabels,
 	onBatchPCR,
 	onTakeInWork,
+	onExportSelected,
 }: SelectionBarProps) {
 	if (selectedIds.size === 0) return null;
 
@@ -72,6 +74,12 @@ export function SelectionBar({
 						<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
 					</svg>
 					ID
+				</button>
+				<button
+					onClick={onExportSelected}
+					className="px-5 py-2.5 text-sm font-medium text-(--md-sys-color-inverse-primary) hover:bg-white/10 rounded-full transition-colors"
+				>
+					Экспорт
 				</button>
 				<button
 					onClick={onPrintLabels}
