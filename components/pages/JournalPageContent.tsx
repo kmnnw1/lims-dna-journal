@@ -266,7 +266,7 @@ export function JournalPageContent() {
 		};
 		const csvContent =
 			'data:text/csv;charset=utf-8,' +
-			'ID,Taxon,Locality,ITS,SSU,LSU,MCM7\r\n' +
+			'ID,Taxon,Locality,ITS,SSU,LSU,RPB2,MCM7\r\n' +
 			selected
 				.map((s: Specimen) =>
 					[
@@ -276,6 +276,7 @@ export function JournalPageContent() {
 						csvEscape(s.itsStatus || ''),
 						csvEscape(s.ssuStatus || ''),
 						csvEscape(s.lsuStatus || ''),
+						csvEscape(s.rpb2Status || ''),
 						csvEscape(s.mcm7Status || ''),
 					].join(','),
 				)
