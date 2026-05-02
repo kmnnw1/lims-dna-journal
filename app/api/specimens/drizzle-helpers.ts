@@ -116,21 +116,32 @@ export function buildDrizzleQuery(params: {
 
 	if (params.markerCombo && params.markerCombo.length > 0) {
 		const comboSet = new Set(params.markerCombo);
-		const markerConditions: SQL[] = [
-			comboSet.has('ITS')
-				? (sql`coalesce(${specimens.itsStatus}, '') <> ''` as unknown as SQL)
-				: (sql`coalesce(${specimens.itsStatus}, '') = ''` as unknown as SQL),
-			comboSet.has('SSU')
-				? (sql`coalesce(${specimens.ssuStatus}, '') <> ''` as unknown as SQL)
-				: (sql`coalesce(${specimens.ssuStatus}, '') = ''` as unknown as SQL),
-			comboSet.has('LSU')
-				? (sql`coalesce(${specimens.lsuStatus}, '') <> ''` as unknown as SQL)
-				: (sql`coalesce(${specimens.lsuStatus}, '') = ''` as unknown as SQL),
-			comboSet.has('MCM7')
-				? (sql`coalesce(${specimens.mcm7Status}, '') <> ''` as unknown as SQL)
-				: (sql`coalesce(${specimens.mcm7Status}, '') = ''` as unknown as SQL),
-		];
-		conditions.push(and(...markerConditions) as unknown as SQL);
+		const markerConditions: SQL[] = [];
+
+		if (comboSet.has('ITS'))
+			markerConditions.push(
+				sql`coalesce(${specimens.itsStatus}, '') <> ''` as unknown as SQL,
+			);
+		if (comboSet.has('SSU'))
+			markerConditions.push(
+				sql`coalesce(${specimens.ssuStatus}, '') <> ''` as unknown as SQL,
+			);
+		if (comboSet.has('LSU'))
+			markerConditions.push(
+				sql`coalesce(${specimens.lsuStatus}, '') <> ''` as unknown as SQL,
+			);
+		if (comboSet.has('RPB2'))
+			markerConditions.push(
+				sql`coalesce(${specimens.rpb2Status}, '') <> ''` as unknown as SQL,
+			);
+		if (comboSet.has('MCM7'))
+			markerConditions.push(
+				sql`coalesce(${specimens.mcm7Status}, '') <> ''` as unknown as SQL,
+			);
+
+		if (markerConditions.length > 0) {
+			conditions.push(or(...markerConditions) as unknown as SQL);
+		}
 	}
 
 	if (params.markerCount !== null && params.markerCount !== undefined) {
@@ -139,6 +150,7 @@ export function buildDrizzleQuery(params: {
 			(case when coalesce(${specimens.itsStatus}, '') <> '' then 1 else 0 end) +
 			(case when coalesce(${specimens.ssuStatus}, '') <> '' then 1 else 0 end) +
 			(case when coalesce(${specimens.lsuStatus}, '') <> '' then 1 else 0 end) +
+			(case when coalesce(${specimens.rpb2Status}, '') <> '' then 1 else 0 end) +
 			(case when coalesce(${specimens.mcm7Status}, '') <> '' then 1 else 0 end)
 		) = ${params.markerCount}` as unknown as SQL,
 		);
