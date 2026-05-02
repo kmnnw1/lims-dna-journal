@@ -42,6 +42,27 @@ function normalizeGb(value: string): string {
 	return m[1].toUpperCase();
 }
 
+/**
+ * Глубокое восстановление полей на основе межколоночных зависимостей.
+ * Правило 1: Если в поле Collector указано "Имя Номер" (Давыдов 5295),
+ * разделяем их, если поле collectionNumber пустое.
+ */
+function deepRestoreFields(row: ParsedSpecimenRow, fixes: string[]): Partial<ParsedSpecimenRow> {
+	const updates: Partial<ParsedSpecimenRow> = {};
+
+	// Восстановление номера сбора из поля коллектора
+	if (row.collector && !row.collectionNumber) {
+		const m = row.collector.match(/^([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)*)\s+(\d+(?:\/\d+)?(?:[а-яА-Я])?)$/);
+		if (m) {
+			updates.collector = m[1].trim();
+			updates.collectionNumber = m[2].trim();
+			fixes.push(`Collector -> CollectionNumber: разбор "${row.collector}" на имя и номер`);
+		}
+	}
+
+	return updates;
+}
+
 export function normalizeParsedRow(row: ParsedSpecimenRow): ParsedSpecimenRow {
 	const fixes: string[] = [];
 
@@ -68,6 +89,30 @@ export function normalizeParsedRow(row: ParsedSpecimenRow): ParsedSpecimenRow {
 	const mcm7Gb = normalizeGb(cleanText(row.mcm7Gb, fixes, 'mcm7Gb'));
 
 	const notesBase = cleanText(row.notes, fixes, 'notes');
+
+	// Применяем правила глубокого восстановления
+	const restored = deepRestoreFields(
+		{
+			...row,
+			id,
+			taxon,
+			locality,
+			collector,
+			extrLab,
+			extrOperator,
+			extrMethod,
+			extrDateRaw,
+		},
+		fixes,
+	);
+
+	const finalCollector = restored.collector ?? collector;
+	const finalCollNo = restored.collectionNumber ?? cleanText(row.collectionNumber, fixes, 'collNo');
+	const finalAccNo = cleanText(row.accessionNumber, fixes, 'accNo');
+	const finalHerbarium = cleanText(row.herbarium, fixes, 'herbarium');
+	const finalLabNo = cleanText(row.labNo, fixes, 'labNo');
+	const finalConnections = cleanText(row.connections, fixes, 'connections');
+
 	const autoFixLine =
 		fixes.length > 0 ? `[AUTO_FIX] ${Array.from(new Set(fixes)).join('; ')}` : '';
 	const notes = [notesBase, autoFixLine].filter(Boolean).join('\n');
@@ -77,7 +122,12 @@ export function normalizeParsedRow(row: ParsedSpecimenRow): ParsedSpecimenRow {
 		id,
 		taxon,
 		locality,
-		collector,
+		collector: finalCollector,
+		collectionNumber: finalCollNo,
+		accessionNumber: finalAccNo,
+		herbarium: finalHerbarium,
+		labNo: finalLabNo,
+		connections: finalConnections,
 		extrLab,
 		extrOperator,
 		extrMethod,
