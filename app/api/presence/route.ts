@@ -59,26 +59,29 @@ export async function POST(req: Request) {
 		const resourceType = sanitizeString(body.resourceType, 50) || null;
 		const resourceId = sanitizeString(body.resourceId, 50) || null;
 
-		await prisma.$transaction([
-			prisma.user.update({
-				where: { id: user.id! },
-				data: { lastSeenAt: new Date() },
-			}),
-			prisma.userActivity.upsert({
-				where: { userId: user.id! },
-				create: {
-					userId: user.id!,
-					resourceType,
-					resourceId,
-					lastUpdate: new Date(),
-				},
-				update: {
-					resourceType,
-					resourceId,
-					lastUpdate: new Date(),
-				},
-			}),
-		]);
+		const existingUser = await prisma.user.findUnique({ where: { id: user.id! } });
+		if (existingUser) {
+			await prisma.$transaction([
+				prisma.user.update({
+					where: { id: user.id! },
+					data: { lastSeenAt: new Date() },
+				}),
+				prisma.userActivity.upsert({
+					where: { userId: user.id! },
+					create: {
+						userId: user.id!,
+						resourceType,
+						resourceId,
+						lastUpdate: new Date(),
+					},
+					update: {
+						resourceType,
+						resourceId,
+						lastUpdate: new Date(),
+					},
+				}),
+			]);
+		}
 
 		return NextResponse.json({ success: true });
 	} catch (e) {
