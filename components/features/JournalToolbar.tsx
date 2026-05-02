@@ -21,7 +21,7 @@ interface JournalToolbarProps {
  * Извлечена из JournalPageContent для снижения связности.
  */
 export function JournalToolbar({
-	isMobileDevice,
+	isMobileDevice: _isMobileDevice,
 	page,
 	totalPages,
 	setPage,
@@ -76,7 +76,6 @@ export function JournalToolbar({
 	return (
 		<div className="flex flex-row items-end md:items-center justify-end gap-2 shrink-0 md:pr-2 w-full md:w-auto">
 			<div className="flex items-center gap-1.5 sm:gap-2">
-				{isMobileDevice ? null : null}
 				<div className="relative flex items-center" ref={exportRef}>
 					<div className="flex items-center h-9 sm:h-10 bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-full shadow-sm hover:md-elevation-2 overflow-hidden group">
 						<button
