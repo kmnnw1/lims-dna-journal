@@ -18,6 +18,7 @@ import { SelectionBar } from '@/components/features/SelectionBar';
 import { SpecimenTable } from '@/components/features/SpecimenTable';
 import { StatsCards } from '@/components/features/StatsCards';
 import { WorkflowStagePicker } from '@/components/features/WorkflowStagePicker';
+import { sanitizeForExport } from '@/lib/excel/normalize';
 import { useTheme } from '@/components/layout/ThemeProvider';
 import { AddSpecimenModal } from '@/components/modals/AddSpecimenModal';
 import BatchPCRModal from '@/components/modals/BatchPCRModal';
@@ -258,7 +259,7 @@ export function JournalPageContent() {
 		}
 
 		const csvEscape = (value: unknown) => {
-			const text = String(value ?? '');
+			const text = sanitizeForExport(value);
 			if (/[",\r\n]/.test(text)) {
 				return `"${text.replaceAll('"', '""')}"`;
 			}

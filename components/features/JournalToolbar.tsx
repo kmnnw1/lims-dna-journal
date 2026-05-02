@@ -4,6 +4,7 @@ import { ChevronDown, Download } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { PaginationControls } from '@/components/features/PaginationControls';
+import { ImportMapperModal } from '@/components/modals/ImportMapperModal';
 
 type ExportFormat = 'XLSX' | 'CSV' | 'SQL';
 
@@ -37,6 +38,13 @@ export function JournalToolbar({
 	const [isExportOpen, setIsExportOpen] = useState(false);
 	const [lastExportFormat, setLastExportFormat] = useState<ExportFormat>('XLSX');
 	const [isImportDragOver, setIsImportDragOver] = useState(false);
+	const [mapperData, setMapperData] = useState<{
+		headers: string[];
+		sampleRows: any[][];
+		suggestedMapping: Record<string, string>;
+		file: File;
+	} | null>(null);
+	const [isImporting, setIsImporting] = useState(false);
 	const exportRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -85,37 +93,50 @@ export function JournalToolbar({
 		const formData = new FormData();
 		formData.append('file', file);
 		try {
+			// Step 1: Analyze only
+			const res = await fetch('/api/import?analyzeOnly=true', {
+				method: 'POST',
+				body: formData,
+			});
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) {
+				onImportUploaded(data?.error || 'Ошибка анализа файла', 'error');
+				return;
+			}
+			setMapperData({
+				headers: data.headers,
+				sampleRows: data.sampleRows,
+				suggestedMapping: data.suggestedMapping,
+				file,
+			});
+		} catch {
+			onImportUploaded('Ошибка анализа файла', 'error');
+		}
+	};
+
+	const confirmImport = async (mapping: Record<string, string>) => {
+		if (!mapperData) return;
+		setIsImporting(true);
+		const formData = new FormData();
+		formData.append('file', mapperData.file);
+		formData.append('mapping', JSON.stringify(mapping));
+
+		try {
 			const res = await fetch('/api/import', {
 				method: 'POST',
 				body: formData,
 			});
 			const data = await res.json().catch(() => ({}));
 			if (!res.ok) {
-				onImportUploaded(data?.error || 'Ошибка загрузки файла', 'error');
+				onImportUploaded(data?.error || 'Ошибка импорта', 'error');
 				return;
 			}
-			const hints = data?.importHints as
-				| {
-						missingDates?: number;
-						notesWithExcelComments?: number;
-						autoFixedRows?: number;
-						rowsWithExtraColumns?: number;
-				  }
-				| undefined;
-			const hintParts = [
-				hints?.missingDates ? `неразобранные даты: ${hints.missingDates}` : null,
-				hints?.notesWithExcelComments
-					? `строки с комментариями: ${hints.notesWithExcelComments}`
-					: null,
-				hints?.autoFixedRows ? `авто-исправлено строк: ${hints.autoFixedRows}` : null,
-				hints?.rowsWithExtraColumns
-					? `дополнительные колонки: ${hints.rowsWithExtraColumns}`
-					: null,
-			].filter(Boolean);
-			const hintSuffix = hintParts.length > 0 ? ` (${hintParts.join(', ')})` : '';
-			onImportUploaded((data?.message || 'Импорт завершён') + hintSuffix, 'success');
+			onImportUploaded(data?.message || 'Импорт завершён', 'success');
+			setMapperData(null);
 		} catch {
-			onImportUploaded('Ошибка загрузки файла', 'error');
+			onImportUploaded('Ошибка импорта', 'error');
+		} finally {
+			setIsImporting(false);
 		}
 	};
 
@@ -235,6 +256,18 @@ export function JournalToolbar({
 				</div>
 			</div>
 			<PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
+
+			{mapperData && (
+				<ImportMapperModal
+					isOpen={!!mapperData}
+					onClose={() => setMapperData(null)}
+					headers={mapperData.headers}
+					sampleRows={mapperData.sampleRows}
+					suggestedMapping={mapperData.suggestedMapping}
+					onConfirm={confirmImport}
+					isImporting={isImporting}
+				/>
+			)}
 		</div>
 	);
 }
