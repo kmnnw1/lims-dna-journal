@@ -17,6 +17,7 @@ import { QuickFilterBar } from '@/components/features/QuickFilterBar';
 import { SelectionBar } from '@/components/features/SelectionBar';
 import { SpecimenTable } from '@/components/features/SpecimenTable';
 import { StatsCards } from '@/components/features/StatsCards';
+import { WorkflowStagePicker } from '@/components/features/WorkflowStagePicker';
 import { useTheme } from '@/components/layout/ThemeProvider';
 import { AddSpecimenModal } from '@/components/modals/AddSpecimenModal';
 import BatchPCRModal from '@/components/modals/BatchPCRModal';
@@ -41,6 +42,8 @@ export function JournalPageContent() {
 		setSearchQuery,
 		filterType,
 		setFilterType,
+		workflowStage,
+		setWorkflowStage,
 		sortConfig,
 		selectedIds,
 		setSelectedIds,
@@ -242,14 +245,20 @@ export function JournalPageContent() {
 						)}
 
 						{devSettings.visibility?.filters && (
-							<JournalToolbar
-								isMobileDevice={isMobileDevice}
-								page={page}
-								totalPages={totalPages}
-								setPage={setPage}
-								handleExportCSV={handleExportCSV}
-								handleExportXLSX={handleExportXLSX}
-							/>
+							<div className="flex flex-col gap-2 w-full md:w-auto">
+								<WorkflowStagePicker
+									value={workflowStage}
+									onChange={setWorkflowStage}
+								/>
+								<JournalToolbar
+									isMobileDevice={isMobileDevice}
+									page={page}
+									totalPages={totalPages}
+									setPage={setPage}
+									handleExportCSV={handleExportCSV}
+									handleExportXLSX={handleExportXLSX}
+								/>
+							</div>
 						)}
 					</div>
 				)}

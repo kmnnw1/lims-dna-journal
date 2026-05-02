@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { WorkflowStage } from '@/components/features/WorkflowStagePicker';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useJournalHotkeys } from '@/hooks/useJournalHotkeys';
 import { useSpecimenMutations } from '@/hooks/useSpecimenMutations';
@@ -22,6 +23,7 @@ export function useJournalPage() {
 		null,
 	);
 	const [filterType, setFilterType] = useState<'all' | 'success' | 'error' | 'fav'>('all');
+	const [workflowStage, setWorkflowStage] = useState<WorkflowStage>('PREP');
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [toastMessage, setToastMessage] = useState<{
 		text: string;
@@ -298,6 +300,8 @@ export function useJournalPage() {
 		setSearchQuery,
 		filterType,
 		setFilterType,
+		workflowStage,
+		setWorkflowStage,
 		sortConfig,
 		handleSort,
 		selectedIds,
