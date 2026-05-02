@@ -90,6 +90,7 @@ export function useJournalPage() {
 				page,
 				search: debouncedSearch,
 				filter: filterType,
+				stage: workflowStage,
 				sortBy: sortConfig?.key,
 				sortOrder: sortConfig?.direction,
 				minConc,
@@ -103,6 +104,7 @@ export function useJournalPage() {
 				limit: '15',
 				search: debouncedSearch,
 				filter: filterType,
+				stage: workflowStage,
 				sortBy: sortConfig?.key || 'id',
 				sortOrder: sortConfig?.direction || 'asc',
 			});

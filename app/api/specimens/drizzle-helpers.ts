@@ -2,6 +2,15 @@ import { and, eq, gte, isNull, like, lte, or, SQL, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle/drizzle';
 import { specimens } from '@/lib/db/drizzle/schema';
 
+type WorkflowStage =
+	| 'PREP'
+	| 'EXTRACTION'
+	| 'DNA_MEASUREMENT'
+	| 'AMPLIFICATION'
+	| 'CLEANUP'
+	| 'SEQUENCING'
+	| 'TASKS';
+
 /**
  * Высокопроизводительный построитель запросов для Drizzle.
  * Прямое отображение параметров запроса в SQL.
@@ -12,8 +21,34 @@ export function buildDrizzleQuery(params: {
 	operator?: string;
 	minConc?: number | null;
 	maxConc?: number | null;
+	stage?: WorkflowStage | null;
 }) {
 	const conditions = [isNull(specimens.deletedAt)];
+
+	// Фильтрация по этапу — базовая эвристика по существующим полям.
+	// Дальше будет уточняться на базе WorkflowOperation/AmplificationTask, но уже сейчас даёт рабочий “вид по этапам”.
+	if (params.stage && params.stage !== 'TASKS') {
+		if (params.stage === 'EXTRACTION') {
+			conditions.push(isNull(specimens.extrDate));
+		} else if (params.stage === 'DNA_MEASUREMENT') {
+			conditions.push(
+				and(
+					// есть выделение
+					// biome-ignore lint/suspicious/noExplicitAny: Drizzle comparisons can be strict with column types
+					or(sql`extrDate IS NOT NULL`, sql`extrDateRaw IS NOT NULL`) as any,
+					isNull(specimens.dnaConcentration),
+				) as unknown as SQL,
+			);
+		} else if (params.stage === 'AMPLIFICATION') {
+			conditions.push(
+				or(
+					eq(specimens.itsStatus, '✕'),
+					eq(specimens.itsStatus, '?'),
+					isNull(specimens.itsStatus),
+				) as unknown as SQL,
+			);
+		}
+	}
 
 	if (params.search) {
 		const s = `%${params.search}%`;

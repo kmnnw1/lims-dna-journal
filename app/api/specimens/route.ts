@@ -22,6 +22,30 @@ import {
 	setCache,
 } from './helpers';
 
+type WorkflowStage =
+	| 'PREP'
+	| 'EXTRACTION'
+	| 'DNA_MEASUREMENT'
+	| 'AMPLIFICATION'
+	| 'CLEANUP'
+	| 'SEQUENCING'
+	| 'TASKS';
+
+function coerceStage(raw: string): WorkflowStage | null {
+	const v = raw.trim().toUpperCase();
+	if (!v) return null;
+	const allowed: WorkflowStage[] = [
+		'PREP',
+		'EXTRACTION',
+		'DNA_MEASUREMENT',
+		'AMPLIFICATION',
+		'CLEANUP',
+		'SEQUENCING',
+		'TASKS',
+	];
+	return (allowed as string[]).includes(v) ? (v as WorkflowStage) : null;
+}
+
 export async function GET(req: Request) {
 	try {
 		await requireRole('READER');
@@ -38,6 +62,7 @@ export async function GET(req: Request) {
 		) as keyof typeof specimensTable;
 		const sortDir = sanitizeString(searchParams.get('sortOrder') || 'asc', 10);
 		const filterType = sanitizeString(searchParams.get('filter') || 'all', 30);
+		const stage = coerceStage(sanitizeString(searchParams.get('stage') || '', 40));
 		const minConc = searchParams.get('minConc')
 			? parseFloat(searchParams.get('minConc')!)
 			: null;
@@ -53,6 +78,7 @@ export async function GET(req: Request) {
 			sortKey,
 			sortDir,
 			filterType,
+			stage,
 			minConc,
 			maxConc,
 			operator,
@@ -61,13 +87,21 @@ export async function GET(req: Request) {
 		if (cached) return NextResponse.json(cached);
 
 		const skip = (page - 1) * limit;
-		const where = buildDrizzleQuery({ search, filterType, operator, minConc, maxConc });
+		const where = buildDrizzleQuery({
+			search,
+			filterType,
+			operator,
+			minConc,
+			maxConc,
+			stage,
+		});
 		const whereStats = buildDrizzleQuery({
 			search,
 			filterType: 'all',
 			operator,
 			minConc,
 			maxConc,
+			stage,
 		});
 
 		const [results, totalCount, statsData, suggestions] = await Promise.all([
