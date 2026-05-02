@@ -113,13 +113,34 @@ export async function PUT(req: Request) {
 		if (!action) return NextResponse.json({ error: 'action обязателен' }, { status: 400 });
 
 		if (action === 'take') {
-			const updated = await prisma.amplificationTask.update({
-				where: { id },
-				data: {
-					status: 'in_progress',
-					takenAt: new Date(),
-					takenBy: user?.id || null,
-				},
+			const updated = await prisma.$transaction(async (tx) => {
+				const task = await tx.amplificationTask.update({
+					where: { id },
+					data: {
+						status: 'in_progress',
+						takenAt: new Date(),
+						takenBy: user?.id || null,
+					},
+				});
+				await tx.workflowOperation.create({
+					data: {
+						specimenId: task.specimenId,
+						stage: 'AMPLIFICATION',
+						status: 'in_progress',
+						marker: task.marker,
+						operator: user?.id || null,
+						paramsJson: JSON.stringify({
+							taskId: task.id,
+							forwardPrimer: task.forwardPrimer,
+							reversePrimer: task.reversePrimer,
+							dnaMatrix: task.dnaMatrix,
+							volume: task.volume,
+							priority: task.priority,
+						}),
+						addedBy: user?.id || null,
+					},
+				});
+				return task;
 			});
 			await logAuditAction({
 				userId: user?.id || 'unknown',
@@ -132,9 +153,27 @@ export async function PUT(req: Request) {
 		}
 
 		if (action === 'complete') {
-			const updated = await prisma.amplificationTask.update({
-				where: { id },
-				data: { status: 'done' },
+			const updated = await prisma.$transaction(async (tx) => {
+				const task = await tx.amplificationTask.update({
+					where: { id },
+					data: { status: 'done' },
+				});
+				await tx.workflowOperation.create({
+					data: {
+						specimenId: task.specimenId,
+						stage: 'AMPLIFICATION',
+						status: 'ok',
+						marker: task.marker,
+						operator: user?.id || null,
+						completedAt: new Date(),
+						paramsJson: JSON.stringify({
+							taskId: task.id,
+							transition: 'complete',
+						}),
+						addedBy: user?.id || null,
+					},
+				});
+				return task;
 			});
 			await logAuditAction({
 				userId: user?.id || 'unknown',

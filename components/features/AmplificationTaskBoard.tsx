@@ -15,6 +15,17 @@ type Task = {
 	status: string;
 };
 
+type WorkflowOperation = {
+	id: string;
+	specimenId: string;
+	stage: string;
+	status: string;
+	marker: string | null;
+	startedAt: string;
+	completedAt: string | null;
+	paramsJson: string | null;
+};
+
 export function AmplificationTaskBoard({
 	selectedIds,
 	onToast,
@@ -24,6 +35,8 @@ export function AmplificationTaskBoard({
 }) {
 	const [loading, setLoading] = useState(false);
 	const [tasks, setTasks] = useState<Task[]>([]);
+	const [historySpecimenId, setHistorySpecimenId] = useState('');
+	const [history, setHistory] = useState<WorkflowOperation[]>([]);
 
 	const [marker, setMarker] = useState('ITS');
 	const [forwardPrimer, setForwardPrimer] = useState('');
@@ -111,6 +124,24 @@ export function AmplificationTaskBoard({
 			await loadTasks();
 		} catch {
 			onToast('Ошибка изменения задания', 'error');
+			setLoading(false);
+		}
+	};
+
+	const loadHistory = async () => {
+		const id = historySpecimenId.trim();
+		if (!id) return;
+		setLoading(true);
+		try {
+			const res = await fetch(
+				`/api/workflow/operations?specimenId=${encodeURIComponent(id)}`,
+			);
+			if (!res.ok) throw new Error('history');
+			const data = (await res.json()) as WorkflowOperation[];
+			setHistory(data);
+		} catch {
+			onToast('Не удалось загрузить историю этапов', 'error');
+		} finally {
 			setLoading(false);
 		}
 	};
@@ -234,6 +265,44 @@ export function AmplificationTaskBoard({
 						</div>
 					);
 				})}
+			</div>
+
+			<div className="bg-(--md-sys-color-surface-container-low) rounded-2xl p-4 border border-(--md-sys-color-outline-variant)/20">
+				<h3 className="font-bold mb-3">История этапов по пробе</h3>
+				<div className="flex flex-wrap gap-2">
+					<input
+						value={historySpecimenId}
+						onChange={(e) => setHistorySpecimenId(e.target.value)}
+						placeholder="ID пробы"
+						className="px-3 py-2 rounded-xl border bg-(--md-sys-color-surface) min-w-[220px]"
+					/>
+					<button onClick={loadHistory} className="px-4 py-2 rounded-full border">
+						Показать историю
+					</button>
+				</div>
+				<div className="mt-3 space-y-2">
+					{history.length === 0 && (
+						<div className="text-sm text-(--md-sys-color-on-surface-variant)">
+							История не загружена.
+						</div>
+					)}
+					{history.map((h) => (
+						<div
+							key={h.id}
+							className="text-sm rounded-xl border border-(--md-sys-color-outline-variant)/20 p-2 bg-(--md-sys-color-surface)"
+						>
+							<div>
+								<b>{h.stage}</b> / {h.status} / маркер: {h.marker || '-'}
+							</div>
+							<div className="text-xs text-(--md-sys-color-on-surface-variant)">
+								Старт: {new Date(h.startedAt).toLocaleString()}
+								{h.completedAt
+									? ` | Завершено: ${new Date(h.completedAt).toLocaleString()}`
+									: ''}
+							</div>
+						</div>
+					))}
+				</div>
 			</div>
 		</div>
 	);
