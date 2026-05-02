@@ -65,8 +65,8 @@ export function ImportMapperModal({
 	const isValid = Object.values(mapping).includes('isolate');
 
 	return (
-		<div className="fixed inset-0 z-150 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-			<div className="w-full max-w-4xl bg-(--md-sys-color-surface-container-low) rounded-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+		<div className="fixed inset-0 z-150 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-in fade-in duration-300">
+			<div className="w-full max-w-4xl bg-(--md-sys-color-surface-container-low) rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-(--md-sys-color-outline-variant)/10">
 				{/* Header */}
 				<div className="p-6 border-b border-(--md-sys-color-outline-variant)/20 flex items-center justify-between">
 					<div>
@@ -140,7 +140,7 @@ export function ImportMapperModal({
 				</div>
 
 				{/* Footer */}
-				<div className="p-6 border-t border-(--md-sys-color-outline-variant)/20 flex items-center justify-between bg-(--md-sys-color-surface-container)">
+				<div className="p-6 border-t border-(--md-sys-color-outline-variant)/20 flex items-center justify-between bg-(--md-sys-color-surface-container-low)">
 					<div className="flex items-center gap-2">
 						{!isValid && (
 							<p className="text-xs text-(--md-sys-color-error) font-medium">
