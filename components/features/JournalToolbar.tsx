@@ -90,7 +90,24 @@ export function JournalToolbar({
 				onImportUploaded(data?.error || 'Ошибка загрузки файла', 'error');
 				return;
 			}
-			onImportUploaded(data?.message || 'Импорт завершён', 'success');
+			const hints = data?.importHints as
+				| {
+						missingDates?: number;
+						notesWithExcelComments?: number;
+						rowsWithExtraColumns?: number;
+				  }
+				| undefined;
+			const hintParts = [
+				hints?.missingDates ? `неразобранные даты: ${hints.missingDates}` : null,
+				hints?.notesWithExcelComments
+					? `строки с комментариями: ${hints.notesWithExcelComments}`
+					: null,
+				hints?.rowsWithExtraColumns
+					? `дополнительные колонки: ${hints.rowsWithExtraColumns}`
+					: null,
+			].filter(Boolean);
+			const hintSuffix = hintParts.length > 0 ? ` (${hintParts.join(', ')})` : '';
+			onImportUploaded((data?.message || 'Импорт завершён') + hintSuffix, 'success');
 		} catch {
 			onImportUploaded('Ошибка загрузки файла', 'error');
 		}

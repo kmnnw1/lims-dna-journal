@@ -88,6 +88,7 @@ export function JournalPageContent() {
 		setIsCommandPaletteOpen,
 		focusedIndex,
 		toggleMyFilter,
+		refreshSpecimens,
 	} = useJournalPage();
 
 	const { settings: devSettings } = useDevSettings();
@@ -242,8 +243,8 @@ export function JournalPageContent() {
 			text: `Переименовано записей: ${data?.updated ?? selectedIds.size}`,
 			type: 'success',
 		});
-		setPage(page);
-	}, [selectedIds, setToastMessage, setPage, page]);
+		refreshSpecimens();
+	}, [selectedIds, setToastMessage, refreshSpecimens]);
 
 	const openPrintBlank = useCallback(
 		(payload: {

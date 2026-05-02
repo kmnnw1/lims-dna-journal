@@ -288,6 +288,10 @@ export function useJournalPage() {
 		// Реализация печати этикеток перенесена в TODO_LOCAL.md
 	}, []);
 
+	const refreshSpecimens = useCallback(() => {
+		queryClient.invalidateQueries({ queryKey: ['specimens'] });
+	}, [queryClient]);
+
 	useEffect(() => {
 		if (status === 'unauthenticated') router.push('/login');
 	}, [status, router]);
@@ -369,6 +373,7 @@ export function useJournalPage() {
 		handleExportCSV,
 		handleExportXLSX,
 		handlePrintLabels,
+		refreshSpecimens,
 		isMobileDevice,
 		toggleMyFilter: useCallback(() => {
 			const user = session?.user;
