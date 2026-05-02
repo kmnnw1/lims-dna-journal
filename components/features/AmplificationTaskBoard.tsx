@@ -183,6 +183,66 @@ export function AmplificationTaskBoard({
 		}
 	};
 
+	const completeOperation = async (
+		operationId: string,
+		status: 'ok' | 'weak' | 'double' | 'fail',
+	) => {
+		setLoading(true);
+		try {
+			const res = await fetch('/api/workflow/operations', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					id: operationId,
+					action: 'complete',
+					status,
+				}),
+			});
+			if (!res.ok) throw new Error('complete-op');
+			onToast(`Операция закрыта: ${status}`, 'success');
+			await loadHistory();
+		} catch {
+			onToast('Ошибка закрытия операции', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const printTaskGroup = (group: Task[]) => {
+		if (group.length === 0) return;
+		const head = group[0];
+		const ids = group.map((g) => g.specimenId);
+		const html = `
+			<!doctype html>
+			<html><head><meta charset="utf-8"><title>Задание амплификации</title>
+			<style>
+				body { font-family: Arial, sans-serif; padding: 20px; }
+				h1 { margin: 0 0 10px; }
+				.meta { margin: 0 0 8px; font-size: 14px; }
+				table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+				th, td { border: 1px solid #bbb; padding: 6px; font-size: 13px; }
+				th { text-align: left; background: #f2f2f2; }
+			</style></head><body>
+				<h1>Задание амплификации</h1>
+				<div class="meta">Маркер: <b>${head.marker}</b></div>
+				<div class="meta">Прямой праймер: <b>${head.forwardPrimer || '-'}</b></div>
+				<div class="meta">Обратный праймер: <b>${head.reversePrimer || '-'}</b></div>
+				<div class="meta">Матрица ДНК: <b>${head.dnaMatrix || '-'}</b></div>
+				<div class="meta">Объем: <b>${head.volume || '-'}</b></div>
+				<div class="meta">Приоритет: <b>${head.priority}</b></div>
+				<table><thead><tr><th>#</th><th>ID пробы</th></tr></thead><tbody>
+					${ids.map((id, i) => `<tr><td>${i + 1}</td><td>${id}</td></tr>`).join('')}
+				</tbody></table>
+				<script>window.onload = () => window.print();</script>
+			</body></html>
+		`;
+		const w = window.open('', '_blank', 'width=900,height=700');
+		if (!w) return;
+		w.document.open();
+		w.document.write(html);
+		w.document.close();
+	};
+
 	const attachToOperation = async () => {
 		if (!attachOperationId.trim()) {
 			onToast('Укажи operationId', 'error');
@@ -326,6 +386,12 @@ export function AmplificationTaskBoard({
 								>
 									Отменить
 								</button>
+								<button
+									onClick={() => printTaskGroup(group)}
+									className="px-3 py-1 rounded-full border text-xs"
+								>
+									Печать группы
+								</button>
 							</div>
 						</div>
 					);
@@ -423,6 +489,32 @@ export function AmplificationTaskBoard({
 								{h.completedAt
 									? ` | Завершено: ${new Date(h.completedAt).toLocaleString()}`
 									: ''}
+							</div>
+							<div className="mt-2 flex flex-wrap gap-2">
+								<button
+									onClick={() => completeOperation(h.id, 'ok')}
+									className="px-2 py-1 rounded-full border text-xs"
+								>
+									ok
+								</button>
+								<button
+									onClick={() => completeOperation(h.id, 'weak')}
+									className="px-2 py-1 rounded-full border text-xs"
+								>
+									weak
+								</button>
+								<button
+									onClick={() => completeOperation(h.id, 'double')}
+									className="px-2 py-1 rounded-full border text-xs"
+								>
+									double
+								</button>
+								<button
+									onClick={() => completeOperation(h.id, 'fail')}
+									className="px-2 py-1 rounded-full border text-xs"
+								>
+									fail
+								</button>
 							</div>
 							{h.attachments && h.attachments.length > 0 && (
 								<div className="text-xs mt-1 text-(--md-sys-color-on-surface-variant)">
