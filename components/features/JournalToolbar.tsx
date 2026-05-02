@@ -98,6 +98,7 @@ export function JournalToolbar({
 				| {
 						missingDates?: number;
 						notesWithExcelComments?: number;
+						autoFixedRows?: number;
 						rowsWithExtraColumns?: number;
 				  }
 				| undefined;
@@ -106,6 +107,7 @@ export function JournalToolbar({
 				hints?.notesWithExcelComments
 					? `строки с комментариями: ${hints.notesWithExcelComments}`
 					: null,
+				hints?.autoFixedRows ? `авто-исправлено строк: ${hints.autoFixedRows}` : null,
 				hints?.rowsWithExtraColumns
 					? `дополнительные колонки: ${hints.rowsWithExtraColumns}`
 					: null,

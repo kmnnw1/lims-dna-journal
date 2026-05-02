@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI, type Schema, SchemaType } from '@google/generative-ai';
+import { normalizeParsedRow } from './normalize';
 import type { ParsedSpecimenRow } from './types';
 
 // Structured output schema for Gemini
@@ -114,7 +115,7 @@ function normalizeAIRow(
 	sheetName: string,
 	chunkOffset: number,
 ): ParsedSpecimenRow {
-	return {
+	return normalizeParsedRow({
 		id: raw.id?.trim() || '',
 		taxon: raw.taxon?.trim() || '',
 		locality: raw.locality?.trim() || '',
@@ -134,5 +135,5 @@ function normalizeAIRow(
 		mcm7Gb: raw.mcm7Gb?.trim() || '',
 		notes: raw.notes?.trim() || '',
 		_sources: [{ sheet: sheetName, row: chunkOffset + 1 }],
-	};
+	});
 }

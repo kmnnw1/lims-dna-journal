@@ -1,4 +1,5 @@
 import { extractEmbeddedDate, extrDateString, parseLabDate } from './cell-parsers';
+import { normalizeParsedRow } from './normalize';
 import { ParsedSpecimenRow, SourceRef } from './types';
 
 function pickNonEmpty(prev: string, next: string): string {
@@ -27,7 +28,9 @@ function formatSources(sources: SourceRef[]): string {
 export function mergeById(rows: ParsedSpecimenRow[]): ParsedSpecimenRow[] {
 	const map = new Map<string, ParsedSpecimenRow>();
 
-	for (const row of rows) {
+	for (const rawRow of rows) {
+		const row = normalizeParsedRow(rawRow);
+		if (!row.id.trim()) continue;
 		const prev = map.get(row.id);
 		if (!prev) {
 			map.set(row.id, { ...row, _sources: [...(row._sources || [])] });

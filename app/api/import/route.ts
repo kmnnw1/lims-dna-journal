@@ -20,6 +20,7 @@ function buildImportHints(rows: ParsedSpecimenRow[]) {
 	const notesWithExcelComments = rows.filter((row) =>
 		row.notes.includes('Excel-комментарий:'),
 	).length;
+	const autoFixedRows = rows.filter((row) => row.notes.includes('[AUTO_FIX]')).length;
 	const rowsWithExtraColumns = rows.filter((row) => row.notes.includes('__col_')).length;
 	const problematicRows = rows
 		.filter(
@@ -35,6 +36,7 @@ function buildImportHints(rows: ParsedSpecimenRow[]) {
 	return {
 		missingDates,
 		notesWithExcelComments,
+		autoFixedRows,
 		rowsWithExtraColumns,
 		problematicRows,
 	};
@@ -221,7 +223,7 @@ export async function POST(req: Request) {
 
 			return NextResponse.json({
 				success: true,
-				message: `Загрузка завершена. Новых: ${inserted}, обновлено: ${updated}. Проверьте importHints для проблемных полей.`,
+				message: `Загрузка завершена. Новых: ${inserted}, обновлено: ${updated}. Проблемные и авто-исправленные поля отражены в importHints.`,
 				inserted,
 				updated,
 				previousCount: beforeCount,

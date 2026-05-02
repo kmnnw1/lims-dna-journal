@@ -9,6 +9,9 @@ export function cellText(v: unknown): string {
 
 	if (typeof v === 'object' && v !== null) {
 		const obj = v as Record<string, unknown>;
+		if (typeof obj.error === 'string') {
+			return String(obj.error).trim();
+		}
 		if (Array.isArray(obj.richText)) {
 			return obj.richText
 				.map((t: unknown) => (t as Record<string, unknown>).text || '')
@@ -116,6 +119,13 @@ export function parseLabDate(raw: string): Date | null {
 	if (!raw) return null;
 	const compact = extractEmbeddedDate(raw);
 	const s = compact.toLowerCase().trim();
+
+	if (/^\d{5,6}$/.test(s)) {
+		const serial = Number(s);
+		if (Number.isFinite(serial) && serial > 20000 && serial < 90000) {
+			return new Date(Math.round((serial - 25569) * 86400 * 1000));
+		}
+	}
 
 	const dotMatch = s.match(/(\d{1,2})[\./-](\d{1,2})[\./-](\d{2,4})/);
 	if (dotMatch) {

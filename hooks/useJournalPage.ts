@@ -8,6 +8,7 @@ import type { WorkflowStage } from '@/components/features/WorkflowStagePicker';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useJournalHotkeys } from '@/hooks/useJournalHotkeys';
 import { useSpecimenMutations } from '@/hooks/useSpecimenMutations';
+import { sanitizeForExport } from '@/lib/excel';
 import { formatOperatorName } from '@/lib/utils';
 import type { Specimen } from '@/types';
 
@@ -225,7 +226,7 @@ export function useJournalPage() {
 
 	const handleExportCSV = useCallback(() => {
 		const csvEscape = (value: unknown) => {
-			const text = String(value ?? '');
+			const text = sanitizeForExport(value);
 			if (/[",\r\n]/.test(text)) {
 				return `"${text.replaceAll('"', '""')}"`;
 			}
@@ -271,7 +272,15 @@ export function useJournalPage() {
 				{ header: 'MCM7', key: 'mcm7Status', width: 10 },
 			];
 			specimens.forEach((s: Specimen) => {
-				sheet.addRow({ ...s });
+				sheet.addRow({
+					id: sanitizeForExport(s.id),
+					taxon: sanitizeForExport(s.taxon),
+					locality: sanitizeForExport(s.locality),
+					itsStatus: sanitizeForExport(s.itsStatus),
+					ssuStatus: sanitizeForExport(s.ssuStatus),
+					lsuStatus: sanitizeForExport(s.lsuStatus),
+					mcm7Status: sanitizeForExport(s.mcm7Status),
+				});
 			});
 			const buffer = await workbook.xlsx.writeBuffer();
 			const blob = new Blob([buffer], {
