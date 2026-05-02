@@ -8,6 +8,7 @@ interface SelectionBarProps {
 	onCopySelectedIds: () => void;
 	onPrintLabels: () => void;
 	onBatchPCR: () => void;
+	onTakeInWork: () => void;
 }
 
 /**
@@ -20,6 +21,7 @@ export function SelectionBar({
 	onCopySelectedIds,
 	onPrintLabels,
 	onBatchPCR,
+	onTakeInWork,
 }: SelectionBarProps) {
 	if (selectedIds.size === 0) return null;
 
@@ -82,6 +84,12 @@ export function SelectionBar({
 					className="px-5 py-2.5 text-sm font-medium text-(--md-sys-color-inverse-primary) hover:bg-white/10 rounded-full transition-colors"
 				>
 					Массовый ПЦР
+				</button>
+				<button
+					onClick={onTakeInWork}
+					className="px-5 py-2.5 text-sm font-medium bg-(--md-sys-color-inverse-primary) text-(--md-sys-color-primary) rounded-full transition-colors"
+				>
+					В работу
 				</button>
 			</div>
 		</div>

@@ -23,6 +23,7 @@ import { AddSpecimenModal } from '@/components/modals/AddSpecimenModal';
 import BatchPCRModal from '@/components/modals/BatchPCRModal';
 import { EditSpecimenModal } from '@/components/modals/EditSpecimenModal';
 import { PCRModal } from '@/components/modals/PCRModal';
+import { TakeInWorkModal } from '@/components/modals/TakeInWorkModal';
 import { CommandPalette } from '@/components/ui/CommandPalette';
 import { FAB } from '@/components/ui/FAB';
 import { useJournalPage } from '@/hooks/useJournalPage';
@@ -94,6 +95,7 @@ export function JournalPageContent() {
 		id: string;
 		type: 'SPECIMEN' | 'PCR_ATTEMPT';
 	} | null>(null);
+	const [isTakeInWorkOpen, setIsTakeInWorkOpen] = useState(false);
 	const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
 
 	const handleSelect = useCallback(
@@ -166,6 +168,49 @@ export function JournalPageContent() {
 			});
 		});
 	}, [selectedIds, setToastMessage]);
+
+	const openPrintBlank = useCallback(
+		(payload: {
+			stage: string;
+			startedAt: string;
+			lab: string;
+			method: string;
+			operator: string;
+			comment: string;
+		}) => {
+			const ids = Array.from(selectedIds);
+			const html = `
+				<!doctype html>
+				<html><head><meta charset="utf-8"><title>Бланк работ</title>
+				<style>
+					body { font-family: Arial, sans-serif; padding: 20px; }
+					h1 { margin: 0 0 10px; }
+					.meta { margin: 0 0 14px; font-size: 14px; }
+					table { width: 100%; border-collapse: collapse; }
+					th, td { border: 1px solid #bbb; padding: 6px; font-size: 13px; }
+					th { text-align: left; background: #f2f2f2; }
+				</style></head><body>
+				<h1>Бланк лабораторной работы</h1>
+				<div class="meta">Этап: <b>${payload.stage}</b></div>
+				<div class="meta">Дата: <b>${payload.startedAt}</b></div>
+				<div class="meta">Лаборатория: <b>${payload.lab || '-'}</b></div>
+				<div class="meta">Метод: <b>${payload.method || '-'}</b></div>
+				<div class="meta">Оператор: <b>${payload.operator || '-'}</b></div>
+				<div class="meta">Комментарий: <b>${payload.comment || '-'}</b></div>
+				<table><thead><tr><th>#</th><th>ID пробы</th></tr></thead><tbody>
+				${ids.map((id, i) => `<tr><td>${i + 1}</td><td>${id}</td></tr>`).join('')}
+				</tbody></table>
+				<script>window.onload = () => window.print();</script>
+				</body></html>
+			`;
+			const w = window.open('', '_blank', 'width=900,height=700');
+			if (!w) return;
+			w.document.open();
+			w.document.write(html);
+			w.document.close();
+		},
+		[selectedIds],
+	);
 
 	// Auto-dismiss toast after 4 seconds
 	useEffect(() => {
@@ -328,6 +373,43 @@ export function JournalPageContent() {
 					onCopySelectedIds={handleCopySelectedIds}
 					onPrintLabels={handlePrintLabels}
 					onBatchPCR={() => setIsBatchModalOpen(true)}
+					onTakeInWork={() => setIsTakeInWorkOpen(true)}
+				/>
+				<TakeInWorkModal
+					open={isTakeInWorkOpen}
+					stage={workflowStage}
+					selectedCount={selectedIds.size}
+					defaultOperator={session?.user?.name || ''}
+					onClose={() => setIsTakeInWorkOpen(false)}
+					onSubmit={async (payload) => {
+						const response = await fetch('/api/workflow/operations/batch', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({
+								specimenIds: Array.from(selectedIds),
+								stage: payload.stage,
+								startedAt: payload.startedAt,
+								lab: payload.lab,
+								method: payload.method,
+								operator: payload.operator,
+								status: 'in_progress',
+								params: { comment: payload.comment },
+							}),
+						});
+						if (!response.ok) {
+							setToastMessage({ text: 'Не удалось записать работу', type: 'error' });
+							return;
+						}
+						setToastMessage({
+							text: `В работу записано: ${selectedIds.size}`,
+							type: 'success',
+						});
+						if (payload.printAfterSave) {
+							openPrintBlank(payload);
+						}
+						setSelectedIds(new Set());
+						setIsTakeInWorkOpen(false);
+					}}
 				/>
 
 				<AddSpecimenModal
