@@ -21,10 +21,22 @@ function buildImportHints(rows: ParsedSpecimenRow[]) {
 		row.notes.includes('Excel-комментарий:'),
 	).length;
 	const rowsWithExtraColumns = rows.filter((row) => row.notes.includes('__col_')).length;
+	const problematicRows = rows
+		.filter(
+			(row) => (row.extrDateRaw && !row.extrDate) || row.notes.includes('Excel-комментарий:'),
+		)
+		.slice(0, 20)
+		.map((row) => ({
+			id: row.id,
+			extrDateRaw: row.extrDateRaw || null,
+			extrDate: row.extrDate,
+			source: row._sources?.[0] || null,
+		}));
 	return {
 		missingDates,
 		notesWithExcelComments,
 		rowsWithExtraColumns,
+		problematicRows,
 	};
 }
 

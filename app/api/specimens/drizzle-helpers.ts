@@ -47,6 +47,20 @@ export function buildDrizzleQuery(params: {
 					isNull(specimens.itsStatus),
 				) as unknown as SQL,
 			);
+		} else if (params.stage === 'CLEANUP') {
+			conditions.push(
+				or(eq(specimens.itsStatus, '✓'), eq(specimens.itsStatus, 'weak')) as unknown as SQL,
+			);
+		} else if (params.stage === 'SEQUENCING') {
+			conditions.push(
+				and(
+					or(
+						eq(specimens.itsStatus, '✓'),
+						eq(specimens.itsStatus, 'weak'),
+					) as unknown as SQL,
+					isNull(specimens.itsGb),
+				) as unknown as SQL,
+			);
 		}
 	}
 
