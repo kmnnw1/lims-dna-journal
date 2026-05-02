@@ -52,11 +52,35 @@ function deepRestoreFields(row: ParsedSpecimenRow, fixes: string[]): Partial<Par
 
 	// Восстановление номера сбора из поля коллектора
 	if (row.collector && !row.collectionNumber) {
-		const m = row.collector.match(/^([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)*)\s+(\d+(?:\/\d+)?(?:[а-яА-Я])?)$/);
+		const m = row.collector.match(
+			/^([А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)*)\s+(\d+(?:\/\d+)?(?:[а-яА-Я])?)$/,
+		);
 		if (m) {
 			updates.collector = m[1].trim();
 			updates.collectionNumber = m[2].trim();
 			fixes.push(`Collector -> CollectionNumber: разбор "${row.collector}" на имя и номер`);
+		}
+	}
+
+	// Очистка префиксов в поле Collector (leg., coll. и т.д.)
+	if (row.collector) {
+		const cleaned = row.collector.replace(/^(?:leg\.?|coll\.?|collector:?|собр\.?|сбор:?)\s+/i, '');
+		if (cleaned !== row.collector) {
+			updates.collector = cleaned;
+			fixes.push(`Collector: удален технический префикс из "${row.collector}"`);
+		}
+	}
+
+	// Извлечение даты из Locality (часто встречается в скобках в конце)
+	if (row.locality && !row.extrDate) {
+		const dateMatch = row.locality.match(/\(([^)]*(\d{2,4})[^)]*)\)$/);
+		if (dateMatch) {
+			const potentialDate = dateMatch[1];
+			const parsed = parseLabDate(extractEmbeddedDate(potentialDate) || potentialDate);
+			if (parsed) {
+				updates.extrDate = extrDateString(parsed);
+				fixes.push(`Locality -> ExtrDate: извлечена дата "${potentialDate}" из местоположения`);
+			}
 		}
 	}
 
@@ -107,11 +131,14 @@ export function normalizeParsedRow(row: ParsedSpecimenRow): ParsedSpecimenRow {
 	);
 
 	const finalCollector = restored.collector ?? collector;
-	const finalCollNo = restored.collectionNumber ?? cleanText(row.collectionNumber, fixes, 'collNo');
-	const finalAccNo = cleanText(row.accessionNumber, fixes, 'accNo');
-	const finalHerbarium = cleanText(row.herbarium, fixes, 'herbarium');
-	const finalLabNo = cleanText(row.labNo, fixes, 'labNo');
-	const finalConnections = cleanText(row.connections, fixes, 'connections');
+	const finalCollNo =
+		restored.collectionNumber ?? cleanText(row.collectionNumber || '', fixes, 'collNo');
+	const finalAccNo = cleanText(row.accessionNumber || '', fixes, 'accNo');
+	const finalHerbarium = cleanText(row.herbarium || '', fixes, 'herbarium');
+	const finalLabNo = cleanText(row.labNo || '', fixes, 'labNo');
+	const finalConnections = cleanText(row.connections || '', fixes, 'connections');
+
+	const finalExtrDate = restored.extrDate ?? extrDate;
 
 	const autoFixLine =
 		fixes.length > 0 ? `[AUTO_FIX] ${Array.from(new Set(fixes)).join('; ')}` : '';
@@ -132,7 +159,7 @@ export function normalizeParsedRow(row: ParsedSpecimenRow): ParsedSpecimenRow {
 		extrOperator,
 		extrMethod,
 		extrDateRaw,
-		extrDate,
+		extrDate: finalExtrDate,
 		itsStatus,
 		itsGb,
 		ssuStatus,
