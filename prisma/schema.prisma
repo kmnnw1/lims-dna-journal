@@ -40,57 +40,59 @@ model UserActivity {
 }
 
 model Specimen {
-  id               String       @id @default(uuid())
-  taxon            String?
-  locality         String?
-  collector        String?
-  collectedAt      DateTime?
-  collectNotes     String?
-  extrLab          String?
-  extrOperator     String?
-  extrMethod       String?
-  extrDateRaw      String?
-  extrDate         DateTime?
-  dnaMeter         String?
-  measDate         DateTime?
-  measOperator     String?
-  dnaConcentration Float?
-  dnaProfile       String?
-  measComm         String?
-  imageUrl         String?
-  itsStatus        String?
-  itsGb            String?
-  ssuStatus        String?
-  ssuGb            String?
-  lsuStatus        String?
-  lsuGb            String?
-  mcm7Status       String?
-  mcm7Gb           String?
-  rpb2Status       String?
-  rpb2Gb           String?
-  mtLsuStatus      String?
-  mtLsuGb          String?
-  mtSsuStatus      String?
-  mtSsuGb          String?
-  herbarium        String?
-  labNo            String?
-  notes            String?
-  importOrigin     String?
-  importRow        Int?
-  importNotes      String?
-  reviewNotes      String?
-  reviewPhotos     String?
-  deletedAt        DateTime?
-  labTechnicianId  String?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  accessionNumber  String?
-  collectionNumber String?
-  connections      String?
-  addedBy          String?
-  attempts         PCRAttempt[]
-  labTechnician    User?        @relation("LabTechnician", fields: [labTechnicianId], references: [id])
-  technicians      Technician[] @relation("SpecimenTechnicians")
+  id                 String              @id @default(uuid())
+  taxon              String?
+  locality           String?
+  collector          String?
+  collectedAt        DateTime?
+  collectNotes       String?
+  extrLab            String?
+  extrOperator       String?
+  extrMethod         String?
+  extrDateRaw        String?
+  extrDate           DateTime?
+  dnaMeter           String?
+  measDate           DateTime?
+  measOperator       String?
+  dnaConcentration   Float?
+  dnaProfile         String?
+  measComm           String?
+  imageUrl           String?
+  itsStatus          String?
+  itsGb              String?
+  ssuStatus          String?
+  ssuGb              String?
+  lsuStatus          String?
+  lsuGb              String?
+  mcm7Status         String?
+  mcm7Gb             String?
+  rpb2Status         String?
+  rpb2Gb             String?
+  mtLsuStatus        String?
+  mtLsuGb            String?
+  mtSsuStatus        String?
+  mtSsuGb            String?
+  herbarium          String?
+  labNo              String?
+  notes              String?
+  importOrigin       String?
+  importRow          Int?
+  importNotes        String?
+  reviewNotes        String?
+  reviewPhotos       String?
+  deletedAt          DateTime?
+  labTechnicianId    String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  accessionNumber    String?
+  collectionNumber   String?
+  connections        String?
+  addedBy            String?
+  attempts           PCRAttempt[]
+  workflowOperations WorkflowOperation[]
+  amplificationTasks AmplificationTask[]
+  labTechnician      User?               @relation("LabTechnician", fields: [labTechnicianId], references: [id])
+  technicians        Technician[]        @relation("SpecimenTechnicians")
 
   @@index([deletedAt])
 }
@@ -118,6 +120,123 @@ model PCRAttempt {
 
   @@index([specimenId])
   @@index([marker])
+  @@index([deletedAt])
+}
+
+model WorkflowOperation {
+  id         String @id @default(uuid())
+  specimenId String
+
+  /**
+   * Этапы лабораторного процесса:
+   * - PREP (подготовка)
+   * - EXTRACTION (выделение ДНК)
+   * - DNA_MEASUREMENT (измерение концентрации ДНК)
+   * - AMPLIFICATION (амплификация)
+   * - CLEANUP (очистка амплификата)
+   * - SEQUENCING (секвенирование)
+   */
+  stage String
+
+  /**
+   * Для AMPLIFICATION/SEQUENCING операция относится к конкретному маркеру/фрагменту.
+   */
+  marker String?
+
+  /**
+   * Общий статус операции (для фильтров и этапов).
+   * Для AMPLIFICATION ожидаются значения ok/weak/double/fail/in_progress.
+   */
+  status String
+
+  /**
+   * Параметры этапа в JSON (праймеры/объёмы/концентрации/пороговые значения и т. п.).
+   */
+  paramsJson String?
+
+  /**
+   * Контекст выполнения.
+   */
+  lab      String?
+  method   String?
+  operator String?
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+  addedBy     String?
+
+  specimen    Specimen             @relation(fields: [specimenId], references: [id], onDelete: Cascade)
+  attachments WorkflowAttachment[]
+
+  @@index([specimenId])
+  @@index([stage])
+  @@index([marker])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model WorkflowAttachment {
+  id          String   @id @default(uuid())
+  operationId String
+  kind        String
+  filename    String?
+  mimeType    String?
+  url         String?
+  textContent String?
+  createdAt   DateTime @default(now())
+
+  operation WorkflowOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+
+  @@index([operationId])
+  @@index([kind])
+}
+
+model AmplificationTask {
+  id         String @id @default(uuid())
+  specimenId String
+  marker     String
+
+  forwardPrimer String?
+  reversePrimer String?
+
+  /**
+   * ДНК-матрица/концентрация и общий объём реакции — основные параметры группировки.
+   * Храним строками, чтобы не потерять исходный формат из Excel/практики.
+   */
+  dnaMatrix String?
+  volume    String?
+
+  /**
+   * Доп. параметры (например, полимераза, реактивы) — JSON.
+   */
+  paramsJson String?
+
+  /**
+   * Назначение задачи и приоритет.
+   * assigneeId=null означает «всем».
+   */
+  priority   Int     @default(3)
+  assigneeId String?
+
+  /**
+   * Статус очереди: queued / in_progress / done / cancelled
+   */
+  status String @default("queued")
+
+  createdAt DateTime  @default(now())
+  takenAt   DateTime?
+  takenBy   String?
+  deletedAt DateTime?
+
+  specimen Specimen @relation(fields: [specimenId], references: [id], onDelete: Cascade)
+
+  @@index([specimenId])
+  @@index([marker])
+  @@index([assigneeId])
+  @@index([priority])
+  @@index([status])
   @@index([deletedAt])
 }
 
