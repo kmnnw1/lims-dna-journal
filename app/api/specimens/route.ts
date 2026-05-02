@@ -33,7 +33,7 @@ type WorkflowStage =
 	| 'SEQUENCING'
 	| 'TASKS';
 
-const KNOWN_MARKERS = ['ITS', 'SSU', 'LSU', 'MCM7'] as const;
+const KNOWN_MARKERS = ['ITS', 'SSU', 'LSU', 'RPB2', 'MCM7'] as const;
 
 function coerceStage(raw: string): WorkflowStage | null {
 	const v = raw.trim().toUpperCase();
