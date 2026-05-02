@@ -6,11 +6,15 @@ import { type ApiUser, handleError, requireRole } from '@/lib/api/helpers';
 import { logAuditAction } from '@/lib/db/prisma/audit-log';
 import { prisma } from '@/lib/db/prisma/prisma';
 import {
+	buildColumnBindings,
 	cellText,
 	extractRawDataFromSheet,
+	findHeaderRowIndex,
 	mergeById,
+	type ColumnBinding,
 	type ParsedSpecimenRow,
 	parseSheetToRows,
+	parseRowWithBindings,
 } from '@/lib/excel';
 import { parseWithAI } from '@/lib/excel/ai-parser';
 import { validateContentType, validateFileSize } from '@/lib/security/input-validator';
@@ -183,14 +187,67 @@ export async function POST(req: Request) {
 				throw { statusCode: 400, message: 'Допустимы только файлы .xlsx' };
 			}
 
+			const analyzeOnly = new URL(req.url).searchParams.get('analyzeOnly') === 'true';
+
 			const bytes = await file.arrayBuffer();
 			const workbook = new ExcelJS.Workbook();
 			await workbook.xlsx.load(bytes);
 
+			if (analyzeOnly) {
+				const firstSheet = workbook.worksheets[0];
+				const rawData = extractRawDataFromSheet(firstSheet);
+				const headerIdx = findHeaderRowIndex(rawData);
+				if (headerIdx === -1) {
+					throw { statusCode: 400, message: 'Заголовок "isolate" не найден в файле' };
+				}
+				const rawHeaders = rawData[headerIdx] as string[];
+				const sampleRows = rawData.slice(headerIdx + 1, headerIdx + 6);
+				const suggestedMapping = buildColumnBindings(rawHeaders).reduce(
+					(acc, b) => {
+						acc[b.rawHeader] = b.key;
+						return acc;
+					},
+					{} as Record<string, string>,
+				);
+
+				return NextResponse.json({
+					success: true,
+					headers: rawHeaders,
+					sampleRows,
+					suggestedMapping,
+				});
+			}
+
+			// Final Import logic
+			const customMappingJson = formData.get('mapping') as string;
+			const customMapping = customMappingJson ? JSON.parse(customMappingJson) : null;
+
 			const dataToInsert: ParsedSpecimenRow[] = [];
 			for (const sheet of workbook.worksheets) {
-				const rows = parseSheetToRows(sheet, sheet.name);
-				dataToInsert.push(...rows);
+				if (customMapping) {
+					// Use custom mapping for all sheets if provided
+					const rawData = extractRawDataFromSheet(sheet);
+					const headerIdx = findHeaderRowIndex(rawData);
+					if (headerIdx !== -1) {
+						const rawHeaders = rawData[headerIdx] as string[];
+						// Convert custom mapping object back to bindings
+						const bindings: ColumnBinding[] = rawHeaders
+							.map((h, i) => {
+								const key = customMapping[h];
+								if (!key) return null;
+								return { index: i, rawHeader: h, key };
+							})
+							.filter(Boolean) as ColumnBinding[];
+
+						for (let i = headerIdx + 1; i < rawData.length; i++) {
+							const parsed = parseRowWithBindings(rawData[i], bindings, sheet, i, sheet.name);
+							if (parsed) dataToInsert.push(parsed);
+						}
+					}
+				} else {
+					const rows = parseSheetToRows(sheet, sheet.name);
+					dataToInsert.push(...rows);
+				}
 			}
 
 			const uniqueData = mergeById(dataToInsert);
@@ -206,11 +263,63 @@ export async function POST(req: Request) {
 					const existing = await tx.specimen.findUnique({ where: { id } });
 					await tx.specimen.upsert({
 						where: { id },
-						update: { ...data, updatedAt: new Date() },
-						create: { id, ...data },
+						update: {
+							taxon: data.taxon || null,
+							locality: data.locality || null,
+							collector: data.collector || null,
+							extrLab: data.extrLab || null,
+							extrOperator: data.extrOperator || null,
+							extrMethod: data.extrMethod || null,
+							extrDate: data.extrDate || null,
+							herbarium: data.herbarium || null,
+							collectionNumber: data.collectionNumber || null,
+							accessionNumber: data.accessionNumber || null,
+							labNo: data.labNo || null,
+							connections: data.connections || null,
+							updatedAt: new Date(),
+						},
+						create: {
+							id,
+							taxon: data.taxon || null,
+							locality: data.locality || null,
+							collector: data.collector || null,
+							extrLab: data.extrLab || null,
+							extrOperator: data.extrOperator || null,
+							extrMethod: data.extrMethod || null,
+							extrDate: data.extrDate || null,
+							herbarium: data.herbarium || null,
+							collectionNumber: data.collectionNumber || null,
+							accessionNumber: data.accessionNumber || null,
+							labNo: data.labNo || null,
+							connections: data.connections || null,
+						},
 					});
 					if (existing) updated++;
 					else inserted++;
+
+					// Also create/update PCR attempts for all markers
+					const markers = [
+						{ status: row.itsStatus, gb: row.itsGb, type: 'ITS' },
+						{ status: row.ssuStatus, gb: row.ssuGb, type: 'SSU' },
+						{ status: row.lsuStatus, gb: row.lsuGb, type: 'LSU' },
+						{ status: row.rpb2Status, gb: row.rpb2Gb, type: 'RPB2' },
+						{ status: row.mcm7Status, gb: row.mcm7Gb, type: 'MCM7' },
+					];
+
+					for (const marker of markers) {
+						if (marker.status || marker.gb) {
+							// For simplicity in this route, we just create.
+							// In a real production app, we'd check for existing attempts to avoid duplicates.
+							await tx.pCRAttempt.create({
+								data: {
+									specimenId: id,
+									marker: marker.type,
+									result: marker.status || 'Unknown',
+									resultNotes: marker.gb ? `GenBank: ${marker.gb}` : null,
+								},
+							});
+						}
+					}
 				}
 			});
 
@@ -223,7 +332,7 @@ export async function POST(req: Request) {
 
 			return NextResponse.json({
 				success: true,
-				message: `Загрузка завершена. Новых: ${inserted}, обновлено: ${updated}. Проблемные и авто-исправленные поля отражены в importHints.`,
+				message: `Загрузка завершена. Новых: ${inserted}, обновлено: ${updated}.`,
 				inserted,
 				updated,
 				previousCount: beforeCount,

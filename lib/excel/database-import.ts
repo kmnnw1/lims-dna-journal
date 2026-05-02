@@ -50,6 +50,11 @@ export async function processExcelToDatabase(buffer: Buffer) {
 						extrOperator: row.extrOperator || null,
 						extrMethod: row.extrMethod || null,
 						extrDate: row.extrDate || null,
+						herbarium: row.herbarium || null,
+						collectionNumber: row.collectionNumber || null,
+						accessionNumber: row.accessionNumber || null,
+						labNo: row.labNo || null,
+						connections: row.connections || null,
 						notes: notesValue,
 					},
 					create: {
@@ -61,6 +66,11 @@ export async function processExcelToDatabase(buffer: Buffer) {
 						extrOperator: row.extrOperator || null,
 						extrMethod: row.extrMethod || null,
 						extrDate: row.extrDate || null,
+						herbarium: row.herbarium || null,
+						collectionNumber: row.collectionNumber || null,
+						accessionNumber: row.accessionNumber || null,
+						labNo: row.labNo || null,
+						connections: row.connections || null,
 						notes: notesValue,
 					},
 				});
@@ -72,6 +82,7 @@ export async function processExcelToDatabase(buffer: Buffer) {
 					{ status: row.itsStatus, gb: row.itsGb, type: 'ITS' },
 					{ status: row.ssuStatus, gb: row.ssuGb, type: 'SSU' },
 					{ status: row.lsuStatus, gb: row.lsuGb, type: 'LSU' },
+					{ status: row.rpb2Status, gb: row.rpb2Gb, type: 'RPB2' },
 					{ status: row.mcm7Status, gb: row.mcm7Gb, type: 'MCM7' },
 				];
 
