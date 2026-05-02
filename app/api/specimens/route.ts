@@ -264,6 +264,53 @@ export async function PUT(req: Request) {
 		const body = await req.json();
 		const { id, singleId, updateData, singleStatus, ...restData } = body;
 
+		if (Array.isArray(body?.ids) && body?.rename && typeof body.rename === 'object') {
+			const ids = body.ids
+				.map((rawId: unknown) => validateSpecimenId(rawId))
+				.filter((v: string | null): v is string => Boolean(v));
+			if (ids.length === 0) {
+				return NextResponse.json(
+					{ error: 'Ни один ID не прошёл валидацию' },
+					{ status: 400 },
+				);
+			}
+
+			const prefix = sanitizeString(body.rename.prefix, 120) || '';
+			const suffix = sanitizeString(body.rename.suffix, 120) || '';
+			const replaceFrom = sanitizeString(body.rename.replaceFrom, 120) || '';
+			const replaceTo = sanitizeString(body.rename.replaceTo, 120) || '';
+
+			const targets = await prisma.specimen.findMany({
+				where: { id: { in: ids }, deletedAt: null },
+				select: { id: true, taxon: true },
+			});
+
+			await prisma.$transaction(
+				targets.map((specimen) => {
+					const current = specimen.taxon || '';
+					const replaced = replaceFrom
+						? current.replaceAll(replaceFrom, replaceTo)
+						: current;
+					const updatedTaxon = `${prefix}${replaced}${suffix}`;
+					return prisma.specimen.update({
+						where: { id: specimen.id },
+						data: { taxon: updatedTaxon },
+					});
+				}),
+			);
+
+			const currentUser = session.user as ApiUser | undefined;
+			await logAuditAction({
+				userId: currentUser?.id || 'unknown',
+				action: 'UPDATE_SPECIMEN',
+				resourceType: 'SPECIMEN_BULK_RENAME',
+				details: { ids, prefix, suffix, replaceFrom, replaceTo },
+			});
+
+			invalidateSpecimenCaches();
+			return NextResponse.json({ success: true, updated: targets.length });
+		}
+
 		if (singleId && updateData) {
 			const safeSingleId = validateSpecimenId(singleId);
 			if (!safeSingleId) {

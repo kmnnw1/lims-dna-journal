@@ -197,6 +197,39 @@ export function JournalPageContent() {
 		setToastMessage({ text: `Экспортировано: ${selected.length}`, type: 'success' });
 	}, [specimens, selectedIds, setToastMessage]);
 
+	const handleBulkRenameSelected = useCallback(async () => {
+		if (selectedIds.size === 0) {
+			setToastMessage({ text: 'Нет выбранных проб для переименования', type: 'error' });
+			return;
+		}
+		const replaceFrom = window.prompt('Заменить в таксоне (что ищем):', '') ?? '';
+		const replaceTo = window.prompt('Заменить на:', '') ?? '';
+		const prefix = window.prompt('Префикс (опционально):', '') ?? '';
+		const suffix = window.prompt('Суффикс (опционально):', '') ?? '';
+
+		const res = await fetch('/api/specimens', {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				ids: Array.from(selectedIds),
+				rename: { replaceFrom, replaceTo, prefix, suffix },
+			}),
+		});
+		const data = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			setToastMessage({
+				text: data?.error || 'Ошибка массового переименования',
+				type: 'error',
+			});
+			return;
+		}
+		setToastMessage({
+			text: `Переименовано записей: ${data?.updated ?? selectedIds.size}`,
+			type: 'success',
+		});
+		setPage(page);
+	}, [selectedIds, setToastMessage, setPage, page]);
+
 	const openPrintBlank = useCallback(
 		(payload: {
 			stage: string;
@@ -330,6 +363,10 @@ export function JournalPageContent() {
 									setPage={setPage}
 									handleExportCSV={handleExportCSV}
 									handleExportXLSX={handleExportXLSX}
+									onImportUploaded={(message, type) => {
+										setToastMessage({ text: message, type });
+										setPage(1);
+									}}
 								/>
 							</div>
 						)}
@@ -405,6 +442,7 @@ export function JournalPageContent() {
 					setSelectedIds={setSelectedIds}
 					onCopySelectedIds={handleCopySelectedIds}
 					onExportSelected={handleExportSelected}
+					onBulkRename={handleBulkRenameSelected}
 					onPrintLabels={handlePrintLabels}
 					onBatchPCR={() => setIsBatchModalOpen(true)}
 					onTakeInWork={() => setIsTakeInWorkOpen(true)}

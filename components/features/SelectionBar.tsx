@@ -10,6 +10,7 @@ interface SelectionBarProps {
 	onBatchPCR: () => void;
 	onTakeInWork: () => void;
 	onExportSelected: () => void;
+	onBulkRename: () => void;
 }
 
 /**
@@ -24,6 +25,7 @@ export function SelectionBar({
 	onBatchPCR,
 	onTakeInWork,
 	onExportSelected,
+	onBulkRename,
 }: SelectionBarProps) {
 	if (selectedIds.size === 0) return null;
 
@@ -80,6 +82,12 @@ export function SelectionBar({
 					className="px-5 py-2.5 text-sm font-medium text-(--md-sys-color-inverse-primary) hover:bg-white/10 rounded-full transition-colors"
 				>
 					Экспорт
+				</button>
+				<button
+					onClick={onBulkRename}
+					className="px-5 py-2.5 text-sm font-medium text-(--md-sys-color-inverse-primary) hover:bg-white/10 rounded-full transition-colors"
+				>
+					Переименовать
 				</button>
 				<button
 					onClick={onPrintLabels}

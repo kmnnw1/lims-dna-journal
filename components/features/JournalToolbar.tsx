@@ -14,6 +14,7 @@ interface JournalToolbarProps {
 	setPage: (v: number) => void;
 	handleExportCSV: () => void;
 	handleExportXLSX: () => void;
+	onImportUploaded: (message: string, type: 'success' | 'error') => void;
 }
 
 /**
@@ -27,10 +28,12 @@ export function JournalToolbar({
 	setPage,
 	handleExportCSV,
 	handleExportXLSX,
+	onImportUploaded,
 }: JournalToolbarProps) {
 	const [isExportOpen, setIsExportOpen] = useState(false);
 	const [lastExportFormat, setLastExportFormat] = useState<ExportFormat>('XLSX');
 	const exportRef = useRef<HTMLDivElement>(null);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	// Load last export format from localStorage
 	useEffect(() => {
@@ -73,9 +76,46 @@ export function JournalToolbar({
 		else if (lastExportFormat === 'SQL') handleExportDB();
 	};
 
+	const uploadImportFile = async (file: File) => {
+		const formData = new FormData();
+		formData.append('file', file);
+		try {
+			const res = await fetch('/api/import', {
+				method: 'POST',
+				body: formData,
+			});
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) {
+				onImportUploaded(data?.error || 'Ошибка загрузки файла', 'error');
+				return;
+			}
+			onImportUploaded(data?.message || 'Импорт завершён', 'success');
+		} catch {
+			onImportUploaded('Ошибка загрузки файла', 'error');
+		}
+	};
+
 	return (
 		<div className="flex flex-row items-end md:items-center justify-end gap-2 shrink-0 md:pr-2 w-full md:w-auto">
 			<div className="flex items-center gap-1.5 sm:gap-2">
+				<button
+					type="button"
+					onClick={() => fileInputRef.current?.click()}
+					className="h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) text-xs sm:text-sm font-medium hover:md-elevation-2"
+				>
+					Импорт XLSX
+				</button>
+				<input
+					ref={fileInputRef}
+					type="file"
+					accept=".xlsx"
+					className="hidden"
+					onChange={(e) => {
+						const file = e.target.files?.[0];
+						if (file) uploadImportFile(file);
+						e.currentTarget.value = '';
+					}}
+				/>
 				<div className="relative flex items-center" ref={exportRef}>
 					<div className="flex items-center h-9 sm:h-10 bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-full shadow-sm hover:md-elevation-2 overflow-hidden group">
 						<button
