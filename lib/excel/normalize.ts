@@ -64,7 +64,10 @@ function deepRestoreFields(row: ParsedSpecimenRow, fixes: string[]): Partial<Par
 
 	// Очистка префиксов в поле Collector (leg., coll. и т.д.)
 	if (row.collector) {
-		const cleaned = row.collector.replace(/^(?:leg\.?|coll\.?|collector:?|собр\.?|сбор:?)\s+/i, '');
+		const cleaned = row.collector.replace(
+			/^(?:leg\.?|coll\.?|collector:?|собр\.?|сбор:?)\s+/i,
+			'',
+		);
 		if (cleaned !== row.collector) {
 			updates.collector = cleaned;
 			fixes.push(`Collector: удален технический префикс из "${row.collector}"`);
@@ -79,7 +82,9 @@ function deepRestoreFields(row: ParsedSpecimenRow, fixes: string[]): Partial<Par
 			const parsed = parseLabDate(extractEmbeddedDate(potentialDate) || potentialDate);
 			if (parsed) {
 				updates.extrDate = extrDateString(parsed);
-				fixes.push(`Locality -> ExtrDate: извлечена дата "${potentialDate}" из местоположения`);
+				fixes.push(
+					`Locality -> ExtrDate: извлечена дата "${potentialDate}" из местоположения`,
+				);
 			}
 		}
 	}

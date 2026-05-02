@@ -116,8 +116,10 @@ export function parseRowWithBindings(
 		rpb2Status: rpb2,
 		rpb2Gb,
 		herbarium: getByKey(row, bindings, 'herbarium'),
-		collectionNumber: getByKey(row, bindings, 'collectionNumber') || getByKey(row, bindings, 'collNo'),
-		accessionNumber: getByKey(row, bindings, 'accessionNumber') || getByKey(row, bindings, 'accNo'),
+		collectionNumber:
+			getByKey(row, bindings, 'collectionNumber') || getByKey(row, bindings, 'collNo'),
+		accessionNumber:
+			getByKey(row, bindings, 'accessionNumber') || getByKey(row, bindings, 'accNo'),
 		labNo: getByKey(row, bindings, 'labNo'),
 		connections: getByKey(row, bindings, 'connections'),
 		notes,

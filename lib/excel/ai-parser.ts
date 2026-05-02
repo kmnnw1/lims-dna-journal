@@ -27,8 +27,14 @@ const specimenSchema: Schema = {
 			mcm7Status: { type: SchemaType.STRING, description: 'MCM7 marker status' },
 			mcm7Gb: { type: SchemaType.STRING, description: 'MCM7 GenBank accession' },
 			herbarium: { type: SchemaType.STRING, description: 'Herbarium info' },
-			collectionNumber: { type: SchemaType.STRING, description: 'Collection number (Coll. No.)' },
-			accessionNumber: { type: SchemaType.STRING, description: 'Accession number (Acc. No.)' },
+			collectionNumber: {
+				type: SchemaType.STRING,
+				description: 'Collection number (Coll. No.)',
+			},
+			accessionNumber: {
+				type: SchemaType.STRING,
+				description: 'Accession number (Acc. No.)',
+			},
 			labNo: { type: SchemaType.STRING, description: 'Lab number' },
 			connections: { type: SchemaType.STRING, description: 'Connections to other specimens' },
 			notes: { type: SchemaType.STRING, description: 'All extra notes, comments' },

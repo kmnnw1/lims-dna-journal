@@ -40,7 +40,7 @@ export function JournalToolbar({
 	const [isImportDragOver, setIsImportDragOver] = useState(false);
 	const [mapperData, setMapperData] = useState<{
 		headers: string[];
-		sampleRows: any[][];
+		sampleRows: unknown[][];
 		suggestedMapping: Record<string, string>;
 		file: File;
 	} | null>(null);

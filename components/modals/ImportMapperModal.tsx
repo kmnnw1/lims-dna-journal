@@ -36,7 +36,7 @@ interface Props {
 	isOpen: boolean;
 	onClose: () => void;
 	headers: string[];
-	sampleRows: any[][];
+	sampleRows: unknown[][];
 	suggestedMapping: Record<string, string>;
 	onConfirm: (mapping: Record<string, string>) => void;
 	isImporting: boolean;
@@ -65,7 +65,7 @@ export function ImportMapperModal({
 	const isValid = Object.values(mapping).includes('isolate');
 
 	return (
-		<div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+		<div className="fixed inset-0 z-150 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
 			<div className="w-full max-w-4xl bg-(--md-sys-color-surface-container-low) rounded-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
 				{/* Header */}
 				<div className="p-6 border-b border-(--md-sys-color-outline-variant)/20 flex items-center justify-between">

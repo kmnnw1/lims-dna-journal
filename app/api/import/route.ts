@@ -7,14 +7,14 @@ import { logAuditAction } from '@/lib/db/prisma/audit-log';
 import { prisma } from '@/lib/db/prisma/prisma';
 import {
 	buildColumnBindings,
+	type ColumnBinding,
 	cellText,
 	extractRawDataFromSheet,
 	findHeaderRowIndex,
 	mergeById,
-	type ColumnBinding,
 	type ParsedSpecimenRow,
-	parseSheetToRows,
 	parseRowWithBindings,
+	parseSheetToRows,
 } from '@/lib/excel';
 import { parseWithAI } from '@/lib/excel/ai-parser';
 import { validateContentType, validateFileSize } from '@/lib/security/input-validator';
@@ -240,7 +240,13 @@ export async function POST(req: Request) {
 							.filter(Boolean) as ColumnBinding[];
 
 						for (let i = headerIdx + 1; i < rawData.length; i++) {
-							const parsed = parseRowWithBindings(rawData[i], bindings, sheet, i, sheet.name);
+							const parsed = parseRowWithBindings(
+								rawData[i],
+								bindings,
+								sheet,
+								i,
+								sheet.name,
+							);
 							if (parsed) dataToInsert.push(parsed);
 						}
 					}
