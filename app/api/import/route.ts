@@ -15,6 +15,19 @@ import {
 import { parseWithAI } from '@/lib/excel/ai-parser';
 import { validateContentType, validateFileSize } from '@/lib/security/input-validator';
 
+function buildImportHints(rows: ParsedSpecimenRow[]) {
+	const missingDates = rows.filter((row) => row.extrDateRaw && !row.extrDate).length;
+	const notesWithExcelComments = rows.filter((row) =>
+		row.notes.includes('Excel-комментарий:'),
+	).length;
+	const rowsWithExtraColumns = rows.filter((row) => row.notes.includes('__col_')).length;
+	return {
+		missingDates,
+		notesWithExcelComments,
+		rowsWithExtraColumns,
+	};
+}
+
 export async function GET(req: Request) {
 	try {
 		const session = await requireRole('ADMIN');
@@ -67,6 +80,7 @@ export async function GET(req: Request) {
 		}
 
 		const uniqueData = mergeById(dataToInsert);
+		const importHints = buildImportHints(uniqueData);
 
 		const beforeCount = await prisma.specimen.count();
 
@@ -122,6 +136,7 @@ export async function GET(req: Request) {
 			updated,
 			previousCount: beforeCount,
 			aiUsed,
+			importHints,
 		});
 	} catch (e: unknown) {
 		return handleError(e, req);
@@ -165,6 +180,7 @@ export async function POST(req: Request) {
 			}
 
 			const uniqueData = mergeById(dataToInsert);
+			const importHints = buildImportHints(uniqueData);
 			const beforeCount = await prisma.specimen.count();
 
 			let inserted = 0;
@@ -193,10 +209,11 @@ export async function POST(req: Request) {
 
 			return NextResponse.json({
 				success: true,
-				message: `Загрузка завершена. Новых: ${inserted}, обновлено: ${updated}`,
+				message: `Загрузка завершена. Новых: ${inserted}, обновлено: ${updated}. Проверьте importHints для проблемных полей.`,
 				inserted,
 				updated,
 				previousCount: beforeCount,
+				importHints,
 			});
 		}
 

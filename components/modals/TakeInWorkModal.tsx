@@ -11,8 +11,14 @@ type TakeInWorkPayload = {
 	operator: string;
 	comment: string;
 	resultStatus: string;
+	failReason: string;
+	genbankNo: string;
 	sequenceText: string;
 	rawFileUrl: string;
+	processedFileUrl: string;
+	cleanupAtVendor: boolean;
+	postCleanupConcentration: string;
+	qualityStatus: string;
 	printAfterSave: boolean;
 };
 
@@ -37,8 +43,14 @@ export function TakeInWorkModal({
 	const [operator, setOperator] = useState(defaultOperator);
 	const [comment, setComment] = useState('');
 	const [resultStatus, setResultStatus] = useState('in_progress');
+	const [failReason, setFailReason] = useState('');
+	const [genbankNo, setGenbankNo] = useState('');
 	const [sequenceText, setSequenceText] = useState('');
 	const [rawFileUrl, setRawFileUrl] = useState('');
+	const [processedFileUrl, setProcessedFileUrl] = useState('');
+	const [cleanupAtVendor, setCleanupAtVendor] = useState(false);
+	const [postCleanupConcentration, setPostCleanupConcentration] = useState('');
+	const [qualityStatus, setQualityStatus] = useState('');
 	const [printAfterSave, setPrintAfterSave] = useState(true);
 	const [saving, setSaving] = useState(false);
 
@@ -120,11 +132,29 @@ export function TakeInWorkModal({
 								</select>
 							</label>
 							<label className="sm:col-span-2 flex flex-col gap-1 text-sm">
+								<span>Номер GenBank</span>
+								<input
+									value={genbankNo}
+									onChange={(e) => setGenbankNo(e.target.value)}
+									placeholder="Например, GB_ACCESSION"
+									className="px-3 py-2 rounded-xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/30"
+								/>
+							</label>
+							<label className="sm:col-span-2 flex flex-col gap-1 text-sm">
 								<span>Ссылка на сырой файл</span>
 								<input
 									value={rawFileUrl}
 									onChange={(e) => setRawFileUrl(e.target.value)}
 									placeholder="URL/путь к сырому файлу"
+									className="px-3 py-2 rounded-xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/30"
+								/>
+							</label>
+							<label className="sm:col-span-2 flex flex-col gap-1 text-sm">
+								<span>Ссылка на обработанный файл (опционально)</span>
+								<input
+									value={processedFileUrl}
+									onChange={(e) => setProcessedFileUrl(e.target.value)}
+									placeholder="URL/путь к обработанному файлу"
 									className="px-3 py-2 rounded-xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/30"
 								/>
 							</label>
@@ -137,6 +167,51 @@ export function TakeInWorkModal({
 									placeholder="ATCG..."
 									className="px-3 py-2 rounded-xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/30"
 								/>
+							</label>
+							{resultStatus === 'fail' && (
+								<label className="sm:col-span-2 flex flex-col gap-1 text-sm">
+									<span>Причина неуспеха</span>
+									<input
+										value={failReason}
+										onChange={(e) => setFailReason(e.target.value)}
+										placeholder="Например, смесь организмов / слабый сигнал"
+										className="px-3 py-2 rounded-xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/30"
+									/>
+								</label>
+							)}
+							<label className="sm:col-span-2 flex items-center gap-2 text-sm mt-1">
+								<input
+									type="checkbox"
+									checked={cleanupAtVendor}
+									onChange={(e) => setCleanupAtVendor(e.target.checked)}
+								/>
+								Очистка на стороне лаборатории секвенирования
+							</label>
+						</>
+					)}
+					{stage === 'CLEANUP' && (
+						<>
+							<label className="flex flex-col gap-1 text-sm">
+								<span>Концентрация после очистки</span>
+								<input
+									value={postCleanupConcentration}
+									onChange={(e) => setPostCleanupConcentration(e.target.value)}
+									placeholder="нг/мкл"
+									className="px-3 py-2 rounded-xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/30"
+								/>
+							</label>
+							<label className="flex flex-col gap-1 text-sm">
+								<span>Качество</span>
+								<select
+									value={qualityStatus}
+									onChange={(e) => setQualityStatus(e.target.value)}
+									className="px-3 py-2 rounded-xl bg-(--md-sys-color-surface-container) border border-(--md-sys-color-outline-variant)/30"
+								>
+									<option value="">Не указано</option>
+									<option value="ok">Годно</option>
+									<option value="weak">Слабо</option>
+									<option value="fail">Негодно</option>
+								</select>
 							</label>
 						</>
 					)}
@@ -168,8 +243,14 @@ export function TakeInWorkModal({
 									operator,
 									comment,
 									resultStatus,
+									failReason,
+									genbankNo,
 									sequenceText,
 									rawFileUrl,
+									processedFileUrl,
+									cleanupAtVendor,
+									postCleanupConcentration,
+									qualityStatus,
 									printAfterSave,
 								});
 							} finally {

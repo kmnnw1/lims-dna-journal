@@ -32,6 +32,7 @@ export function JournalToolbar({
 }: JournalToolbarProps) {
 	const [isExportOpen, setIsExportOpen] = useState(false);
 	const [lastExportFormat, setLastExportFormat] = useState<ExportFormat>('XLSX');
+	const [isImportDragOver, setIsImportDragOver] = useState(false);
 	const exportRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -101,9 +102,34 @@ export function JournalToolbar({
 				<button
 					type="button"
 					onClick={() => fileInputRef.current?.click()}
-					className="h-9 sm:h-10 px-3 sm:px-4 rounded-full bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) text-xs sm:text-sm font-medium hover:md-elevation-2"
+					onDragOver={(e) => {
+						e.preventDefault();
+						setIsImportDragOver(true);
+					}}
+					onDragLeave={(e) => {
+						e.preventDefault();
+						setIsImportDragOver(false);
+					}}
+					onDrop={(e) => {
+						e.preventDefault();
+						setIsImportDragOver(false);
+						const file = e.dataTransfer.files?.[0];
+						if (!file) return;
+						const extension = file.name.split('.').pop()?.toLowerCase();
+						if (extension !== 'xlsx') {
+							onImportUploaded('Для импорта перетащите файл .xlsx', 'error');
+							return;
+						}
+						uploadImportFile(file);
+					}}
+					className={`h-9 sm:h-10 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-medium hover:md-elevation-2 border transition-colors ${
+						isImportDragOver
+							? 'bg-(--md-sys-color-primary-container) text-(--md-sys-color-on-primary-container) border-(--md-sys-color-primary)'
+							: 'bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) border-transparent'
+					}`}
+					title="Клик для выбора файла или перетащите .xlsx сюда"
 				>
-					Импорт XLSX
+					{isImportDragOver ? 'Отпустите файл .xlsx' : 'Импорт XLSX'}
 				</button>
 				<input
 					ref={fileInputRef}

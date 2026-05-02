@@ -487,8 +487,14 @@ export function JournalPageContent() {
 										: null,
 								params: {
 									comment: payload.comment,
+									failReason: payload.failReason,
+									genbankNo: payload.genbankNo,
 									sequenceText: payload.sequenceText,
 									rawFileUrl: payload.rawFileUrl,
+									processedFileUrl: payload.processedFileUrl,
+									cleanupAtVendor: payload.cleanupAtVendor,
+									postCleanupConcentration: payload.postCleanupConcentration,
+									qualityStatus: payload.qualityStatus,
 								},
 							}),
 						});
