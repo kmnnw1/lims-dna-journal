@@ -2,7 +2,7 @@
 
 import { Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-
+import { AmplificationTaskBoard } from '@/components/features/AmplificationTaskBoard';
 import { useDevSettings } from '@/components/features/DevSettingsProvider';
 import { ERModelVisualizer } from '@/components/features/ERModelVisualizer';
 import { HistoryDialog } from '@/components/features/HistoryDialog';
@@ -309,9 +309,14 @@ export function JournalPageContent() {
 				)}
 				{devSettings.visibility?.table && (
 					<div className="bg-(--md-sys-color-surface-container-lowest) rounded-2xl sm:rounded-3xl md-elevation-1 border border-(--md-sys-color-outline-variant)/10 overflow-hidden min-h-[400px]">
-						{(isMobileDevice || devSettings.forceMobileView) &&
-						devSettings.enableMobileCards &&
-						!devSettings.forceDesktopView ? (
+						{workflowStage === 'TASKS' ? (
+							<AmplificationTaskBoard
+								selectedIds={selectedIds}
+								onToast={(text, type) => setToastMessage({ text, type })}
+							/>
+						) : (isMobileDevice || devSettings.forceMobileView) &&
+							devSettings.enableMobileCards &&
+							!devSettings.forceDesktopView ? (
 							<div className="grid grid-cols-1 gap-3 p-1 sm:p-0">
 								{specimens.map((s: Specimen) => (
 									<MobileSpecimenCard
