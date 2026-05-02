@@ -36,7 +36,6 @@ export function useJournalPage() {
 	const [editingSpecimen, setEditingSpecimen] = useState<Specimen | null>(null);
 	const [activePCRSpecimen, setActivePCRSpecimen] = useState<Specimen | null>(null);
 	const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
-	const [isScanOpen, setIsScanOpen] = useState(false);
 	const [validationError, setValidationError] = useState<string | null>(null);
 
 	const [newRecordData, setNewRecordData] = useState({
@@ -333,8 +332,6 @@ export function useJournalPage() {
 		setActivePCRSpecimen,
 		isBatchModalOpen,
 		setIsBatchModalOpen,
-		isScanOpen,
-		setIsScanOpen,
 		validationError,
 		setValidationError,
 		newRecordData,

@@ -1,6 +1,6 @@
 'use client';
 
-import { Camera, ChevronDown, Download } from 'lucide-react';
+import { ChevronDown, Download } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { PaginationControls } from '@/components/features/PaginationControls';
@@ -9,8 +9,6 @@ type ExportFormat = 'XLSX' | 'CSV' | 'SQL';
 
 interface JournalToolbarProps {
 	isMobileDevice: boolean;
-	isScanOpen: boolean;
-	setIsScanOpen: (v: boolean) => void;
 	page: number;
 	totalPages: number;
 	setPage: (v: number) => void;
@@ -24,7 +22,6 @@ interface JournalToolbarProps {
  */
 export function JournalToolbar({
 	isMobileDevice,
-	setIsScanOpen,
 	page,
 	totalPages,
 	setPage,
@@ -79,15 +76,7 @@ export function JournalToolbar({
 	return (
 		<div className="flex flex-row items-end md:items-center justify-end gap-2 shrink-0 md:pr-2 w-full md:w-auto">
 			<div className="flex items-center gap-1.5 sm:gap-2">
-				{isMobileDevice && (
-					<button
-						onClick={() => setIsScanOpen(true)}
-						className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-(--md-sys-color-secondary-container) text-(--md-sys-color-on-secondary-container) md-elevation-1 hover:md-elevation-2 rounded-full transition-all font-medium text-xs sm:text-sm active:scale-95"
-					>
-						<Camera className="w-4 h-4 sm:w-5 sm:h-5" />
-						<span className="hidden sm:inline">Сканировать</span>
-					</button>
-				)}
+				{isMobileDevice ? null : null}
 				<div className="relative flex items-center" ref={exportRef}>
 					<div className="flex items-center h-9 sm:h-10 bg-(--md-sys-color-tertiary-container) text-(--md-sys-color-on-tertiary-container) rounded-full shadow-sm hover:md-elevation-2 overflow-hidden group">
 						<button

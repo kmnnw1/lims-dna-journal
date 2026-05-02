@@ -3,7 +3,6 @@
 import { Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { BarcodeScanDialog } from '@/components/features/BarcodeScanDialog';
 import { useDevSettings } from '@/components/features/DevSettingsProvider';
 import { ERModelVisualizer } from '@/components/features/ERModelVisualizer';
 import { HistoryDialog } from '@/components/features/HistoryDialog';
@@ -53,8 +52,6 @@ export function JournalPageContent() {
 		setActivePCRSpecimen,
 		isBatchModalOpen,
 		setIsBatchModalOpen,
-		isScanOpen,
-		setIsScanOpen,
 		isMobileDevice,
 		newRecordData,
 		setNewRecordData,
@@ -247,8 +244,6 @@ export function JournalPageContent() {
 						{devSettings.visibility?.filters && (
 							<JournalToolbar
 								isMobileDevice={isMobileDevice}
-								isScanOpen={isScanOpen}
-								setIsScanOpen={setIsScanOpen}
 								page={page}
 								totalPages={totalPages}
 								setPage={setPage}
@@ -290,10 +285,8 @@ export function JournalPageContent() {
 												onClick={() => handleStatusToggle(spec.id, marker)}
 											/>
 										)}
-										selected={false}
-										onToggleSelect={function (): void {
-											throw new Error('Function not implemented.');
-										}}
+										selected={selectedIds.has(s.id)}
+										onToggleSelect={() => handleSelect(s.id)}
 									/>
 								))}
 							</div>
@@ -364,14 +357,6 @@ export function JournalPageContent() {
 					open={isBatchModalOpen}
 					selectedSpecimenIds={[...selectedIds]}
 					onClose={() => setIsBatchModalOpen(false)}
-				/>
-				<BarcodeScanDialog
-					open={isScanOpen}
-					onClose={() => setIsScanOpen(false)}
-					onCode={(raw) => {
-						setSelectedIds((current) => new Set(current).add(raw));
-						setIsScanOpen(false);
-					}}
 				/>
 				<HistoryDialog
 					open={Boolean(historyTarget)}
