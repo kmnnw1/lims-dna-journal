@@ -103,3 +103,70 @@ export async function POST(req: Request) {
 		return handleError(e, req);
 	}
 }
+
+export async function PUT(req: Request) {
+	try {
+		const session = await requireRole('EDITOR');
+		const user = session.user as ApiUser | undefined;
+
+		const contentType = req.headers.get('content-type');
+		if (!validateContentType(contentType)) {
+			return NextResponse.json(
+				{ error: 'Content-Type должен быть application/json' },
+				{ status: 415 },
+			);
+		}
+
+		const body = await req.json();
+		const id = sanitizeString(body?.id, 80);
+		const action = sanitizeString(body?.action, 40);
+		if (!id) return NextResponse.json({ error: 'id обязателен' }, { status: 400 });
+		if (!action) return NextResponse.json({ error: 'action обязателен' }, { status: 400 });
+
+		if (action === 'complete') {
+			const status = sanitizeString(body?.status, 40) || 'ok';
+			const updated = await prisma.workflowOperation.update({
+				where: { id },
+				data: { status, completedAt: new Date() },
+				include: { attachments: true },
+			});
+			await logAuditAction({
+				userId: user?.id || 'unknown',
+				action: 'CREATE_WORKFLOW_OPERATION',
+				resourceType: 'WORKFLOW_OPERATION',
+				resourceId: id,
+				details: { transition: 'complete', status },
+			});
+			return NextResponse.json(updated);
+		}
+
+		if (action === 'attach') {
+			const kind = sanitizeString(body?.kind, 40) || 'file';
+			const url = sanitizeString(body?.url, 1000);
+			const filename = sanitizeString(body?.filename, 255);
+			const textContent = sanitizeString(body?.textContent, 10000);
+			const created = await prisma.workflowAttachment.create({
+				data: {
+					operationId: id,
+					kind,
+					url,
+					filename,
+					textContent,
+					mimeType: sanitizeString(body?.mimeType, 255),
+				},
+			});
+			await logAuditAction({
+				userId: user?.id || 'unknown',
+				action: 'CREATE_WORKFLOW_OPERATION',
+				resourceType: 'WORKFLOW_ATTACHMENT',
+				resourceId: created.id,
+				details: { operationId: id, kind },
+			});
+			return NextResponse.json(created);
+		}
+
+		return NextResponse.json({ error: 'Неизвестное действие' }, { status: 400 });
+	} catch (e) {
+		return handleError(e, req);
+	}
+}

@@ -24,6 +24,13 @@ type WorkflowOperation = {
 	startedAt: string;
 	completedAt: string | null;
 	paramsJson: string | null;
+	attachments?: Array<{
+		id: string;
+		kind: string;
+		url: string | null;
+		filename: string | null;
+		textContent: string | null;
+	}>;
 };
 
 export function AmplificationTaskBoard({
@@ -37,6 +44,11 @@ export function AmplificationTaskBoard({
 	const [tasks, setTasks] = useState<Task[]>([]);
 	const [historySpecimenId, setHistorySpecimenId] = useState('');
 	const [history, setHistory] = useState<WorkflowOperation[]>([]);
+	const [attachOperationId, setAttachOperationId] = useState('');
+	const [attachKind, setAttachKind] = useState('gel_image');
+	const [attachUrl, setAttachUrl] = useState('');
+	const [attachText, setAttachText] = useState('');
+	const [batchStage, setBatchStage] = useState<'CLEANUP' | 'SEQUENCING'>('CLEANUP');
 
 	const [marker, setMarker] = useState('ITS');
 	const [forwardPrimer, setForwardPrimer] = useState('');
@@ -141,6 +153,59 @@ export function AmplificationTaskBoard({
 			setHistory(data);
 		} catch {
 			onToast('Не удалось загрузить историю этапов', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const createBatchByStage = async () => {
+		if (selectedIds.size === 0) {
+			onToast('Выдели пробы для пакетной операции', 'error');
+			return;
+		}
+		setLoading(true);
+		try {
+			const res = await fetch('/api/workflow/operations/batch', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					specimenIds: Array.from(selectedIds),
+					stage: batchStage,
+					status: 'in_progress',
+				}),
+			});
+			if (!res.ok) throw new Error('batch');
+			onToast(`Пакет ${batchStage}: ${selectedIds.size} записей`, 'success');
+		} catch {
+			onToast('Ошибка пакетной операции', 'error');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const attachToOperation = async () => {
+		if (!attachOperationId.trim()) {
+			onToast('Укажи operationId', 'error');
+			return;
+		}
+		setLoading(true);
+		try {
+			const res = await fetch('/api/workflow/operations', {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					id: attachOperationId,
+					action: 'attach',
+					kind: attachKind,
+					url: attachUrl || null,
+					textContent: attachText || null,
+				}),
+			});
+			if (!res.ok) throw new Error('attach');
+			onToast('Артефакт прикреплён', 'success');
+			await loadHistory();
+		} catch {
+			onToast('Ошибка прикрепления артефакта', 'error');
 		} finally {
 			setLoading(false);
 		}
@@ -268,6 +333,23 @@ export function AmplificationTaskBoard({
 			</div>
 
 			<div className="bg-(--md-sys-color-surface-container-low) rounded-2xl p-4 border border-(--md-sys-color-outline-variant)/20">
+				<h3 className="font-bold mb-3">Пакетные этапы очистки/секвенирования</h3>
+				<div className="flex flex-wrap gap-2">
+					<select
+						value={batchStage}
+						onChange={(e) => setBatchStage(e.target.value as 'CLEANUP' | 'SEQUENCING')}
+						className="px-3 py-2 rounded-xl border bg-(--md-sys-color-surface)"
+					>
+						<option value="CLEANUP">CLEANUP</option>
+						<option value="SEQUENCING">SEQUENCING</option>
+					</select>
+					<button onClick={createBatchByStage} className="px-4 py-2 rounded-full border">
+						Записать пакет ({selectedIds.size})
+					</button>
+				</div>
+			</div>
+
+			<div className="bg-(--md-sys-color-surface-container-low) rounded-2xl p-4 border border-(--md-sys-color-outline-variant)/20">
 				<h3 className="font-bold mb-3">История этапов по пробе</h3>
 				<div className="flex flex-wrap gap-2">
 					<input
@@ -279,6 +361,48 @@ export function AmplificationTaskBoard({
 					<button onClick={loadHistory} className="px-4 py-2 rounded-full border">
 						Показать историю
 					</button>
+				</div>
+				<div className="mt-4 border-t pt-3 border-(--md-sys-color-outline-variant)/20">
+					<h4 className="font-semibold mb-2 text-sm">Прикрепление артефакта</h4>
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+						<input
+							value={attachOperationId}
+							onChange={(e) => setAttachOperationId(e.target.value)}
+							placeholder="operationId"
+							className="px-3 py-2 rounded-xl border bg-(--md-sys-color-surface)"
+						/>
+						<select
+							value={attachKind}
+							onChange={(e) => setAttachKind(e.target.value)}
+							className="px-3 py-2 rounded-xl border bg-(--md-sys-color-surface)"
+						>
+							<option value="gel_image">gel_image</option>
+							<option value="raw_file">raw_file</option>
+							<option value="sequence_text">sequence_text</option>
+							<option value="comment">comment</option>
+						</select>
+						<input
+							value={attachUrl}
+							onChange={(e) => setAttachUrl(e.target.value)}
+							placeholder="URL/путь файла"
+							className="px-3 py-2 rounded-xl border bg-(--md-sys-color-surface)"
+						/>
+					</div>
+					<textarea
+						value={attachText}
+						onChange={(e) => setAttachText(e.target.value)}
+						rows={2}
+						placeholder="Текст артефакта (sequence/comment)"
+						className="mt-2 w-full px-3 py-2 rounded-xl border bg-(--md-sys-color-surface)"
+					/>
+					<div className="mt-2">
+						<button
+							onClick={attachToOperation}
+							className="px-4 py-2 rounded-full border"
+						>
+							Прикрепить
+						</button>
+					</div>
 				</div>
 				<div className="mt-3 space-y-2">
 					{history.length === 0 && (
@@ -300,6 +424,14 @@ export function AmplificationTaskBoard({
 									? ` | Завершено: ${new Date(h.completedAt).toLocaleString()}`
 									: ''}
 							</div>
+							{h.attachments && h.attachments.length > 0 && (
+								<div className="text-xs mt-1 text-(--md-sys-color-on-surface-variant)">
+									Артефакты:{' '}
+									{h.attachments
+										.map((a) => `${a.kind}${a.url ? `:${a.url}` : ''}`)
+										.join(' | ')}
+								</div>
+							)}
 						</div>
 					))}
 				</div>
